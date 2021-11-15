@@ -44,18 +44,18 @@ struct ExtCategory_Realtime : public Category_Realtime {
 struct ExtType_Realtime : public Type_Realtime {
   inline ExtType_Realtime(Category_Realtime& p, Params<0>::Type params) : Type_Realtime(p, params) {}
 
-  ReturnTuple Call_sleepSeconds(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_sleepSeconds(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Realtime.sleepSeconds")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     if (Var_arg1 > 0) {
       std::this_thread::sleep_for(std::chrono::duration<double>(Var_arg1));
     }
     return ReturnTuple();
   }
 
-  ReturnTuple Call_sleepSecondsPrecise(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_sleepSecondsPrecise(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Realtime.sleepSecondsPrecise")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
 
     const auto spinlock_limit = std::chrono::duration<double>(SLEEP_SPINLOCK_LIMIT);
 
@@ -78,7 +78,7 @@ struct ExtType_Realtime : public Type_Realtime {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_monoSeconds(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_monoSeconds(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Realtime.monoSeconds")
     const auto time = std::chrono::steady_clock::now().time_since_epoch();
     const PrimFloat seconds =

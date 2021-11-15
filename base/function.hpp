@@ -95,13 +95,45 @@ struct PassArgs : public ParamsArgs {
     Init<Pn, An+1>(passed...);
   }
 
-  int NumParams() const final                                { return P; }
-  const S<const TypeInstance>& GetParam(int pos) const final { return *params[pos]; }
-  int NumArgs() const final                     { return A; }
-  const BoxedValue& GetArg(int pos) const final { return *args[pos]; }
+  int NumParams() const final { return P; }
+
+  const S<const TypeInstance>& GetParam(int pos) const final {
+    if (pos < 0 || pos >= P) {
+      FAIL() << "Bad param index";
+    }
+    return *params[pos];
+  }
+
+  int NumArgs() const final { return A; }
+
+  const BoxedValue& GetArg(int pos) const final {
+    if (pos < 0 || pos >= A) {
+      FAIL() << "Bad arg index";
+    }
+    return *args[pos];
+  }
 
   const S<const TypeInstance>* params[P];
   const BoxedValue*   args[A];
+};
+
+template<>
+struct PassArgs<0, 0> : public ParamsArgs {
+  constexpr PassArgs() {}
+
+  int NumParams() const final { return 0; }
+
+  const S<const TypeInstance>& GetParam(int pos) const final {
+    FAIL() << "Bad param index";
+    __builtin_unreachable();
+  }
+
+  int NumArgs() const final { return 0; }
+
+  const BoxedValue& GetArg(int pos) const final {
+    FAIL() << "Bad arg index";
+    __builtin_unreachable();
+  }
 };
 
 template<int P>
@@ -122,8 +154,15 @@ struct PassReturns : public ParamsArgs {
     returns = &forward;
   }
 
-  int NumParams() const final                                { return P; }
-  const S<const TypeInstance>& GetParam(int pos) const final { return *params[pos]; }
+  int NumParams() const final { return P; }
+
+  const S<const TypeInstance>& GetParam(int pos) const final {
+    if (pos < 0 || pos >= P) {
+      FAIL() << "Bad param index";
+    }
+    return *params[pos];
+  }
+
   int NumArgs() const final                     { return returns->Size(); }
   const BoxedValue& GetArg(int pos) const final { return returns->At(pos); }
 

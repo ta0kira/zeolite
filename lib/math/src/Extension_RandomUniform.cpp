@@ -28,7 +28,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ValueTuple& args);
+BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ParamsArgs& params_args);
 
 struct ExtCategory_RandomUniform : public Category_RandomUniform {
 };
@@ -36,32 +36,32 @@ struct ExtCategory_RandomUniform : public Category_RandomUniform {
 struct ExtType_RandomUniform : public Type_RandomUniform {
   inline ExtType_RandomUniform(Category_RandomUniform& p, Params<0>::Type params) : Type_RandomUniform(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("RandomUniform.new")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
-    const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
+    const PrimFloat Var_arg2 = (params_args.GetArg(1)).AsFloat();
     if (Var_arg2 <= Var_arg1) {
       FAIL() << "Invalid range (" << Var_arg1 << "," << Var_arg2 << ")";
     }
-    return ReturnTuple(CreateValue_RandomUniform(PARAM_SELF, args));
+    return ReturnTuple(CreateValue_RandomUniform(PARAM_SELF, params_args));
   }
 };
 
 struct ExtValue_RandomUniform : public Value_RandomUniform {
-  inline ExtValue_RandomUniform(S<const Type_RandomUniform> p, const ValueTuple& args)
+  inline ExtValue_RandomUniform(S<const Type_RandomUniform> p, const ParamsArgs& params_args)
     : Value_RandomUniform(std::move(p)),
       generator_((int) (long) this),
-      distribution_(args.At(0).AsFloat(), args.At(1).AsFloat()) {}
+      distribution_(params_args.GetArg(0).AsFloat(), params_args.GetArg(1).AsFloat()) {}
 
-  ReturnTuple Call_generate(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_generate(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("RandomUniform.generate")
     return ReturnTuple(Box_Float(distribution_(generator_)));
   }
 
-  ReturnTuple Call_setSeed(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_setSeed(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("RandomUniform.setSeed")
     distribution_.reset();
-    generator_.seed(args.At(0).AsInt());
+    generator_.seed(params_args.GetArg(0).AsInt());
     return ReturnTuple(VAR_SELF);
   }
 
@@ -81,8 +81,8 @@ S<const Type_RandomUniform> CreateType_RandomUniform(const Params<0>::Type& para
 
 void RemoveType_RandomUniform(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RandomUniform>(std::move(parent), args);
+BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ParamsArgs& params_args) {
+  return BoxedValue::New<ExtValue_RandomUniform>(std::move(parent), params_args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

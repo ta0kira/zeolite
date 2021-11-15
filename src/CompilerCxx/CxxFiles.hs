@@ -495,23 +495,23 @@ generateCategoryDefinition testing = common where
 
   declareCategoryOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
-      "  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final;"
+      "  ReturnTuple Dispatch(const CategoryFunction& label, const ParamsArgs& params_args) final;"
     ]
   declareTypeOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
       "  void BuildTypeName(std::ostream& output) const final;",
       "  bool TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const final;",
-      "  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) const final;",
+      "  ReturnTuple Dispatch(const TypeFunction& label, const ParamsArgs& params_args) const final;",
       "  bool CanConvertFrom(const S<const TypeInstance>& from) const final;"
     ]
   declareValueOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
-      "  ReturnTuple Dispatch(const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) final;"
+      "  ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args) final;"
     ]
 
   defineCategoryOverrides t fs = return $ mconcat [
       onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return \"" ++ show (getCategoryName t) ++ "\"; }",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const CategoryFunction& label, const ParamsArgs& params_args) {",
       createFunctionDispatch t CategoryScope fs,
       onlyCode "}"
     ] where
@@ -524,7 +524,7 @@ generateCategoryDefinition testing = common where
       onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const {",
       createTypeArgsForParent t,
       onlyCode $ "}",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) const {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamsArgs& params_args) const {",
       createFunctionDispatch t TypeScope fs,
       onlyCode $ "}",
       onlyCode $ "bool " ++ className ++ "::CanConvertFrom(const S<const TypeInstance>& from) const {",
@@ -535,7 +535,7 @@ generateCategoryDefinition testing = common where
       params = map vpParam $ getCategoryParams t
   defineValueOverrides t fs = return $ mconcat [
       onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return parent->CategoryName(); }",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const ValueFunction& label, const ParamsArgs& params_args) {",
       createFunctionDispatch t ValueScope fs,
       onlyCode $ "}"
     ] where
@@ -589,13 +589,13 @@ generateCategoryDefinition testing = common where
 
   inlineValueConstructor t d = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
-    let argsPassed = "const ValueTuple& args"
+    let argsPassed = "const ParamsArgs& params_args"
     let allArgs = intercalate ", " [argParent,argsPassed]
     let initParent = "parent(p)"
     let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(" ++ unwrappedArg i m ++ ")") $ zip ([0..] :: [Int]) members
     let allInit = intercalate ", " $ initParent:initArgs
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}" where
-      unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
+      unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "params_args.GetArg(" ++ show i ++ ")")
       members = filter ((== ValueScope). dmScope) $ dcMembers d
 
   abstractValueConstructor t = do
@@ -614,7 +614,7 @@ generateCategoryDefinition testing = common where
     return $ onlyCode $ "inline " ++ typeCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
   customValueConstructor t = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
-    let argsPassed = "const ValueTuple& args"
+    let argsPassed = "const ParamsArgs& params_args"
     let allArgs = intercalate ", " [argParent,argsPassed]
     let allInit = valueName (getCategoryName t) ++ "(std::move(p))"
     return $ onlyCode $ "inline " ++ valueCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
@@ -752,11 +752,11 @@ createFunctionDispatch t s fs = function where
   byCategory = Map.toList $ Map.fromListWith (++) $ map (\f -> (sfType f,[f])) flattened
   typedef
     | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName name ++
-                           "::*)(const ParamTuple&, const ValueTuple&);"
+                           "::*)(const ParamsArgs&);"
     | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName name ++
-                           "::*)(const ParamTuple&, const ValueTuple&) const;"
+                           "::*)(const ParamsArgs&) const;"
     | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName name ++
-                           "::*)(const ParamTuple&, const ValueTuple&)" ++ suffix ++ ";"
+                           "::*)(const ParamsArgs&)" ++ suffix ++ ";"
     | otherwise = undefined
   suffix
     | isImmutable t = " const"
@@ -788,14 +788,14 @@ createFunctionDispatch t s fs = function where
       "      return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");"
     ]
   args
-    | s == CategoryScope = "params, args"
-    | s == TypeScope     = "params, args"
-    | s == ValueScope    = "params, args"
+    | s == CategoryScope = "params_args"
+    | s == TypeScope     = "params_args"
+    | s == ValueScope    = "params_args"
     | otherwise = undefined
   fallback
-    | s == CategoryScope = "  return TypeCategory::Dispatch(label, params, args);"
-    | s == TypeScope     = "  return TypeInstance::Dispatch(label, params, args);"
-    | s == ValueScope    = "  return TypeValue::Dispatch(label, params, args);"
+    | s == CategoryScope = "  return TypeCategory::Dispatch(label, params_args);"
+    | s == TypeScope     = "  return TypeInstance::Dispatch(label, params_args);"
+    | s == ValueScope    = "  return TypeValue::Dispatch(label, params_args);"
     | otherwise = undefined
 
 createCanConvertFrom :: AnyCategory c -> CompiledData [String]
@@ -937,7 +937,7 @@ declareInternalValue t =
   onlyCodes [
       "BoxedValue " ++ valueCreator (getCategoryName t) ++
       "(S<const " ++ typeName (getCategoryName t) ++ "> parent, " ++
-      "const ValueTuple& args);"
+      "const ParamsArgs& params_args);"
     ]
 
 defineInternalValue :: AnyCategory c -> CompiledData [String]
@@ -948,8 +948,8 @@ defineInternalValue2 className t =
   onlyCodes [
       "BoxedValue " ++ valueCreator (getCategoryName t) ++
       "(S<const " ++ typeName (getCategoryName t) ++ "> parent, " ++
-      "const ValueTuple& args) {",
-      "  return BoxedValue::New<" ++ className ++ ">(std::move(parent), args);",
+      "const ParamsArgs& params_args) {",
+      "  return BoxedValue::New<" ++ className ++ ">(std::move(parent), params_args);",
       "}"
     ]
 

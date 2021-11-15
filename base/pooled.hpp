@@ -20,9 +20,7 @@ limitations under the License.
 #define POOLED_HPP_
 
 
-class ArgTuple;
 class ReturnTuple;
-class ParamTuple;
 
 namespace zeolite_internal {
 
@@ -56,9 +54,7 @@ struct PoolManager {};
 
 template<class T>
 class PoolArray {
-  friend class ::ArgTuple;
   friend class ::ReturnTuple;
-  friend class ::ParamTuple;
 
   constexpr PoolArray() : size_(0), array_(nullptr) {}
 

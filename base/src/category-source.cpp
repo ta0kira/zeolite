@@ -182,20 +182,17 @@ const S<const TypeInstance>& GetMerged_All() {
 const BoxedValue Var_empty;
 
 
-ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
-                                   const ParamTuple& params, const ValueTuple& args) {
+ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label, const ParamsArgs& params_args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
 
-ReturnTuple TypeInstance::Dispatch(const TypeFunction& label,
-                                   const ParamTuple& params, const ValueTuple& args) const {
+ReturnTuple TypeInstance::Dispatch(const TypeFunction& label, const ParamsArgs& params_args) const {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
 
-ReturnTuple TypeValue::Dispatch(const ValueFunction& label,
-                                const ParamTuple& params, const ValueTuple& args) {
+ReturnTuple TypeValue::Dispatch(const ValueFunction& label, const ParamsArgs& params_args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }

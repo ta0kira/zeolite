@@ -24,21 +24,21 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent, const ValueTuple& args);
+BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent);
 
 struct ExtCategory_Destructor : public Category_Destructor {
 };
 
 struct ExtType_Destructor : public Type_Destructor {
   inline ExtType_Destructor(Category_Destructor& p, Params<0>::Type params) : Type_Destructor(p, params) {}
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Destructor.new")
-    return ReturnTuple(CreateValue_Destructor(PARAM_SELF, ArgTuple()));
+    return ReturnTuple(CreateValue_Destructor(PARAM_SELF));
   }
 };
 
 struct ExtValue_Destructor : public Value_Destructor {
-  inline ExtValue_Destructor(S<const Type_Destructor> p, const ValueTuple& args)
+  inline ExtValue_Destructor(S<const Type_Destructor> p)
     : Value_Destructor(std::move(p)) {}
 
   ~ExtValue_Destructor() {
@@ -58,8 +58,8 @@ S<const Type_Destructor> CreateType_Destructor(const Params<0>::Type& params) {
 
 void RemoveType_Destructor(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_Destructor>(std::move(parent), args);
+BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent) {
+  return BoxedValue::New<ExtValue_Destructor>(std::move(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

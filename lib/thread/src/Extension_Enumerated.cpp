@@ -115,7 +115,7 @@ struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
   inline ExtValue_EnumeratedWait(S<const Type_EnumeratedWait> p, S<Barrier> b, int i)
     : Value_EnumeratedWait(std::move(p)), barrier(b), index(i) {}
 
-  ReturnTuple Call_wait(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_wait(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("EnumeratedWait.wait")
     barrier->Wait(index);
     return ReturnTuple(VAR_SELF);
@@ -165,9 +165,9 @@ struct ExtCategory_EnumeratedBarrier : public Category_EnumeratedBarrier {
 struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
   inline ExtType_EnumeratedBarrier(Category_EnumeratedBarrier& p, Params<0>::Type params) : Type_EnumeratedBarrier(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("EnumeratedBarrier.new")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Invalid barrier thread count " << Var_arg1;
     }
@@ -186,16 +186,16 @@ struct ExtValue_EnumeratedBarrier : public Value_EnumeratedBarrier {
   inline ExtValue_EnumeratedBarrier(S<const Type_EnumeratedBarrier> p, std::vector<BoxedValue> w)
     : Value_EnumeratedBarrier(std::move(p)), waits(std::move(w)) {}
 
-  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("EnumeratedBarrier.readAt")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= waits.size()) {
       FAIL() << "index " << Var_arg1 << " is out of bounds";
     }
     return ReturnTuple(waits[Var_arg1]);
   }
 
-  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("EnumeratedBarrier.size")
     return ReturnTuple(Box_Int(waits.size()));
   }

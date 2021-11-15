@@ -32,7 +32,7 @@ struct Base {
 
 }  // namespace
 
-BoxedValue CreateValue_Offset(S<const Type_Offset> parent, const ValueTuple& args);
+BoxedValue CreateValue_Offset(S<const Type_Offset> parent);
 
 struct ExtCategory_Offset : public Category_Offset {
 };
@@ -40,18 +40,18 @@ struct ExtCategory_Offset : public Category_Offset {
 struct ExtType_Offset : public Type_Offset {
   inline ExtType_Offset(Category_Offset& p, Params<0>::Type params) : Type_Offset(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Offset.new")
-    return ReturnTuple(CreateValue_Offset(PARAM_SELF, ArgTuple()));
+    return ReturnTuple(CreateValue_Offset(PARAM_SELF));
   }
 };
 
 // Using virtual will (ideally) change the offset.
 struct ExtValue_Offset : public Base, virtual public Value_Offset {
-  inline ExtValue_Offset(S<const Type_Offset> p, const ValueTuple& args)
+  inline ExtValue_Offset(S<const Type_Offset> p)
     : Value_Offset(std::move(p)) {}
 
-  ReturnTuple Call_call(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_call(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("Offset.call")
     if ((void*) this == (void*) static_cast<TypeValue*>(this)) {
       message = "same";
@@ -61,7 +61,7 @@ struct ExtValue_Offset : public Base, virtual public Value_Offset {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_get(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_get(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("Offset.get")
     return ReturnTuple(Box_String(message));
   }
@@ -79,8 +79,8 @@ S<const Type_Offset> CreateType_Offset(const Params<0>::Type& params) {
 
 void RemoveType_Offset(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_Offset(S<const Type_Offset> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_Offset>(std::move(parent), args);
+BoxedValue CreateValue_Offset(S<const Type_Offset> parent) {
+  return BoxedValue::New<ExtValue_Offset>(std::move(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

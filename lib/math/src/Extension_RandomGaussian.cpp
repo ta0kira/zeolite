@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RandomGaussian(S<const Type_RandomGaussian> parent, const ValueTuple& args);
+BoxedValue CreateValue_RandomGaussian(S<const Type_RandomGaussian> parent, const ParamsArgs& params_args);
 
 struct ExtCategory_RandomGaussian : public Category_RandomGaussian {
 };
@@ -37,32 +37,32 @@ struct ExtCategory_RandomGaussian : public Category_RandomGaussian {
 struct ExtType_RandomGaussian : public Type_RandomGaussian {
   inline ExtType_RandomGaussian(Category_RandomGaussian& p, Params<0>::Type params) : Type_RandomGaussian(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("RandomGaussian.new")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
-    const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
+    const PrimFloat Var_arg2 = (params_args.GetArg(1)).AsFloat();
     if (Var_arg2 <= 0) {
       FAIL() << "Invalid standard deviation " << Var_arg2;
     }
-    return ReturnTuple(CreateValue_RandomGaussian(PARAM_SELF, args));
+    return ReturnTuple(CreateValue_RandomGaussian(PARAM_SELF, params_args));
   }
 };
 
 struct ExtValue_RandomGaussian : public Value_RandomGaussian {
-  inline ExtValue_RandomGaussian(S<const Type_RandomGaussian> p, const ValueTuple& args)
+  inline ExtValue_RandomGaussian(S<const Type_RandomGaussian> p, const ParamsArgs& params_args)
     : Value_RandomGaussian(std::move(p)),
       generator_((int) (long) this),
-      distribution_(args.At(0).AsFloat(), args.At(1).AsFloat()) {}
+      distribution_(params_args.GetArg(0).AsFloat(), params_args.GetArg(1).AsFloat()) {}
 
-  ReturnTuple Call_generate(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_generate(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("RandomGaussian.generate")
     return ReturnTuple(Box_Float(distribution_(generator_)));
   }
 
-  ReturnTuple Call_setSeed(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_setSeed(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("RandomGaussian.setSeed")
     distribution_.reset();
-    generator_.seed(args.At(0).AsInt());
+    generator_.seed(params_args.GetArg(0).AsInt());
     return ReturnTuple(VAR_SELF);
   }
 
@@ -82,8 +82,8 @@ S<const Type_RandomGaussian> CreateType_RandomGaussian(const Params<0>::Type& pa
 
 void RemoveType_RandomGaussian(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_RandomGaussian(S<const Type_RandomGaussian> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RandomGaussian>(std::move(parent), args);
+BoxedValue CreateValue_RandomGaussian(S<const Type_RandomGaussian> parent, const ParamsArgs& params_args) {
+  return BoxedValue::New<ExtValue_RandomGaussian>(std::move(parent), params_args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

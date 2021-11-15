@@ -33,167 +33,167 @@ struct ExtCategory_Math : public Category_Math {
 struct ExtType_Math : public Type_Math {
   inline ExtType_Math(Category_Math& p, Params<0>::Type params) : Type_Math(p, params) {}
 
-  ReturnTuple Call_acos(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_acos(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.acos")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::acos(Var_arg1)));
   }
 
-  ReturnTuple Call_acosh(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_acosh(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.acosh")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::acosh(Var_arg1)));
   }
 
-  ReturnTuple Call_asin(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_asin(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.asin")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::asin(Var_arg1)));
   }
 
-  ReturnTuple Call_asinh(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_asinh(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.asinh")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::asinh(Var_arg1)));
   }
 
-  ReturnTuple Call_atan(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_atan(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.atan")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::atan(Var_arg1)));
   }
 
-  ReturnTuple Call_atanh(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_atanh(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.atanh")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::atanh(Var_arg1)));
   }
 
-  ReturnTuple Call_ceil(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_ceil(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.ceil")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::ceil(Var_arg1)));
   }
 
-  ReturnTuple Call_cos(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_cos(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.cos")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::cos(Var_arg1)));
   }
 
-  ReturnTuple Call_cosh(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_cosh(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.cosh")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::cosh(Var_arg1)));
   }
 
-  ReturnTuple Call_exp(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_exp(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.exp")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::exp(Var_arg1)));
   }
 
-  ReturnTuple Call_fabs(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_fabs(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.fabs")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::fabs(Var_arg1)));
   }
 
-  ReturnTuple Call_floor(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_floor(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.floor")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::floor(Var_arg1)));
   }
 
-  ReturnTuple Call_fmod(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_fmod(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.fmod")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
-    const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
+    const PrimFloat Var_arg2 = (params_args.GetArg(1)).AsFloat();
     return ReturnTuple(Box_Float(std::fmod(Var_arg1,Var_arg2)));
   }
 
-  ReturnTuple Call_isinf(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_isinf(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.isinf")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Bool(std::isinf(Var_arg1)));
   }
 
-  ReturnTuple Call_isnan(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_isnan(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.isnan")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Bool(std::isnan(Var_arg1)));
   }
 
-  ReturnTuple Call_log(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_log(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.log")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::log(Var_arg1)));
   }
 
-  ReturnTuple Call_log10(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_log10(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.log10")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::log10(Var_arg1)));
   }
 
-  ReturnTuple Call_log2(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_log2(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.log2")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::log2(Var_arg1)));
   }
 
-  ReturnTuple Call_pow(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_pow(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.pow")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
-    const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
+    const PrimFloat Var_arg2 = (params_args.GetArg(1)).AsFloat();
     return ReturnTuple(Box_Float(std::pow(Var_arg1,Var_arg2)));
   }
 
-  ReturnTuple Call_round(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_round(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.round")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::round(Var_arg1)));
   }
 
-  ReturnTuple Call_sin(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_sin(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.sin")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::sin(Var_arg1)));
   }
 
-  ReturnTuple Call_sinh(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_sinh(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.sinh")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::sinh(Var_arg1)));
   }
 
-  ReturnTuple Call_sqrt(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_sqrt(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.sqrt")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::sqrt(Var_arg1)));
   }
 
-  ReturnTuple Call_tan(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_tan(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.tan")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::tan(Var_arg1)));
   }
 
-  ReturnTuple Call_tanh(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_tanh(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.tanh")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::tanh(Var_arg1)));
   }
 
-  ReturnTuple Call_trunc(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_trunc(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.trunc")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     return ReturnTuple(Box_Float(std::trunc(Var_arg1)));
   }
 
-  ReturnTuple Call_abs(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_abs(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Math.abs")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     return ReturnTuple(Box_Int(std::abs(Var_arg1)));
   }
 };

@@ -48,17 +48,11 @@ class Value_StringBuilder : public TypeValue {
   std::string CategoryName() const final { return "StringBuilder"; }
 
   ReturnTuple Dispatch(const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
+                       const ParamsArgs& params_args) final {
     if (&label == &Function_Append_append) {
       TRACE_FUNCTION("StringBuilder.append")
       std::lock_guard<std::mutex> lock(mutex);
-      output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted, ParamTuple(), ArgTuple()).Only().AsString();
+      output_ << TypeValue::Call(params_args.GetArg(0), Function_Formatted_formatted, PassParamsArgs()).At(0).AsString();
       return ReturnTuple(VAR_SELF);
     }
     if (&label == &Function_Build_build) {
@@ -66,7 +60,7 @@ class Value_StringBuilder : public TypeValue {
       std::lock_guard<std::mutex> lock(mutex);
       return ReturnTuple(Box_String(output_.str()));
     }
-    return TypeValue::Dispatch(label, params, args);
+    return TypeValue::Dispatch(label, params_args);
   }
 
  private:
@@ -77,33 +71,33 @@ class Value_StringBuilder : public TypeValue {
 struct ExtType_String : public Type_String {
   inline ExtType_String(Category_String& p, Params<0>::Type params) : Type_String(p, params) {}
 
-  ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_builder(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.builder")
     return ReturnTuple(BoxedValue::New<Value_StringBuilder>());
   }
 
-  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_default(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.default")
     return ReturnTuple(Box_String(""));
   }
 
-  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_equals(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.equals")
-    const BoxedValue& Var_arg1 = (args.At(0));
-    const BoxedValue& Var_arg2 = (args.At(1));
+    const BoxedValue& Var_arg1 = (params_args.GetArg(0));
+    const BoxedValue& Var_arg2 = (params_args.GetArg(1));
     return ReturnTuple(Box_Bool(Var_arg1.AsString()==Var_arg2.AsString()));
   }
 
-  ReturnTuple Call_fromCharBuffer(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_fromCharBuffer(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.fromCharBuffer")
-    const BoxedValue& Var_arg1 = (args.At(0));
+    const BoxedValue& Var_arg1 = (params_args.GetArg(0));
     return ReturnTuple(Box_String(PrimString(Var_arg1.AsCharBuffer())));
   }
 
-  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_lessThan(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.lessThan")
-    const BoxedValue& Var_arg1 = (args.At(0));
-    const BoxedValue& Var_arg2 = (args.At(1));
+    const BoxedValue& Var_arg1 = (params_args.GetArg(0));
+    const BoxedValue& Var_arg2 = (params_args.GetArg(1));
     return ReturnTuple(Box_Bool(Var_arg1.AsString()<Var_arg2.AsString()));
   }
 };
@@ -115,9 +109,7 @@ class StringOrder : public TypeValue {
 
   std::string CategoryName() const final { return "StringOrder"; }
 
-  ReturnTuple Dispatch(const ValueFunction& label,
-                       const ParamTuple& params,
-                       const ValueTuple& args) final {
+  ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args) final {
     if (&label == &Function_Order_next) {
       TRACE_FUNCTION("StringOrder.next")
       if (index_+1 >= value_.size()) {
@@ -134,7 +126,7 @@ class StringOrder : public TypeValue {
       }
       return ReturnTuple(Box_Char(value_[index_]));
     }
-    return TypeValue::Dispatch(label, params, args);
+    return TypeValue::Dispatch(label, params_args);
   }
 
  private:
@@ -147,12 +139,12 @@ struct ExtValue_String : public Value_String {
   inline ExtValue_String(S<const Type_String> p, const PrimString& value)
     : Value_String(std::move(p)), value_(value) {}
 
-  ReturnTuple Call_asBool(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_asBool(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.asBool")
     return ReturnTuple(Box_Bool(value_.size() != 0));
   }
 
-  ReturnTuple Call_defaultOrder(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_defaultOrder(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.defaultOrder")
     if (value_.empty()) {
       return ReturnTuple(Var_empty);
@@ -161,29 +153,29 @@ struct ExtValue_String : public Value_String {
     }
   }
 
-  ReturnTuple Call_formatted(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_formatted(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.formatted")
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_readAt(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.readAt")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
       FAIL() << "Read position " << Var_arg1 << " is out of bounds";
     }
     return ReturnTuple(Box_Char(value_[Var_arg1]));
   }
 
-  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_size(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.size")
     return ReturnTuple(Box_Int(value_.size()));
   }
 
-  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_subSequence(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.subSequence")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
-    const PrimInt Var_arg2 = (args.At(1)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
+    const PrimInt Var_arg2 = (params_args.GetArg(1)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 > value_.size()) {
       FAIL() << "Subsequence position " << Var_arg1 << " is out of bounds";
     }

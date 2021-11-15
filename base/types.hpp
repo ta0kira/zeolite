@@ -169,20 +169,6 @@ typename ParamsKey<N>::Type GetKeyFromParams(const typename Params<N>::Type& fro
   return KeyFromParams<N, 0>::Get(from);
 }
 
-class ValueTuple {
- public:
-  virtual int Size() const = 0;
-  virtual const BoxedValue& At(int pos) const = 0;
-  virtual const BoxedValue& Only() const = 0;
-
- protected:
-  ValueTuple() = default;
-  virtual ~ValueTuple() = default;
-
- private:
-  void* operator new(std::size_t size) = delete;
-};
-
 
 namespace zeolite_internal {
 
@@ -202,42 +188,10 @@ class PoolManager<BoxedValue> {
   static std::atomic_flag pool4_flag_;
 };
 
-template<>
-class PoolManager<const BoxedValue*> {
-  using PoolEntry = PoolStorage<const BoxedValue*>;
-  using Managed = PoolEntry::Managed;
-
-  template<class> friend class PoolArray;
-
-  static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage, int size);
-
-  static constexpr unsigned int pool_limit_ = 256;
-  static unsigned int pool4_size_;
-  static PoolEntry* pool4_;
-  static std::atomic_flag pool4_flag_;
-};
-
-template<>
-class PoolManager<S<const TypeInstance>> {
-  using PoolEntry = PoolStorage<S<const TypeInstance>>;
-  using Managed = PoolEntry::Managed;
-
-  template<class> friend class PoolArray;
-
-  static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage, int size);
-
-  static constexpr unsigned int pool_limit_ = 256;
-  static unsigned int pool4_size_;
-  static PoolEntry* pool4_;
-  static std::atomic_flag pool4_flag_;
-};
-
 }  // namespace zeolite_internal
 
 
-class ReturnTuple : public ValueTuple {
+class ReturnTuple {
  public:
   constexpr ReturnTuple() : data_() {}
 
@@ -252,10 +206,9 @@ class ReturnTuple : public ValueTuple {
 
   void TransposeFrom(ReturnTuple&& other);
 
-  int Size() const final;
+  int Size() const;
   BoxedValue& At(int pos);
-  const BoxedValue& At(int pos) const final;
-  const BoxedValue& Only() const final;
+  const BoxedValue& At(int pos) const;
 
  private:
   ReturnTuple(const ReturnTuple&) = delete;
@@ -264,52 +217,6 @@ class ReturnTuple : public ValueTuple {
   void* operator new(std::size_t size) = delete;
 
   zeolite_internal::PoolArray<BoxedValue> data_;
-};
-
-class ArgTuple : public ValueTuple {
- public:
-  constexpr ArgTuple() : data_() {}
-
-  template<class...Ts>
-  explicit ArgTuple(const Ts&... args) : data_(sizeof...(Ts)) {
-    data_.Init(&args...);
-  }
-
-  int Size() const final;
-  const BoxedValue& At(int pos) const final;
-  const BoxedValue& Only() const final;
-
- private:
-  ArgTuple(const ArgTuple&) = delete;
-  ArgTuple(ArgTuple&&) = delete;
-  ArgTuple& operator = (const ArgTuple&) = delete;
-  ArgTuple& operator = (ArgTuple&&) =  delete;
-  void* operator new(std::size_t size) = delete;
-
-  zeolite_internal::PoolArray<const BoxedValue*> data_;
-};
-
-class ParamTuple {
- public:
-  constexpr ParamTuple() : data_() {}
-
-  template<class...Ts>
-  explicit ParamTuple(const Ts&... params) : data_(sizeof...(Ts)) {
-    data_.Init(std::move(params)...);
-  }
-
-  ParamTuple(ParamTuple&& other) = default;
-
-  int Size() const;
-  const S<const TypeInstance>& At(int pos) const;
-
- private:
-  ParamTuple(const ParamTuple&) = delete;
-  ParamTuple& operator = (const ParamTuple&) = delete;
-  ParamTuple& operator = (ParamTuple&&) = delete;
-  void* operator new(std::size_t size) = delete;
-
-  zeolite_internal::PoolArray<S<const TypeInstance>> data_;
 };
 
 #endif  // TYPES_HPP_

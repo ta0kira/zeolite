@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PRIVATE_NAMESPACE {
 #endif  // ZEOLITE_PRIVATE_NAMESPACE
 
-BoxedValue CreateValue_Type1(S<const Type_Type1> parent, const ValueTuple& args);
+BoxedValue CreateValue_Type1(S<const Type_Type1> parent, const ParamsArgs& params_args);
 
 struct ExtCategory_Type1 : public Category_Type1 {
 };
@@ -37,20 +37,20 @@ struct ExtCategory_Type1 : public Category_Type1 {
 struct ExtType_Type1 : public Type_Type1 {
   inline ExtType_Type1(Category_Type1& p, Params<0>::Type params) : Type_Type1(p, params) {}
 
-  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) const {
+  ReturnTuple Call_create(const ParamsArgs& params_args) const {
     TRACE_FUNCTION("Type1.create")
     return ReturnTuple(CreateValue_Type1(PARAM_SELF,
-      TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
+      PassParamsArgs(TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, PassParamsArgs()))));
   }
 };
 
 struct ExtValue_Type1 : public Value_Type1 {
-  inline ExtValue_Type1(S<const Type_Type1> p, const ValueTuple& args)
-    : Value_Type1(std::move(p)), value(args.At(0)) {}
+  inline ExtValue_Type1(S<const Type_Type1> p, const ParamsArgs& params_args)
+    : Value_Type1(std::move(p)), value(params_args.GetArg(0)) {}
 
-  ReturnTuple Call_get(const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_get(const ParamsArgs& params_args) {
     TRACE_FUNCTION("Type1.get")
-    return ReturnTuple(TypeValue::Call(value, Function_Type2_get, ParamTuple(), ArgTuple()));
+    return ReturnTuple(TypeValue::Call(value, Function_Type2_get, PassParamsArgs()));
   }
 
   const BoxedValue value;
@@ -68,8 +68,8 @@ S<const Type_Type1> CreateType_Type1(const Params<0>::Type& params) {
 
 void RemoveType_Type1(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_Type1(S<const Type_Type1> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_Type1>(std::move(parent), args);
+BoxedValue CreateValue_Type1(S<const Type_Type1> parent, const ParamsArgs& params_args) {
+  return BoxedValue::New<ExtValue_Type1>(std::move(parent), params_args);
 }
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
@@ -82,7 +82,7 @@ using namespace ZEOLITE_PRIVATE_NAMESPACE;
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_Type3(S<const Type_Type3> parent, const ValueTuple& args);
+BoxedValue CreateValue_Type3(S<const Type_Type3> parent, const ParamsArgs& params_args);
 
 struct ExtCategory_Type3 : public Category_Type3 {
 };
@@ -90,20 +90,20 @@ struct ExtCategory_Type3 : public Category_Type3 {
 struct ExtType_Type3 : public Type_Type3 {
   inline ExtType_Type3(Category_Type3& p, Params<0>::Type params) : Type_Type3(p, params) {}
 
-  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) const {
+  ReturnTuple Call_create(const ParamsArgs& params_args) const {
     TRACE_FUNCTION("Type3.create")
     return ReturnTuple(CreateValue_Type3(PARAM_SELF,
-      TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
+      PassParamsArgs(TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, PassParamsArgs()))));
   }
 };
 
 struct ExtValue_Type3 : public Value_Type3 {
-  inline ExtValue_Type3(S<const Type_Type3> p, const ValueTuple& args)
-    : Value_Type3(std::move(p)), value(args.At(0)) {}
+  inline ExtValue_Type3(S<const Type_Type3> p, const ParamsArgs& params_args)
+    : Value_Type3(std::move(p)), value(params_args.GetArg(0)) {}
 
-  ReturnTuple Call_get(const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_get(const ParamsArgs& params_args) {
     TRACE_FUNCTION("Type3.get")
-    return ReturnTuple(TypeValue::Call(value, Function_Type2_get, ParamTuple(), ArgTuple()));
+    return ReturnTuple(TypeValue::Call(value, Function_Type2_get, PassParamsArgs()));
   }
 
   const BoxedValue value;
@@ -121,8 +121,8 @@ S<const Type_Type3> CreateType_Type3(const Params<0>::Type& params) {
 
 void RemoveType_Type3(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_Type3(S<const Type_Type3> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_Type3>(std::move(parent), args);
+BoxedValue CreateValue_Type3(S<const Type_Type3> parent, const ParamsArgs& params_args) {
+  return BoxedValue::New<ExtValue_Type3>(std::move(parent), params_args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

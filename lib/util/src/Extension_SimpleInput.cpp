@@ -38,26 +38,26 @@ struct ExtCategory_SimpleInput : public Category_SimpleInput {
 struct ExtType_SimpleInput : public Type_SimpleInput {
   inline ExtType_SimpleInput(Category_SimpleInput& p, Params<0>::Type params) : Type_SimpleInput(p, params) {}
 
-  ReturnTuple Call_stdin(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_stdin(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("SimpleInput.stdin")
     return ReturnTuple(Var_stdin);
   }
 };
 
 struct ExtValue_SimpleInput : public Value_SimpleInput {
-  inline ExtValue_SimpleInput(S<const Type_SimpleInput> p, const ValueTuple& args)
+  inline ExtValue_SimpleInput(S<const Type_SimpleInput> p)
     : Value_SimpleInput(std::move(p)) {}
 
-  ReturnTuple Call_pastEnd(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pastEnd(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("SimpleInput.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(zero_read));
   }
 
-  ReturnTuple Call_readBlock(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readBlock(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("SimpleInput.readBlock")
     std::lock_guard<std::mutex> lock(mutex);
-    const int size = args.At(0).AsInt();
+    const int size = params_args.GetArg(0).AsInt();
     if (size < 0) {
       FAIL() << "Read size " << size << " is invalid";
     }
@@ -76,7 +76,7 @@ struct ExtValue_SimpleInput : public Value_SimpleInput {
 };
 
 namespace {
-const BoxedValue Var_stdin = BoxedValue::New<ExtValue_SimpleInput>(CreateType_SimpleInput(Params<0>::Type()), ArgTuple());
+const BoxedValue Var_stdin = BoxedValue::New<ExtValue_SimpleInput>(CreateType_SimpleInput(Params<0>::Type()));
 }  // namespace
 
 Category_SimpleInput& CreateCategory_SimpleInput() {

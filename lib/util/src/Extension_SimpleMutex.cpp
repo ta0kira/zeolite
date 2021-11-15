@@ -35,7 +35,7 @@ struct ExtCategory_SimpleMutex : public Category_SimpleMutex {
 struct ExtType_SimpleMutex : public Type_SimpleMutex {
   inline ExtType_SimpleMutex(Category_SimpleMutex& p, Params<0>::Type params) : Type_SimpleMutex(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("SimpleMutex.new")
     return ReturnTuple(CreateValue_SimpleMutex(CreateType_SimpleMutex(Params<0>::Type())));
   }
@@ -45,13 +45,13 @@ struct ExtValue_SimpleMutex : public Value_SimpleMutex {
   inline ExtValue_SimpleMutex(S<const Type_SimpleMutex> p)
     : Value_SimpleMutex(std::move(p)) {}
 
-  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("SimpleMutex.lock")
     mutex.lock();
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_unlock(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_unlock(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("SimpleMutex.unlock")
     mutex.unlock();
     return ReturnTuple(VAR_SELF);

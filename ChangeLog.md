@@ -1,5 +1,27 @@
 # Revision history for zeolite-lang
 
+## 0.21.0.0  -- ????-??-??
+
+### Language
+
+* **[breaking]** Combines params and args in function calls into a single
+  object. This breaks all C++ extensions.
+
+  - `Call_foo` for function `foo` must now take `const ParamsArgs& params_args`
+    as its only argument.
+    - Access param `n` using `params_args.GetParam(n)`.
+    - Access arg `n` using `params_args.GetArg(n)`.
+  - Function calls must group params and args with
+    `PassParamsArgs(params..., args...)` rather than with
+    `ParamTuple(params...)` and `ArgTuple(args...)`.
+  - To directly pass the returns from another function call, use that function
+    call in place of `args...`, e.g.
+    `PassParamsArgs(params..., TypeValue::Call(Var_foo, Function_Foo_bar, ...))`.
+  - Value initialization should be changed to take `ParamsArgs` instead of
+    `ValueTuple`, since the latter has been removed. (Alternatively, just pass a
+    custom set of arguments.)
+  - `ReturnTuple` usage for returns remains unchanged.
+
 ## 0.20.0.1  -- 2021-11-14
 
 ### Language

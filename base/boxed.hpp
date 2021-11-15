@@ -228,8 +228,7 @@ class BoxedValue {
     return value;
   }
 
-  ReturnTuple Dispatch(
-    const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) const;
+  ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args) const;
 
   void Cleanup();
 

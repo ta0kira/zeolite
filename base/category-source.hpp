@@ -32,7 +32,7 @@ limitations under the License.
 
 #define BUILTIN_FAIL(e) { \
   FAIL() << TypeValue::Call((e), Function_Formatted_formatted, \
-                            ParamTuple(), ArgTuple()).Only().AsString(); \
+                            PassParamsArgs()).At(0).AsString(); \
   __builtin_unreachable(); \
   }
 
@@ -62,9 +62,8 @@ extern const BoxedValue Var_empty;
 
 class TypeCategory {
  public:
-  inline ReturnTuple Call(const CategoryFunction& label,
-                          const ParamTuple& params, const ValueTuple& args) {
-    return Dispatch(label, params, args);
+  inline ReturnTuple Call(const CategoryFunction& label, const ParamsArgs& params_args) {
+    return Dispatch(label, params_args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -75,19 +74,17 @@ class TypeCategory {
  protected:
   TypeCategory() = default;
 
-  virtual ReturnTuple Dispatch(const CategoryFunction& label,
-                               const ParamTuple& params, const ValueTuple& args);
+  virtual ReturnTuple Dispatch(const CategoryFunction& label, const ParamsArgs& params_args);
 };
 
 class TypeInstance {
  public:
   inline static ReturnTuple Call(const S<const TypeInstance>& target,
-                                 const TypeFunction& label,
-                                 const ParamTuple& params, const ValueTuple& args) {
+                                 const TypeFunction& label, const ParamsArgs& params_args) {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
     }
-    return target->Dispatch(label, params, args);
+    return target->Dispatch(label, params_args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -117,8 +114,7 @@ class TypeInstance {
  protected:
   TypeInstance() = default;
 
-  virtual ReturnTuple Dispatch(const TypeFunction& label,
-                               const ParamTuple& params, const ValueTuple& args) const;
+  virtual ReturnTuple Dispatch(const TypeFunction& label, const ParamsArgs& params_args) const;
 
   virtual bool CanConvertFrom(const S<const TypeInstance>& from) const
   { return false; }
@@ -161,8 +157,8 @@ class TypeInstance {
 class TypeValue {
  public:
   inline static ReturnTuple Call(const BoxedValue& target, const ValueFunction& label,
-                                 const ParamTuple& params, const ValueTuple& args) {
-    return target.Dispatch(label, params, args);
+                                 const ParamsArgs& params_args) {
+    return target.Dispatch(label, params_args);
   }
 
   virtual const PrimString& AsString() const;
@@ -188,8 +184,7 @@ class TypeValue {
   // NOTE: For some reason, making this private causes a segfault.
   virtual std::string CategoryName() const = 0;
 
-  virtual ReturnTuple Dispatch(
-    const ValueFunction& label, const ParamTuple& params, const ValueTuple& args);
+  virtual ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args);
 
  private:
   // Creating a BoxedValue from a TypeValue won't have the correct offset.

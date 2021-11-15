@@ -189,22 +189,22 @@ useAsReturns (LazySingle e)                  = useAsReturns $ getFromLazy e
 
 useAsArgs :: ExpressionValue -> String
 useAsArgs (OpaqueMulti e)                 = e
-useAsArgs (WrappedSingle e)               = "ArgTuple(" ++ e ++ ")"
-useAsArgs (UnwrappedSingle e)             = "ArgTuple(" ++ e ++ ")"
-useAsArgs (BoxedPrimitive PrimBool e)     = "ArgTuple(Box_Bool(" ++ e ++ "))"
-useAsArgs (BoxedPrimitive PrimString e)   = "ArgTuple(Box_String(" ++ e ++ "))"
-useAsArgs (BoxedPrimitive PrimChar e)     = "ArgTuple(Box_Char(" ++ e ++ "))"
-useAsArgs (BoxedPrimitive PrimInt e)      = "ArgTuple(Box_Int(" ++ e ++ "))"
-useAsArgs (BoxedPrimitive PrimFloat e)    = "ArgTuple(Box_Float(" ++ e ++ "))"
-useAsArgs (UnboxedPrimitive PrimBool e)   = "ArgTuple(Box_Bool(" ++ e ++ "))"
-useAsArgs (UnboxedPrimitive PrimString e) = "ArgTuple(Box_String(" ++ e ++ "))"
-useAsArgs (UnboxedPrimitive PrimChar e)   = "ArgTuple(Box_Char(" ++ e ++ "))"
-useAsArgs (UnboxedPrimitive PrimInt e)    = "ArgTuple(Box_Int(" ++ e ++ "))"
-useAsArgs (UnboxedPrimitive PrimFloat e)  = "ArgTuple(Box_Float(" ++ e ++ "))"
+useAsArgs (WrappedSingle e)               = e
+useAsArgs (UnwrappedSingle e)             = e
+useAsArgs (BoxedPrimitive PrimBool e)     = "Box_Bool(" ++ e ++ ")"
+useAsArgs (BoxedPrimitive PrimString e)   = "Box_String(" ++ e ++ ")"
+useAsArgs (BoxedPrimitive PrimChar e)     = "Box_Char(" ++ e ++ ")"
+useAsArgs (BoxedPrimitive PrimInt e)      = "Box_Int(" ++ e ++ ")"
+useAsArgs (BoxedPrimitive PrimFloat e)    = "Box_Float(" ++ e ++ ")"
+useAsArgs (UnboxedPrimitive PrimBool e)   = "Box_Bool(" ++ e ++ ")"
+useAsArgs (UnboxedPrimitive PrimString e) = "Box_String(" ++ e ++ ")"
+useAsArgs (UnboxedPrimitive PrimChar e)   = "Box_Char(" ++ e ++ ")"
+useAsArgs (UnboxedPrimitive PrimInt e)    = "Box_Int(" ++ e ++ ")"
+useAsArgs (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 useAsArgs (LazySingle e)                  = useAsArgs $ getFromLazy e
 
 useAsUnwrapped :: ExpressionValue -> String
-useAsUnwrapped (OpaqueMulti e)                 = "(" ++ e ++ ").Only()"
+useAsUnwrapped (OpaqueMulti e)                 = "(" ++ e ++ ").At(0)"
 useAsUnwrapped (WrappedSingle e)               = e
 useAsUnwrapped (UnwrappedSingle e)             = e
 useAsUnwrapped (BoxedPrimitive PrimBool e)     = "Box_Bool(" ++ e ++ ")"
@@ -220,11 +220,11 @@ useAsUnwrapped (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (LazySingle e)                  = useAsUnwrapped $ getFromLazy e
 
 useAsUnboxed :: PrimitiveType -> ExpressionValue -> String
-useAsUnboxed PrimBool   (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsBool()"
-useAsUnboxed PrimString (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsString()"
-useAsUnboxed PrimChar   (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsChar()"
-useAsUnboxed PrimInt    (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsInt()"
-useAsUnboxed PrimFloat  (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsFloat()"
+useAsUnboxed PrimBool   (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsBool()"
+useAsUnboxed PrimString (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsString()"
+useAsUnboxed PrimChar   (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsChar()"
+useAsUnboxed PrimInt    (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsInt()"
+useAsUnboxed PrimFloat  (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsFloat()"
 useAsUnboxed PrimBool   (WrappedSingle e)   = "(" ++ e ++ ").AsBool()"
 useAsUnboxed PrimString (WrappedSingle e)   = "(" ++ e ++ ").AsString()"
 useAsUnboxed PrimChar   (WrappedSingle e)   = "(" ++ e ++ ").AsChar()"
@@ -251,7 +251,7 @@ valueAsWrapped (LazySingle e)                  = valueAsWrapped $ getFromLazy e
 valueAsWrapped v                               = v
 
 valueAsUnwrapped :: ExpressionValue -> ExpressionValue
-valueAsUnwrapped (OpaqueMulti e)                 = UnwrappedSingle $ "(" ++ e ++ ").Only()"
+valueAsUnwrapped (OpaqueMulti e)                 = UnwrappedSingle $ "(" ++ e ++ ").At(0)"
 valueAsUnwrapped (WrappedSingle e)               = UnwrappedSingle e
 valueAsUnwrapped (UnboxedPrimitive PrimBool e)   = UnwrappedSingle $ "Box_Bool(" ++ e ++ ")"
 valueAsUnwrapped (UnboxedPrimitive PrimString e) = UnwrappedSingle $ "Box_String(" ++ e ++ ")"

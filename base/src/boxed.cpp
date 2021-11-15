@@ -28,16 +28,16 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 ReturnTuple DispatchBool(PrimBool value, const ValueFunction& label,
-                         const ParamTuple& params, const ValueTuple& args);
+                         const ParamsArgs& params_args);
 
 ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
-                         const ParamTuple& params, const ValueTuple& args);
+                         const ParamsArgs& params_args);
 
 ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
-                        const ParamTuple& params, const ValueTuple& args);
+                        const ParamsArgs& params_args);
 
 ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
-                          const ParamTuple& params, const ValueTuple& args);
+                          const ParamsArgs& params_args);
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE
@@ -145,25 +145,25 @@ PrimCharBuffer& BoxedValue::AsCharBuffer() const {
 }
 
 ReturnTuple BoxedValue::Dispatch(
-  const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) const {
+  const ValueFunction& label, const ParamsArgs& params_args) const {
   switch (union_.type_) {
     case UnionValue::Type::EMPTY:
       FAIL() << "Function called on empty value";
       __builtin_unreachable();
       break;
     case UnionValue::Type::BOOL:
-      return DispatchBool(union_.value_.as_bool_, label, params, args);
+      return DispatchBool(union_.value_.as_bool_, label, params_args);
     case UnionValue::Type::CHAR:
-      return DispatchChar(union_.value_.as_char_, label, params, args);
+      return DispatchChar(union_.value_.as_char_, label, params_args);
     case UnionValue::Type::INT:
-      return DispatchInt(union_.value_.as_int_, label, params, args);
+      return DispatchInt(union_.value_.as_int_, label, params_args);
     case UnionValue::Type::FLOAT:
-      return DispatchFloat(union_.value_.as_float_, label, params, args);
+      return DispatchFloat(union_.value_.as_float_, label, params_args);
     case UnionValue::Type::BOXED:
       if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
         FAIL() << "Function called on null pointer";
       }
-      return union_.value_.as_pointer_->object_->Dispatch(label, params, args);
+      return union_.value_.as_pointer_->object_->Dispatch(label, params_args);
   }
 }
 

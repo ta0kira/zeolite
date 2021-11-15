@@ -35,7 +35,7 @@ struct ExtCategory_SpinlockMutex : public Category_SpinlockMutex {
 struct ExtType_SpinlockMutex : public Type_SpinlockMutex {
   inline ExtType_SpinlockMutex(Category_SpinlockMutex& p, Params<0>::Type params) : Type_SpinlockMutex(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("SpinlockMutex.new")
     return ReturnTuple(CreateValue_SpinlockMutex(CreateType_SpinlockMutex(Params<0>::Type())));
   }
@@ -45,13 +45,13 @@ struct ExtValue_SpinlockMutex : public Value_SpinlockMutex {
   inline ExtValue_SpinlockMutex(S<const Type_SpinlockMutex> p)
     : Value_SpinlockMutex(std::move(p)) {}
 
-  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("SpinlockMutex.lock")
     while (flag.test_and_set(std::memory_order_acquire));
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_unlock(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_unlock(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("SpinlockMutex.unlock")
     flag.clear(std::memory_order_release);
     return ReturnTuple(VAR_SELF);

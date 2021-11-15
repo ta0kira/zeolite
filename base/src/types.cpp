@@ -24,24 +24,6 @@ limitations under the License.
 #include "logging.hpp"
 
 
-int ArgTuple::Size() const {
-  return data_.Size();
-}
-
-const BoxedValue& ArgTuple::At(int pos) const {
-  if (pos < 0 || pos >= data_.Size()) {
-    FAIL() << "Bad ArgTuple index";
-  }
-  return *data_[pos];
-}
-
-const BoxedValue& ArgTuple::Only() const {
-  if (data_.Size() != 1) {
-    FAIL() << "Bad ArgTuple index";
-  }
-  return *data_[0];
-}
-
 void ReturnTuple::TransposeFrom(ReturnTuple&& other) {
   if (Size() != other.Size()) {
     FAIL() << "ReturnTuple size mismatch in assignment: " << Size()
@@ -58,32 +40,14 @@ int ReturnTuple::Size() const {
 
 BoxedValue& ReturnTuple::At(int pos) {
   if (pos < 0 || pos >= data_.Size()) {
-    FAIL() << "Bad ReturnTuple index";
+    FAIL() << "Bad return index";
   }
   return data_[pos];
 }
 
 const BoxedValue& ReturnTuple::At(int pos) const {
   if (pos < 0 || pos >= data_.Size()) {
-    FAIL() << "Bad ReturnTuple index";
-  }
-  return data_[pos];
-}
-
-const BoxedValue& ReturnTuple::Only() const {
-  if (data_.Size() != 1) {
-    FAIL() << "Bad ReturnTuple index";
-  }
-  return data_[0];
-}
-
-int ParamTuple::Size() const {
-  return data_.Size();
-}
-
-const S<const TypeInstance>& ParamTuple::At(int pos) const {
-  if (pos < 0 || pos >= data_.Size()) {
-    FAIL() << "Bad ParamTuple index";
+    FAIL() << "Bad return index";
   }
   return data_[pos];
 }
@@ -153,72 +117,6 @@ typename PoolManager<BoxedValue>::PoolEntry* PoolManager<BoxedValue>::Take(int o
 
 // static
 void PoolManager<BoxedValue>::Return(PoolEntry* storage, int orig_size) {
-  if (!storage) return;
-  for (int i = 0; i < orig_size; ++i) {
-    storage->data()[i].~Managed();
-  }
-  if (storage->size == 4 && PoolReturnCommon(storage, pool4_flag_, pool4_, pool4_size_, pool_limit_)) {
-    return;
-  }
-  storage->~PoolEntry();
-  delete[] (unsigned char*) storage;
-}
-
-
-unsigned int PoolManager<const BoxedValue*>::pool4_size_ = 0;
-typename PoolManager<const BoxedValue*>::PoolEntry* PoolManager<const BoxedValue*>::pool4_{nullptr};
-std::atomic_flag PoolManager<const BoxedValue*>::pool4_flag_ = ATOMIC_FLAG_INIT;
-
-// static
-typename PoolManager<const BoxedValue*>::PoolEntry* PoolManager<const BoxedValue*>::Take(int orig_size) {
-  int size = orig_size;
-  if (size == 0) return nullptr;
-  if (size < 4) {
-    size = 4;
-  }
-  PoolEntry* storage = nullptr;
-  if (size == 4 && (storage = PoolTakeCommon(pool4_flag_, pool4_, pool4_size_))) {
-  } else {
-    storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
-  }
-  // NOTE: Skipping constructor calls since pointers are trivial.
-  return storage;
-}
-
-// static
-void PoolManager<const BoxedValue*>::Return(PoolEntry* storage, int orig_size) {
-  if (!storage) return;
-  // NOTE: Skipping destructor calls since pointers are trivial.
-  if (storage->size == 4 && PoolReturnCommon(storage, pool4_flag_, pool4_, pool4_size_, pool_limit_)) {
-    return;
-  }
-  storage->~PoolEntry();
-  delete[] (unsigned char*) storage;
-}
-
-
-unsigned int PoolManager<S<const TypeInstance>>::pool4_size_ = 0;
-typename PoolManager<S<const TypeInstance>>::PoolEntry* PoolManager<S<const TypeInstance>>::pool4_{nullptr};
-std::atomic_flag PoolManager<S<const TypeInstance>>::pool4_flag_ = ATOMIC_FLAG_INIT;
-
-// static
-typename PoolManager<S<const TypeInstance>>::PoolEntry* PoolManager<S<const TypeInstance>>::Take(int orig_size) {
-  int size = orig_size;
-  if (size == 0) return nullptr;
-  if (size < 4) {
-    size = 4;
-  }
-  PoolEntry* storage = nullptr;
-  if (size == 4 && (storage = PoolTakeCommon(pool4_flag_, pool4_, pool4_size_))) {
-  } else {
-    storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
-  }
-  new (storage->data()) Managed[orig_size];
-  return storage;
-}
-
-// static
-void PoolManager<S<const TypeInstance>>::Return(PoolEntry* storage, int orig_size) {
   if (!storage) return;
   for (int i = 0; i < orig_size; ++i) {
     storage->data()[i].~Managed();

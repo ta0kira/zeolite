@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ValueTuple& args);
+BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ParamsArgs& params_args);
 
 struct ExtCategory_RandomExponential : public Category_RandomExponential {
 };
@@ -37,31 +37,31 @@ struct ExtCategory_RandomExponential : public Category_RandomExponential {
 struct ExtType_RandomExponential : public Type_RandomExponential {
   inline ExtType_RandomExponential(Category_RandomExponential& p, Params<0>::Type params) : Type_RandomExponential(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("RandomExponential.new")
-    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg1 = (params_args.GetArg(0)).AsFloat();
     if (Var_arg1 <= 0) {
       FAIL() << "Invalid lambda " << Var_arg1;
     }
-    return ReturnTuple(CreateValue_RandomExponential(PARAM_SELF, args));
+    return ReturnTuple(CreateValue_RandomExponential(PARAM_SELF, params_args));
   }
 };
 
 struct ExtValue_RandomExponential : public Value_RandomExponential {
-  inline ExtValue_RandomExponential(S<const Type_RandomExponential> p, const ValueTuple& args)
+  inline ExtValue_RandomExponential(S<const Type_RandomExponential> p, const ParamsArgs& params_args)
     : Value_RandomExponential(std::move(p)),
       generator_((int) (long) this),
-      distribution_(args.At(0).AsFloat()) {}
+      distribution_(params_args.GetArg(0).AsFloat()) {}
 
-  ReturnTuple Call_generate(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_generate(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("RandomExponential.generate")
     return ReturnTuple(Box_Float(distribution_(generator_)));
   }
 
-  ReturnTuple Call_setSeed(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_setSeed(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("RandomExponential.setSeed")
     distribution_.reset();
-    generator_.seed(args.At(0).AsInt());
+    generator_.seed(params_args.GetArg(0).AsInt());
     return ReturnTuple(VAR_SELF);
   }
 
@@ -81,8 +81,8 @@ S<const Type_RandomExponential> CreateType_RandomExponential(const Params<0>::Ty
 
 void RemoveType_RandomExponential(const Params<0>::Type& params) {}
 
-BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RandomExponential>(std::move(parent), args);
+BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ParamsArgs& params_args) {
+  return BoxedValue::New<ExtValue_RandomExponential>(std::move(parent), params_args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

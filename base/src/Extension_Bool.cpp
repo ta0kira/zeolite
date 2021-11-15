@@ -39,21 +39,21 @@ struct ExtCategory_Bool : public Category_Bool {
 struct ExtType_Bool : public Type_Bool {
   inline ExtType_Bool(Category_Bool& p, Params<0>::Type params) : Type_Bool(p, params) {}
 
-  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_default(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Bool.default")
     return ReturnTuple(Box_Bool(false));
   }
 
-  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_equals(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Bool.equals")
-    const PrimBool Var_arg1 = (args.At(0)).AsBool();
-    const PrimBool Var_arg2 = (args.At(1)).AsBool();
+    const PrimBool Var_arg1 = (params_args.GetArg(0)).AsBool();
+    const PrimBool Var_arg2 = (params_args.GetArg(1)).AsBool();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 };
 
 ReturnTuple DispatchBool(PrimBool value, const ValueFunction& label,
-                         const ParamTuple& params, const ValueTuple& args) {
+                         const ParamsArgs& params_args) {
   switch (label.collection) {
     case CategoryId_AsBool:
       return ReturnTuple(Box_Bool(value));

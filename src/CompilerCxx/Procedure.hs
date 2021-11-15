@@ -73,11 +73,11 @@ procedureDeclaration immutable abstract f = return $ onlyCode func where
     | otherwise = ""
   proto
     | sfScope f == CategoryScope =
-      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
+      "ReturnTuple " ++ name ++ "(const ParamsArgs& params_args)"
     | sfScope f == TypeScope =
-      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args) const"
+      "ReturnTuple " ++ name ++ "(const ParamsArgs& params_args) const"
     | sfScope f == ValueScope =
-      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ suffix
+      "ReturnTuple " ++ name ++ "(const ParamsArgs& params_args)" ++ suffix
     | otherwise = undefined
 
 data CxxFunctionType =
@@ -132,11 +132,11 @@ compileExecutableProcedure immutable cxxType ctx
       | otherwise = ""
     proto
       | s == CategoryScope =
-        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamsArgs& params_args)" ++ final ++ " {"
       | s == TypeScope =
-        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args) const" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamsArgs& params_args) const" ++ final ++ " {"
       | s == ValueScope =
-        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ suffix ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamsArgs& params_args)" ++ suffix ++ final ++ " {"
       | otherwise = undefined
     setProcedureTrace
       | any isNoTrace pragmas = return []
@@ -151,12 +151,12 @@ compileExecutableProcedure immutable cxxType ctx
       | isUnnamedReturns rs2 = []
       | otherwise            = ["ReturnTuple returns(" ++ show (length $ pValues rs1) ++ ");"]
     nameParams = flip map (zip ([0..] :: [Int]) $ pValues ps1) $
-      (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = params.At(" ++ show i ++ ");")
+      (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = params_args.GetParam(" ++ show i ++ ");")
     nameArgs = map nameSingleArg (zip ([0..] :: [Int]) $ zip (pValues as1) (pValues $ avNames as2))
     nameSingleArg (i,(t2,n2))
       | isDiscardedInput n2 = "// Arg " ++ show i ++ " (" ++ show (pvType t2) ++ ") is discarded"
       | otherwise = "const " ++ variableProxyType (pvType t2) ++ " " ++ variableName (ivName n2) ++
-                    " = " ++ writeStoredVariable (pvType t2) (UnwrappedSingle $ "args.At(" ++ show i ++ ")") ++ ";"
+                    " = " ++ writeStoredVariable (pvType t2) (UnwrappedSingle $ "params_args.GetArg(" ++ show i ++ ")") ++ ";"
     nameReturns
       | isUnnamedReturns rs2 = []
       | otherwise = map (\(i,(t2,n2)) -> nameReturn i (pvType t2) n2) (zip ([0..] :: [Int]) $ zip (pValues rs1) (pValues $ nrNames rs2))
@@ -902,7 +902,7 @@ compileExpressionStart (InitializeValue c t es) = do
   let typeInstance = getType t' sameType s params
   -- TODO: This is unsafe if used in a type or category constructor.
   return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
-          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ es'' ++ ")")
+          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", PassParamsArgs(" ++ es'' ++ "))")
   where
     getType _  True ValueScope _      = "parent"
     getType _  True TypeScope  _      = "PARAM_SELF"
@@ -913,8 +913,7 @@ compileExpressionStart (InitializeValue c t es) = do
     getValues rs = do
       (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
         "In return at " ++ formatFullContext c
-      return (map (head . pValues . fst) rs,
-              "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
+      return (map (head . pValues . fst) rs, intercalate ", " (map (useAsUnwrapped . snd) rs))
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compilerErrorM $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -998,28 +997,29 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
       compilerBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
+    joinParamsArgs ps2 es2 = "PassParamsArgs(" ++ intercalate ", " (ps2 ++ es2) ++ ")"
     assemble Nothing _ ValueScope ValueScope ps2 es2 =
-      return $ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
     assemble Nothing _ TypeScope TypeScope ps2 es2 =
-      return $ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
     assemble Nothing scoped ValueScope TypeScope ps2 es2 =
-      return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ scoped ++ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
     assemble Nothing scoped _ _ ps2 es2 =
-      return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ scoped ++ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
     assemble (Just e2) _ _ ValueScope ps2 es2 =
-      return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ joinParamsArgs ps2 es2 ++ ")"
     assemble (Just e2) _ _ TypeScope ps2 es2 =
-      return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ joinParamsArgs ps2 es2 ++ ")"
     assemble (Just e2) _ _ _ ps2 es2 =
-      return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ joinParamsArgs ps2 es2 ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
-    getValues [(Positional ts,e2)] = return (ts,useAsArgs e2)
+    getValues [(Positional ts,e2)] = return (ts,[useAsArgs e2])
     -- Multi-expression => must all be singles.
     getValues rs = do
       (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
         "In return at " ++ formatFullContext c
-      return (map (head . pValues . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
+      return (map (head . pValues . fst) rs,map (useAsUnwrapped . snd) rs)
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compilerErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -1152,10 +1152,8 @@ expandParams ps = do
   return $ "T_get(" ++ intercalate ", " ps' ++ ")"
 
 expandParams2 :: (CollectErrorsM m, CompilerContext c m s a) =>
-  Positional GeneralInstance -> CompilerState a m String
-expandParams2 ps = do
-  ps' <- sequence $ map expandGeneralInstance $ pValues ps
-  return $ "ParamTuple(" ++ intercalate "," ps' ++ ")"
+  Positional GeneralInstance -> CompilerState a m [String]
+expandParams2 ps = sequence $ map expandGeneralInstance $ pValues ps
 
 expandCategory :: CompilerContext c m s a =>
   CategoryName -> CompilerState a m String

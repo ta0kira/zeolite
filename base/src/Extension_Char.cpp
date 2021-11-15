@@ -42,38 +42,38 @@ struct ExtCategory_Char : public Category_Char {
 struct ExtType_Char : public Type_Char {
   inline ExtType_Char(Category_Char& p, Params<0>::Type params) : Type_Char(p, params) {}
 
-  ReturnTuple Call_maxBound(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_maxBound(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Char.maxBound")
     return ReturnTuple(Box_Char('\xff'));
   }
 
-  ReturnTuple Call_minBound(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_minBound(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Char.minBound")
     return ReturnTuple(Box_Char('\0'));
   }
 
-  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_default(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Char.default")
     return ReturnTuple(Box_Char('\0'));
   }
 
-  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_equals(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Char.equals")
-    const PrimChar Var_arg1 = (args.At(0)).AsChar();
-    const PrimChar Var_arg2 = (args.At(1)).AsChar();
+    const PrimChar Var_arg1 = (params_args.GetArg(0)).AsChar();
+    const PrimChar Var_arg2 = (params_args.GetArg(1)).AsChar();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 
-  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_lessThan(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("Char.lessThan")
-    const PrimChar Var_arg1 = (args.At(0)).AsChar();
-    const PrimChar Var_arg2 = (args.At(1)).AsChar();
+    const PrimChar Var_arg1 = (params_args.GetArg(0)).AsChar();
+    const PrimChar Var_arg2 = (params_args.GetArg(1)).AsChar();
     return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
   }
 };
 
 ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
-                         const ParamTuple& params, const ValueTuple& args) {
+                         const ParamsArgs& params_args) {
   switch (label.collection) {
     case CategoryId_AsBool:
       return ReturnTuple(Box_Bool(value != '\0'));

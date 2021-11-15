@@ -37,9 +37,9 @@ struct ExtCategory_CharBuffer : public Category_CharBuffer {
 struct ExtType_CharBuffer : public Type_CharBuffer {
   inline ExtType_CharBuffer(Category_CharBuffer& p, Params<0>::Type params) : Type_CharBuffer(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("CharBuffer.new")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Buffer size " << Var_arg1 << " is invalid";
     }
@@ -51,18 +51,18 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
   inline ExtValue_CharBuffer(S<const Type_CharBuffer> p, PrimCharBuffer value)
     : Value_CharBuffer(std::move(p)), value_(std::move(value)) {}
 
-  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("CharBuffer.readAt")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= AsCharBuffer().size()) {
       FAIL() << "Read position " << Var_arg1 << " is out of bounds";
     }
     return ReturnTuple(Box_Char(AsCharBuffer()[Var_arg1]));
   }
 
-  ReturnTuple Call_resize(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resize(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("CharBuffer.resize")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Buffer size " << Var_arg1 << " is invalid";
     } else {
@@ -71,15 +71,15 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("CharBuffer.size")
     return ReturnTuple(Box_Int(value_.size()));
   }
 
-  ReturnTuple Call_writeAt(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeAt(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("CharBuffer.writeAt")
-    const PrimInt Var_arg1 = (args.At(0)).AsInt();
-    const PrimChar Var_arg2 = (args.At(1)).AsChar();
+    const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
+    const PrimChar Var_arg2 = (params_args.GetArg(1)).AsChar();
     if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
       FAIL() << "Write position " << Var_arg1 << " is out of bounds";
     } else {
