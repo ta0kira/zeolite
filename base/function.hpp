@@ -66,4 +66,107 @@ inline std::ostream& operator << (std::ostream& output, const ValueFunction& fun
   return output << func.category << "." << func.function;
 }
 
+struct ParamsArgs {
+  virtual int NumParams() const = 0;
+  virtual const S<const TypeInstance>& GetParam(int pos) const = 0;
+  virtual int NumArgs() const = 0;
+  virtual const BoxedValue& GetArg(int pos) const = 0;
+};
+
+template<int P, int A>
+struct PassArgs : public ParamsArgs {
+  template<class... Ps>
+  PassArgs(const Ps&... passed) {
+    Init<0, 0>(passed...);
+  }
+
+  template<int Pn, int An>
+  void Init() {}
+
+  template<int Pn, int An, class... Ps>
+  void Init(const S<const TypeInstance>& param, const Ps&... passed) {
+    params[Pn] = &param;
+    Init<Pn+1, An>(passed...);
+  }
+
+  template<int Pn, int An, class... Ps>
+  void Init(const BoxedValue& arg, const Ps&... passed) {
+    args[An] = &arg;
+    Init<Pn, An+1>(passed...);
+  }
+
+  int NumParams() const final                                { return P; }
+  const S<const TypeInstance>& GetParam(int pos) const final { return *params[pos]; }
+  int NumArgs() const final                     { return A; }
+  const BoxedValue& GetArg(int pos) const final { return *args[pos]; }
+
+  const S<const TypeInstance>* params[P];
+  const BoxedValue*   args[A];
+};
+
+template<int P>
+struct PassReturns : public ParamsArgs {
+  template<class... Ps>
+  PassReturns(const Ps&... passed) {
+    Init<0>(passed...);
+  }
+
+  template<int Pn, class... Ps>
+  void Init(const S<const TypeInstance>& param, const Ps&... passed) {
+    params[Pn] = &param;
+    Init<Pn+1>(passed...);
+  }
+
+  template<int Pn>
+  void Init(const ReturnTuple& forward) {
+    returns = &forward;
+  }
+
+  int NumParams() const final                                { return P; }
+  const S<const TypeInstance>& GetParam(int pos) const final { return *params[pos]; }
+  int NumArgs() const final                     { return returns->Size(); }
+  const BoxedValue& GetArg(int pos) const final { return returns->At(pos); }
+
+  const S<const TypeInstance>* params[P];
+  const ReturnTuple* returns;
+};
+
+template<int P, int A, class... Ps>
+struct AutoArgs;
+
+template<int P, int A>
+struct AutoArgs<P, A> {
+  using Type = PassArgs<P, A>;
+};
+
+template<int P, int A, class... Ps>
+struct AutoArgs<P, A, BoxedValue, Ps...> {
+  using Type = typename AutoArgs<P, A+1, Ps...>::Type;
+};
+
+template<int P, class... Ps>
+struct AutoCall {
+  using Type = typename AutoArgs<P, 0, Ps...>::Type;
+};
+
+template<int P>
+struct AutoCall<P, ReturnTuple> {
+  using Type = PassReturns<P>;
+};
+
+template<int P, class... Ps>
+struct AutoCall<P, S<const TypeInstance>, Ps...> {
+  using Type = typename AutoCall<P+1, Ps...>::Type;
+};
+
+template<class... Ps>
+struct GetCall {
+  using Type = typename AutoCall<0, Ps...>::Type;
+};
+
+template<class... Ps>
+typename GetCall<Ps...>::Type PassParamsArgs(const Ps&... passed) {
+  return typename GetCall<Ps...>::Type(passed...);
+}
+
 #endif  // FUNCTION_HPP_
