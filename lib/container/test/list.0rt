@@ -248,18 +248,12 @@ unittest duplicate {
   \ Testing.checkEquals<?>(present(head2),false)
 }
 
-unittest unbuild {
-  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
-      .append(3)
-      .append(2)
-      .append(5)
-      .append(1)
-      .append(6)
-      .append(4)
-      .build()
-
-  // The only expectation here is to not crash.
-  \ LinkedNode:unbuild<?>(head)
+unittest hugeCleanup { $DisableCoverage$
+  scoped {
+    ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
+  } in traverse (Counter.zeroIndexed(1000000) -> _) {
+    \ builder.append(0)
+  }
 }
 
 unittest forwardTraverseSingle {
@@ -318,18 +312,12 @@ unittest duplicateSingle {
   \ Testing.checkEquals<?>(present(head2),false)
 }
 
-unittest unbuildSingle {
-  optional ForwardNode<Int> head, _ <- ForwardNode<Int>.builder()
-      .append(3)
-      .append(2)
-      .append(5)
-      .append(1)
-      .append(6)
-      .append(4)
-      .build()
-
-  // The only expectation here is to not crash.
-  \ ForwardNode:unbuild<?>(head)
+unittest hugeCleanupSingle { $DisableCoverage$
+  scoped {
+    ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
+  } in traverse (Counter.zeroIndexed(1000000) -> _) {
+    \ builder.append(0)
+  }
 }
 
 concrete Helper {
