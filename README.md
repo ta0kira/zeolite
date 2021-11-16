@@ -1433,6 +1433,14 @@ passed to `create` as `#x`, which it then has available for the `reduce` call.
 The type variables `#x` and `#y` are the primary inputs to `reduce`; there is
 absolutely no examination of the "real" type of `value` at runtime.
 
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#898887;'>// Here we explicitly set #x = Formatted when calling create.</span>
+<span style='color:#0057ae;'>AnyObject</span> value &lt;- <span style='color:#0057ae;'>Object</span><span style='color:#644a9b;'>:</span>create&lt;<i><span style='color:#0057ae;'>Formatted</span></i>&gt;(<span style='color:#bf0303;'>&quot;message&quot;</span>)
+
+<span style='color:#898887;'>// This will be empty even though the actual value is a String because getAs</span>
+<span style='color:#898887;'>// uses #x = Formatted in the reduce call.</span>
+<b>optional</b> <i><span style='color:#0057ae;'>String</span></i> value1 &lt;- value<span style='color:#644a9b;'>.</span>getAs&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;()</pre>
+
 ### Builtins
 
 #### Reserved Words
