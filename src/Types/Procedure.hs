@@ -331,7 +331,8 @@ getValueLiteralContext (EmptyLiteral c)       = c
 
 data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
-  ValueCall [c] (FunctionCall c)
+  ValueCall [c] (FunctionCall c) |
+  SelectReturn [c] Int
   deriving (Show)
 
 newtype MacroName =

@@ -719,6 +719,13 @@ compileExpression = compile where
     t' <- requireSingle c ts
     f' <- lookupValueFunction t' f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
+  transform e (SelectReturn c pos) = do
+    (Positional ts,e') <- e
+    when (not $ isOpaqueMulti e') $
+      compilerErrorM $ "Return selection can only be used with function returns" ++ formatFullContextBrace c
+    when (pos >= length ts) $
+      compilerErrorM $ "Position " ++ show pos ++ " exceeds return count " ++ show (length ts) ++ formatFullContext c
+    return (Positional [ts !! pos],WrappedSingle $ useAsReturns e' ++ ".At(" ++ show pos ++ ")")
   requireSingle _ [t] = return t
   requireSingle c2 ts =
     compilerErrorM $ "Function call requires 1 return but found but found {" ++

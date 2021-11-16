@@ -790,15 +790,26 @@ The caller of a function with multiple returns also has a few options:
    `_` in that position. (Prior to compiler version `0.3.0.0`, multiple
    assignments were enclosed in `{}`, e.g., `{ Int min, _ } <- minMax(4,3)`.)
 
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
 
 2. Pass them directly to a function that requires the same number of
    compatible arguments. (Note that you *cannot* concatenate the returns of
    multiple functions.)
 
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>))</pre>
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>))</pre>
+
+3. If you need to immediately perform an operation on just one of the returned
+   values while ignoring the others, you can select just that return inline. (As
+   of compiler version `0.21.0.0`.)
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <span style='color:#898887;'>// Select return 0 from minMax.</span>
+   <b>return</b> minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>){<span style='color:#b08000;'>0</span>}</pre>
+
+   Note that the position *must* be an integer literal so that the compiler can
+   validate both the position and the return type.
 
 #### Optional and Weak Values
 

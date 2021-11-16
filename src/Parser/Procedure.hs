@@ -658,7 +658,7 @@ instance ParseFromSource (ValueLiteral SourceContext) where
       return $ EmptyLiteral [c]
 
 instance ParseFromSource (ValueOperation SourceContext) where
-  sourceParser = try valueCall <|> try conversion where
+  sourceParser = try valueCall <|> try conversion <|> selectReturn where
     valueCall = labeled "function call" $ do
       c <- getSourceContext
       valueSymbolGet
@@ -673,6 +673,12 @@ instance ParseFromSource (ValueOperation SourceContext) where
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ ConvertedCall [c] t f
+    selectReturn = labeled "return selection" $ do
+      c <- getSourceContext
+      sepAfter_ (string_ "{")
+      pos <- labeled "return position" parseDec
+      sepAfter_ (string_ "}")
+      return $ SelectReturn [c] (fromIntegral pos)
 
 instance ParseFromSource MacroName where
   sourceParser = labeled "macro name" $ do

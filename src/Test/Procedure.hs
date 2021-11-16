@@ -223,6 +223,11 @@ tests = [
     checkShortParseSuccess "_ <- 1 / 2 - 3",
     checkShortParseSuccess "_ <- x < y || z > w",
 
+    checkShortParseSuccess "\\ call(){0}",
+    checkShortParseSuccess "\\ call(){0}.bar()",
+    checkShortParseFail "\\ call(){x}",
+    checkShortParseFail "\\ call(){-1}",
+
     checkParsesAs "'\"'"
                   (\e -> case e of
                               (Expression _ (UnambiguousLiteral (CharLiteral _ '"')) []) -> True

@@ -28,6 +28,7 @@ module Types.Builtin (
   floatRequiredValue,
   formattedRequiredValue,
   intRequiredValue,
+  isOpaqueMulti,
   orderOptionalValue,
   stringRequiredValue,
 ) where
@@ -83,3 +84,7 @@ data ExpressionValue =
   -- Value with lazy initialization. Requires indirection to get/set.
   LazySingle ExpressionValue
   deriving (Show)
+
+isOpaqueMulti :: ExpressionValue -> Bool
+isOpaqueMulti (OpaqueMulti _) = True
+isOpaqueMulti _               = False

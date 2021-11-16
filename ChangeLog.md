@@ -28,6 +28,19 @@
 
 ### Language
 
+* **[new]** Adds syntax to select a single return value from a function that
+  returns multiple values.
+
+  ```text
+  // Previous method:
+  scoped {
+    Foo foo, _ <- call()
+  } in \ foo.bar()
+
+  // New method:
+  \ call(){0}.bar()
+  ```
+
 * **[new]** Adds the `$FlatCleanup[`*`memberName`*`]$` pragma to enable
   non-recursive cleanup for deeply-recursive types like linked lists.
 

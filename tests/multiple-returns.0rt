@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,4 +108,91 @@ define Test {
 concrete Test {
   @type get () -> (Int,Int)
   @type call (Int,Int) -> ()
+}
+
+
+testcase "return selection" {
+  success
+}
+
+unittest correctPosition {
+  \ Testing.checkEquals<?>(Test.get(){0},123)
+  \ Testing.checkEquals<?>(Test.get(){1},"message")
+}
+
+unittest chainedCall {
+  \ Testing.checkEquals<?>(Test.get(){0}.formatted(),"123")
+}
+
+concrete Test {
+  @type get () -> (Int,String)
+}
+
+define Test {
+  get () {
+    return 123, "message"
+  }
+}
+
+
+testcase "bad return-selection index" {
+  error
+  require "100"
+}
+
+unittest test {
+  \ Test.get(){100}
+}
+
+concrete Test {
+  @type get () -> (Int,String)
+}
+
+define Test {
+  get () {
+    return 123, "message"
+  }
+}
+
+
+testcase "cannot select return from literal" {
+  error
+  require "selection"
+}
+
+unittest test {
+  \ "message"{0}
+}
+
+
+testcase "cannot select return from boxed variable" {
+  error
+  require "selection"
+}
+
+unittest test {
+  String value <- "message"
+  \ value{0}
+}
+
+
+testcase "cannot select return from unboxed variable" {
+  error
+  require "selection"
+}
+
+unittest test {
+  Int value <- 123
+  \ value{0}
+}
+
+
+testcase "cannot double select" {
+  error
+  require "selection"
+  exclude "123"
+}
+
+unittest test {
+  \ "message".formatted(){0}{123}
 }
