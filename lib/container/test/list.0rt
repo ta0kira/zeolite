@@ -48,7 +48,8 @@ unittest forwardTraverse {
 }
 
 unittest reverseTraverse {
-  _, optional LinkedNode<Int> tail <- LinkedNode<Int>.builder()
+  // NOTE: Since the list is weak in reverse, we need to store head.
+  optional LinkedNode<Int> head, optional LinkedNode<Int> tail <- LinkedNode<Int>.builder()
       .append(3)
       .append(2)
       .append(5)
@@ -247,6 +248,20 @@ unittest duplicate {
   \ Testing.checkEquals<?>(present(head2),false)
 }
 
+unittest unbuild {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  // The only expectation here is to not crash.
+  \ LinkedNode:unbuild<?>(head)
+}
+
 unittest forwardTraverseSingle {
   optional ForwardNode<Int> head, _ <- ForwardNode<Int>.builder()
       .append(3)
@@ -301,6 +316,20 @@ unittest duplicateSingle {
     head2 <- require(head2).next()
   }
   \ Testing.checkEquals<?>(present(head2),false)
+}
+
+unittest unbuildSingle {
+  optional ForwardNode<Int> head, _ <- ForwardNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  // The only expectation here is to not crash.
+  \ ForwardNode:unbuild<?>(head)
 }
 
 concrete Helper {

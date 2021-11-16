@@ -22,6 +22,13 @@
     custom set of arguments.)
   - `ReturnTuple` usage for returns remains unchanged.
 
+### Libraries
+
+* **[fix]** Fixes memory leak in `LinkedNode`.
+
+* **[fix]** Adds helpers to mitigate excessive recursion during cleanup of
+  extremely long `LinkedNode` and `ForwardNode` lists.
+
 ### Language
 
 * **[behavior]** More improvements in efficiency of function calls.

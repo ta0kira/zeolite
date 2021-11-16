@@ -18,7 +18,7 @@ limitations under the License.
 
 define LinkedNode {
   @value #x value
-  @value optional #self prev
+  @value weak #self prev
   @value optional #self next
 
   newNode (value) {
@@ -38,12 +38,20 @@ define LinkedNode {
     return ListBuilder<#x,#self>.new()
   }
 
+  unbuild (list) {
+    scoped {
+      optional LinkedNode<#x> current <- list
+    } in while (present(current)) {
+      current <- require(current).setNext(empty)
+    }
+  }
+
   next () {
     return next
   }
 
   prev () {
-    return prev
+    return strong(prev)
   }
 
   duplicate () {
@@ -59,27 +67,25 @@ define LinkedNode {
 
   setNext (next2) (old) {
     old <- next
-    $Hidden[old]$
-    if (present(next)) {
-      \ require(next).setPrevBase(empty)
+    if (present(old)) {
+      \ require(old).setPrevBase(empty)
     }
     next <- next2
-    if (present(next)) {
-      \ require(next).setPrev(empty)
-      \ require(next).setPrevBase(self)
+    if (present(next2)) {
+      \ require(next2).setPrev(empty)
+      \ require(next2).setPrevBase(self)
     }
   }
 
   setPrev (prev2) (old) {
-    old <- prev
-    $Hidden[old]$
-    if (present(prev)) {
-      \ require(prev).setNextBase(empty)
+    old <- strong(prev)
+    if (present(old)) {
+      \ require(old).setNextBase(empty)
     }
     prev <- prev2
-    if (present(prev)) {
-      \ require(prev).setNext(empty)
-      \ require(prev).setNextBase(self)
+    if (present(prev2)) {
+      \ require(prev2).setNext(empty)
+      \ require(prev2).setNextBase(self)
     }
   }
 
@@ -113,6 +119,14 @@ define ForwardNode {
 
   builder () {
     return ListBuilder<#x,#self>.new()
+  }
+
+  unbuild (list) {
+    scoped {
+      optional ForwardNode<#x> current <- list
+    } in while (present(current)) {
+      current <- require(current).setNext(empty)
+    }
   }
 
   next () {
