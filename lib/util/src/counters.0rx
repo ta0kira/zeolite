@@ -154,12 +154,12 @@ define Repeat {
 }
 
 define Ranges {
-  min (x,y) (z) {
-    z, _ <- minMax<?>(x,y)
+  min (x,y) {
+    return minMax<?>(x,y){0}
   }
 
   max (x,y) (z) {
-    _, z <- minMax<?>(x,y)
+    return minMax<?>(x,y){1}
   }
 
   minMax (x,y) {
