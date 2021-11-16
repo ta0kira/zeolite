@@ -48,13 +48,9 @@ define LinkedNode { $FlatCleanup[next]$
 
   duplicate () {
     $Hidden[prev,next,value]$
-    ListBuilder<#x,#self> builder <- #self.builder()
-    traverse (self -> #x value2) {
-      \ builder.append(value2)
-    }
     scoped {
-      optional #self head, _ <- builder.build()
-    } in return require(head)
+      optional #self head2, _ <- builder().appendAll(self).build()
+    } in return require(head2)
   }
 
   setNext (next2) (old) {
@@ -119,13 +115,9 @@ define ForwardNode { $FlatCleanup[next]$
 
   duplicate () {
     $Hidden[next,value]$
-    ListBuilder<#x,#self> builder <- #self.builder()
-    traverse (self -> #x value2) {
-      \ builder.append(value2)
-    }
     scoped {
-      optional #self head, _ <- builder.build()
-    } in return require(head)
+      optional #self head2, _ <- builder().appendAll(self).build()
+    } in return require(head2)
   }
 
   setNext (next2) (old) {
@@ -150,6 +142,13 @@ define ListBuilder {
       \ require(tail).setNext(node)
     }
     tail <- node
+    return self
+  }
+
+  appendAll (values) {
+    traverse (values -> #x value) {
+      \ append(value)
+    }
     return self
   }
 

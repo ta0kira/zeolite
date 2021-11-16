@@ -98,6 +98,9 @@ concrete ListBuilder<#x|#n> {
   // Create a new builder.
   @type new () -> (#self)
 
+  // Append all of the elements from the Order.
+  @value appendAll (optional Order<#x>) -> (#self)
+
   // Build the list.
   //
   // Returns:
