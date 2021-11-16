@@ -168,31 +168,25 @@ ReturnTuple BoxedValue::Dispatch(
 }
 
 void BoxedValue::Cleanup() {
-  switch (union_.type_) {
-    case UnionValue::Type::BOXED:
-      while (union_.type_ == UnionValue::Type::BOXED) {
-        while (union_.value_.as_pointer_->lock_.test_and_set(std::memory_order_acquire));
-        if (--union_.value_.as_pointer_->strong_ == 0) {
-          TypeValue* const object = union_.value_.as_pointer_->object_;
-          union_.value_.as_pointer_->object_ = nullptr;
-          union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
-          BoxedValue next = object->FlatCleanup();
-          object->~TypeValue();
-          if (--union_.value_.as_pointer_->weak_ == 0) {
-            // NOTE: as_bytes_ contains object => ~TypeValue() must happen first.
-            free(union_.value_.as_bytes_);
-          }
-          union_ = next.union_;
-          next.union_.type_ = UnionValue::Type::EMPTY;
-          next.union_.value_.as_pointer_ = nullptr;
-        } else {
-          union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
-          break;
-        }
+  while (union_.type_ == UnionValue::Type::BOXED) {
+    while (union_.value_.as_pointer_->lock_.test_and_set(std::memory_order_acquire));
+    if (--union_.value_.as_pointer_->strong_ == 0) {
+      TypeValue* const object = union_.value_.as_pointer_->object_;
+      union_.value_.as_pointer_->object_ = nullptr;
+      union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+      BoxedValue next = object->FlatCleanup();
+      object->~TypeValue();
+      if (--union_.value_.as_pointer_->weak_ == 0) {
+        // NOTE: as_bytes_ contains object => ~TypeValue() must happen first.
+        free(union_.value_.as_bytes_);
       }
+      union_ = next.union_;
+      // This is only to skip cleanup of next.
+      next.union_.type_ = UnionValue::Type::EMPTY;
+    } else {
+      union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
       break;
-    default:
-      break;
+    }
   }
   union_.type_ = UnionValue::Type::EMPTY;
   union_.value_.as_pointer_ = nullptr;
