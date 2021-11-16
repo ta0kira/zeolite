@@ -117,9 +117,7 @@ unittest sortList {
     \ expected.append(i/3)
   }
 
-  scoped {
-    optional LinkedNode<Int> head, _ <- builder.build()
-  } in optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(head)
+  optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
     \ Testing.checkEquals<?>(require(actual).get(),n)
@@ -141,9 +139,7 @@ unittest sortListSingle { $DisableCoverage$
     \ expected.append(i/3)
   }
 
-  scoped {
-    optional ForwardNode<Int> head, _ <- builder.build()
-  } in optional ForwardNode<Int> actual <- Sorting:sortList<?,?>(head)
+  optional ForwardNode<Int> actual <- Sorting:sortList<?,?>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
     \ Testing.checkEquals<?>(require(actual).get(),n)
@@ -169,9 +165,7 @@ unittest sortListPow2 { $DisableCoverage$
     \ expected.append(i/3)
   }
 
-  scoped {
-    optional LinkedNode<Int> head, _ <- builder.build()
-  } in optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(head)
+  optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
     \ Testing.checkEquals<?>(require(actual).get(),n)
@@ -193,9 +187,7 @@ unittest sortListWith { $DisableCoverage$
     \ expected.append(i/3)
   }
 
-  scoped {
-    optional LinkedNode<Int> head, _ <- builder.build()
-  } in optional LinkedNode<Int> actual <- Sorting:sortListWith<?,?,Reversed<Int>>(head)
+  optional LinkedNode<Int> actual <- Sorting:sortListWith<?,?,Reversed<Int>>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
     \ Testing.checkEquals<?>(require(actual).get(),n)
@@ -219,9 +211,7 @@ unittest reverseList {
     \ builder.append(i)
   }
 
-  scoped {
-    optional LinkedNode<Int> head, _ <- builder.build()
-  } in optional LinkedNode<Int> reversed <- Sorting:reverseList<?,?>(head)
+  optional LinkedNode<Int> reversed <- Sorting:reverseList<?,?>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int value) {
     \ Testing.checkEquals<?>(require(reversed).get(),value)
@@ -245,9 +235,7 @@ unittest reverseListSingle { $DisableCoverage$
     \ builder.append(i)
   }
 
-  scoped {
-    optional ForwardNode<Int> head, _ <- builder.build()
-  } in optional ForwardNode<Int> reversed <- Sorting:reverseList<?,?>(head)
+  optional ForwardNode<Int> reversed <- Sorting:reverseList<?,?>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int value) {
     \ Testing.checkEquals<?>(require(reversed).get(),value)
