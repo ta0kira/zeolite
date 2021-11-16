@@ -73,10 +73,12 @@ of this document.
 - [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
+  - [`define` Pragmas](#define-pragmas)
   - [`unittest` Pragmas](#unittest-pragmas)
   - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
 - [Known Language Limitations](#known-language-limitations)
+  - [Reference Counting](#reference-counting)
 
 ## Project Status
 
@@ -1801,6 +1803,24 @@ These must occur at the very top of a function definition.
   trivial; however, it increases the memory size of the value by a few bytes per
   call currently on the stack at the time it gets created.
 
+### `define` Pragmas
+
+These must be at the top of a category `define` immediately following `{`.
+
+- **`$FlatCleanup[`**_`memberName`_**`]$`**. (As of compiler version `0.21.0.0`.)
+  Clear the `@value` member `memberName` before actually cleaning up the
+  `@value` itself to avoid recursive cleanup. Use this when recursive cleanup
+  might otherwise result in a stack overflow, e.g., with linked lists.
+
+  Only *one* member can be specified in this pragma so that the implementation
+  does not need to use a dynamically-sized cleanup queue to handle branching.
+
+- **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. See
+  [Local Variable Rules](#local-variable-rules).
+
+- **`$Hidden[`**_`var1,var2,...`_**`]$`**. See
+  [Local Variable Rules](#local-variable-rules).
+
 ### `unittest` Pragmas
 
 These must be at the top of a `unittest` immediately following `{`.
@@ -1939,7 +1959,18 @@ These can be used in place of language expressions.
 
 ## Known Language Limitations
 
-(Previous limitations that were listed here have been solved.)
+### Reference Counting
+
+Zeolite currently uses reference counting rather than a garbage-collection
+system that might otherwise search for unreferenced objects in the background.
+While this simplifies the implementation, it is possible to have a reference
+cycle that prevents cleanup of the involved objects, thereby causing a memory
+leak.
+
+This can be mitigated by using [`weak` references](#optional-and-weak-values) in
+categories where a cycle is probable or guaranteed. For example, `LinkedNode` in
+`lib/container` is a doubly-linked list, which would create a reference cycle if
+both forward and reverse references were non-`weak`.
 
 [action-status]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml/badge.svg
 [action-zeolite]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml

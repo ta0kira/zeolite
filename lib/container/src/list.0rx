@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define LinkedNode {
+define LinkedNode { $FlatCleanup[next]$
   @value #x value
   @value weak #self prev
   @value optional #self next
@@ -36,14 +36,6 @@ define LinkedNode {
 
   builder () {
     return ListBuilder<#x,#self>.new()
-  }
-
-  unbuild (list) {
-    scoped {
-      optional LinkedNode<#x> current <- list
-    } in while (present(current)) {
-      current <- require(current).setNext(empty)
-    }
   }
 
   next () {
@@ -100,7 +92,7 @@ define LinkedNode {
   }
 }
 
-define ForwardNode {
+define ForwardNode { $FlatCleanup[next]$
   @value #x value
   @value optional #self next
 
@@ -119,14 +111,6 @@ define ForwardNode {
 
   builder () {
     return ListBuilder<#x,#self>.new()
-  }
-
-  unbuild (list) {
-    scoped {
-      optional ForwardNode<#x> current <- list
-    } in while (present(current)) {
-      current <- require(current).setNext(empty)
-    }
   }
 
   next () {

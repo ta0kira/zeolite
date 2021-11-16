@@ -424,6 +424,7 @@ generateCategoryDefinition testing = common where
   defineConcreteValue r params fs t d = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ inlineValueConstructor t d,
+      fmap indentCompiled $ inlineFlatCleanup d,
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       fmap indentCompiled $ concatM $ map (createMember r params t) members,
@@ -587,6 +588,21 @@ generateCategoryDefinition testing = common where
         prefix ++ "~" ++ typeName (getCategoryName t) ++ "() { " ++ typeRemover (getCategoryName t) ++ "(" ++ params ++ "); }"
       ]
 
+  inlineFlatCleanup d = do
+    let pragmas = filter isFlatCleanup $ dcPragmas d
+    handle pragmas where
+      handle [] = return emptyCode
+      handle [FlatCleanup c v] = do
+        let ms = filter ((== v) . dmName) members
+        case ms of
+             [m] -> return $ onlyCode $ "BoxedValue FlatCleanup() final { return std::move(" ++ variableName (dmName m) ++ "); }"
+             _ -> compilerErrorM $ "FlatCleanup requires a non-weak boxed member" ++ formatFullContextBrace c
+      handle ps = "Only one FlatCleanup is allowed" !!>
+        (mapErrorsM $ map (\p -> "FlatCleanup using " ++ show (fcMember p) ++ formatFullContextBrace (fcContext p)) ps)
+      members = filter ((/= WeakValue) . vtRequired . dmType) $
+                filter (not . isStoredUnboxed . dmType) $
+                filter ((== ValueScope) . dmScope) $ dcMembers d
+
   inlineValueConstructor t d = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let argsPassed = "const ParamsArgs& params_args"
@@ -596,7 +612,7 @@ generateCategoryDefinition testing = common where
     let allInit = intercalate ", " $ initParent:initArgs
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}" where
       unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "params_args.GetArg(" ++ show i ++ ")")
-      members = filter ((== ValueScope). dmScope) $ dcMembers d
+      members = filter ((== ValueScope) . dmScope) $ dcMembers d
 
   abstractValueConstructor t = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"

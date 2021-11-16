@@ -25,6 +25,7 @@ module Types.DefinedCategory (
   VariableRule(..),
   VariableValue(..),
   isInitialized,
+  isFlatCleanup,
   isMembersHidden,
   isMembersReadOnly,
   mapMembers,
@@ -81,6 +82,10 @@ data PragmaDefined c =
   MembersHidden {
     mhContext :: [c],
     mhMembers :: [VariableName]
+  } |
+  FlatCleanup {
+    fcContext :: [c],
+    fcMember :: VariableName
   }
   deriving (Show)
 
@@ -91,6 +96,10 @@ isMembersReadOnly _                     = False
 isMembersHidden :: PragmaDefined c -> Bool
 isMembersHidden (MembersHidden _ _) = True
 isMembersHidden _                   = False
+
+isFlatCleanup :: PragmaDefined c -> Bool
+isFlatCleanup (FlatCleanup _ _) = True
+isFlatCleanup _                 = False
 
 data VariableRule c =
   VariableDefault |

@@ -184,6 +184,8 @@ class TypeValue {
   // NOTE: For some reason, making this private causes a segfault.
   virtual std::string CategoryName() const = 0;
 
+  virtual BoxedValue FlatCleanup() { return BoxedValue(); }
+
   virtual ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args);
 
  private:

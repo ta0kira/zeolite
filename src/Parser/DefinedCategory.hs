@@ -49,7 +49,11 @@ instance ParseFromSource (DefinedCategory SourceContext) where
     return $ DefinedCategory [c] n pragmas ds rs ms ps fs
     where
       parseRefinesDefines = fmap merge2 $ sepBy refineOrDefine optionalSpace
-      singlePragma = readOnly <|> hidden
+      singlePragma = readOnly <|> hidden <|> flatCleanup
+      flatCleanup = autoPragma "FlatCleanup" $ Right parseAt where
+        parseAt c = do
+          v <- labeled "variable name" sourceParser
+          return $ FlatCleanup [c] v
       readOnly = autoPragma "ReadOnly" $ Right parseAt where
         parseAt c = do
           vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")

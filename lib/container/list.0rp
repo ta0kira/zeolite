@@ -59,8 +59,6 @@ limitations under the License.
 // Notes:
 // - This list is weak in the reverse direction. In other words, prev only
 //   exists if there is another non-weak reference to it.
-// - To avoid excessive recursion during cleanup for extremely large lists,
-//   pass the head to LinkedNode:unbuild<?> for a safer cleanup.
 concrete LinkedNode<#x> {
   defines NewNode<#x>
   // Duplication happens only in the forward direction.
@@ -69,9 +67,6 @@ concrete LinkedNode<#x> {
 
   // Create a new builder.
   @type builder () -> (ListBuilder<#x,#self>)
-
-  // Cleans up the list without recursion.
-  @category unbuild<#x> (optional LinkedNode<#x>) -> ()
 
   // Set the value held by the node.
   @value set (#x) -> (#self)
@@ -82,8 +77,6 @@ concrete LinkedNode<#x> {
 // Notes:
 // - This is more efficient than LinkedNode, but lacks housekeeping when
 //   modifying the list's structure.
-// - To avoid excessive recursion during cleanup for extremely large lists,
-//   pass the head to ForwardNode:unbuild<?> for a safer cleanup.
 concrete ForwardNode<#x> {
   defines NewNode<#x>
   refines Duplicate
@@ -91,9 +84,6 @@ concrete ForwardNode<#x> {
 
   // Create a new builder.
   @type builder () -> (ListBuilder<#x,#self>)
-
-  // Cleans up the list without recursion.
-  @category unbuild<#x> (optional ForwardNode<#x>) -> ()
 
   // Set the value held by the node.
   @value set (#x) -> (#self)

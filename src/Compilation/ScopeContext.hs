@@ -110,6 +110,7 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
       mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++
                                             " does not exist (marked Hidden at " ++
                                             formatFullContext c2 ++ ")") missing
+    checkPragma _ = return ()
     allMembers = Set.fromList $ map dmName ms
     valueMembers = map dmName $ filter ((== ValueScope) . dmScope) ms
     immutableContext t = head $ (map ciContext $ filter isCategoryImmutable (getCategoryPragmas t)) ++ [[]]

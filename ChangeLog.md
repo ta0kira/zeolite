@@ -26,10 +26,10 @@
 
 * **[fix]** Fixes memory leak in `LinkedNode`.
 
-* **[fix]** Adds helpers to mitigate excessive recursion during cleanup of
-  extremely long `LinkedNode` and `ForwardNode` lists.
-
 ### Language
+
+* **[new]** Adds the `$FlatCleanup[`*`memberName`*`]$` pragma to enable
+  non-recursive cleanup for deeply-recursive types like linked lists.
 
 * **[behavior]** More improvements in efficiency of function calls.
 
