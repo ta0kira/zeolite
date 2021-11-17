@@ -28,12 +28,12 @@ unittest readWrite {
   } cleanup {
     \ writer.freeResource()
   } in {
-    \ Testing.checkEmpty(writer.getFileError())
+    \ Testing.checkEmpty<?>(writer.getFileError())
     Int writeSize <- writer.writeBlock(data)
     if (writeSize != data.size()) {
       fail(writeSize)
     }
-    \ Testing.checkEmpty(writer.getFileError())
+    \ Testing.checkEmpty<?>(writer.getFileError())
   }
 
   scoped {
@@ -41,7 +41,7 @@ unittest readWrite {
   } cleanup {
     \ reader.freeResource()
   } in {
-    \ Testing.checkEmpty(reader.getFileError())
+    \ Testing.checkEmpty<?>(reader.getFileError())
 
     scoped {
       String data2 <- reader.readBlock(8)
@@ -53,7 +53,7 @@ unittest readWrite {
     } in if (data2 != "some\x00data") {
       fail("\"" + data2 + "\"")
     }
-    \ Testing.checkEmpty(reader.getFileError())
+    \ Testing.checkEmpty<?>(reader.getFileError())
 
     if (!reader.pastEnd()) {
       fail("more data in file")
@@ -81,7 +81,7 @@ unittest readEmpty {
   if (data != "") {
     fail("\"" + data + "\"")
   }
-  \ Testing.checkEmpty(reader.getFileError())
+  \ Testing.checkEmpty<?>(reader.getFileError())
   if (!reader.pastEnd()) {
     fail("more data in file")
   }

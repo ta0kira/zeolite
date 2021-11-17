@@ -163,8 +163,7 @@ unittest integrationTest { $DisableCoverage$
     remaining <- remaining-1
   }
 
-  // NOTE: Order does not refine Formatted => can't use checkEmpty here.
-  \ Testing.checkEquals<?>(present(node),false)
+  \ Testing.checkEmpty<?>(node)
   \ Testing.checkEquals<?>(remaining,0)
 }
 

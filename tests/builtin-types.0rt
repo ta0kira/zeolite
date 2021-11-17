@@ -469,7 +469,7 @@ unittest stringReferenceCounted {
     String value1 <- "x"
     value2 <- value1
   } in \ Testing.checkPresent(strong(value2))
-  \ Testing.checkEmpty(strong(value2))
+  \ Testing.checkEmpty<?>(strong(value2))
 }
 
 

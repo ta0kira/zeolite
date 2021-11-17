@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,19 +40,36 @@ testcase "checkEmpty success" {
   success
 }
 
-unittest test {
-  \ Testing.checkEmpty(empty)
+unittest formatted {
+  \ Testing.checkEmpty<?>(empty)
+}
+
+unittest notFormatted {
+  optional CharBuffer value <- empty
+  \ Testing.checkEmpty<?>(value)
 }
 
 
-testcase "checkEmpty fail" {
+testcase "checkEmpty fail formatted" {
   crash
   require stderr "13"
   require stderr "empty"
 }
 
 unittest test {
-  \ Testing.checkEmpty(13)
+  \ Testing.checkEmpty<?>(13)
+}
+
+
+testcase "checkEmpty fail unformatted" {
+  crash
+  require stderr "unformatted"
+  require stderr "empty"
+}
+
+unittest test {
+  CharBuffer value <- CharBuffer.new(10)
+  \ Testing.checkEmpty<?>(value)
 }
 
 

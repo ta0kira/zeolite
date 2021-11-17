@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,10 +31,16 @@ define Testing {
 
   checkEmpty (x) {
     if (present(x)) {
-      fail(String.builder()
-          .append(require(x))
-          .append(" is not empty")
-          .build())
+      scoped {
+        optional Formatted formatted <- reduce<#x,Formatted>(require(x))
+      } in if (present(formatted)) {
+        fail(String.builder()
+            .append(require(formatted))
+            .append(" is not empty")
+            .build())
+      } else {
+        fail("(unformatted value) is not empty")
+      }
     }
   }
 
