@@ -55,6 +55,7 @@ define TypeMap {
         \ output.append(require(value))
       }
     }
+    return output
   }
 }
 

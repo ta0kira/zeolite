@@ -46,7 +46,9 @@ concrete TypeMap {
   @value get<#x> (TypeKey<#x>) -> (optional #x)
 
   // Get all values of type #x.
-  @value getAll<#x> (Append<#x>) -> ()
+  @value getAll<#c,#x>
+    #c requires Append<#x>
+  (#c) -> (#c)
 }
 
 // A typed key for use with TypeMap.

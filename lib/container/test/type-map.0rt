@@ -80,8 +80,7 @@ unittest getValues {
       .set<?>(TypeKey<String>.new(),"two")
       .set<?>(TypeKey<Int>.new(),1)
 
-  TreeSet<String> actual <- TreeSet<String>.new()
-  \ tree.getAll<String>(actual)
+  [Container&SetReader<String>] actual <- tree.getAll<?,?>(TreeSet<String>.new())
 
   \ Testing.checkEquals<?>(actual.size(),2)
   \ Testing.checkTrue(actual.member("one"))
