@@ -1285,6 +1285,10 @@ Only the function arguments and the parameter filters are used to infer the type
 substitution; return types are ignored. If inference fails, you will see a
 compiler error and will need to explicitly write out the type.
 
+As of compiler version `0.21.0.0`, if you want to infer *all* params, you can
+skip `<...>` entirely. If you only want to infer some of the params, you must
+specify all params, using `?` for those that should be inferred.
+
 Type inference will *only* succeed if:
 
 1. There is a valid pattern match between the expected argument types and the

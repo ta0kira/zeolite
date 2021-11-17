@@ -37,6 +37,9 @@
 
 ### Language
 
+* **[new]** Makes param inference the default when no params are specified in a
+  function call. For example, `call<?>(foo)` can now be `call(foo)`.
+
 * **[new]** Adds syntax to select a single return value from a function that
   returns multiple values.
 

@@ -978,12 +978,15 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- lift $ getValues es'
-  self <- autoSelfType
-  ps' <- lift $ fmap Positional $ mapCompilerM (replaceSelfParam self) $ pValues ps
-  ps2 <- lift $ guessParamsFromArgs r fa f ps' (Positional ts)
-  lift $ mapCompilerM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   f' <- lift $ parsedToFunctionType f
+  let psActual = case ps of
+                      (Positional []) -> Positional $ take (length $ pValues $ ftParams f') $ repeat (InferredInstance c)
+                      _ -> ps
+  self <- autoSelfType
+  ps' <- lift $ fmap Positional $ mapCompilerM (replaceSelfParam self) $ pValues psActual
+  ps2 <- lift $ guessParamsFromArgs r fa f ps' (Positional ts)
   f'' <- lift $ assignFunctionParams r fa Map.empty ps2 f'
+  lift $ mapCompilerM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)

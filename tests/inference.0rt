@@ -21,16 +21,45 @@ testcase "simple inference" {
 }
 
 unittest test {
-  Int value <- Test.get<?>(10)
+  Int value1, String value2 <- Test.get<?,?>(10,"message")
+  \ Testing.checkEquals<?>(value1,10)
+  \ Testing.checkEquals<?>(value2,"message")
+}
+
+unittest testImplicit {
+  Int value1, String value2 <- Test.get(10,"message")
+  \ Testing.checkEquals<?>(value1,10)
+  \ Testing.checkEquals<?>(value2,"message")
 }
 
 concrete Test {
-  @type get<#x> (#x) -> (#x)
+  @type get<#x,#y> (#x,#y) -> (#x,#y)
 }
 
 define Test {
-  get (x) {
-    return x
+  get (x,y) {
+    return x, y
+  }
+}
+
+
+testcase "wrong param count" {
+  error
+  require "mismatch"
+  require "get"
+}
+
+unittest test {
+  Int value1, String value2 <- Test.get<?>(10,"message")
+}
+
+concrete Test {
+  @type get<#x,#y> (#x,#y) -> (#x,#y)
+}
+
+define Test {
+  get (x,y) {
+    return x, y
   }
 }
 
