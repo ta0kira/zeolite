@@ -29,7 +29,7 @@ concrete KeyValueH {
   //
   // Example:
   //
-  //   Bool lt <- x `KeyValueH:lessThan<?,?>` y
+  //   Bool lt <- x `KeyValueH:lessThan` y
   @category lessThan<#k,#v>
     #k defines LessThan<#k>
     #v defines LessThan<#v>
@@ -63,7 +63,7 @@ concrete KeyValueH {
   //
   // Example:
   //
-  //   Bool eq <- x `KeyValueH:equals<?,?>` y
+  //   Bool eq <- x `KeyValueH:equals` y
   @category equals<#k,#v>
     #k defines Equals<#k>
     #v defines Equals<#v>

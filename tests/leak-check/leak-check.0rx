@@ -29,7 +29,7 @@ define LeakTest {
 
   @type runWith (Int,Int) -> ()
   runWith (iterations,size) {
-    Int threads <- Ranges:max<?>(3,$ExprLookup[CPU_CORE_COUNT]$-1)
+    Int threads <- Ranges:max(3,$ExprLookup[CPU_CORE_COUNT]$-1)
     ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(threads+1)
     traverse (Counter.zeroIndexed(iterations) -> Int i) {
       \ doIteration<LastReference>(i,size,barriers)

@@ -27,8 +27,9 @@
 * **[breaking]** Makes `LinkedNode` in `lib/container` weak in the reverse
   direction to avoid reference cycles.
 
-* **[breaking]** Gives `Testing.checkEmpty` in `lib/testing` a parameter to
-  allow values that do not `refine Formatted`.
+* **[new]** Gives `Testing.checkEmpty` in `lib/testing` a parameter to allow
+  values that do not refine `Formatted`. (This is not breaking because of the
+  new language feature that infers params by default.)
 
 * **[new]** Adds `getAll` to `TypeMap` in `lib/container` to read all values of
   a specified type.
@@ -56,7 +57,10 @@
 * **[new]** Adds the `$FlatCleanup[`*`memberName`*`]$` pragma to enable
   non-recursive cleanup for deeply-recursive types like linked lists.
 
-* **[behavior]** More improvements in efficiency of function calls.
+* **[behavior]** Removes all dynamic allocation when passing params and
+  arguments in function calls.
+
+* **[behavior]** Improves efficiency of returning values from function calls.
 
 ## 0.20.0.1  -- 2021-11-14
 

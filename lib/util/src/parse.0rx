@@ -145,7 +145,7 @@ define ParseChars {
       }
     }
 
-    return ErrorOr:value<?>(total)
+    return ErrorOr:value(total)
   }
 
   int (data) {
@@ -177,7 +177,7 @@ define ParseChars {
       return ErrorOr:error("missing digits in Int value")
     }
 
-    return ErrorOr:value<?>(sign*total)
+    return ErrorOr:value(sign*total)
   }
 
   hexInt (data) {
@@ -219,7 +219,7 @@ define ParseChars {
       return ErrorOr:error("missing digits in Int value")
     }
 
-    return ErrorOr:value<?>(sign*total)
+    return ErrorOr:value(sign*total)
   }
 
   octInt (data) {
@@ -251,7 +251,7 @@ define ParseChars {
       return ErrorOr:error("missing digits in Int value")
     }
 
-    return ErrorOr:value<?>(sign*total)
+    return ErrorOr:value(sign*total)
   }
 
   binInt (data) {
@@ -283,7 +283,7 @@ define ParseChars {
       return ErrorOr:error("missing digits in Int value")
     }
 
-    return ErrorOr:value<?>(sign*total)
+    return ErrorOr:value(sign*total)
   }
 
   @type autoFail<#x> (Char) -> (ErrorOr<all>)

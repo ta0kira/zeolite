@@ -16,12 +16,12 @@ define StringParser {
           // Partial match => set error context.
           return context.setBrokenInput(message)
         } else {
-          return context.setValue<?>(ErrorOr:error(message))
+          return context.setValue(ErrorOr:error(message))
         }
       }
       context <- context.advance()
     }
-    return context.setValue<?>(ErrorOr:value<?>(match))
+    return context.setValue(ErrorOr:value(match))
   }
 
   create (match) {
@@ -74,12 +74,12 @@ define SequenceOfParser {
       context <- context.advance()
     }
     if (count >= min) {
-      return context.setValue<?>(ErrorOr:value<?>(builder.build()))
+      return context.setValue(ErrorOr:value(builder.build()))
     } elif (count > 0) {
       // Partial match => set error context.
       return context.setBrokenInput(message)
     } else {
-      return context.setValue<?>(ErrorOr:error(message))
+      return context.setValue(ErrorOr:error(message))
     }
   }
 
@@ -99,9 +99,9 @@ define CharParser {
     }
     if (contextOld.atEof() || contextOld.current() != match) {
       String message <- "Failed to match '" + match.formatted() + "' at " + contextOld.getPosition()
-      return contextOld.setValue<?>(ErrorOr:error(message))
+      return contextOld.setValue(ErrorOr:error(message))
     } else {
-      return contextOld.advance().setValue<?>(ErrorOr:value<?>(match))
+      return contextOld.advance().setValue(ErrorOr:value(match))
     }
   }
 
@@ -122,7 +122,7 @@ define ConstParser {
   @value #x value
 
   run (contextOld) {
-    return contextOld.setValue<?>(ErrorOr:value<?>(value))
+    return contextOld.setValue(ErrorOr:value(value))
   }
 
   create (value) {
@@ -140,7 +140,7 @@ define ErrorParser {
   @value String message
 
   run (contextOld) {
-    return contextOld.setValue<?>(ErrorOr:error(message))
+    return contextOld.setValue(ErrorOr:error(message))
   }
 
   create (message) {
@@ -163,7 +163,7 @@ define TryParser {
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser)
     if (context.hasAnyError()) {
-      return contextOld.setValue<?>(context.getValue().convertError())
+      return contextOld.setValue(context.getValue().convertError())
     } else {
       return context.toState()
     }
@@ -220,11 +220,11 @@ define LeftParser {
     if (context.hasAnyError()) {
       return context.toState()
     } else {
-      ParseContext<any> context2 <- context.run<?>(parser2)
+      ParseContext<any> context2 <- context.run(parser2)
       if (context2.hasAnyError()) {
         return context2.convertError()
       } else {
-        return context2.setValue<?>(context.getValue())
+        return context2.setValue(context.getValue())
       }
     }
   }
@@ -248,7 +248,7 @@ define RightParser {
     if (contextOld.hasAnyError()) {
       return contextOld.convertError()
     }
-    ParseContext<any> context <- contextOld.run<?>(parser1)
+    ParseContext<any> context <- contextOld.run(parser1)
     if (context.hasAnyError()) {
       return context.convertError()
     } else {

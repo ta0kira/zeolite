@@ -27,21 +27,21 @@ unittest basicOperations {
   TypeKey<String> keyString <- TypeKey<String>.new()
   TypeKey<Value>  keyValue  <- TypeKey<Value>.new()
 
-  \ Testing.checkOptional<?>(tree.get<?>(keyInt),   empty)
-  \ Testing.checkOptional<?>(tree.get<?>(keyString),empty)
-  \ Testing.checkOptional<?>(tree.get<?>(keyValue), empty)
+  \ Testing.checkOptional(tree.get(keyInt),   empty)
+  \ Testing.checkOptional(tree.get(keyString),empty)
+  \ Testing.checkOptional(tree.get(keyValue), empty)
 
-  \ tree.set<?>(keyInt,1)
-  \ tree.set<?>(keyString,"a")
-  \ tree.set<?>(keyValue,Value.new())
+  \ tree.set(keyInt,1)
+  \ tree.set(keyString,"a")
+  \ tree.set(keyValue,Value.new())
 
-  \ Testing.checkOptional<?>(tree.get<?>(keyInt),   1)
-  \ Testing.checkOptional<?>(tree.get<?>(keyString),"a")
-  \ Testing.checkOptional<?>(tree.get<?>(keyValue), Value.new())
+  \ Testing.checkOptional(tree.get(keyInt),   1)
+  \ Testing.checkOptional(tree.get(keyString),"a")
+  \ Testing.checkOptional(tree.get(keyValue), Value.new())
 
   \ tree.remove(keyString)
 
-  \ Testing.checkOptional<?>(tree.get<?>(keyString),empty)
+  \ Testing.checkOptional(tree.get(keyString),empty)
 }
 
 unittest wrongReturnType {
@@ -51,38 +51,38 @@ unittest wrongReturnType {
 
   // Added as Formatted, which means it cannot be retrieved as String later.
   \ tree.set<Formatted>(keyString,"a")
-  \ Testing.checkOptional<?>(tree.get<String>(keyString),empty)
+  \ Testing.checkOptional(tree.get<String>(keyString),empty)
 
   \ tree.set<String>(keyString,"a")
-  \ Testing.checkOptional<?>(tree.get<String>(keyString),"a")
+  \ Testing.checkOptional(tree.get<String>(keyString),"a")
 }
 
 unittest duplicate {
   TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
   TypeKey<String> keyString <- TypeKey<String>.new()
 
-  TypeMap tree <- TypeMap.new().set<?>(keyInt,1).set<?>(keyString,"a")
+  TypeMap tree <- TypeMap.new().set(keyInt,1).set(keyString,"a")
 
   TypeMap copy <- tree.duplicate()
-  \ Testing.checkOptional<?>(copy.get<?>(keyInt),1)
-  \ Testing.checkOptional<?>(copy.get<?>(keyString),"a")
+  \ Testing.checkOptional(copy.get(keyInt),1)
+  \ Testing.checkOptional(copy.get(keyString),"a")
 
   \ copy.remove(keyString)
-  \ Testing.checkOptional<?>(copy.get<?>(keyInt),1)
-  \ Testing.checkOptional<?>(copy.get<?>(keyString),empty)
-  \ Testing.checkOptional<?>(tree.get<?>(keyString),"a")
+  \ Testing.checkOptional(copy.get(keyInt),1)
+  \ Testing.checkOptional(copy.get(keyString),empty)
+  \ Testing.checkOptional(tree.get(keyString),"a")
 }
 
 unittest getValues {
   TypeMap tree <- TypeMap.new()
-      .set<?>(TypeKey<String>.new(),"one")
-      .set<?>(TypeKey<Int>.new(),2)
-      .set<?>(TypeKey<String>.new(),"two")
-      .set<?>(TypeKey<Int>.new(),1)
+      .set(TypeKey<String>.new(),"one")
+      .set(TypeKey<Int>.new(),2)
+      .set(TypeKey<String>.new(),"two")
+      .set(TypeKey<Int>.new(),1)
 
-  [Container&SetReader<String>] actual <- tree.getAll<?,?>(TreeSet<String>.new())
+  [Container&SetReader<String>] actual <- tree.getAll(TreeSet<String>.new())
 
-  \ Testing.checkEquals<?>(actual.size(),2)
+  \ Testing.checkEquals(actual.size(),2)
   \ Testing.checkTrue(actual.member("one"))
   \ Testing.checkTrue(actual.member("two"))
 }

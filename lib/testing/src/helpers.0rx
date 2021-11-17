@@ -54,7 +54,7 @@ define Testing {
 
   checkOptional (x,y) {
     if (present(x) && present(y)) {
-      \ checkEquals<?>(require(x),require(y))
+      \ checkEquals(require(x),require(y))
     } elif (!present(x) && present(y)) {
       fail("empty is not equal to " + require(y).formatted())
     } elif (present(x) && !present(y)) {
@@ -75,7 +75,7 @@ define Testing {
   }
 
   checkBetween (x,l,h) {
-    if (!lessEquals<?>(l,h)) {
+    if (!lessEquals(l,h)) {
       fail(String.builder()
           .append("Upper limit ")
           .append(l)
@@ -83,7 +83,7 @@ define Testing {
           .append(h)
           .build())
     }
-    if (!lessEquals<?>(l,x) || !lessEquals<?>(x,h)) {
+    if (!lessEquals(l,x) || !lessEquals(x,h)) {
       fail(String.builder()
           .append(x)
           .append(" is not between ")
@@ -95,7 +95,7 @@ define Testing {
   }
 
   checkGreaterThan (x,l) {
-    if (lessEquals<?>(x,l)) {
+    if (lessEquals(x,l)) {
       fail(String.builder()
           .append(x)
           .append(" is not greater than ")
@@ -105,7 +105,7 @@ define Testing {
   }
 
   checkLessThan (x,h) {
-    if (lessEquals<?>(h,x)) {
+    if (lessEquals(h,x)) {
       fail(String.builder()
           .append(x)
           .append(" is not less than ")

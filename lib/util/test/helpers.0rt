@@ -21,69 +21,69 @@ testcase "comparator helper tests" {
 }
 
 unittest orderHLessThan {
-  \ Testing.checkEquals<?>("".defaultOrder()    `OrderH:lessThan<?>` "".defaultOrder(),   false)
-  \ Testing.checkTrue("a".defaultOrder()   `OrderH:lessThan<?>` "abc".defaultOrder())
-  \ Testing.checkFalse("b".defaultOrder()   `OrderH:lessThan<?>` "abc".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThan<?>` "abc".defaultOrder())
-  \ Testing.checkEquals<?>("abc".defaultOrder() `OrderH:lessThan<?>` "a".defaultOrder(),  false)
-  \ Testing.checkEquals<?>("abc".defaultOrder() `OrderH:lessThan<?>` "b".defaultOrder(),  true)
+  \ Testing.checkFalse("".defaultOrder()    `OrderH:lessThan` "".defaultOrder())
+  \ Testing.checkTrue("a".defaultOrder()    `OrderH:lessThan` "abc".defaultOrder())
+  \ Testing.checkFalse("b".defaultOrder()   `OrderH:lessThan` "abc".defaultOrder())
+  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThan` "abc".defaultOrder())
+  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThan` "a".defaultOrder())
+  \ Testing.checkTrue("abc".defaultOrder()  `OrderH:lessThan` "b".defaultOrder())
 }
 
 unittest orderHLessThanWith {
-  \ Testing.checkEquals<?>("".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "".defaultOrder(),   false)
-  \ Testing.checkTrue("a".defaultOrder()   `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
-  \ Testing.checkTrue("b".defaultOrder()   `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
+  \ Testing.checkFalse("".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "".defaultOrder())
+  \ Testing.checkTrue("a".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
+  \ Testing.checkTrue("b".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
   \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
-  \ Testing.checkEquals<?>("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "a".defaultOrder(),  false)
-  \ Testing.checkEquals<?>("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "b".defaultOrder(),  false)
+  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "a".defaultOrder())
+  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "b".defaultOrder())
 }
 
 unittest orderHEquals {
-  \ Testing.checkEquals<?>("".defaultOrder()    `OrderH:equals<?>` "".defaultOrder(),   true)
-  \ Testing.checkFalse("a".defaultOrder()   `OrderH:equals<?>` "abc".defaultOrder())
-  \ Testing.checkTrue("abc".defaultOrder() `OrderH:equals<?>` "abc".defaultOrder())
-  \ Testing.checkEquals<?>("abc".defaultOrder() `OrderH:equals<?>` "a".defaultOrder(),  false)
+  \ Testing.checkTrue("".defaultOrder()     `OrderH:equals` "".defaultOrder())
+  \ Testing.checkFalse("a".defaultOrder()   `OrderH:equals` "abc".defaultOrder())
+  \ Testing.checkTrue("abc".defaultOrder()  `OrderH:equals` "abc".defaultOrder())
+  \ Testing.checkFalse("abc".defaultOrder() `OrderH:equals` "a".defaultOrder())
 }
 
 unittest orderHEqualsWith {
-  \ Testing.checkEquals<?>("".defaultOrder()    `OrderH:equalsWith<?,IgnoreCase>` "".defaultOrder(),   true)
+  \ Testing.checkTrue("".defaultOrder()     `OrderH:equalsWith<?,IgnoreCase>` "".defaultOrder())
   \ Testing.checkFalse("a".defaultOrder()   `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder())
-  \ Testing.checkTrue("abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder())
+  \ Testing.checkTrue("abc".defaultOrder()  `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder())
   \ Testing.checkFalse("abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "DEF".defaultOrder())
-  \ Testing.checkEquals<?>("abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "A".defaultOrder(),  false)
+  \ Testing.checkFalse("abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "A".defaultOrder())
 }
 
 unittest readAtHLessThan {
-  \ Testing.checkEquals<?>(""    `ReadAtH:lessThan<?>` "",   false)
-  \ Testing.checkTrue("a"   `ReadAtH:lessThan<?>` "abc")
-  \ Testing.checkFalse("b"   `ReadAtH:lessThan<?>` "abc")
-  \ Testing.checkFalse("abc" `ReadAtH:lessThan<?>` "abc")
-  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "a",  false)
-  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "b",  true)
+  \ Testing.checkFalse(""    `ReadAtH:lessThan` "")
+  \ Testing.checkTrue("a"    `ReadAtH:lessThan` "abc")
+  \ Testing.checkFalse("b"   `ReadAtH:lessThan` "abc")
+  \ Testing.checkFalse("abc" `ReadAtH:lessThan` "abc")
+  \ Testing.checkFalse("abc" `ReadAtH:lessThan` "a")
+  \ Testing.checkTrue("abc"  `ReadAtH:lessThan` "b")
 }
 
 unittest readAtHLessThanWith {
-  \ Testing.checkEquals<?>(""    `ReadAtH:lessThanWith<?,Reversed<Char>>` "",   false)
-  \ Testing.checkTrue("a"   `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
-  \ Testing.checkTrue("b"   `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
+  \ Testing.checkFalse(""    `ReadAtH:lessThanWith<?,Reversed<Char>>` "")
+  \ Testing.checkTrue("a"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
+  \ Testing.checkTrue("b"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
   \ Testing.checkFalse("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
-  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "a",  false)
-  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "b",  false)
+  \ Testing.checkFalse("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "a")
+  \ Testing.checkFalse("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "b")
 }
 
 unittest readAtHEquals {
-  \ Testing.checkEquals<?>(""    `ReadAtH:equals<?>` "",   true)
-  \ Testing.checkFalse("a"   `ReadAtH:equals<?>` "abc")
-  \ Testing.checkTrue("abc" `ReadAtH:equals<?>` "abc")
-  \ Testing.checkEquals<?>("abc" `ReadAtH:equals<?>` "a",  false)
+  \ Testing.checkTrue(""     `ReadAtH:equals` "")
+  \ Testing.checkFalse("a"   `ReadAtH:equals` "abc")
+  \ Testing.checkTrue("abc"  `ReadAtH:equals` "abc")
+  \ Testing.checkFalse("abc" `ReadAtH:equals` "a")
 }
 
 unittest readAtHEqualsWith {
-  \ Testing.checkEquals<?>(""    `ReadAtH:equalsWith<?,IgnoreCase>` "",   true)
+  \ Testing.checkTrue(""     `ReadAtH:equalsWith<?,IgnoreCase>` "")
   \ Testing.checkFalse("a"   `ReadAtH:equalsWith<?,IgnoreCase>` "ABC")
-  \ Testing.checkTrue("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "ABC")
+  \ Testing.checkTrue("abc"  `ReadAtH:equalsWith<?,IgnoreCase>` "ABC")
   \ Testing.checkFalse("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "DEF")
-  \ Testing.checkEquals<?>("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "a",  false)
+  \ Testing.checkFalse("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "a")
 }
 
 concrete IgnoreCase {
@@ -108,32 +108,32 @@ define IgnoreCase {
 unittest reversed {
   \ Testing.checkFalse(0 `Reversed<Int>.lessThan` 0)
   \ Testing.checkFalse(0 `Reversed<Int>.lessThan` 1)
-  \ Testing.checkTrue(1 `Reversed<Int>.lessThan` 0)
+  \ Testing.checkTrue(1  `Reversed<Int>.lessThan` 0)
 }
 
 unittest bySizeLessThan {
-  \ Testing.checkEquals<?>(""   `BySize.lessThan` "",  false)
-  \ Testing.checkTrue("b"  `BySize.lessThan` "ac")
-  \ Testing.checkEquals<?>("ac" `BySize.lessThan` "b", false)
-  \ Testing.checkEquals<?>("a"  `BySize.lessThan` "b", false)
+  \ Testing.checkFalse(""   `BySize.lessThan` "")
+  \ Testing.checkTrue("b"   `BySize.lessThan` "ac")
+  \ Testing.checkFalse("ac" `BySize.lessThan` "b")
+  \ Testing.checkFalse("a"  `BySize.lessThan` "b")
 }
 
 unittest bySizeEquals {
-  \ Testing.checkEquals<?>(""   `BySize.equals` "",  true)
+  \ Testing.checkTrue(""    `BySize.equals` "")
   \ Testing.checkFalse("b"  `BySize.equals` "ac")
-  \ Testing.checkEquals<?>("ac" `BySize.equals` "b", false)
-  \ Testing.checkEquals<?>("a"  `BySize.equals` "b", true)
+  \ Testing.checkFalse("ac" `BySize.equals` "b")
+  \ Testing.checkTrue("a"   `BySize.equals` "b")
 }
 
 unittest alwaysEqualLessThan {
-  \ Testing.checkEquals<?>(""   `AlwaysEqual.lessThan` "",  false)
+  \ Testing.checkFalse(""   `AlwaysEqual.lessThan` "")
   \ Testing.checkFalse("b"  `AlwaysEqual.lessThan` "ac")
-  \ Testing.checkEquals<?>("ac" `AlwaysEqual.lessThan` "b", false)
+  \ Testing.checkFalse("ac" `AlwaysEqual.lessThan` "b")
 }
 
 unittest alwaysEqualEquals {
-  \ Testing.checkEquals<?>(""   `AlwaysEqual.equals` "",  true)
+  \ Testing.checkTrue(""   `AlwaysEqual.equals` "")
   \ Testing.checkTrue("b"  `AlwaysEqual.equals` "ac")
-  \ Testing.checkEquals<?>("ac" `AlwaysEqual.equals` "b", true)
-  \ Testing.checkEquals<?>("a"  `AlwaysEqual.equals` "b", true)
+  \ Testing.checkTrue("ac" `AlwaysEqual.equals` "b")
+  \ Testing.checkTrue("a"  `AlwaysEqual.equals` "b")
 }

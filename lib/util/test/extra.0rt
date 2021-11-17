@@ -23,20 +23,20 @@ testcase "Argv checks" {
 
 unittest global {
   Int count <- Argv.global().size()
-  \ Testing.checkEquals<?>(count,5)
-  \ Testing.checkEquals<?>(Argv.global().readAt(0),"testcase")
-  \ Testing.checkEquals<?>(Argv.global().readAt(1),"arg1")
-  \ Testing.checkEquals<?>(Argv.global().readAt(2),"arg2")
-  \ Testing.checkEquals<?>(Argv.global().readAt(3),"arg3")
-  \ Testing.checkEquals<?>(Argv.global().readAt(4),"arg4")
+  \ Testing.checkEquals(count,5)
+  \ Testing.checkEquals(Argv.global().readAt(0),"testcase")
+  \ Testing.checkEquals(Argv.global().readAt(1),"arg1")
+  \ Testing.checkEquals(Argv.global().readAt(2),"arg2")
+  \ Testing.checkEquals(Argv.global().readAt(3),"arg3")
+  \ Testing.checkEquals(Argv.global().readAt(4),"arg4")
 }
 
 unittest subSequence {
   ReadAt<String> argv <- Argv.global().subSequence(2,2)
   Int count <- argv.size()
-  \ Testing.checkEquals<?>(count,2)
-  \ Testing.checkEquals<?>(argv.readAt(0),"arg2")
-  \ Testing.checkEquals<?>(argv.readAt(1),"arg3")
+  \ Testing.checkEquals(count,2)
+  \ Testing.checkEquals(argv.readAt(0),"arg2")
+  \ Testing.checkEquals(argv.readAt(1),"arg3")
 }
 
 
@@ -67,20 +67,20 @@ testcase "ErrorOr checks" {
 unittest withValue {
   ErrorOr<Int> value <- ErrorOr:value<Int>(10)
   \ Testing.checkFalse(value.isError())
-  \ Testing.checkEquals<?>(value.getValue(),10)
+  \ Testing.checkEquals(value.getValue(),10)
 }
 
 unittest withError {
   ErrorOr<String> value <- ErrorOr:error("error message")
   \ Testing.checkTrue(value.isError())
-  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
+  \ Testing.checkEquals(value.getError().formatted(),"error message")
 }
 
 unittest convertError {
   scoped {
     ErrorOr<String> error <- ErrorOr:error("error message")
   } in ErrorOr<Int> value <- error.convertError()
-  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
+  \ Testing.checkEquals(value.getError().formatted(),"error message")
 }
 
 

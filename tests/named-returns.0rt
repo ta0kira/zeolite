@@ -287,11 +287,11 @@ testcase "top-level scoped/cleanup sets named return" {
 }
 
 unittest withScoped {
-  \ Testing.checkEquals<?>(Test.withScoped(),"message")
+  \ Testing.checkEquals(Test.withScoped(),"message")
 }
 
 unittest withCleanup {
-  \ Testing.checkEquals<?>(Test.withCleanup(),"message")
+  \ Testing.checkEquals(Test.withCleanup(),"message")
 }
 
 concrete Test {

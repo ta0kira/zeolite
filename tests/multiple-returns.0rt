@@ -116,12 +116,12 @@ testcase "return selection" {
 }
 
 unittest correctPosition {
-  \ Testing.checkEquals<?>(Test.get(){0},123)
-  \ Testing.checkEquals<?>(Test.get(){1},"message")
+  \ Testing.checkEquals(Test.get(){0},123)
+  \ Testing.checkEquals(Test.get(){1},"message")
 }
 
 unittest chainedCall {
-  \ Testing.checkEquals<?>(Test.get(){0}.formatted(),"123")
+  \ Testing.checkEquals(Test.get(){0}.formatted(),"123")
 }
 
 concrete Test {

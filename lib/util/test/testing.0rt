@@ -31,7 +31,7 @@ testcase "UtilTesting.checkError with value" {
 }
 
 unittest test {
-  \ UtilTesting.checkError(ErrorOr:value<?>("message"))
+  \ UtilTesting.checkError(ErrorOr:value("message"))
 }
 
 
@@ -40,7 +40,7 @@ testcase "UtilTesting.checkSuccess success" {
 }
 
 unittest test {
-  \ UtilTesting.checkSuccess<?>(ErrorOr:value<?>("message"),"message")
+  \ UtilTesting.checkSuccess(ErrorOr:value("message"),"message")
 }
 
 
@@ -51,7 +51,7 @@ testcase "UtilTesting.checkSuccess bad value" {
 }
 
 unittest test {
-  \ UtilTesting.checkSuccess<?>(ErrorOr:value<?>("foo"),"message")
+  \ UtilTesting.checkSuccess(ErrorOr:value("foo"),"message")
 }
 
 
@@ -62,7 +62,7 @@ testcase "UtilTesting.checkSuccess with error" {
 }
 
 unittest test {
-  \ UtilTesting.checkSuccess<?>(ErrorOr:error("failure"),"message")
+  \ UtilTesting.checkSuccess(ErrorOr:error("failure"),"message")
 }
 
 
@@ -71,7 +71,7 @@ testcase "UtilTesting.checkSuccessBetween success" {
 }
 
 unittest test {
-  \ UtilTesting.checkSuccessBetween<?>(ErrorOr:value<?>(1),0,2)
+  \ UtilTesting.checkSuccessBetween(ErrorOr:value(1),0,2)
 }
 
 
@@ -81,7 +81,7 @@ testcase "UtilTesting.checkSuccess bad value" {
 }
 
 unittest test {
-  \ UtilTesting.checkSuccessBetween<?>(ErrorOr:value<?>(7),0,2)
+  \ UtilTesting.checkSuccessBetween(ErrorOr:value(7),0,2)
 }
 
 
@@ -92,5 +92,5 @@ testcase "UtilTesting.checkSuccess with error" {
 }
 
 unittest test {
-  \ UtilTesting.checkSuccessBetween<?>(ErrorOr:error("failure"),0,2)
+  \ UtilTesting.checkSuccessBetween(ErrorOr:error("failure"),0,2)
 }

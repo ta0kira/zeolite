@@ -40,7 +40,7 @@ unittest forwardTraverse {
       .append(4)
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(head).get(),value)
+    \ Testing.checkEquals(require(head).get(),value)
   } update {
     head <- require(head).next()
   }
@@ -67,7 +67,7 @@ unittest reverseTraverse {
       .append(3)
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(tail).get(),value)
+    \ Testing.checkEquals(require(tail).get(),value)
   } update {
     tail <- require(tail).prev()
   }
@@ -84,7 +84,7 @@ unittest setNext {
       .append(4)
       .build()
 
-  optional LinkedNode<Int> after1  <- Helper.jumpBy<?>(3,head1)
+  optional LinkedNode<Int> after1  <- Helper.jumpBy(3,head1)
   optional LinkedNode<Int> before1 <- require(after1).prev()
 
   optional LinkedNode<Int> head2, _ <- LinkedNode<Int>.builder()
@@ -96,14 +96,14 @@ unittest setNext {
       .append(14)
       .build()
 
-  optional LinkedNode<Int> after2  <- Helper.jumpBy<?>(3,head2)
+  optional LinkedNode<Int> after2  <- Helper.jumpBy(3,head2)
   optional LinkedNode<Int> before2 <- require(after2).prev()
 
-  \ Testing.checkEquals<?>(require(require(before1).setNext(after2)).get(),1)
+  \ Testing.checkEquals(require(require(before1).setNext(after2)).get(),1)
 
   \ Testing.checkFalse(present(require(after1).prev()))
-  \ Testing.checkEquals<?>(require(require(before1).next()).get(),11)
-  \ Testing.checkEquals<?>(require(require(after2).prev()).get(),5)
+  \ Testing.checkEquals(require(require(before1).next()).get(),11)
+  \ Testing.checkEquals(require(require(after2).prev()).get(),5)
   \ Testing.checkFalse(present(require(before2).next()))
 }
 
@@ -117,7 +117,7 @@ unittest setPrev {
       .append(4)
       .build()
 
-  optional LinkedNode<Int> after1  <- Helper.jumpBy<?>(3,head1)
+  optional LinkedNode<Int> after1  <- Helper.jumpBy(3,head1)
   optional LinkedNode<Int> before1 <- require(after1).prev()
 
   optional LinkedNode<Int> head2, _ <- LinkedNode<Int>.builder()
@@ -129,15 +129,15 @@ unittest setPrev {
       .append(14)
       .build()
 
-  optional LinkedNode<Int> after2  <- Helper.jumpBy<?>(3,head2)
+  optional LinkedNode<Int> after2  <- Helper.jumpBy(3,head2)
   optional LinkedNode<Int> before2 <- require(after2).prev()
 
-  \ Testing.checkEquals<?>(require(require(after1).setPrev(before2)).get(),5)
+  \ Testing.checkEquals(require(require(after1).setPrev(before2)).get(),5)
 
-  \ Testing.checkEquals<?>(require(require(after1).prev()).get(),15)
+  \ Testing.checkEquals(require(require(after1).prev()).get(),15)
   \ Testing.checkFalse(present(require(before1).next()))
   \ Testing.checkFalse(present(require(after2).prev()))
-  \ Testing.checkEquals<?>(require(require(before2).next()).get(),1)
+  \ Testing.checkEquals(require(require(before2).next()).get(),1)
 }
 
 unittest setNextSame {
@@ -150,13 +150,13 @@ unittest setNextSame {
       .append(4)
       .build()
 
-  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> after  <- Helper.jumpBy(3,head)
   optional LinkedNode<Int> before <- require(after).prev()
 
   \ require(before).setNext(after)
 
-  \ Testing.checkEquals<?>(require(require(after).prev()).get(),5)
-  \ Testing.checkEquals<?>(require(require(before).next()).get(),1)
+  \ Testing.checkEquals(require(require(after).prev()).get(),5)
+  \ Testing.checkEquals(require(require(before).next()).get(),1)
 }
 
 unittest setPrevSame {
@@ -169,13 +169,13 @@ unittest setPrevSame {
       .append(4)
       .build()
 
-  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> after  <- Helper.jumpBy(3,head)
   optional LinkedNode<Int> before <- require(after).prev()
 
   \ require(after).setPrev(before)
 
-  \ Testing.checkEquals<?>(require(require(after).prev()).get(),5)
-  \ Testing.checkEquals<?>(require(require(before).next()).get(),1)
+  \ Testing.checkEquals(require(require(after).prev()).get(),5)
+  \ Testing.checkEquals(require(require(before).next()).get(),1)
 }
 
 unittest setNextSelf {
@@ -188,14 +188,14 @@ unittest setNextSelf {
       .append(4)
       .build()
 
-  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> after  <- Helper.jumpBy(3,head)
   optional LinkedNode<Int> before <- require(after).prev()
 
   \ require(before).setNext(before)
 
   \ Testing.checkFalse(present(require(after).prev()))
-  \ Testing.checkEquals<?>(require(require(before).prev()).get(),5)
-  \ Testing.checkEquals<?>(require(require(before).next()).get(),5)
+  \ Testing.checkEquals(require(require(before).prev()).get(),5)
+  \ Testing.checkEquals(require(require(before).next()).get(),5)
 }
 
 unittest setPrevSelf {
@@ -208,14 +208,14 @@ unittest setPrevSelf {
       .append(4)
       .build()
 
-  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> after  <- Helper.jumpBy(3,head)
   optional LinkedNode<Int> before <- require(after).prev()
 
   \ require(after).setPrev(after)
 
   \ Testing.checkFalse(present(require(before).next()))
-  \ Testing.checkEquals<?>(require(require(after).prev()).get(),1)
-  \ Testing.checkEquals<?>(require(require(after).next()).get(),1)
+  \ Testing.checkEquals(require(require(after).prev()).get(),1)
+  \ Testing.checkEquals(require(require(after).next()).get(),1)
 }
 
 unittest duplicate {
@@ -237,11 +237,11 @@ unittest duplicate {
       .append(4)
 
   optional LinkedNode<Int> head2 <- require(head).duplicate()
-  \ require(Helper.jumpBy<?>(3,head)).set(7).setNext(empty)
+  \ require(Helper.jumpBy(3,head)).set(7).setNext(empty)
   $Hidden[head]$
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(head2).get(),value)
+    \ Testing.checkEquals(require(head2).get(),value)
   } update {
     head2 <- require(head2).next()
   }
@@ -275,7 +275,7 @@ unittest forwardTraverseSingle {
       .append(4)
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(head).get(),value)
+    \ Testing.checkEquals(require(head).get(),value)
   } update {
     head <- require(head).next()
   }
@@ -301,11 +301,11 @@ unittest duplicateSingle {
       .append(4)
 
   optional ForwardNode<Int> head2 <- require(head).duplicate()
-  \ require(Helper.jumpBy<?>(3,head)).set(7).setNext(empty)
+  \ require(Helper.jumpBy(3,head)).set(7).setNext(empty)
   $Hidden[head]$
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(head2).get(),value)
+    \ Testing.checkEquals(require(head2).get(),value)
   } update {
     head2 <- require(head2).next()
   }

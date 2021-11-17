@@ -29,7 +29,7 @@ unittest addAndRemove {
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     \ set.add((i*hash)%max)
-    \ Testing.checkEquals<?>(set.size(),i+1)
+    \ Testing.checkEquals(set.size(),i+1)
   }
 
   // Remove only the odd elements.
@@ -38,12 +38,12 @@ unittest addAndRemove {
       // Remove it twice to ensure idempotence.
       \ set.remove(i).remove(i)
     }
-    \ Testing.checkEquals<?>(set.size(),max-(i+1)/2)
+    \ Testing.checkEquals(set.size(),max-(i+1)/2)
   }
 
   // Validate set membership.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkEquals<?>(set.member(i),i%2 == 0)
+    \ Testing.checkEquals(set.member(i),i%2 == 0)
   }
 }
 
@@ -61,11 +61,11 @@ unittest defaultOrder {
   // Validate the traversal order.
   Int index <- 0
   traverse (set.defaultOrder() -> Int entry) {
-    \ Testing.checkEquals<?>(entry,index)
+    \ Testing.checkEquals(entry,index)
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,max)
+  \ Testing.checkEquals(index,max)
 }
 
 unittest reverseOrder {
@@ -83,10 +83,10 @@ unittest reverseOrder {
   Int index <- max
   traverse (set.reverseOrder() -> Int entry) {
     index <- index-1
-    \ Testing.checkEquals<?>(entry,index)
+    \ Testing.checkEquals(entry,index)
   }
 
-  \ Testing.checkEquals<?>(index,0)
+  \ Testing.checkEquals(index,0)
 }
 
 unittest getForward {
@@ -104,10 +104,10 @@ unittest getForward {
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
     traverse (set.getForward(index) -> Int entry) {
-      \ Testing.checkEquals<?>(entry,index)
+      \ Testing.checkEquals(entry,index)
       index <- index+1
     }
-    \ Testing.checkEquals<?>(index,max)
+    \ Testing.checkEquals(index,max)
   }
 }
 
@@ -120,7 +120,7 @@ unittest getForwardNotFound {
   } in if (!present(start)) {
     fail("Failed")
   } else {
-    \ Testing.checkEquals<?>(require(start).get(),5)
+    \ Testing.checkEquals(require(start).get(),5)
   }
 
   scoped {
@@ -145,10 +145,10 @@ unittest getReverse {
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
     traverse (set.getReverse(index) -> Int entry) {
-      \ Testing.checkEquals<?>(entry,index)
+      \ Testing.checkEquals(entry,index)
       index <- index-1
     }
-    \ Testing.checkEquals<?>(index,-1)
+    \ Testing.checkEquals(index,-1)
   }
 }
 
@@ -161,7 +161,7 @@ unittest getReverseNotFound {
   } in if (!present(start)) {
     fail("Failed")
   } else {
-    \ Testing.checkEquals<?>(require(start).get(),1)
+    \ Testing.checkEquals(require(start).get(),1)
   }
 
   scoped {
@@ -175,12 +175,12 @@ unittest duplicate {
   TreeSet<Int> set <- TreeSet<Int>.new().add(1).add(2)
 
   TreeSet<Int> copy <- set.duplicate()
-  \ Testing.checkEquals<?>(copy.size(),2)
+  \ Testing.checkEquals(copy.size(),2)
   \ Testing.checkTrue(copy.member(1))
   \ Testing.checkTrue(copy.member(1))
 
   \ copy.remove(2)
-  \ Testing.checkEquals<?>(copy.size(),1)
+  \ Testing.checkEquals(copy.size(),1)
   \ Testing.checkTrue(copy.member(1))
   \ Testing.checkTrue(set.member(2))
 }

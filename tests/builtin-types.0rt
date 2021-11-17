@@ -306,19 +306,19 @@ unittest boolDefault {
 }
 
 unittest charDefault {
-  \ Testing.checkEquals<?>(Char.default(),'\000')
+  \ Testing.checkEquals(Char.default(),'\000')
 }
 
 unittest floatDefault {
-  \ Testing.checkEquals<?>(Float.default(),0.0)
+  \ Testing.checkEquals(Float.default(),0.0)
 }
 
 unittest intDefault {
-  \ Testing.checkEquals<?>(Int.default(),0)
+  \ Testing.checkEquals(Int.default(),0)
 }
 
 unittest stringDefault {
-  \ Testing.checkEquals<?>(String.default(),"")
+  \ Testing.checkEquals(String.default(),"")
 }
 
 unittest stringLessThan {
@@ -341,9 +341,9 @@ unittest stringEquals {
 
 unittest stringBuilder {
   [Append<Formatted>&Build<String>] builder <- String.builder()
-  \ Testing.checkEquals<?>(builder.build(),"")
-  \ Testing.checkEquals<?>(builder.append("xyz").build(),"xyz")
-  \ Testing.checkEquals<?>(builder.append(123).build(),"xyz123")
+  \ Testing.checkEquals(builder.build(),"")
+  \ Testing.checkEquals(builder.append("xyz").build(),"xyz")
+  \ Testing.checkEquals(builder.append(123).build(),"xyz123")
 }
 
 unittest charLessThan {
@@ -469,7 +469,7 @@ unittest stringReferenceCounted {
     String value1 <- "x"
     value2 <- value1
   } in \ Testing.checkPresent(strong(value2))
-  \ Testing.checkEmpty<?>(strong(value2))
+  \ Testing.checkEmpty(strong(value2))
 }
 
 
@@ -488,24 +488,24 @@ unittest writeAndRead {
       .writeAt(1,'B')
       .writeAt(2,'C')
 
-  \ Testing.checkEquals<?>(buffer.size(),5)
-  \ Testing.checkEquals<?>(buffer.readAt(0),'a')
-  \ Testing.checkEquals<?>(buffer.readAt(1),'B')
-  \ Testing.checkEquals<?>(buffer.readAt(2),'C')
-  \ Testing.checkEquals<?>(buffer.readAt(3),'d')
-  \ Testing.checkEquals<?>(buffer.readAt(4),'e')
+  \ Testing.checkEquals(buffer.size(),5)
+  \ Testing.checkEquals(buffer.readAt(0),'a')
+  \ Testing.checkEquals(buffer.readAt(1),'B')
+  \ Testing.checkEquals(buffer.readAt(2),'C')
+  \ Testing.checkEquals(buffer.readAt(3),'d')
+  \ Testing.checkEquals(buffer.readAt(4),'e')
 }
 
 unittest resizeDown {
   CharBuffer buffer <- CharBuffer.new(5).resize(3).writeAt(2,'a')
-  \ Testing.checkEquals<?>(buffer.size(),3)
-  \ Testing.checkEquals<?>(buffer.readAt(2),'a')
+  \ Testing.checkEquals(buffer.size(),3)
+  \ Testing.checkEquals(buffer.readAt(2),'a')
 }
 
 unittest resizeUp {
   CharBuffer buffer <- CharBuffer.new(5).resize(7).writeAt(6,'a')
-  \ Testing.checkEquals<?>(buffer.size(),7)
-  \ Testing.checkEquals<?>(buffer.readAt(6),'a')
+  \ Testing.checkEquals(buffer.size(),7)
+  \ Testing.checkEquals(buffer.readAt(6),'a')
 }
 
 
@@ -634,11 +634,11 @@ unittest traverseString {
   String value <- "abcdefg"
 
   traverse (value.defaultOrder() -> Char c) {
-    \ Testing.checkEquals<?>(c,value.readAt(index))
+    \ Testing.checkEquals(c,value.readAt(index))
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,7)
+  \ Testing.checkEquals(index,7)
 }
 
 unittest fromCharBuffer {
@@ -648,7 +648,7 @@ unittest fromCharBuffer {
       .writeAt(2,'c')
       .writeAt(3,'d')
       .writeAt(4,'e')
-  \ Testing.checkEquals<?>(String.fromCharBuffer(buffer),"abcde")
+  \ Testing.checkEquals(String.fromCharBuffer(buffer),"abcde")
 }
 
 
@@ -720,19 +720,19 @@ testcase "Char stuff" {
 }
 
 unittest accurateMax {
-  \ Testing.checkEquals<?>(Char.maxBound().asInt(),255)
+  \ Testing.checkEquals(Char.maxBound().asInt(),255)
 }
 
 unittest accurateMin {
-  \ Testing.checkEquals<?>(Char.minBound().asInt(),0)
+  \ Testing.checkEquals(Char.minBound().asInt(),0)
 }
 
 unittest asIntIsUnsigned {
-  \ Testing.checkEquals<?>('\xff'.asInt(),255)
+  \ Testing.checkEquals('\xff'.asInt(),255)
 }
 
 unittest asFloatIsUnsigned {
-  \ Testing.checkEquals<?>('\xff'.asFloat(),255.0)
+  \ Testing.checkEquals('\xff'.asFloat(),255.0)
 }
 
 
@@ -741,21 +741,21 @@ testcase "Int stuff" {
 }
 
 unittest accurateMax {
-  \ Testing.checkEquals<?>(Int.maxBound(),9223372036854775807)
+  \ Testing.checkEquals(Int.maxBound(),9223372036854775807)
 }
 
 unittest accurateMin {
-  \ Testing.checkEquals<?>(Int.minBound(),-9223372036854775808)
+  \ Testing.checkEquals(Int.minBound(),-9223372036854775808)
 }
 
 unittest asCharIsPeriodic {
-  \ Testing.checkEquals<?>((65).asChar(),(65+256).asChar())
-  \ Testing.checkEquals<?>((65).asChar(),(65+1024).asChar())
-  \ Testing.checkEquals<?>((65).asChar(),(65-1024).asChar())
+  \ Testing.checkEquals((65).asChar(),(65+256).asChar())
+  \ Testing.checkEquals((65).asChar(),(65+1024).asChar())
+  \ Testing.checkEquals((65).asChar(),(65-1024).asChar())
 }
 
 unittest hexUnsigned {
-  \ Testing.checkEquals<?>(\xffffffffffffffff,-1)
+  \ Testing.checkEquals(\xffffffffffffffff,-1)
 }
 
 

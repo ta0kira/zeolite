@@ -28,7 +28,7 @@ define TypeMap {
   }
 
   set (k,v) {
-    \ tree.set(k,GenericValue:create<?>(v))
+    \ tree.set(k,GenericValue:create(v))
     return self
   }
 

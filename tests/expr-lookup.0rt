@@ -71,7 +71,7 @@ testcase "constant defined in .zeolite-module" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>($ExprLookup[INT_EXPR]$,4)
+  \ Testing.checkEquals($ExprLookup[INT_EXPR]$,4)
   // Use it a second time to ensure that reserving the macro name doesn't
   // carry over to the next statement.
   \ $ExprLookup[INT_EXPR]$
@@ -83,7 +83,7 @@ testcase "constant defined in .zeolite-module from regular source" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(ExprLookup.intExpr(),4)
+  \ Testing.checkEquals(ExprLookup.intExpr(),4)
 }
 
 
@@ -99,7 +99,7 @@ define Test {
   @category String macroLocalVar <- "hello"
 
   run () {
-    \ Testing.checkEquals<?>($ExprLookup[LOCAL_VAR]$,"hello")
+    \ Testing.checkEquals($ExprLookup[LOCAL_VAR]$,"hello")
   }
 }
 
@@ -124,7 +124,7 @@ testcase "in context defined in .zeolite-module from regular source" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(ExprLookup.localVar(),99)
+  \ Testing.checkEquals(ExprLookup.localVar(),99)
 }
 
 
@@ -133,7 +133,7 @@ testcase "nested expression defined in .zeolite-module" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>($ExprLookup[META_VAR]$,20)
+  \ Testing.checkEquals($ExprLookup[META_VAR]$,20)
 }
 
 
@@ -142,7 +142,7 @@ testcase "function called on expression" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>($ExprLookup[INT_EXPR]$.formatted(),"4")
+  \ Testing.checkEquals($ExprLookup[INT_EXPR]$.formatted(),"4")
 }
 
 

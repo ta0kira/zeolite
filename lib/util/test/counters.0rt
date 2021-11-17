@@ -24,11 +24,11 @@ unittest zeroIndexed {
   Int index <- 0
 
   traverse (Counter.zeroIndexed(10) -> Int i) {
-    \ Testing.checkEquals<?>(i,index)
+    \ Testing.checkEquals(i,index)
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,10)
+  \ Testing.checkEquals(index,10)
 }
 
 unittest revZeroIndexed {
@@ -36,81 +36,81 @@ unittest revZeroIndexed {
 
   traverse (Counter.revZeroIndexed(10) -> Int i) {
     index <- index-1
-    \ Testing.checkEquals<?>(i,index)
+    \ Testing.checkEquals(i,index)
   }
 
-  \ Testing.checkEquals<?>(index,0)
+  \ Testing.checkEquals(index,0)
 }
 
 unittest unlimitedCount {
   Int index <- 0
 
   traverse (Counter.unlimited() -> Int i) {
-    \ Testing.checkEquals<?>(i,index)
+    \ Testing.checkEquals(i,index)
     if ((index <- index+1) >= 10) {
       break
     }
   }
 
-  \ Testing.checkEquals<?>(index,10)
+  \ Testing.checkEquals(index,10)
 }
 
 unittest times {
   Int index <- 0
 
-  traverse ("message" `Repeat:times<?>` 10 -> String m) {
-    \ Testing.checkEquals<?>(m,"message")
+  traverse ("message" `Repeat:times` 10 -> String m) {
+    \ Testing.checkEquals(m,"message")
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,10)
+  \ Testing.checkEquals(index,10)
 }
 
 unittest unlimitedValue {
   Int index <- 0
 
-  traverse (Repeat:unlimited<?>("message") -> String m) {
-    \ Testing.checkEquals<?>(m,"message")
+  traverse (Repeat:unlimited("message") -> String m) {
+    \ Testing.checkEquals(m,"message")
     if ((index <- index+1) >= 10) {
       break
     }
   }
 
-  \ Testing.checkEquals<?>(index,10)
+  \ Testing.checkEquals(index,10)
 }
 
 unittest minMax {
   scoped {
-    Int x, Int y <- Ranges:minMax<?>(10,3)
+    Int x, Int y <- Ranges:minMax(10,3)
   } in {
-    \ Testing.checkEquals<?>(x,3)
-    \ Testing.checkEquals<?>(y,10)
+    \ Testing.checkEquals(x,3)
+    \ Testing.checkEquals(y,10)
   }
 
   scoped {
-    Int x, Int y <- Ranges:minMax<?>(3,10)
+    Int x, Int y <- Ranges:minMax(3,10)
   } in {
-    \ Testing.checkEquals<?>(x,3)
-    \ Testing.checkEquals<?>(y,10)
+    \ Testing.checkEquals(x,3)
+    \ Testing.checkEquals(y,10)
   }
 }
 
 unittest min {
   scoped {
-    Int x <- Ranges:min<?>(10,3)
-  } in \ Testing.checkEquals<?>(x,3)
+    Int x <- Ranges:min(10,3)
+  } in \ Testing.checkEquals(x,3)
 
   scoped {
-    Int x <- Ranges:min<?>(3,10)
-  } in \ Testing.checkEquals<?>(x,3)
+    Int x <- Ranges:min(3,10)
+  } in \ Testing.checkEquals(x,3)
 }
 
 unittest max {
   scoped {
-    Int x <- Ranges:max<?>(10,3)
-  } in \ Testing.checkEquals<?>(x,10)
+    Int x <- Ranges:max(10,3)
+  } in \ Testing.checkEquals(x,10)
 
   scoped {
-    Int x <- Ranges:max<?>(3,10)
-  } in \ Testing.checkEquals<?>(x,10)
+    Int x <- Ranges:max(3,10)
+  } in \ Testing.checkEquals(x,10)
 }

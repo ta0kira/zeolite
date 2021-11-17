@@ -46,19 +46,19 @@ define SearchTree {
   }
 
   defaultOrder () {
-    return ForwardTreeOrder:create<?,?>(tree.getRoot())
+    return ForwardTreeOrder:create(tree.getRoot())
   }
 
   reverseOrder () {
-    return ReverseTreeOrder:create<?,?>(tree.getRoot())
+    return ReverseTreeOrder:create(tree.getRoot())
   }
 
   getForward (k) {
-    return ForwardTreeOrder:seek<?,?>(k,tree.getRoot())
+    return ForwardTreeOrder:seek(k,tree.getRoot())
   }
 
   getReverse (k) {
-    return ReverseTreeOrder:seek<?,?>(k,tree.getRoot())
+    return ReverseTreeOrder:seek(k,tree.getRoot())
   }
 }
 

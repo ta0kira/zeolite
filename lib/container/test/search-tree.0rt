@@ -29,7 +29,7 @@ unittest integrationTest { $DisableCoverage$
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     \ tree.set(new,i)
-    \ Testing.checkEquals<?>(tree.size(),i+1)
+    \ Testing.checkEquals(tree.size(),i+1)
   }
 
   // Check and remove values.
@@ -55,7 +55,7 @@ unittest integrationTest { $DisableCoverage$
           .writeTo(SimpleOutput.error())
     }
     \ tree.remove(new)
-    \ Testing.checkEquals<?>(tree.size(),count-i-1)
+    \ Testing.checkEquals(tree.size(),count-i-1)
   }
 }
 
@@ -73,12 +73,12 @@ unittest defaultOrder {
   // Validate the traversal order.
   Int index <- 0
   traverse (tree.defaultOrder() -> KeyValue<Int,Int> entry) {
-    \ Testing.checkEquals<?>(entry.getKey(),index)
-    \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
+    \ Testing.checkEquals(entry.getKey(),index)
+    \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,max)
+  \ Testing.checkEquals(index,max)
 }
 
 unittest reverseOrder {
@@ -96,11 +96,11 @@ unittest reverseOrder {
   Int index <- max
   traverse (tree.reverseOrder() -> KeyValue<Int,Int> entry) {
     index <- index-1
-    \ Testing.checkEquals<?>(entry.getKey(),index)
-    \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
+    \ Testing.checkEquals(entry.getKey(),index)
+    \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
   }
 
-  \ Testing.checkEquals<?>(index,0)
+  \ Testing.checkEquals(index,0)
 }
 
 unittest getForward {
@@ -118,11 +118,11 @@ unittest getForward {
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
     traverse (tree.getForward(index) -> KeyValue<Int,Int> entry) {
-      \ Testing.checkEquals<?>(entry.getKey(),index)
-      \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
+      \ Testing.checkEquals(entry.getKey(),index)
+      \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
       index <- index+1
     }
-    \ Testing.checkEquals<?>(index,max)
+    \ Testing.checkEquals(index,max)
   }
 }
 
@@ -135,7 +135,7 @@ unittest getForwardNotFound {
   } in if (!present(start)) {
     fail("Failed")
   } else {
-    \ Testing.checkEquals<?>(require(start).get().getKey(),5)
+    \ Testing.checkEquals(require(start).get().getKey(),5)
   }
 
   scoped {
@@ -160,11 +160,11 @@ unittest getReverse {
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
     traverse (tree.getReverse(index) -> KeyValue<Int,Int> entry) {
-      \ Testing.checkEquals<?>(entry.getKey(),index)
-      \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
+      \ Testing.checkEquals(entry.getKey(),index)
+      \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
       index <- index-1
     }
-    \ Testing.checkEquals<?>(index,-1)
+    \ Testing.checkEquals(index,-1)
   }
 }
 
@@ -177,7 +177,7 @@ unittest getReverseNotFound {
   } in if (!present(start)) {
     fail("Failed")
   } else {
-    \ Testing.checkEquals<?>(require(start).get().getKey(),1)
+    \ Testing.checkEquals(require(start).get().getKey(),1)
   }
 
   scoped {
@@ -191,16 +191,16 @@ unittest duplicate {
   SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new().set(1,1).set(2,2).set(3,3)
 
   SearchTree<Int,Int> copy <- tree.duplicate()
-  \ Testing.checkEquals<?>(copy.size(),3)
-  \ Testing.checkOptional<?>(copy.get(1),1)
-  \ Testing.checkOptional<?>(copy.get(2),2)
-  \ Testing.checkOptional<?>(copy.get(3),3)
+  \ Testing.checkEquals(copy.size(),3)
+  \ Testing.checkOptional(copy.get(1),1)
+  \ Testing.checkOptional(copy.get(2),2)
+  \ Testing.checkOptional(copy.get(3),3)
 
   \ copy.remove(2)
   $Hidden[copy]$
 
-  \ Testing.checkEquals<?>(tree.size(),3)
-  \ Testing.checkOptional<?>(tree.get(1),1)
-  \ Testing.checkOptional<?>(tree.get(2),2)
-  \ Testing.checkOptional<?>(tree.get(3),3)
+  \ Testing.checkEquals(tree.size(),3)
+  \ Testing.checkOptional(tree.get(1),1)
+  \ Testing.checkOptional(tree.get(2),2)
+  \ Testing.checkOptional(tree.get(3),3)
 }

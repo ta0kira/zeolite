@@ -90,7 +90,7 @@ testcase "@category member refers to @category member" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(Test:get(),2)
+  \ Testing.checkEquals(Test:get(),2)
 }
 
 concrete Test {

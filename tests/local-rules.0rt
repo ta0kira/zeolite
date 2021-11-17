@@ -52,7 +52,7 @@ unittest test {
     $ReadOnly[foo]$
   }
   foo <- 2
-  \ Testing.checkEquals<?>(foo,2)
+  \ Testing.checkEquals(foo,2)
 }
 
 
@@ -82,7 +82,7 @@ unittest test {
     $ReadOnly[foo]$
   }
   foo <- 2
-  \ Testing.checkEquals<?>(foo,2)
+  \ Testing.checkEquals(foo,2)
 }
 
 
@@ -97,9 +97,9 @@ unittest test {
     foo <- 2
     $ReadOnly[foo]$
   }
-  \ Testing.checkEquals<?>(foo,2)
+  \ Testing.checkEquals(foo,2)
   foo <- 3
-  \ Testing.checkEquals<?>(foo,3)
+  \ Testing.checkEquals(foo,3)
 }
 
 
@@ -151,7 +151,7 @@ unittest test {
   cleanup {
     foo <- 2
   } in $ReadOnly[foo]$
-  \ Testing.checkEquals<?>(foo,2)
+  \ Testing.checkEquals(foo,2)
 }
 
 
@@ -181,7 +181,7 @@ unittest test {
     $Hidden[foo]$
   }
   foo <- 2
-  \ Testing.checkEquals<?>(foo,2)
+  \ Testing.checkEquals(foo,2)
 }
 
 
@@ -240,9 +240,9 @@ unittest test {
     foo <- 2
     $Hidden[foo]$
   }
-  \ Testing.checkEquals<?>(foo,2)
+  \ Testing.checkEquals(foo,2)
   foo <- 3
-  \ Testing.checkEquals<?>(foo,3)
+  \ Testing.checkEquals(foo,3)
 }
 
 
@@ -321,7 +321,7 @@ testcase "Hidden @category member is visible during init" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(Type:get(),2)
+  \ Testing.checkEquals(Type:get(),2)
 }
 
 concrete Type {
@@ -404,7 +404,7 @@ testcase "ReadOnly @value member can be initialized" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(Type.create().get(),1)
+  \ Testing.checkEquals(Type.create().get(),1)
 }
 
 concrete Type {

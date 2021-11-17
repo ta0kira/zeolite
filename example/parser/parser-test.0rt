@@ -4,10 +4,10 @@ testcase "parse data from a file" {
 
 unittest test {
   String raw <- FileTesting.forceReadFile($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
-  ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll<?>` raw
+  ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll` raw
   TestData data <- errorOrData.getValue()
 
-  \ Testing.checkEquals<?>(data.getName(),"example data")
-  \ Testing.checkEquals<?>(data.getDescription(),"THIS_IS_A_TOKEN")
+  \ Testing.checkEquals(data.getName(),"example data")
+  \ Testing.checkEquals(data.getDescription(),"THIS_IS_A_TOKEN")
   \ Testing.checkFalse(data.getBoolean())
 }

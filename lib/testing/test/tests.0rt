@@ -21,7 +21,7 @@ testcase "checkEquals success" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(13,13)
+  \ Testing.checkEquals(13,13)
 }
 
 
@@ -32,7 +32,7 @@ testcase "checkEquals fail" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(13,15)
+  \ Testing.checkEquals(13,15)
 }
 
 
@@ -41,12 +41,12 @@ testcase "checkEmpty success" {
 }
 
 unittest formatted {
-  \ Testing.checkEmpty<?>(empty)
+  \ Testing.checkEmpty(empty)
 }
 
 unittest notFormatted {
   optional CharBuffer value <- empty
-  \ Testing.checkEmpty<?>(value)
+  \ Testing.checkEmpty(value)
 }
 
 
@@ -57,7 +57,7 @@ testcase "checkEmpty fail formatted" {
 }
 
 unittest test {
-  \ Testing.checkEmpty<?>(13)
+  \ Testing.checkEmpty(13)
 }
 
 
@@ -69,7 +69,7 @@ testcase "checkEmpty fail unformatted" {
 
 unittest test {
   CharBuffer value <- CharBuffer.new(10)
-  \ Testing.checkEmpty<?>(value)
+  \ Testing.checkEmpty(value)
 }
 
 
@@ -98,7 +98,7 @@ testcase "checkOptional success" {
 
 unittest test {
   \ Testing.checkOptional<Int>(empty,empty)
-  \ Testing.checkOptional<?>(13,13)
+  \ Testing.checkOptional(13,13)
 }
 
 
@@ -109,7 +109,7 @@ testcase "checkOptional fail empty" {
 }
 
 unittest test {
-  \ Testing.checkOptional<?>(13,empty)
+  \ Testing.checkOptional(13,empty)
 }
 
 
@@ -120,7 +120,7 @@ testcase "checkOptional fail present" {
 }
 
 unittest test {
-  \ Testing.checkOptional<?>(empty,13)
+  \ Testing.checkOptional(empty,13)
 }
 
 
@@ -129,7 +129,7 @@ testcase "checkBetween success" {
 }
 
 unittest test {
-  \ Testing.checkBetween<?>(13,13,15)
+  \ Testing.checkBetween(13,13,15)
 }
 
 
@@ -141,7 +141,7 @@ testcase "checkBetween fail" {
 }
 
 unittest test {
-  \ Testing.checkBetween<?>(13,14,15)
+  \ Testing.checkBetween(13,14,15)
 }
 
 
@@ -153,7 +153,7 @@ testcase "checkBetween bad range" {
 }
 
 unittest test {
-  \ Testing.checkBetween<?>(14,15,13)
+  \ Testing.checkBetween(14,15,13)
 }
 
 
@@ -162,7 +162,7 @@ testcase "checkGreaterThan success" {
 }
 
 unittest test {
-  \ Testing.checkGreaterThan<?>(13,11)
+  \ Testing.checkGreaterThan(13,11)
 }
 
 
@@ -173,7 +173,7 @@ testcase "checkGreaterThan fail" {
 }
 
 unittest test {
-  \ Testing.checkGreaterThan<?>(13,14)
+  \ Testing.checkGreaterThan(13,14)
 }
 
 
@@ -182,7 +182,7 @@ testcase "checkLessThan success" {
 }
 
 unittest test {
-  \ Testing.checkLessThan<?>(13,14)
+  \ Testing.checkLessThan(13,14)
 }
 
 
@@ -193,7 +193,7 @@ testcase "checkLessThan fail" {
 }
 
 unittest test {
-  \ Testing.checkLessThan<?>(13,11)
+  \ Testing.checkLessThan(13,11)
 }
 
 

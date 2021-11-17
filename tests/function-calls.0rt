@@ -454,25 +454,25 @@ testcase "large dispatch tables" {
 }
 
 unittest callDispatch {
-  \ Testing.checkEquals<?>(Type.new().get(),00)
-  \ Testing.checkEquals<?>(Type.new().get01(),01)
-  \ Testing.checkEquals<?>(Type.new().get02(),02)
-  \ Testing.checkEquals<?>(Type.new().get03(),03)
-  \ Testing.checkEquals<?>(Type.new().get04(),04)
-  \ Testing.checkEquals<?>(Type.new().get05(),05)
-  \ Testing.checkEquals<?>(Type.new().get06(),06)
-  \ Testing.checkEquals<?>(Type.new().get07(),07)
-  \ Testing.checkEquals<?>(Type.new().get08(),08)
-  \ Testing.checkEquals<?>(Type.new().get09(),09)
-  \ Testing.checkEquals<?>(Type.new().get10(),10)
-  \ Testing.checkEquals<?>(Type.new().get11(),11)
-  \ Testing.checkEquals<?>(Type.new().get12(),12)
-  \ Testing.checkEquals<?>(Type.new().get13(),13)
-  \ Testing.checkEquals<?>(Type.new().get14(),14)
-  \ Testing.checkEquals<?>(Type.new().get15(),15)
-  \ Testing.checkEquals<?>(Type.new().get16(),16)
-  \ Testing.checkEquals<?>(Type.new().get17(),17)
-  \ Testing.checkEquals<?>(Type.new().get18(),18)
+  \ Testing.checkEquals(Type.new().get(),00)
+  \ Testing.checkEquals(Type.new().get01(),01)
+  \ Testing.checkEquals(Type.new().get02(),02)
+  \ Testing.checkEquals(Type.new().get03(),03)
+  \ Testing.checkEquals(Type.new().get04(),04)
+  \ Testing.checkEquals(Type.new().get05(),05)
+  \ Testing.checkEquals(Type.new().get06(),06)
+  \ Testing.checkEquals(Type.new().get07(),07)
+  \ Testing.checkEquals(Type.new().get08(),08)
+  \ Testing.checkEquals(Type.new().get09(),09)
+  \ Testing.checkEquals(Type.new().get10(),10)
+  \ Testing.checkEquals(Type.new().get11(),11)
+  \ Testing.checkEquals(Type.new().get12(),12)
+  \ Testing.checkEquals(Type.new().get13(),13)
+  \ Testing.checkEquals(Type.new().get14(),14)
+  \ Testing.checkEquals(Type.new().get15(),15)
+  \ Testing.checkEquals(Type.new().get16(),16)
+  \ Testing.checkEquals(Type.new().get17(),17)
+  \ Testing.checkEquals(Type.new().get18(),18)
 }
 
 unittest reduceBuiltin {
@@ -719,7 +719,7 @@ testcase "discarded args are skipped over" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(Value.create().call(1,"mess",2,"age"),"message")
+  \ Testing.checkEquals(Value.create().call(1,"mess",2,"age"),"message")
 }
 
 concrete Value {

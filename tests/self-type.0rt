@@ -223,8 +223,8 @@ unittest test {
   Type<Formatted> value2 <- Type<Formatted>.create()
   \ Testing.checkTrue(value1.checkFrom<Type<Formatted>>())
   \ Testing.checkFalse(value2.checkFrom<Type<String>>())
-  \ Testing.checkFalse(value1.checkTo<?>(value2))
-  \ Testing.checkTrue(value2.checkTo<?>(value1))
+  \ Testing.checkFalse(value1.checkTo(value2))
+  \ Testing.checkTrue(value2.checkTo(value1))
 }
 
 concrete Type<|#x> {
@@ -253,7 +253,7 @@ testcase "#self in typename" {
 }
 
 unittest test {
-  \ Testing.checkEquals<?>(Type<Bool>.get(),"Type<Type<Bool>>")
+  \ Testing.checkEquals(Type<Bool>.get(),"Type<Type<Bool>>")
 }
 
 concrete Type<#x> {
@@ -272,7 +272,7 @@ testcase "#self with type inference" {
 }
 
 unittest test {
-  \ Type.create().call<?>("message")
+  \ Type.create().call("message")
 }
 
 concrete Type {
@@ -374,12 +374,12 @@ testcase "#self preserves type in implementations" {
 
 unittest withConcrete {
   Type value <- Type.create()
-  \ Testing.checkEquals<?>(value.next().prev().prev().next().next().get(),1)
+  \ Testing.checkEquals(value.next().prev().prev().next().next().get(),1)
 }
 
 unittest withIntersect {
   [Cell<Int>&Forward&Reverse] value <- Type.create()
-  \ Testing.checkEquals<?>(value.next().prev().prev().next().next().get(),1)
+  \ Testing.checkEquals(value.next().prev().prev().next().next().get(),1)
 }
 
 @value interface Cell<|#x> {
@@ -431,7 +431,7 @@ testcase "#self preserves type in function param filters" {
 
 unittest test {
   Type value <- Helper.new<Type>()
-  \ Testing.checkEquals<?>((value `Advance.by<?>` 3).get(),3)
+  \ Testing.checkEquals((value `Advance.by` 3).get(),3)
 }
 
 @value interface Forward {

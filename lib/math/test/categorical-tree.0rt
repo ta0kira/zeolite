@@ -37,16 +37,16 @@ unittest simpleInsertion {
       .push(5).push(5).push(5).push(5)
       .push(6).push(6)
 
-  \ Testing.checkEquals<?>(tree.getTotal(),expected.size())
-  \ Testing.checkEquals<?>(tree.getWeight(1),3)
-  \ Testing.checkEquals<?>(tree.getWeight(2),7)
-  \ Testing.checkEquals<?>(tree.getWeight(3),1)
-  \ Testing.checkEquals<?>(tree.getWeight(4),3)
-  \ Testing.checkEquals<?>(tree.getWeight(5),4)
-  \ Testing.checkEquals<?>(tree.getWeight(6),2)
+  \ Testing.checkEquals(tree.getTotal(),expected.size())
+  \ Testing.checkEquals(tree.getWeight(1),3)
+  \ Testing.checkEquals(tree.getWeight(2),7)
+  \ Testing.checkEquals(tree.getWeight(3),1)
+  \ Testing.checkEquals(tree.getWeight(4),3)
+  \ Testing.checkEquals(tree.getWeight(5),4)
+  \ Testing.checkEquals(tree.getWeight(6),2)
 
   traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
-    \ Testing.checkEquals<?>(tree.locate(pos),expected.readAt(pos))
+    \ Testing.checkEquals(tree.locate(pos),expected.readAt(pos))
   }
 }
 
@@ -71,22 +71,22 @@ unittest modifySizes {
       .push(6).push(6)
       .push(7).push(7).push(7)
 
-  \ Testing.checkEquals<?>(tree.getTotal(),expected.size())
-  \ Testing.checkEquals<?>(tree.getWeight(1),3)
-  \ Testing.checkEquals<?>(tree.getWeight(2),7)
-  \ Testing.checkEquals<?>(tree.getWeight(3),0)
-  \ Testing.checkEquals<?>(tree.getWeight(4),3)
-  \ Testing.checkEquals<?>(tree.getWeight(5),1)
-  \ Testing.checkEquals<?>(tree.getWeight(6),2)
-  \ Testing.checkEquals<?>(tree.getWeight(7),3)
+  \ Testing.checkEquals(tree.getTotal(),expected.size())
+  \ Testing.checkEquals(tree.getWeight(1),3)
+  \ Testing.checkEquals(tree.getWeight(2),7)
+  \ Testing.checkEquals(tree.getWeight(3),0)
+  \ Testing.checkEquals(tree.getWeight(4),3)
+  \ Testing.checkEquals(tree.getWeight(5),1)
+  \ Testing.checkEquals(tree.getWeight(6),2)
+  \ Testing.checkEquals(tree.getWeight(7),3)
 
   traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
-    \ Testing.checkEquals<?>(tree.locate(pos),expected.readAt(pos))
+    \ Testing.checkEquals(tree.locate(pos),expected.readAt(pos))
   }
 
   // Use ReadAt aliases for the same functionality.
   traverse (Counter.zeroIndexed(tree.size()) -> Int pos) {
-    \ Testing.checkEquals<?>(tree.readAt(pos),expected.readAt(pos))
+    \ Testing.checkEquals(tree.readAt(pos),expected.readAt(pos))
   }
 }
 
@@ -96,8 +96,8 @@ unittest increment {
     .incrWeight(1)
     .incrWeight(1)
 
-  \ Testing.checkEquals<?>(tree.getTotal(),3)
-  \ Testing.checkEquals<?>(tree.getWeight(1),3)
+  \ Testing.checkEquals(tree.getTotal(),3)
+  \ Testing.checkEquals(tree.getWeight(1),3)
 }
 
 unittest decrement {
@@ -107,22 +107,22 @@ unittest decrement {
     .decrWeight(1)
     .decrWeight(1)
 
-  \ Testing.checkEquals<?>(tree.getTotal(),7)
-  \ Testing.checkEquals<?>(tree.getWeight(1),7)
+  \ Testing.checkEquals(tree.getTotal(),7)
+  \ Testing.checkEquals(tree.getWeight(1),7)
 }
 
 unittest duplicate {
   CategoricalTree<Int> tree <- CategoricalTree<Int>.new().setWeight(1,1).setWeight(2,2)
 
   CategoricalTree<Int> copy <- tree.duplicate()
-  \ Testing.checkEquals<?>(copy.size(),3)
-  \ Testing.checkEquals<?>(copy.getWeight(1),1)
-  \ Testing.checkEquals<?>(copy.getWeight(2),2)
+  \ Testing.checkEquals(copy.size(),3)
+  \ Testing.checkEquals(copy.getWeight(1),1)
+  \ Testing.checkEquals(copy.getWeight(2),2)
 
   \ copy.setWeight(2,0)
-  \ Testing.checkEquals<?>(copy.size(),1)
-  \ Testing.checkEquals<?>(copy.getWeight(1),1)
-  \ Testing.checkEquals<?>(tree.getWeight(2),2)
+  \ Testing.checkEquals(copy.size(),1)
+  \ Testing.checkEquals(copy.getWeight(1),1)
+  \ Testing.checkEquals(tree.getWeight(2),2)
 }
 
 unittest integrationTest { $DisableCoverage$
@@ -159,12 +159,12 @@ unittest integrationTest { $DisableCoverage$
     }
     $ReadOnly[key]$
     $Hidden[node]$
-    \ Testing.checkEquals<?>(tree.locate(pos),key)
+    \ Testing.checkEquals(tree.locate(pos),key)
     remaining <- remaining-1
   }
 
-  \ Testing.checkEmpty<?>(node)
-  \ Testing.checkEquals<?>(remaining,0)
+  \ Testing.checkEmpty(node)
+  \ Testing.checkEquals(remaining,0)
 }
 
 

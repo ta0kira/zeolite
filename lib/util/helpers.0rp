@@ -26,7 +26,7 @@ concrete OrderH {
   //
   // Example:
   //
-  //   Bool lt <- x.defaultOrder() `OrderH:lessThan<?>` y.defaultOrder()
+  //   Bool lt <- x.defaultOrder() `OrderH:lessThan` y.defaultOrder()
   @category lessThan<#x>
     #x defines LessThan<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
@@ -48,7 +48,7 @@ concrete OrderH {
   //
   // Example:
   //
-  //   Bool eq <- x.defaultOrder() `OrderH:equals<?>` y.defaultOrder()
+  //   Bool eq <- x.defaultOrder() `OrderH:equals` y.defaultOrder()
   @category equals<#x>
     #x defines Equals<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
@@ -77,7 +77,7 @@ concrete ReadAtH {
   //
   // Example:
   //
-  //   Bool lt <- x `ReadAtH:lessThan<?>` y
+  //   Bool lt <- x `ReadAtH:lessThan` y
   @category lessThan<#x>
     #x defines LessThan<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
@@ -99,7 +99,7 @@ concrete ReadAtH {
   //
   // Example:
   //
-  //   Bool eq <- x `ReadAtH:equals<?>` y
+  //   Bool eq <- x `ReadAtH:equals` y
   @category equals<#x>
     #x defines Equals<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)

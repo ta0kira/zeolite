@@ -396,7 +396,7 @@ unittest test {
     value <- 1
   } in Int value <- 2
 
-  \ Testing.checkEquals<?>(value,1)
+  \ Testing.checkEquals(value,1)
 }
 
 
@@ -610,13 +610,13 @@ unittest test {
         }
       }
     }
-    \ Testing.checkEquals<?>(x,0)
-    \ Testing.checkEquals<?>(y,2)
-    \ Testing.checkEquals<?>(z,3)
+    \ Testing.checkEquals(x,0)
+    \ Testing.checkEquals(y,2)
+    \ Testing.checkEquals(z,3)
   }
-  \ Testing.checkEquals<?>(x,1)
-  \ Testing.checkEquals<?>(y,2)
-  \ Testing.checkEquals<?>(z,3)
+  \ Testing.checkEquals(x,1)
+  \ Testing.checkEquals(y,2)
+  \ Testing.checkEquals(z,3)
 }
 
 
@@ -634,8 +634,8 @@ unittest test {
   } in {
     while ((called <- called+1) < 3) {
       if (called > 1) {
-        \ Testing.checkEquals<?>(y,2)
-        \ Testing.checkEquals<?>(z,3)
+        \ Testing.checkEquals(y,2)
+        \ Testing.checkEquals(z,3)
       }
       cleanup {
         y <- 2
@@ -647,14 +647,14 @@ unittest test {
         }
       }
     }
-    \ Testing.checkEquals<?>(called,3)
-    \ Testing.checkEquals<?>(x,0)
-    \ Testing.checkEquals<?>(y,2)
-    \ Testing.checkEquals<?>(z,3)
+    \ Testing.checkEquals(called,3)
+    \ Testing.checkEquals(x,0)
+    \ Testing.checkEquals(y,2)
+    \ Testing.checkEquals(z,3)
   }
-  \ Testing.checkEquals<?>(x,1)
-  \ Testing.checkEquals<?>(y,2)
-  \ Testing.checkEquals<?>(z,3)
+  \ Testing.checkEquals(x,1)
+  \ Testing.checkEquals(y,2)
+  \ Testing.checkEquals(z,3)
 }
 
 
@@ -667,16 +667,16 @@ unittest test {
   scoped {
     Int x, Int y, Int z <- value.call()
   } in {
-    \ Testing.checkEquals<?>(x,0)
-    \ Testing.checkEquals<?>(y,0)
-    \ Testing.checkEquals<?>(z,0)
+    \ Testing.checkEquals(x,0)
+    \ Testing.checkEquals(y,0)
+    \ Testing.checkEquals(z,0)
   }
   scoped {
     Int x, Int y, Int z <- value.get()
   } in {
-    \ Testing.checkEquals<?>(x,1)
-    \ Testing.checkEquals<?>(y,2)
-    \ Testing.checkEquals<?>(z,3)
+    \ Testing.checkEquals(x,1)
+    \ Testing.checkEquals(y,2)
+    \ Testing.checkEquals(z,3)
   }
 }
 

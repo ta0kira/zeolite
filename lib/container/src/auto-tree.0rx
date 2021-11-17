@@ -304,7 +304,7 @@ define ForwardTreeOrder {
   }
 
   get () {
-    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
+    return TreeKeyValue:create(node.getKey(),node.getValue())
   }
 }
 
@@ -353,6 +353,6 @@ define ReverseTreeOrder {
   }
 
   get () {
-    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
+    return TreeKeyValue:create(node.getKey(),node.getValue())
   }
 }

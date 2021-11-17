@@ -33,8 +33,8 @@ unittest sort {
     \ expected.append(i/3)
   }
 
-  \ Sorting:sort<?>(original)
-  \ Testing.checkEquals<?>(original,expected)
+  \ Sorting:sort(original)
+  \ Testing.checkEquals(original,expected)
 }
 
 unittest sortWith { $DisableCoverage$
@@ -50,15 +50,15 @@ unittest sortWith { $DisableCoverage$
   }
 
   \ Sorting:sortWith<?,Reversed<Int>>(original)
-  \ Testing.checkEquals<?>(original,expected)
+  \ Testing.checkEquals(original,expected)
 }
 
 unittest sortEmpty {
   TestSequence original <- TestSequence.create()
   TestSequence expected <- TestSequence.create()
 
-  \ Sorting:sort<?>(original)
-  \ Testing.checkEquals<?>(original,expected)
+  \ Sorting:sort(original)
+  \ Testing.checkEquals(original,expected)
 }
 
 unittest reverseEvenSize {
@@ -75,8 +75,8 @@ unittest reverseEvenSize {
     \ original.append(i)
   }
 
-  \ Sorting:reverse<?>(original)
-  \ Testing.checkEquals<?>(original,expected)
+  \ Sorting:reverse(original)
+  \ Testing.checkEquals(original,expected)
 }
 
 unittest reverseOddSize { $DisableCoverage$
@@ -93,16 +93,16 @@ unittest reverseOddSize { $DisableCoverage$
     \ original.append(i)
   }
 
-  \ Sorting:reverse<?>(original)
-  \ Testing.checkEquals<?>(original,expected)
+  \ Sorting:reverse(original)
+  \ Testing.checkEquals(original,expected)
 }
 
 unittest reverseEmpty {
   TestSequence original <- TestSequence.create()
   TestSequence expected <- TestSequence.create()
 
-  \ Sorting:reverse<?>(original)
-  \ Testing.checkEquals<?>(original,expected)
+  \ Sorting:reverse(original)
+  \ Testing.checkEquals(original,expected)
 }
 
 unittest sortList {
@@ -117,10 +117,10 @@ unittest sortList {
     \ expected.append(i/3)
   }
 
-  optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(builder.build(){0})
+  optional LinkedNode<Int> actual <- Sorting:sortList(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
-    \ Testing.checkEquals<?>(require(actual).get(),n)
+    \ Testing.checkEquals(require(actual).get(),n)
   } update {
     actual <- require(actual).next()
   }
@@ -139,10 +139,10 @@ unittest sortListSingle { $DisableCoverage$
     \ expected.append(i/3)
   }
 
-  optional ForwardNode<Int> actual <- Sorting:sortList<?,?>(builder.build(){0})
+  optional ForwardNode<Int> actual <- Sorting:sortList(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
-    \ Testing.checkEquals<?>(require(actual).get(),n)
+    \ Testing.checkEquals(require(actual).get(),n)
   } update {
     actual <- require(actual).next()
   }
@@ -165,10 +165,10 @@ unittest sortListPow2 { $DisableCoverage$
     \ expected.append(i/3)
   }
 
-  optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(builder.build(){0})
+  optional LinkedNode<Int> actual <- Sorting:sortList(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
-    \ Testing.checkEquals<?>(require(actual).get(),n)
+    \ Testing.checkEquals(require(actual).get(),n)
   } update {
     actual <- require(actual).next()
   }
@@ -190,7 +190,7 @@ unittest sortListWith { $DisableCoverage$
   optional LinkedNode<Int> actual <- Sorting:sortListWith<?,?,Reversed<Int>>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
-    \ Testing.checkEquals<?>(require(actual).get(),n)
+    \ Testing.checkEquals(require(actual).get(),n)
   } update {
     actual <- require(actual).next()
   }
@@ -211,10 +211,10 @@ unittest reverseList {
     \ builder.append(i)
   }
 
-  optional LinkedNode<Int> reversed <- Sorting:reverseList<?,?>(builder.build(){0})
+  optional LinkedNode<Int> reversed <- Sorting:reverseList(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(reversed).get(),value)
+    \ Testing.checkEquals(require(reversed).get(),value)
   } update {
     reversed <- require(reversed).next()
   }
@@ -235,10 +235,10 @@ unittest reverseListSingle { $DisableCoverage$
     \ builder.append(i)
   }
 
-  optional ForwardNode<Int> reversed <- Sorting:reverseList<?,?>(builder.build(){0})
+  optional ForwardNode<Int> reversed <- Sorting:reverseList(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals<?>(require(reversed).get(),value)
+    \ Testing.checkEquals(require(reversed).get(),value)
   } update {
     reversed <- require(reversed).next()
   }
@@ -294,6 +294,6 @@ define TestSequence {
   }
 
   equals (x,y) {
-    return x `ReadAtH:equals<?>` y
+    return x `ReadAtH:equals` y
   }
 }

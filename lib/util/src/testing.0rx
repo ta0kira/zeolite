@@ -37,7 +37,7 @@ define UtilTesting {
           .append(x.getError())
           .build())
     } else {
-      \ Testing.checkEquals<?>(x.getValue(),y)
+      \ Testing.checkEquals(x.getValue(),y)
     }
   }
 
@@ -52,7 +52,7 @@ define UtilTesting {
           .append(x.getError())
           .build())
     } else {
-      \ Testing.checkBetween<?>(x.getValue(),l,h)
+      \ Testing.checkBetween(x.getValue(),l,h)
     }
   }
 }

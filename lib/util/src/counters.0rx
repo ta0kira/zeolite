@@ -155,11 +155,11 @@ define Repeat {
 
 define Ranges {
   min (x,y) {
-    return minMax<?>(x,y){0}
+    return minMax(x,y){0}
   }
 
   max (x,y) (z) {
-    return minMax<?>(x,y){1}
+    return minMax(x,y){1}
   }
 
   minMax (x,y) {

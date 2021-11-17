@@ -21,10 +21,10 @@ testcase "comparator helper tests" {
 }
 
 unittest keyValueHLessThan {
-  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"a"))
-  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"))
-  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"))
-  \ Testing.checkTrue(KV.new(1,"b") `KeyValueH:lessThan<?,?>` KV.new(2,"a"))
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:lessThan` KV.new(1,"a"))
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:lessThan` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:lessThan` KV.new(1,"b"))
+  \ Testing.checkTrue(KV.new(1,"b") `KeyValueH:lessThan` KV.new(2,"a"))
 }
 
 unittest keyValueHLessThanWith {
@@ -40,10 +40,10 @@ unittest keyValueHLessThanWith {
 }
 
 unittest keyValueHEquals {
-  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"a"))
-  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"))
-  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"))
-  \ Testing.checkFalse(KV.new(1,"b") `KeyValueH:equals<?,?>` KV.new(2,"a"))
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:equals` KV.new(1,"a"))
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:equals` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:equals` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(1,"b") `KeyValueH:equals` KV.new(2,"a"))
 }
 
 unittest keyValueHEqualsWith {

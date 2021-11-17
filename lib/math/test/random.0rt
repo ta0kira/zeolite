@@ -83,11 +83,11 @@ unittest exponential { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ Testing.checkGreaterThan<?>(value,0.0)
+    \ Testing.checkGreaterThan(value,0.0)
     sum <- sum+value
   }
 
-  \ Testing.checkBetween<?>(sum/count.asFloat(),0.9/lambda,1.1/lambda)
+  \ Testing.checkBetween(sum/count.asFloat(),0.9/lambda,1.1/lambda)
 }
 
 unittest gaussian { $DisableCoverage$
@@ -103,7 +103,7 @@ unittest gaussian { $DisableCoverage$
     sum <- sum+random.generate()
   }
 
-  \ Testing.checkBetween<?>(sum/count.asFloat(),mean-0.1*sd,mean+0.1*sd)
+  \ Testing.checkBetween(sum/count.asFloat(),mean-0.1*sd,mean+0.1*sd)
 }
 
 unittest uniform { $DisableCoverage$
@@ -117,11 +117,11 @@ unittest uniform { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ Testing.checkBetween<?>(value,min,max)
+    \ Testing.checkBetween(value,min,max)
     sum <- sum+value
   }
 
-  \ Testing.checkBetween<?>(sum/count.asFloat(),min-0.1*(max-min),max-0.1*(max-min))
+  \ Testing.checkBetween(sum/count.asFloat(),min-0.1*(max-min),max-0.1*(max-min))
 }
 
 
@@ -145,7 +145,7 @@ unittest exponential {
 
   \ Testing.checkFalse(v1 == v2)
   \ Testing.checkFalse(v1 == v3)
-  \ Testing.checkEquals<?>(v3,v4)
+  \ Testing.checkEquals(v3,v4)
 }
 
 unittest gaussian {
@@ -165,7 +165,7 @@ unittest gaussian {
 
   \ Testing.checkFalse(v1 == v2)
   \ Testing.checkFalse(v1 == v3)
-  \ Testing.checkEquals<?>(v3,v4)
+  \ Testing.checkEquals(v3,v4)
 }
 
 unittest uniform {
@@ -185,7 +185,7 @@ unittest uniform {
 
   \ Testing.checkFalse(v1 == v2)
   \ Testing.checkFalse(v1 == v3)
-  \ Testing.checkEquals<?>(v3,v4)
+  \ Testing.checkEquals(v3,v4)
 }
 
 
@@ -208,15 +208,15 @@ unittest permuteFrom {
       .append("c")
 
   Vector<String> output <- Vector:create<String>()
-  \ Randomize:permuteFrom<?>(tree,RandomUniform.new(0.0,1.0),output)
-  \ Sorting:sort<?>(output)
+  \ Randomize:permuteFrom(tree,RandomUniform.new(0.0,1.0),output)
+  \ Sorting:sort(output)
 
-  \ Testing.checkEquals<?>(output.size(),expected.size())
+  \ Testing.checkEquals(output.size(),expected.size())
   traverse (Counter.zeroIndexed(output.size()) -> Int pos) {
-    \ Testing.checkEquals<?>(output.readAt(pos),expected.readAt(pos))
+    \ Testing.checkEquals(output.readAt(pos),expected.readAt(pos))
   }
 
-  \ Testing.checkEquals<?>(tree.getWeight("a"),2)
-  \ Testing.checkEquals<?>(tree.getWeight("b"),3)
-  \ Testing.checkEquals<?>(tree.getWeight("c"),1)
+  \ Testing.checkEquals(tree.getWeight("a"),2)
+  \ Testing.checkEquals(tree.getWeight("b"),3)
+  \ Testing.checkEquals(tree.getWeight("c"),1)
 }

@@ -68,12 +68,12 @@ unittest testSleep {
   Float start <- Realtime.monoSeconds()
   \ Realtime.sleepSeconds(0.5)
   Float stop <- Realtime.monoSeconds()
-  \ Testing.checkBetween<?>(stop-start,0.5,0.6)
+  \ Testing.checkBetween(stop-start,0.5,0.6)
 }
 
 unittest testPrecise {
   Float start <- Realtime.monoSeconds()
   \ Realtime.sleepSecondsPrecise(0.5)
   Float stop <- Realtime.monoSeconds()
-  \ Testing.checkBetween<?>(stop-start,0.5,0.51)
+  \ Testing.checkBetween(stop-start,0.5,0.51)
 }

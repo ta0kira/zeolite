@@ -22,12 +22,12 @@ testcase "Vector tests" {
 
 unittest createSize {
   Vector<Int> values <- Vector:createSize<Int>(10)
-  \ Testing.checkEquals<?>(values.size(),10)
+  \ Testing.checkEquals(values.size(),10)
 
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
-    \ Testing.checkEquals<?>(values.readAt(i),Int.default())
+    \ Testing.checkEquals(values.readAt(i),Int.default())
   } update {
     i <- i+1
   }
@@ -35,13 +35,13 @@ unittest createSize {
 
 unittest copyFrom {
   String original <- "abcde"
-  Vector<Char> values <- Vector:copyFrom<?>(original)
-  \ Testing.checkEquals<?>(values.size(),original.size())
+  Vector<Char> values <- Vector:copyFrom(original)
+  \ Testing.checkEquals(values.size(),original.size())
 
   scoped {
     Int i <- 0
   } in while (i < original.size()) {
-    \ Testing.checkEquals<?>(values.readAt(i),original.readAt(i))
+    \ Testing.checkEquals(values.readAt(i),original.readAt(i))
   } update {
     i <- i+1
   }
@@ -54,16 +54,16 @@ unittest append {
     Int i <- 0
   } in while (i < 10) {
     \ values.append(i)
-    \ Testing.checkEquals<?>(values.size(),i+1)
+    \ Testing.checkEquals(values.size(),i+1)
   } update {
     i <- i+1
   }
-  \ Testing.checkEquals<?>(values.size(),10)
+  \ Testing.checkEquals(values.size(),10)
 
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
-    \ Testing.checkEquals<?>(values.readAt(i),i)
+    \ Testing.checkEquals(values.readAt(i),i)
   } update {
     i <- i+1
   }
@@ -76,21 +76,21 @@ unittest pushAndPop {
     Int i <- 0
   } in while (i < 10) {
     \ values.push(i)
-    \ Testing.checkEquals<?>(values.size(),i+1)
+    \ Testing.checkEquals(values.size(),i+1)
   } update {
     i <- i+1
   }
-  \ Testing.checkEquals<?>(values.size(),10)
+  \ Testing.checkEquals(values.size(),10)
 
   scoped {
     Int i <- 0
   } in while (i < 10) {
-    \ Testing.checkEquals<?>(values.pop(),10-i-1)
-    \ Testing.checkEquals<?>(values.size(),10-i-1)
+    \ Testing.checkEquals(values.pop(),10-i-1)
+    \ Testing.checkEquals(values.size(),10-i-1)
   } update {
     i <- i+1
   }
-  \ Testing.checkEquals<?>(values.size(),0)
+  \ Testing.checkEquals(values.size(),0)
 }
 
 unittest writeAt {
@@ -107,7 +107,7 @@ unittest writeAt {
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
-    \ Testing.checkEquals<?>(values.readAt(i),2*i)
+    \ Testing.checkEquals(values.readAt(i),2*i)
   } update {
     i <- i+1
   }
@@ -124,25 +124,25 @@ unittest traverseVector {
   \ vector.push(1)
 
   traverse (vector.defaultOrder() -> Int i) {
-    \ Testing.checkEquals<?>(i,vector.readAt(index))
+    \ Testing.checkEquals(i,vector.readAt(index))
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,6)
+  \ Testing.checkEquals(index,6)
 }
 
 unittest duplicate {
   Vector<Int> vector <- Vector:create<Int>().push(1).push(2)
 
   Vector<Int> copy <- vector.duplicate()
-  \ Testing.checkEquals<?>(copy.size(),2)
-  \ Testing.checkEquals<?>(copy.readAt(0),1)
-  \ Testing.checkEquals<?>(copy.readAt(1),2)
+  \ Testing.checkEquals(copy.size(),2)
+  \ Testing.checkEquals(copy.readAt(0),1)
+  \ Testing.checkEquals(copy.readAt(1),2)
 
   \ copy.pop()
-  \ Testing.checkEquals<?>(copy.size(),1)
-  \ Testing.checkEquals<?>(copy.readAt(0),1)
-  \ Testing.checkEquals<?>(vector.readAt(1),2)
+  \ Testing.checkEquals(copy.size(),1)
+  \ Testing.checkEquals(copy.readAt(0),1)
+  \ Testing.checkEquals(vector.readAt(1),2)
 }
 
 
@@ -154,13 +154,13 @@ unittest test {
   Vector<Type> values <- Vector:createSize<Type>(10)
   \ values.readAt(3).set(7)
 
-  \ Testing.checkEquals<?>(values.readAt(3),Type.create(7))
+  \ Testing.checkEquals(values.readAt(3),Type.create(7))
 
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
     if (i != 3) {
-      \ Testing.checkEquals<?>(values.readAt(i),Type.create(0))
+      \ Testing.checkEquals(values.readAt(i),Type.create(0))
     }
   } update {
     i <- i+1
