@@ -176,11 +176,11 @@ unittest duplicate {
 
   TreeSet<Int> copy <- set.duplicate()
   \ Testing.checkEquals<?>(copy.size(),2)
-  \ Testing.checkEquals<?>(copy.member(1),true)
-  \ Testing.checkEquals<?>(copy.member(1),true)
+  \ Testing.checkTrue(copy.member(1))
+  \ Testing.checkTrue(copy.member(1))
 
   \ copy.remove(2)
   \ Testing.checkEquals<?>(copy.size(),1)
-  \ Testing.checkEquals<?>(copy.member(1),true)
-  \ Testing.checkEquals<?>(set.member(2),true)
+  \ Testing.checkTrue(copy.member(1))
+  \ Testing.checkTrue(set.member(2))
 }

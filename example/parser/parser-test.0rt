@@ -9,5 +9,5 @@ unittest test {
 
   \ Testing.checkEquals<?>(data.getName(),"example data")
   \ Testing.checkEquals<?>(data.getDescription(),"THIS_IS_A_TOKEN")
-  \ Testing.checkEquals<?>(data.getBoolean(),false)
+  \ Testing.checkFalse(data.getBoolean())
 }

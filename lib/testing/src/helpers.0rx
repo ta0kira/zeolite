@@ -62,6 +62,18 @@ define Testing {
     }
   }
 
+  checkTrue (x) {
+    if (!x.asBool()) {
+      fail("expected true")
+    }
+  }
+
+  checkFalse (x) {
+    if (x.asBool()) {
+      fail("expected false")
+    }
+  }
+
   checkBetween (x,l,h) {
     if (!lessEquals<?>(l,h)) {
       fail(String.builder()

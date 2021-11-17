@@ -52,6 +52,18 @@ concrete Testing {
     #x defines Equals<#x>
   (optional #x,optional #x) -> ()
 
+  // Check the value for true. Crashes if false.
+  //
+  // Args:
+  // - AsBool: Actual value.
+  @type checkTrue (AsBool) -> ()
+
+  // Check the value for false. Crashes if true.
+  //
+  // Args:
+  // - AsBool: Actual value.
+  @type checkFalse (AsBool) -> ()
+
   // Check that the value is within a range. Crashes if it is not in the range.
   //
   // Args:

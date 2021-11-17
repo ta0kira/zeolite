@@ -302,7 +302,7 @@ testcase "interface implementations" {
 }
 
 unittest boolDefault {
-  \ Testing.checkEquals<?>(Bool.default(),false)
+  \ Testing.checkFalse(Bool.default())
 }
 
 unittest charDefault {

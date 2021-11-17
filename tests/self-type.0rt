@@ -221,10 +221,10 @@ testcase "#self in reduce" {
 unittest test {
   Type<String>    value1 <- Type<String>.create()
   Type<Formatted> value2 <- Type<Formatted>.create()
-  \ Testing.checkEquals<?>(value1.checkFrom<Type<Formatted>>(),true)
-  \ Testing.checkEquals<?>(value2.checkFrom<Type<String>>(),false)
-  \ Testing.checkEquals<?>(value1.checkTo<?>(value2),false)
-  \ Testing.checkEquals<?>(value2.checkTo<?>(value1),true)
+  \ Testing.checkTrue(value1.checkFrom<Type<Formatted>>())
+  \ Testing.checkFalse(value2.checkFrom<Type<String>>())
+  \ Testing.checkFalse(value1.checkTo<?>(value2))
+  \ Testing.checkTrue(value2.checkTo<?>(value1))
 }
 
 concrete Type<|#x> {

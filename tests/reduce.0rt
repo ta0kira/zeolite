@@ -763,21 +763,21 @@ define AC {
 }
 
 unittest leftNestedInRight {
-  \ Testing.checkEquals<?>(present(reduce<[A&B],[[A&B]|C]>(AB.create())),true)
+  \ Testing.checkTrue(present(reduce<[A&B],[[A&B]|C]>(AB.create())))
 }
 
 unittest rightNestedInLeft {
-  \ Testing.checkEquals<?>(present(reduce<[[A|B]&C],[A|B]>(AC.create())),true)
+  \ Testing.checkTrue(present(reduce<[[A|B]&C],[A|B]>(AC.create())))
 }
 
 unittest unionToUnion {
-  \ Testing.checkEquals<?>(present(reduce<[[A&B]|C],[[A&B]|C]>(AB.create())),true)
+  \ Testing.checkTrue(present(reduce<[[A&B]|C],[[A&B]|C]>(AB.create())))
 }
 
 unittest intersectToIntersect {
-  \ Testing.checkEquals<?>(present(reduce<[[A|B]&C],[[A|B]&C]>(AC.create())),true)
+  \ Testing.checkTrue(present(reduce<[[A|B]&C],[[A|B]&C]>(AC.create())))
 }
 
 unittest unionToIntersect {
-  \ Testing.checkEquals<?>(present(reduce<[A|B],[A&B]>(AB.create())),false)
+  \ Testing.checkFalse(present(reduce<[A|B],[A&B]>(AB.create())))
 }

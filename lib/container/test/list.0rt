@@ -44,7 +44,7 @@ unittest forwardTraverse {
   } update {
     head <- require(head).next()
   }
-  \ Testing.checkEquals<?>(present(head),false)
+  \ Testing.checkFalse(present(head))
 }
 
 unittest reverseTraverse {
@@ -71,7 +71,7 @@ unittest reverseTraverse {
   } update {
     tail <- require(tail).prev()
   }
-  \ Testing.checkEquals<?>(present(tail),false)
+  \ Testing.checkFalse(present(tail))
 }
 
 unittest setNext {
@@ -101,10 +101,10 @@ unittest setNext {
 
   \ Testing.checkEquals<?>(require(require(before1).setNext(after2)).get(),1)
 
-  \ Testing.checkEquals<?>(present(require(after1).prev()),false)
+  \ Testing.checkFalse(present(require(after1).prev()))
   \ Testing.checkEquals<?>(require(require(before1).next()).get(),11)
   \ Testing.checkEquals<?>(require(require(after2).prev()).get(),5)
-  \ Testing.checkEquals<?>(present(require(before2).next()),false)
+  \ Testing.checkFalse(present(require(before2).next()))
 }
 
 unittest setPrev {
@@ -135,8 +135,8 @@ unittest setPrev {
   \ Testing.checkEquals<?>(require(require(after1).setPrev(before2)).get(),5)
 
   \ Testing.checkEquals<?>(require(require(after1).prev()).get(),15)
-  \ Testing.checkEquals<?>(present(require(before1).next()),false)
-  \ Testing.checkEquals<?>(present(require(after2).prev()),false)
+  \ Testing.checkFalse(present(require(before1).next()))
+  \ Testing.checkFalse(present(require(after2).prev()))
   \ Testing.checkEquals<?>(require(require(before2).next()).get(),1)
 }
 
@@ -193,7 +193,7 @@ unittest setNextSelf {
 
   \ require(before).setNext(before)
 
-  \ Testing.checkEquals<?>(present(require(after).prev()),false)
+  \ Testing.checkFalse(present(require(after).prev()))
   \ Testing.checkEquals<?>(require(require(before).prev()).get(),5)
   \ Testing.checkEquals<?>(require(require(before).next()).get(),5)
 }
@@ -213,7 +213,7 @@ unittest setPrevSelf {
 
   \ require(after).setPrev(after)
 
-  \ Testing.checkEquals<?>(present(require(before).next()),false)
+  \ Testing.checkFalse(present(require(before).next()))
   \ Testing.checkEquals<?>(require(require(after).prev()).get(),1)
   \ Testing.checkEquals<?>(require(require(after).next()).get(),1)
 }
@@ -245,7 +245,7 @@ unittest duplicate {
   } update {
     head2 <- require(head2).next()
   }
-  \ Testing.checkEquals<?>(present(head2),false)
+  \ Testing.checkFalse(present(head2))
 }
 
 unittest hugeCleanup { $DisableCoverage$
@@ -279,7 +279,7 @@ unittest forwardTraverseSingle {
   } update {
     head <- require(head).next()
   }
-  \ Testing.checkEquals<?>(present(head),false)
+  \ Testing.checkFalse(present(head))
 }
 
 unittest duplicateSingle {
@@ -309,7 +309,7 @@ unittest duplicateSingle {
   } update {
     head2 <- require(head2).next()
   }
-  \ Testing.checkEquals<?>(present(head2),false)
+  \ Testing.checkFalse(present(head2))
 }
 
 unittest hugeCleanupSingle { $DisableCoverage$

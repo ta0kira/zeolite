@@ -66,13 +66,13 @@ testcase "ErrorOr checks" {
 
 unittest withValue {
   ErrorOr<Int> value <- ErrorOr:value<Int>(10)
-  \ Testing.checkEquals<?>(value.isError(),false)
+  \ Testing.checkFalse(value.isError())
   \ Testing.checkEquals<?>(value.getValue(),10)
 }
 
 unittest withError {
   ErrorOr<String> value <- ErrorOr:error("error message")
-  \ Testing.checkEquals<?>(value.isError(),true)
+  \ Testing.checkTrue(value.isError())
   \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
 }
 

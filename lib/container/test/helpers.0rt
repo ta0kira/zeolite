@@ -21,41 +21,41 @@ testcase "comparator helper tests" {
 }
 
 unittest keyValueHLessThan {
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"a"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"),true)
-  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:lessThan<?,?>` KV.new(2,"a"),true)
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"a"))
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"))
+  \ Testing.checkTrue(KV.new(1,"b") `KeyValueH:lessThan<?,?>` KV.new(2,"a"))
 }
 
 unittest keyValueHLessThanWith {
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"a"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(2,"a"),true)
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"a"))
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"))
+  \ Testing.checkTrue(KV.new(1,"b") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(2,"a"))
 
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"a"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),true)
-  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),true)
-  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(2,"a"),false)
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"a"))
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b"))
+  \ Testing.checkTrue(KV.new(2,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(1,"b") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(2,"a"))
 }
 
 unittest keyValueHEquals {
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"a"),true)
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:equals<?,?>` KV.new(2,"a"),false)
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"a"))
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(1,"b") `KeyValueH:equals<?,?>` KV.new(2,"a"))
 }
 
 unittest keyValueHEqualsWith {
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"a"),true)
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),true)
-  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(2,"a"),false)
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"a"))
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(1,"b") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(2,"a"))
 
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"a"),true)
-  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),false)
-  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(2,"a"),false)
+  \ Testing.checkTrue(KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"a"))
+  \ Testing.checkFalse(KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(2,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b"))
+  \ Testing.checkFalse(KV.new(1,"b") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(2,"a"))
 }
 
 unittest integrationTest {
@@ -64,9 +64,9 @@ unittest integrationTest {
   SearchTree<Int,String> tree2 <- SearchTree<Int,String>.new()
       .set(1,"a").set(2,"b").set(3,"c").set(4,"d")
 
-  \ Testing.checkEquals<?>(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    tree2.defaultOrder(),true)
-  \ Testing.checkEquals<?>(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         tree2.defaultOrder(),false)
-  \ Testing.checkEquals<?>(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` tree2.defaultOrder(),false)
+  \ Testing.checkTrue(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    tree2.defaultOrder())
+  \ Testing.checkFalse(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         tree2.defaultOrder())
+  \ Testing.checkFalse(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` tree2.defaultOrder())
 }
 
 concrete KVEquals<#k,#v> {

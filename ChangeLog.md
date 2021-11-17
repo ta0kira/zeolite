@@ -24,14 +24,16 @@
 
 ### Libraries
 
-* **[breaking]** Makes `LinkedNode` (`lib/container`) weak in the reverse
+* **[breaking]** Makes `LinkedNode` in `lib/container` weak in the reverse
   direction to avoid reference cycles.
 
-* **[breaking]** Gives `Testing.checkEmpty` (`lib/testing`) a parameter to allow
-  values that do not `refine Formatted`.
+* **[breaking]** Gives `Testing.checkEmpty` in `lib/testing` a parameter to
+  allow values that do not `refine Formatted`.
 
-* **[new]** Adds `getAll` to `TypeMap` (`lib/container`) to read all values of a
-  specified type.
+* **[new]** Adds `getAll` to `TypeMap` in `lib/container` to read all values of
+  a specified type.
+
+* **[new]** Adds `checkTrue` and `checkFalse` to `Testing` in `lib/testing`.
 
 ### Language
 

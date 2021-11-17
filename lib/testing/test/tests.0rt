@@ -195,3 +195,41 @@ testcase "checkLessThan fail" {
 unittest test {
   \ Testing.checkLessThan<?>(13,11)
 }
+
+
+testcase "checkTrue success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkTrue(1)
+}
+
+
+testcase "checkTrue fail" {
+  crash
+  require stderr "true"
+}
+
+unittest test {
+  \ Testing.checkTrue(0)
+}
+
+
+testcase "checkFalse success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkFalse(0)
+}
+
+
+testcase "checkFalse fail" {
+  crash
+  require stderr "false"
+}
+
+unittest test {
+  \ Testing.checkFalse(1)
+}

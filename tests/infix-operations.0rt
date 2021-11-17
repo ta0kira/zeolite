@@ -137,14 +137,14 @@ unittest rightAssociative {
   Int x <- 2
   Bool y <- true && (x <- 3) == 2 || x == 3
   \ Testing.checkEquals<?>(x,3)
-  \ Testing.checkEquals<?>(y,true)
+  \ Testing.checkTrue(y)
 }
 
 unittest shortCircuit {
   Int x <- 2
   Bool y <- true || (x <- 3) == 2 || x == 3
   \ Testing.checkEquals<?>(x,2)
-  \ Testing.checkEquals<?>(y,true)
+  \ Testing.checkTrue(y)
 }
 
 

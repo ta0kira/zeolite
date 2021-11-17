@@ -143,8 +143,8 @@ unittest exponential {
   random2 <- random2.setSeed(123)
   Float v4 <- random2.generate()
 
-  \ Testing.checkEquals<?>(v1 == v2,false)
-  \ Testing.checkEquals<?>(v1 == v3,false)
+  \ Testing.checkFalse(v1 == v2)
+  \ Testing.checkFalse(v1 == v3)
   \ Testing.checkEquals<?>(v3,v4)
 }
 
@@ -163,8 +163,8 @@ unittest gaussian {
   random2 <- random2.setSeed(123)
   Float v4 <- random2.generate()
 
-  \ Testing.checkEquals<?>(v1 == v2,false)
-  \ Testing.checkEquals<?>(v1 == v3,false)
+  \ Testing.checkFalse(v1 == v2)
+  \ Testing.checkFalse(v1 == v3)
   \ Testing.checkEquals<?>(v3,v4)
 }
 
@@ -183,8 +183,8 @@ unittest uniform {
   random2 <- random2.setSeed(123)
   Float v4 <- random2.generate()
 
-  \ Testing.checkEquals<?>(v1 == v2,false)
-  \ Testing.checkEquals<?>(v1 == v3,false)
+  \ Testing.checkFalse(v1 == v2)
+  \ Testing.checkFalse(v1 == v3)
   \ Testing.checkEquals<?>(v3,v4)
 }
 

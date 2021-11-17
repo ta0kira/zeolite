@@ -124,7 +124,7 @@ unittest sortList {
   } update {
     actual <- require(actual).next()
   }
-  \ Testing.checkEquals<?>(present(actual),false)
+  \ Testing.checkFalse(present(actual))
 }
 
 unittest sortListSingle { $DisableCoverage$
@@ -146,7 +146,7 @@ unittest sortListSingle { $DisableCoverage$
   } update {
     actual <- require(actual).next()
   }
-  \ Testing.checkEquals<?>(present(actual),false)
+  \ Testing.checkFalse(present(actual))
 }
 
 unittest sortListEmpty {
@@ -172,7 +172,7 @@ unittest sortListPow2 { $DisableCoverage$
   } update {
     actual <- require(actual).next()
   }
-  \ Testing.checkEquals<?>(present(actual),false)
+  \ Testing.checkFalse(present(actual))
 }
 
 unittest sortListWith { $DisableCoverage$
@@ -194,7 +194,7 @@ unittest sortListWith { $DisableCoverage$
   } update {
     actual <- require(actual).next()
   }
-  \ Testing.checkEquals<?>(present(actual),false)
+  \ Testing.checkFalse(present(actual))
 }
 
 unittest reverseList {
@@ -218,7 +218,7 @@ unittest reverseList {
   } update {
     reversed <- require(reversed).next()
   }
-  \ Testing.checkEquals<?>(present(reversed),false)
+  \ Testing.checkFalse(present(reversed))
 }
 
 unittest reverseListSingle { $DisableCoverage$
@@ -242,7 +242,7 @@ unittest reverseListSingle { $DisableCoverage$
   } update {
     reversed <- require(reversed).next()
   }
-  \ Testing.checkEquals<?>(present(reversed),false)
+  \ Testing.checkFalse(present(reversed))
 }
 
 unittest reverseListEmpty {

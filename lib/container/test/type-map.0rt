@@ -84,8 +84,8 @@ unittest getValues {
   \ tree.getAll<String>(actual)
 
   \ Testing.checkEquals<?>(actual.size(),2)
-  \ Testing.checkEquals<?>(actual.member("one"),true)
-  \ Testing.checkEquals<?>(actual.member("two"),true)
+  \ Testing.checkTrue(actual.member("one"))
+  \ Testing.checkTrue(actual.member("two"))
 }
 
 concrete Value {
