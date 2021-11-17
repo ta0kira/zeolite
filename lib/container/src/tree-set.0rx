@@ -36,6 +36,10 @@ define TreeSet {
     return self
   }
 
+  append (k) {
+    return add(k)
+  }
+
   remove (k) {
     \ tree.remove(k)
     return self

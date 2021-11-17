@@ -24,7 +24,10 @@
 
 ### Libraries
 
-* **[fix]** Fixes memory leak in `LinkedNode`.
+* **[breaking]** Makes `LinkedNode` weak in the reverse direction to avoid
+  reference cycles.
+
+* **[new]** Adds `getAll` to `TypeMap` to read all values of a specified type.
 
 ### Language
 

@@ -46,6 +46,16 @@ define TypeMap {
       return empty
     }
   }
+
+  getAll (output) {
+    traverse (tree.defaultOrder() -> KeyValue<any,GenericValue<any>> pair) {
+      scoped {
+        optional #x value <- pair.getValue().check<#x>()
+      } in if (present(value)) {
+        \ output.append(require(value))
+      }
+    }
+  }
 }
 
 define TypeKey {

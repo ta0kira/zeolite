@@ -44,6 +44,9 @@ concrete TypeMap {
   //   example, if the value is actually a String but it was added as Formatted
   //   (a parent of String), then the value cannot be retrieved as a String.
   @value get<#x> (TypeKey<#x>) -> (optional #x)
+
+  // Get all values of type #x.
+  @value getAll<#x> (Append<#x>) -> ()
 }
 
 // A typed key for use with TypeMap.

@@ -73,6 +73,21 @@ unittest duplicate {
   \ Testing.checkOptional<?>(tree.get<?>(keyString),"a")
 }
 
+unittest getValues {
+  TypeMap tree <- TypeMap.new()
+      .set<?>(TypeKey<String>.new(),"one")
+      .set<?>(TypeKey<Int>.new(),2)
+      .set<?>(TypeKey<String>.new(),"two")
+      .set<?>(TypeKey<Int>.new(),1)
+
+  TreeSet<String> actual <- TreeSet<String>.new()
+  \ tree.getAll<String>(actual)
+
+  \ Testing.checkEquals<?>(actual.size(),2)
+  \ Testing.checkEquals<?>(actual.member("one"),true)
+  \ Testing.checkEquals<?>(actual.member("two"),true)
+}
+
 concrete Value {
   refines Formatted
   defines Equals<Value>
