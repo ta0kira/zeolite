@@ -380,7 +380,7 @@ test_traces() {
   do_zeolite -p "$ZEOLITE_PATH" -r tests/traces -f
   local source_files=("$ZEOLITE_PATH/tests/traces/traces.0rx")
   local expected=$(fgrep -n '// TRACED' "${source_files[@]}" | egrep -o '^[0-9]+' | sort -u)
-  local actual=$(do_zeolite --show-traces "$ZEOLITE_PATH/tests/traces" | grep 0rx | sed -r 's/^line ([0-9]+).*/\1/' | sort -u)
+  local actual=$(do_zeolite -p "$ZEOLITE_PATH" --show-traces "tests/traces" | grep 0rx | sed -r 's/^line ([0-9]+).*/\1/' | sort -u)
   if [[ "$actual" != "$expected" ]]; then
     show_message "Mismatch between expected and actual traced lines:"
     echo "Expected:" $expected 1>&2

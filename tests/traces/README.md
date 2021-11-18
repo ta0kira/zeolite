@@ -12,6 +12,6 @@ zeolite -p $ZEOLITE_PATH -r tests/traces
 
 Note that there *will* be warnings about unreachable code.
 
-You can then examine `zeolite --show-traces $ZEOLITE_PATH/tests/traces` to see
-what trace contexts `zeolite` picked up during compilation. Every line that is
-commented with `TRACED` should have an entry in `--show-traces`.
+You can then examine `zeolite -p $ZEOLITE_PATH --show-traces tests/traces` to
+see what trace contexts `zeolite` picked up during compilation. Every line that
+is commented with `TRACED` should have an entry in `--show-traces`.
