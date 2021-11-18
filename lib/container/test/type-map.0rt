@@ -87,6 +87,15 @@ unittest getValues {
   \ Testing.checkTrue(actual.member("two"))
 }
 
+unittest keyEquals {
+  TypeKey<Int>    key1 <- TypeKey<Int>.new()
+  TypeKey<Int>    key2 <- TypeKey<Int>.new()
+  TypeKey<String> key3 <- TypeKey<String>.new()
+  \ Testing.checkEquals<TypeKey<Int>>(key1,key1)
+  \ Testing.checkFalse(key1 `TypeKey<any>.equals` key2)
+  \ Testing.checkFalse(key1 `TypeKey<any>.equals` key3)
+}
+
 concrete Value {
   refines Formatted
   defines Equals<Value>
@@ -106,4 +115,14 @@ define Value {
   equals (_,_) {
     return true
   }
+}
+
+
+testcase "TypeKey formatted" {
+  crash
+  require "TypeKey<Int>\{[0-9]+\}"
+}
+
+unittest test {
+  fail(TypeKey<Int>.new())
 }

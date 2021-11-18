@@ -20,9 +20,9 @@ testcase "SearchTree tests" {
   success
 }
 
-unittest integrationTest { $DisableCoverage$
+unittest integrationTest {
   ValidatedTree<Int,Int> tree <- ValidatedTree<Int,Int>.new()
-  Int count <- 30
+  Int count <- 33
   $ReadOnly[count]$
 
   // Insert values.
@@ -203,4 +203,11 @@ unittest duplicate {
   \ Testing.checkOptional(tree.get(1),1)
   \ Testing.checkOptional(tree.get(2),2)
   \ Testing.checkOptional(tree.get(3),3)
+}
+
+unittest duplicateEmpty {
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+
+  SearchTree<Int,Int> copy <- tree.duplicate()
+  \ Testing.checkEquals(copy.size(),0)
 }
