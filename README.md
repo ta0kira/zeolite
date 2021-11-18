@@ -1743,7 +1743,9 @@ option when running tests with `zeolite -t`.
 
 - If a procedure uses the [`$NoTrace$` pragma](#procedure-pragmas), there will
   be no trace information in the log for that procedure. This is because the
-  logging uses the same tooling that is used for stack traces.
+  logging uses the same tooling that is used for stack traces. Similarly, if a
+  specific `unittest` uses the [`$DisableCoverage$` pragma](#unittest-pragmas),
+  no coverage will be recorded as a result of that `unittest`.
 
 - Nothing will be logged for `testcase` that use `compiles` or `error`, since
   those modes do not actually execute any compiled code.
@@ -1778,6 +1780,12 @@ possible `.0rx` lines that can show up in `--log-traces` mode.
   # Output the line numbers missed by the tests.
   zeolite --missed-lines traces.csv your/module1 your/module2
   ```
+
+  Note that `--missed-lines` *does not* account for which module's test was
+  responsible for covering a line during the tests. For example, if you run
+  `zeolite -t --log-traces traces.csv your/module1 your/module2` and
+  `your/module2` depends on `your/module1`, tests from `your/module2` that
+  execute `your/module1` code will contribute to `your/module1`'s coverage.
 
 ## Compiler Pragmas and Macros
 
