@@ -27,6 +27,9 @@
 * **[breaking]** Makes `LinkedNode` in `lib/container` weak in the reverse
   direction to avoid reference cycles.
 
+* **[new]** Adds `Token` to `lib/math`, for more efficient comparison of strings
+  when used in algorithms.
+
 * **[new]** Gives `Testing.checkEmpty` in `lib/testing` a parameter to allow
   values that do not refine `Formatted`. (This is not breaking because of the
   new language feature that infers params by default.)
