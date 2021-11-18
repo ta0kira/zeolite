@@ -22,6 +22,10 @@
     custom set of arguments.)
   - `ReturnTuple` usage for returns remains unchanged.
 
+* **[new]** Updates dependency check to skip checking the modification times of
+  `$ModuleOnly$` `.0rp` source files when determining if the target module needs
+  to be recompiled.
+
 ### Libraries
 
 * **[breaking]** Makes `LinkedNode` in `lib/container` weak in the reverse

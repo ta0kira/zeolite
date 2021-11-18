@@ -109,7 +109,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let extensions = concat $ map getSourceCategories es
-  cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
+  (cs,private) <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
   let cm = createLanguageModule extensions em cs
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs
   let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
@@ -119,8 +119,8 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   fs <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   eraseCachedData (p </> d)
-  ps2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) ps
-  xs2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) xs
+  ps2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) $ filter (not . (`Set.member` private)) ps
+  xs2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) $ xs ++ filter (`Set.member` private) ps
   ts2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) ts
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs
   paths' <- mapM (errorFromIO . canonicalizePath) paths
@@ -289,7 +289,7 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath -> [FilePa
 createModuleTemplates resolver p d ds deps1 deps2 = do
   (ps,xs,_) <- findSourceFiles p (d:ds)
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
-    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
+    fmap (createLanguageModule [] Map.empty . fst) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds2 <- mapCompilerM parseInternalSource xs'
   let ds3 = concat $ map (\(_,_,d2) -> d2) ds2
@@ -320,7 +320,7 @@ runModuleTests resolver backend cl base tp (LoadedTests p d m em deps1 deps2) = 
   mapCompilerM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
-  cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
+  cm <- fmap (createLanguageModule [] em . fst) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
   mapCompilerM (runSingleTest backend cl cm paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t

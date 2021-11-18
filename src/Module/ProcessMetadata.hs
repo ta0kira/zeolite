@@ -316,9 +316,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 ep _ _ is is2 _ _ _ _ ps xs 
   collectAllM_ $ [
       checkHash,
       checkInput time (p </> moduleFilename),
-      mapCompilerM (errorFromIO . canonicalizePath) ps2 >>= checkMissing ps,
-      mapCompilerM (errorFromIO . canonicalizePath) xs2 >>= checkMissing xs,
-      mapCompilerM (errorFromIO . canonicalizePath) ts2 >>= checkMissing ts
+      mapCompilerM (errorFromIO . canonicalizePath) (ps2++xs2++ts2) >>= checkMissing (ps++xs++ts)
     ] ++
     (map (checkDep time) $ is ++ is2) ++
     (map (checkInput time) $ ps ++ xs) ++
@@ -427,20 +425,20 @@ resolveDep _ _ d = [UnresolvedCategory d]
 
 loadModuleGlobals :: PathIOHandler r => r -> FilePath -> (Namespace,Namespace) -> [FilePath] ->
   Maybe CompileMetadata -> [CompileMetadata] -> [CompileMetadata] ->
-  TrackedErrorsIO ([WithVisibility (AnyCategory SourceContext)])
+  TrackedErrorsIO ([WithVisibility (AnyCategory SourceContext)],Set.Set FilePath)
 loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let public = Set.fromList $ map cmPath deps1
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
   cs0 <- fmap concat $ mapCompilerM (processDeps False [FromDependency])            deps1
   cs1 <- fmap concat $ mapCompilerM (processDeps False [FromDependency,ModuleOnly]) deps2'
-  cs2 <- loadAllPublic (ns0,ns1) fs
+  (cs2,xa) <- loadAllPublic (ns0,ns1) fs
   cs3 <- case m of
               Just m2 -> processDeps True [FromDependency] m2
               _       -> return []
-  return (cs0++cs1++cs2++cs3) where
+  return (cs0++cs1++cs2++cs3,xa) where
     processDeps same ss dep = do
       let fs2 = getSourceFilesForDeps [dep]
-      cs <- loadAllPublic (cmPublicNamespace dep,cmPrivateNamespace dep) fs2
+      (cs,_) <- loadAllPublic (cmPublicNamespace dep,cmPrivateNamespace dep) fs2
       let cs' = if not same
                    -- Allow ModuleOnly if the dep is the same module being
                    -- compiled. (Tests load the module being tested as a dep.)
@@ -449,14 +447,18 @@ loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
       return $ map (updateCodeVisibility (Set.union (Set.fromList ss))) cs'
     loadAllPublic (ns2,ns3) fs2 = do
       fs2' <- zipWithContents r p fs2
-      fmap concat $ mapCompilerM loadPublic fs2'
+      loaded <- mapCompilerM loadPublic fs2'
+      return (concat $ map fst loaded,Set.fromList $ concat $ map snd loaded)
       where
         loadPublic p3 = do
           (pragmas,cs) <- parsePublicSource p3
+          let xs = if any isModuleOnly pragmas
+                      then [fst p3]
+                      else []
           let tags = Set.fromList $
                      (if any isTestsOnly  pragmas then [TestsOnly]  else []) ++
                      (if any isModuleOnly pragmas then [ModuleOnly] else [])
           let cs' = if any isModuleOnly pragmas
                        then map (setCategoryNamespace ns3) cs
                        else map (setCategoryNamespace ns2) cs
-          return $ map (WithVisibility tags) cs'
+          return (map (WithVisibility tags) cs',xs)
