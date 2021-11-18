@@ -264,7 +264,7 @@ test_show_deps() {
     'ExprLookup -> String ".*zeolite/base"'
   )
   for pattern in "${patterns[@]}"; do
-    if echo "$output" | egrep -q "$pattern"; then
+    if ! echo "$output" | egrep -q "$pattern"; then
       show_message "Expected \"$pattern\" in --show-deps for tests:"
       echo "$output" 1>&2
       return 1
@@ -322,7 +322,7 @@ test_example_hello() {
   local binary="$ZEOLITE_PATH/example/hello/HelloDemo"
   local name='Cli Tests'
   rm -f "$binary"
-  do_zeolite -p "$ZEOLITE_PATH/example/hello" -I lib/util --fast HelloDemo hello-demo.0rx
+  do_zeolite -p "$ZEOLITE_PATH" -r example/hello -f
   local output=$(echo "$name" | execute_noredir "$binary" 2>&1)
   if ! echo "$output" | egrep -q "\"$name\""; then
     show_message "Expected \"$name\" in HelloDemo output:"
