@@ -260,8 +260,8 @@ test_templates() {
 test_show_deps() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" --show-deps tests)
   local patterns=(
-    'ExprLookup -> Int ".*zeolite/base"'
-    'ExprLookup -> String ".*zeolite/base"'
+    'ExprLookup -> Int "/.+/base"'
+    'ExprLookup -> String "/.+/base"'
   )
   for pattern in "${patterns[@]}"; do
     if ! echo "$output" | egrep -q "$pattern"; then
