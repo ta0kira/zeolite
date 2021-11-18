@@ -35,6 +35,9 @@ module Module.ProcessMetadata (
   getSourceFilesForDeps,
   isPathConfigured,
   isPathUpToDate,
+  isPrivateSource,
+  isPublicSource,
+  isTestSource,
   loadModuleGlobals,
   loadModuleMetadata,
   loadPrivateDeps,
@@ -89,6 +92,15 @@ metadataFilename = "compile-metadata"
 
 tracesFilename :: FilePath
 tracesFilename = "traced-lines"
+
+isPublicSource :: FilePath -> Bool
+isPublicSource = isSuffixOf ".0rp"
+
+isPrivateSource :: FilePath -> Bool
+isPrivateSource = isSuffixOf ".0rx"
+
+isTestSource :: FilePath -> Bool
+isTestSource = isSuffixOf ".0rt"
 
 type MetadataMap = Map.Map FilePath CompileMetadata
 
@@ -192,9 +204,9 @@ findSourceFiles p0 = fmap (select . concat) . mapCompilerM find where
     when (not isDir) $ compilerErrorM $ "Path \"" ++ absolute ++ "\" does not exist"
     errorFromIO $ getDirectoryContents absolute >>= return . map (p </>)
   select ds = (ps,xs,ts) where
-    ps = nub $ filter (isSuffixOf ".0rp") ds
-    xs = nub $ filter (isSuffixOf ".0rx") ds
-    ts = nub $ filter (isSuffixOf ".0rt") ds
+    ps = nub $ filter isPublicSource  ds
+    xs = nub $ filter isPrivateSource ds
+    ts = nub $ filter isTestSource    ds
 
 getExprMap :: FilePath -> ModuleConfig -> TrackedErrorsIO (ExprMap SourceContext)
 getExprMap p m = do
@@ -207,7 +219,7 @@ getRealPathsForDeps = map cmPath
 
 getSourceFilesForDeps :: [CompileMetadata] -> [FilePath]
 getSourceFilesForDeps = concat . map extract where
-  extract m = map (cmPath m </>) (filter (isSuffixOf ".0rp") $ cmPublicFiles m ++ cmPrivateFiles m)
+  extract m = map (cmPath m </>) (filter isPublicSource $ cmPublicFiles m ++ cmPrivateFiles m)
 
 getNamespacesForDeps :: [CompileMetadata] -> [Namespace]
 getNamespacesForDeps = filter (not . isNoNamespace) . map cmPublicNamespace

@@ -23,11 +23,11 @@ module Cli.ParseCompileOptions (
 ) where
 
 import Control.Monad (when)
-import Data.List (isSuffixOf)
 import Text.Regex.TDFA
 
 import Base.CompilerError
 import Cli.CompileOptions
+import Module.ProcessMetadata (isPrivateSource,isPublicSource,isTestSource)
 import Types.TypeCategory (FunctionName(..))
 import Types.TypeInstance (CategoryName(..))
 
@@ -174,7 +174,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         (t,fn) <- check $ break (== '.') c
         checkCategoryName n2 t  "--fast"
         checkFunctionName n2 fn "--fast"
-        when (not $ isSuffixOf ".0rx" f2) $ argError n3 f2 $ "Must specify a .0rx source file."
+        when (not $ isPrivateSource f2) $ argError n3 f2 $ "Must specify a .0rx source file."
         let m2 = CompileFast (CategoryName t) (FunctionName fn) f2
         return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f) where
           check (t,"")     = return (t,defaultMainFunc)
@@ -200,9 +200,9 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-i"):os) = update os where
     update ((n2,d):os2)
-      | isSuffixOf ".0rp" d = argError n2 d "Cannot directly include .0rp source files."
-      | isSuffixOf ".0rx" d = argError n2 d "Cannot directly include .0rx source files."
-      | isSuffixOf ".0rt" d = argError n2 d "Cannot directly include .0rt test files."
+      | isPublicSource  d = argError n2 d "Cannot directly include .0rp source files."
+      | isPrivateSource d = argError n2 d "Cannot directly include .0rx source files."
+      | isTestSource    d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n2 d "-i"
           return (os2,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep p m f)
@@ -210,9 +210,9 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-I"):os) = update os where
     update ((n2,d):os2)
-      | isSuffixOf ".0rp" d = argError n2 d "Cannot directly include .0rp source files."
-      | isSuffixOf ".0rx" d = argError n2 d "Cannot directly include .0rx source files."
-      | isSuffixOf ".0rt" d = argError n2 d "Cannot directly include .0rt test files."
+      | isPublicSource  d = argError n2 d "Cannot directly include .0rp source files."
+      | isPrivateSource d = argError n2 d "Cannot directly include .0rx source files."
+      | isTestSource    d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n2 d "-i"
           return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep p m f)
@@ -229,9 +229,9 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
   parseSingle _ ((n,o@('-':_)):_) = argError n o "Unknown option."
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,d):os)
-      | isSuffixOf ".0rp" d = argError n d "Cannot directly include .0rp source files."
-      | isSuffixOf ".0rx" d = argError n d "Cannot directly include .0rx source files."
-      | isSuffixOf ".0rt" d = do
+      | isPublicSource  d = argError n d "Cannot directly include .0rp source files."
+      | isPrivateSource d = argError n d "Cannot directly include .0rx source files."
+      | isTestSource    d = do
         when (not $ isExecuteTests m) $
           argError n d "Test mode (-t) must be enabled before listing any .0rt test files."
         checkPathName n d ""
