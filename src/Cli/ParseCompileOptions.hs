@@ -94,7 +94,7 @@ optionHelpText = [
     "  category: The name of a concrete category with no params.",
     "  function: The name of a @type function (defaults to \"run\") with no args or params.",
     "  module: Path to a directory containing an existing or to-be-created Zeolite module.",
-    "  tests: Names of .0rt files to limit test execution to.",
+    "  test: Name of a .0rt file to limit test execution to.",
     "",
     "Examples:",
     "",
