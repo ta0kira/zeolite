@@ -191,8 +191,11 @@ jobs:
           if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_CXX='/usr/bin/g++'; fi
           $ZEOLITE_SETUP $ZEOLITE_CXX $ZEOLITE_AR
           ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
-          # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
-          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t lib/testing tests lib/container lib/file lib/math lib/util lib/thread; fi
+          TEST_MODULES='lib/testing tests lib/container lib/file lib/math lib/util lib/thread'
+          # Only run integration tests for a few GHC versions, since they should all be the same if setup succeeds
+          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t --log-traces traces.csv $TEST_MODULES; fi
+          # Show lines missed by test execution
+          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH --missed-lines traces.csv $TEST_MODULES; fi
           # Run extra CLI tests
           if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then bash $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE; fi
       # <<< MANUAL EDIT ***
