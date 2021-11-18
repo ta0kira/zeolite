@@ -322,7 +322,7 @@ test_example_hello() {
   local binary="$ZEOLITE_PATH/example/hello/HelloDemo"
   local name='Cli Tests'
   rm -f "$binary"
-  do_zeolite -p "$ZEOLITE_PATH" -r example/hello -f
+  do_zeolite -p "$ZEOLITE_PATH/example/hello" -I lib/util --fast HelloDemo hello-demo.0rx
   local output=$(echo "$name" | execute_noredir "$binary" 2>&1)
   if ! echo "$output" | egrep -q "\"$name\""; then
     show_message "Expected \"$name\" in HelloDemo output:"
