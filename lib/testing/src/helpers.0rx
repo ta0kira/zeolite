@@ -19,7 +19,7 @@ limitations under the License.
 $TestsOnly$
 
 define Testing {
-  checkEquals (x,y) {
+  checkEquals (x,y) { $NoTrace$
     if (!#x.equals(x,y)) {
       fail(String.builder()
           .append(x)
@@ -29,7 +29,7 @@ define Testing {
     }
   }
 
-  checkEmpty (x) {
+  checkEmpty (x) { $NoTrace$
     if (present(x)) {
       scoped {
         optional Formatted formatted <- reduce<#x,Formatted>(require(x))
@@ -44,7 +44,7 @@ define Testing {
     }
   }
 
-  checkPresent (x) {
+  checkPresent (x) { $NoTrace$
     if (!present(x)) {
       fail(String.builder()
           .append("expected non-empty value")
@@ -52,7 +52,7 @@ define Testing {
     }
   }
 
-  checkOptional (x,y) {
+  checkOptional (x,y) { $NoTrace$
     if (present(x) && present(y)) {
       \ checkEquals(require(x),require(y))
     } elif (!present(x) && present(y)) {
@@ -62,19 +62,19 @@ define Testing {
     }
   }
 
-  checkTrue (x) {
+  checkTrue (x) { $NoTrace$
     if (!x.asBool()) {
       fail("expected true")
     }
   }
 
-  checkFalse (x) {
+  checkFalse (x) { $NoTrace$
     if (x.asBool()) {
       fail("expected false")
     }
   }
 
-  checkBetween (x,l,h) {
+  checkBetween (x,l,h) { $NoTrace$
     if (!lessEquals(l,h)) {
       fail(String.builder()
           .append("Upper limit ")
@@ -94,7 +94,7 @@ define Testing {
     }
   }
 
-  checkGreaterThan (x,l) {
+  checkGreaterThan (x,l) { $NoTrace$
     if (lessEquals(x,l)) {
       fail(String.builder()
           .append(x)
@@ -104,7 +104,7 @@ define Testing {
     }
   }
 
-  checkLessThan (x,h) {
+  checkLessThan (x,h) { $NoTrace$
     if (lessEquals(h,x)) {
       fail(String.builder()
           .append(x)
@@ -118,7 +118,7 @@ define Testing {
     #x defines Equals<#x>
     #x defines LessThan<#x>
   (#x,#x) -> (Bool)
-  lessEquals (x,y) {
+  lessEquals (x,y) { $NoTrace$
     // Using !#x.lessThan(y,x) wouldn't account for NaNs.
     return #x.lessThan(x,y) || #x.equals(x,y)
   }
