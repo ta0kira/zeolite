@@ -31,6 +31,7 @@ module CompilerCxx.CxxFiles (
   generateVerboseExtension,
 ) where
 
+import Control.Arrow (second)
 import Data.List (intercalate,sortBy)
 import Data.Hashable (hash)
 import Prelude hiding (pi)
@@ -761,11 +762,11 @@ createFunctionDispatch t s fs = function where
   name = getCategoryName t
   function
     | null filtered = onlyCode fallback
-    | otherwise = onlyCodes $ [typedef] ++ concat (map table $ byCategory) ++ select
+    | otherwise = onlyCodes $ [typedef] ++ select
   filtered = filter ((== s) . sfScope) fs
   flatten f = f:(concat $ map flatten $ sfMerges f)
   flattened = concat $ map flatten filtered
-  byCategory = Map.toList $ Map.fromListWith (++) $ map (\f -> (sfType f,[f])) flattened
+  byCategory = map (second Set.toList) $ Map.toList $ Map.fromListWith Set.union $ map (\f -> (sfType f,Set.fromList [sfName f])) flattened
   typedef
     | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName name ++
                            "::*)(const ParamsArgs&);"
@@ -782,11 +783,6 @@ createFunctionDispatch t s fs = function where
     | s == TypeScope     = typeName name     ++ "::" ++ callName f
     | s == ValueScope    = valueName name    ++ "::" ++ callName f
     | otherwise = undefined
-  table (_,[_]) = []
-  table (n2,fs2) =
-    ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
-    map (\f -> "    &" ++ funcName f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
-    ["  };"]
   select = [
       "  switch (label.collection) {"
     ] ++ categoryCases ++ [
@@ -797,10 +793,14 @@ createFunctionDispatch t s fs = function where
   categoryCases = concat $ map singleCase byCategory
   singleCase (n2,[f]) = [
       "    case " ++ categoryIdName n2 ++ ":",
-      "      return " ++ callName (sfName f) ++ "(" ++ args ++ ");"
+      "      // " ++ show f ++ " only has one " ++ show s ++ " function.",
+      "      return " ++ callName f ++ "(" ++ args ++ ");"
     ]
-  singleCase (n2,_) = [
+  singleCase (n2,fs2) = [
       "    case " ++ categoryIdName n2 ++ ":",
+      "      static const CallType " ++ tableName n2 ++ "[] = {"
+    ] ++ map (\f -> "        &" ++ funcName f ++ ",") fs2 ++ [
+      "      };",
       "      return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");"
     ]
   args
