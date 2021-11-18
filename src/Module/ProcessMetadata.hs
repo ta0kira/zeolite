@@ -207,7 +207,7 @@ getRealPathsForDeps = map cmPath
 
 getSourceFilesForDeps :: [CompileMetadata] -> [FilePath]
 getSourceFilesForDeps = concat . map extract where
-  extract m = map (cmPath m </>) (cmPublicFiles m)
+  extract m = map (cmPath m </>) (filter (isSuffixOf ".0rp") $ cmPublicFiles m ++ cmPrivateFiles m)
 
 getNamespacesForDeps :: [CompileMetadata] -> [Namespace]
 getNamespacesForDeps = filter (not . isNoNamespace) . map cmPublicNamespace

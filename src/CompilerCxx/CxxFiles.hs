@@ -793,7 +793,7 @@ createFunctionDispatch t s fs = function where
   categoryCases = concat $ map singleCase byCategory
   singleCase (n2,[f]) = [
       "    case " ++ categoryIdName n2 ++ ":",
-      "      // " ++ show f ++ " only has one " ++ show s ++ " function.",
+      "      // " ++ show n2 ++ " only has one " ++ show s ++ " function.",
       "      return " ++ callName f ++ "(" ++ args ++ ");"
     ]
   singleCase (n2,fs2) = [
