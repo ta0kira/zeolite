@@ -26,6 +26,11 @@
   `$ModuleOnly$` `.0rp` source files when determining if the target module needs
   to be recompiled.
 
+* **[new]** Adds `--clean` mode to `zeolite` to clear cached data for a module.
+
+* **[new]** Allows specifying a root path with `-p` in special `zeolite`
+  execution modes, e.g., `--missed-lines`.
+
 ### Libraries
 
 * **[breaking]** Makes `LinkedNode` in `lib/container` weak in the reverse
