@@ -374,7 +374,7 @@ lineComment :: TextParser String
 lineComment = labeled "line comment" $
   between (string_ "//")
           lineEnd
-          (many $ satisfy (/= '\n'))
+          (many $ satisfy (\c -> c /= '\n' && c /= '\r'))
 
 blockComment :: TextParser String
 blockComment = labeled "block comment" $

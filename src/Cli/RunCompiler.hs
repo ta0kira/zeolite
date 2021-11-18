@@ -56,10 +56,9 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl)
     prepareCallLog (Just cl2) = do
       clFull <- errorFromIO $ canonicalizePath (p </> cl2)
       compilerWarningM $ "Logging calls to " ++ clFull
-      errorFromIO $ writeFile clFull (intercalate "," (map show logHeader) ++ "\n")
+      errorFromIO $ writeFile clFull (intercalate "," (map show tracesLogHeader) ++ "\n")
       return clFull
     prepareCallLog _ = return ""
-    logHeader = ["microseconds","pid","function","context"]
     compilerHash = getCompilerHash backend
     preloadTests (ca,ms) d = do
       m <- loadModuleMetadata compilerHash f ca (p </> d)
@@ -188,20 +187,17 @@ data TraceEntry =
     teContext :: String
   }
 
+tracesLogHeader :: [String]
+tracesLogHeader = ["microseconds","pid","function","context"]
+
 parseTracesFile :: (FilePath,String) -> TrackedErrorsIO [TraceEntry]
 parseTracesFile (f,s) = runTextParser (between nullParse endOfDoc tracesFile) f s where
   tracesFile =  do
     parseHeader
     many parseSingle
   parseHeader = do
-    _ <- quotedString
-    string_ ","
-    _ <- quotedString
-    string_ ","
-    _ <- quotedString
-    string_ ","
-    _ <- quotedString
-    many (char '\n' <|> char '\n') >> return ()
+    sequence_ $ intercalate [string_ ","] $ map ((:[]) . parseColTitle) tracesLogHeader
+    some (char '\n' <|> char '\r') >> return ()
   parseSingle = do
     ms <- parseDec
     string_ ","
@@ -210,8 +206,11 @@ parseTracesFile (f,s) = runTextParser (between nullParse endOfDoc tracesFile) f 
     func <- quotedString
     string_ ","
     c <- quotedString
-    many (char '\n' <|> char '\n') >> return ()
+    some (char '\n' <|> char '\r') >> return ()
     return $ TraceEntry ms pid func c
+  parseColTitle expected = do
+    title <- quotedString
+    when (expected /= title) $ compilerErrorM $ "Expected column named \"" ++ expected ++ "\" but found \"" ++ title ++ "\""
 
 runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
   ForceMode -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()
