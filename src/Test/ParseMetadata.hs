@@ -38,6 +38,7 @@ import Types.TypeInstance (CategoryName(..))
 hugeCompileMetadata :: CompileMetadata  -- testfiles/module-cache.txt
 hugeCompileMetadata = CompileMetadata {
     cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+    cmRoot = "/home/project",
     cmPath = "/home/project/special",
     cmExtra = [
       "extra1",
@@ -177,6 +178,7 @@ tests = [
 
     checkWriteFail "bad hash" $ CompileMetadata {
       cmVersionHash = VersionHash "bad hash",
+      cmRoot = "/home/project",
       cmPath = "/home/project/special",
       cmExtra = [],
       cmPublicNamespace = NoNamespace,
@@ -200,6 +202,7 @@ tests = [
 
     checkWriteFail "bad namespace" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+      cmRoot = "/home/project",
       cmPath = "/home/project/special",
       cmExtra = [],
       cmPublicNamespace = StaticNamespace "bad namespace",
@@ -223,6 +226,7 @@ tests = [
 
     checkWriteFail "bad namespace" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+      cmRoot = "/home/project",
       cmPath = "/home/project/special",
       cmExtra = [],
       cmPublicNamespace = NoNamespace,
@@ -246,6 +250,7 @@ tests = [
 
     checkWriteFail "bad category" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+      cmRoot = "/home/project",
       cmPath = "/home/project/special",
       cmExtra = [],
       cmPublicNamespace = NoNamespace,
@@ -271,6 +276,7 @@ tests = [
 
     checkWriteFail "bad category" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+      cmRoot = "/home/project",
       cmPath = "/home/project/special",
       cmExtra = [],
       cmPublicNamespace = NoNamespace,

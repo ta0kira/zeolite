@@ -74,8 +74,6 @@ data ModuleSpec =
 
 data LoadedTests =
   LoadedTests {
-    ltRoot :: FilePath,
-    ltPath :: FilePath,
     ltMetadata :: CompileMetadata,
     ltExprMap :: ExprMap SourceContext,
     ltPublicDeps :: [CompileMetadata],
@@ -102,7 +100,8 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
                  bpDeps <- loadPublicDeps compilerHash f ca2 [base]
                  return $ bpDeps ++ deps1
   time <- errorFromIO getZonedTime
-  path <- errorFromIO $ canonicalizePath $ p </> d
+  root <- errorFromIO $ canonicalizePath p
+  path <- errorFromIO $ canonicalizePath (p </> d)
   extra <- errorFromIO $ sequence $ map (canonicalizePath . (p</>)) ee
   -- NOTE: Making the public namespace deterministic allows freshness checks to
   -- skip checking all inputs/outputs for each dependency.
@@ -119,9 +118,9 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   fs <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   eraseCachedData (p </> d)
-  ps2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) $ filter (not . (`Set.member` private)) ps
-  xs2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) $ xs ++ filter (`Set.member` private) ps
-  ts2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) ts
+  let ps2 = filter (not . (`Set.member` private)) ps
+  let xs2 = xs ++ filter (`Set.member` private) ps
+  let ts2 = ts
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs
   paths' <- mapM (errorFromIO . canonicalizePath) paths
   s0 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
@@ -145,6 +144,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   ls <- createLibrary libraryName (getLinkFlags m) (deps1' ++ deps2) allObjects
   let cm2 = CompileMetadata {
       cmVersionHash = compilerHash,
+      cmRoot = root,
       cmPath = path,
       cmExtra = extra,
       cmPublicNamespace = ns0,
@@ -168,6 +168,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   bs <- createBinary paths' (cm2:(deps1' ++ deps2)) m mf
   let cm2' = CompileMetadata {
       cmVersionHash = cmVersionHash cm2,
+      cmRoot = cmRoot cm2,
       cmPath = cmPath cm2,
       cmExtra = cmExtra cm2,
       cmPublicNamespace = cmPublicNamespace cm2,
@@ -315,11 +316,11 @@ createModuleTemplates resolver p d ds deps1 deps2 = do
 runModuleTests :: (PathIOHandler r, CompilerBackend b) =>
   r -> b -> FilePath -> FilePath -> [FilePath] -> LoadedTests ->
   TrackedErrorsIO [((Int,Int),TrackedErrors ())]
-runModuleTests resolver backend cl base tp (LoadedTests p d m em deps1 deps2) = do
+runModuleTests resolver backend cl base tp (LoadedTests m em deps1 deps2) = do
   let paths = base:(cmPublicSubdirs m ++ cmPrivateSubdirs m ++ getIncludePathsForDeps deps1)
   mapCompilerM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
-  ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
-  path <- errorFromIO $ canonicalizePath (p </> d)
+  ts' <- zipWithContents resolver (cmRoot m) $ filter isTestAllowed $ cmTestFiles m
+  let path = cmPath m
   cm <- fmap (createLanguageModule [] em . fst) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
   mapCompilerM (runSingleTest backend cl cm paths (m:deps2)) ts' where
     allowTests = Set.fromList tp

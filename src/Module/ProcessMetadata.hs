@@ -219,7 +219,7 @@ getRealPathsForDeps = map cmPath
 
 getSourceFilesForDeps :: [CompileMetadata] -> [FilePath]
 getSourceFilesForDeps = concat . map extract where
-  extract m = map (cmPath m </>) (filter isPublicSource $ cmPublicFiles m ++ cmPrivateFiles m)
+  extract m = map (cmRoot m </>) (filter isPublicSource $ cmPublicFiles m ++ cmPrivateFiles m)
 
 getNamespacesForDeps :: [CompileMetadata] -> [Namespace]
 getNamespacesForDeps = filter (not . isNoNamespace) . map cmPublicNamespace
@@ -321,18 +321,18 @@ checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: VersionHash -> MetadataMap -> FilePath -> CompileMetadata -> TrackedErrorsIO ()
-checkModuleFreshness h ca p m@(CompileMetadata _ p2 ep _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs ls _ os) = do
+checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs ls _ os) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
-  (ps2,xs2,ts2) <- findSourceFiles "" (p2:ep)
+  (ps2,xs2,ts2) <- findSourceFiles p2 (d:ep)
   let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
   collectAllM_ $ [
       checkHash,
       checkInput time (p </> moduleFilename),
-      mapCompilerM (errorFromIO . canonicalizePath) (ps2++xs2++ts2) >>= checkMissing (ps++xs++ts)
+      mapCompilerM (errorFromIO . canonicalizePath) (ps2++xs2++ts2) >>= checkMissing (map (p2</>) $ ps++xs++ts)
     ] ++
     (map (checkDep time) $ is ++ is2) ++
     (map (checkInput time) $ ps ++ xs) ++
-    (map (checkInput time . getCachedPath p2 "") $ hxx ++ cxx) ++
+    (map (checkInput time . getCachedPath d "") $ hxx ++ cxx) ++
     (map checkOutput bs) ++
     (map checkOutput ls) ++
     (map checkObject os) ++
@@ -351,14 +351,14 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 ep _ _ is is2 _ _ _ _ ps xs 
       when (not exists) $ compilerErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
-      mapCompilerM_ (checkInput time . (cmPath cm </>)) (cmPublicFiles cm)
+      mapCompilerM_ (checkInput time . (cmRoot cm </>)) (cmPublicFiles cm)
     checkObject (CategoryObjectFile _ _ fs) = mapCompilerM_ checkOutput fs
     checkObject (OtherObjectFile f)         = checkOutput f
     getRequires (CategoryObjectFile _ rs _) = rs
     getRequires _                           = []
-    checkRequire (CategoryIdentifier d c ns) = do
-      cm <- loadMetadata ca d
-      when (cmPath cm /= p2 && ns /= cmPublicNamespace cm) $
+    checkRequire (CategoryIdentifier d2 c ns) = do
+      cm <- loadMetadata ca d2
+      when (cmPath cm /= d && ns /= cmPublicNamespace cm) $
         compilerErrorM $ "Required category " ++ show c ++ " is newer than cached data"
     checkRequire (UnresolvedCategory c) =
       compilerErrorM $ "Required category " ++ show c ++ " is unresolved"

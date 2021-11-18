@@ -39,6 +39,7 @@ import Types.TypeInstance (CategoryName)
 data CompileMetadata =
   CompileMetadata {
     cmVersionHash :: VersionHash,
+    cmRoot :: FilePath,
     cmPath :: FilePath,
     cmExtra :: [FilePath],
     cmPublicNamespace :: Namespace,

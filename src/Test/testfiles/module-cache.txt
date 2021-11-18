@@ -26,6 +26,7 @@ public_deps: [
   "/home/project/public-dep1"
   "/home/project/public-dep2"
 ]
+root: "/home/project"
 private_deps: [
   "/home/project/private-dep1"
   "/home/project/private-dep2"

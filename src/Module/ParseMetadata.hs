@@ -124,6 +124,7 @@ parseRequired l p = toPermutation $ do
 instance ConfigFormat CompileMetadata where
   readConfig = runPermutation $ CompileMetadata
     <$> parseRequired "version_hash:"       parseHash
+    <*> parseRequired "root:"               parseQuoted
     <*> parseRequired "path:"               parseQuoted
     <*> parseOptional "extra_paths:"        [] (parseList parseQuoted)
     <*> parseOptional "public_namespace:"   NoNamespace parseNamespace
@@ -143,7 +144,7 @@ instance ConfigFormat CompileMetadata where
     <*> parseRequired "libraries:"          (parseList parseQuoted)
     <*> parseRequired "link_flags:"         (parseList parseQuoted)
     <*> parseRequired "object_files:"       (parseList readConfig)
-  writeConfig (CompileMetadata h p ee ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs ls lf os) = do
+  writeConfig (CompileMetadata h p d ee ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs ls lf os) = do
     validateHash h
     ns1' <- maybeShowNamespace "public_namespace:"  ns1
     ns2' <- maybeShowNamespace "private_namespace:" ns2
@@ -152,7 +153,8 @@ instance ConfigFormat CompileMetadata where
     os' <- fmap concat $ mapCompilerM writeConfig os
     return $ [
         "version_hash: " ++ show h,
-        "path: " ++ show p
+        "root: " ++ show p,
+        "path: " ++ show d
       ] ++ ns1' ++ ns2' ++ [
         "extra_paths: ["
       ] ++ indents (map show ee) ++ [

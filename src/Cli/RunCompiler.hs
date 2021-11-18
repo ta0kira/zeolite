@@ -70,7 +70,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl)
       deps2 <- loadPrivateDeps compilerHash f ca4 ([m]++deps1)
       let ca5 = ca4 `Map.union` mapMetadata deps2
       em <- getExprMap (p </> d) rm
-      return (ca5,ms ++ [LoadedTests p d m em (deps1) deps2])
+      return (ca5,ms ++ [LoadedTests m em (deps1) deps2])
     checkTestFilters ts = do
       let possibleTests = concat $ map (cmTestFiles . ltMetadata) ts
       let remaining = filter (not . flip any (map (flip isSuffixOf) possibleTests). flip ($)) tp
