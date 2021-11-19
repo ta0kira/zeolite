@@ -74,6 +74,9 @@
 
 * **[behavior]** Improves efficiency of returning values from function calls.
 
+* **[behavior]** Improves efficiency of `Bool`, `Char`, `Float`, and `Int`
+  values when used in function calls and containers.
+
 ## 0.20.0.1  -- 2021-11-14
 
 ### Language

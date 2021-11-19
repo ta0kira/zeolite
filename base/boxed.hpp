@@ -81,7 +81,9 @@ class BoxedValue {
 
   inline BoxedValue& operator = (const BoxedValue& other) {
     if (&other != this) {
-      Cleanup();
+      if (union_.type_ == UnionValue::Type::BOXED) {
+        Cleanup();
+      }
       union_ = other.union_;
       switch (union_.type_) {
         case UnionValue::Type::BOXED:
@@ -102,7 +104,9 @@ class BoxedValue {
 
   inline BoxedValue& operator = (BoxedValue&& other) {
     if (&other != this) {
-      Cleanup();
+      if (union_.type_ == UnionValue::Type::BOXED) {
+        Cleanup();
+      }
       union_ = other.union_;
       other.union_.type_  = UnionValue::Type::EMPTY;
       other.union_.value_.as_pointer_ = nullptr;
@@ -135,7 +139,9 @@ class BoxedValue {
   }
 
   inline ~BoxedValue() {
-    Cleanup();
+    if (union_.type_ == UnionValue::Type::BOXED) {
+      Cleanup();
+    }
   }
 
   inline PrimBool AsBool() const {
