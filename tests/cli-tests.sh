@@ -111,6 +111,7 @@ exclude_patterns() {
 
 
 test_freshness() {
+  mkdir -p "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}
   touch "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}{public{1,2}.0rp,private{1,2}.0rp,source{1,2}.0rx,test{1,2}.0rt}
   echo '$ModuleOnly$' | tee "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}private{1,2}.0rp > /dev/null
   echo 'concrete Type {} define Type {}' | tee "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}private{1,2}.0rx > /dev/null
