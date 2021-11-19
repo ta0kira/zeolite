@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ import Base.CompilerError
 
 
 class CompilerBackend b where
-  runCxxCommand   :: (MonadIO m, ErrorContextM m) => b -> CxxCommand -> m FilePath
-  runTestCommand  :: (MonadIO m, ErrorContextM m) => b -> TestCommand -> m TestCommandResult
-  getCompilerHash :: b -> VersionHash
+  runCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m FilePath
+  runTestCommand  :: (MonadIO m, CollectErrorsM m) => b -> TestCommand -> m TestCommandResult
+  getCompilerHash :: (MonadIO m, CollectErrorsM m) => b -> m VersionHash
 
 newtype VersionHash = VersionHash String deriving (Eq)
 

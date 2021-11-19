@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import Cli.CompileOptions
 import Cli.RunCompiler
 import Config.LoadConfig
 import Config.LocalConfig
+import Config.ParseConfig ()
+import Module.ParseMetadata (autoWriteConfig)
 
 
 main :: IO ()
@@ -39,7 +41,8 @@ main = do
     hPutStrLn stderr $ "*** WARNING: Local config " ++ f ++ " will be overwritten. ***"
   config <- createConfig cxxSpec arSpec
   hPutStrLn stderr $ "Writing local config to " ++ f ++ "."
-  writeFile f (show config ++ "\n")
+  serialized <- tryTrackedErrorsIO "" "" $ autoWriteConfig config
+  writeFile f serialized
   initLibraries config
   hPutStrLn stderr "Setup is now complete!"
 

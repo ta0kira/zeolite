@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@ limitations under the License.
 ----------------------------------------------------------------------------- -}
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
-
-{-# LANGUAGE Safe #-}
 
 module Config.LocalConfig (
   Backend(..),
@@ -43,34 +41,13 @@ import System.Posix.Temp (mkstemps)
 
 import Base.CompilerError
 import Cli.Programs
+import Config.CompilerConfig
+import Config.ParseConfig ()
+import Module.ParseMetadata
 import Module.Paths
 
 import Paths_zeolite_lang (getDataFileName,version)
 
-
-data Backend =
-  UnixBackend {
-    ucCxxBinary :: FilePath,
-    ucCompileFlags :: [String],
-    ucLibraryFlags :: [String],
-    ucBinaryFlags :: [String],
-    ucArBinary :: FilePath
-  }
-  deriving (Read,Show)
-
-data Resolver =
-  SimpleResolver {
-    srVisibleSystem :: [FilePath],
-    srExtraPaths :: [FilePath]
-  }
-  deriving (Read,Show)
-
-data LocalConfig =
-  LocalConfig {
-    lcBackend :: Backend,
-    lcResolver :: Resolver
-  }
-  deriving (Read,Show)
 
 rootPath :: IO FilePath
 rootPath = getDataFileName ""
@@ -129,8 +106,10 @@ instance CompilerBackend Backend where
         hDuplicateTo h1 stdout
         hDuplicateTo h2 stderr
         executeFile b True as Nothing
-  getCompilerHash b = VersionHash $ flip showHex "" $ abs $ hash $ minorVersion ++ show b where
-    minorVersion = show $ take 3 $ versionBranch version
+  getCompilerHash b = do
+    let minorVersion = show $ take 3 $ versionBranch version
+    serialized <- autoWriteConfig b
+    return $ VersionHash $ flip showHex "" $ abs $ hash $ minorVersion ++ serialized
 
 executeProcess :: (MonadIO m, ErrorContextM m) => String -> [String] -> m ()
 executeProcess c os = do

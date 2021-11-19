@@ -59,8 +59,8 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl)
       errorFromIO $ writeFile clFull (intercalate "," (map show tracesLogHeader) ++ "\n")
       return clFull
     prepareCallLog _ = return ""
-    compilerHash = getCompilerHash backend
     preloadTests (ca,ms) d = do
+      compilerHash <- getCompilerHash backend
       m <- loadModuleMetadata compilerHash f ca (p </> d)
       let ca2 = ca `Map.union` mapMetadata [m]
       rm <- loadRecompile (p </> d)
@@ -126,8 +126,8 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
   runRecompileCommon resolver backend f False p ds
 
 runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
-  compilerHash = getCompilerHash backend
   compileSingle d = do
+    compilerHash <- getCompilerHash backend
     d' <- errorFromIO $ canonicalizePath (p </> d)
     (ep,is',is2') <- maybeUseConfig d'
     as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is'
@@ -217,7 +217,6 @@ runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
 runRecompileCommon resolver backend f rec p ds = do
   explicit <- fmap Set.fromList $ mapCompilerM (errorFromIO . canonicalizePath . (p </>)) ds
   foldM (recursive resolver explicit) Set.empty (map ((,) p) ds) >> return () where
-    compilerHash = getCompilerHash backend
     recursive r explicit da (p2,d0) = do
       d <- resolveModule r p2 d0
       isSystem <- isSystemModule r p2 d0
@@ -233,6 +232,7 @@ runRecompileCommon resolver backend f rec p ds = do
            recompile d
            return da'
     recompile d = do
+      compilerHash <- getCompilerHash backend
       upToDate <- isPathUpToDate compilerHash f d
       if f < ForceAll && upToDate
          then compilerWarningM $ "Path " ++ d ++ " is up to date"

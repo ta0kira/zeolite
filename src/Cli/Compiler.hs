@@ -86,6 +86,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
+  compilerHash <- getCompilerHash backend
   deps1 <- loadPublicDeps compilerHash f ca0 as
   let ca1 = ca0 `Map.union` mapMetadata deps1
   deps2 <- loadPublicDeps compilerHash f ca1 as2
@@ -166,7 +167,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
       cmLinkFlags = getLinkFlags m,
       cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
     }
-  bs <- createBinary paths' (cm2:(deps1' ++ deps2)) m mf
+  bs <- createBinary compilerHash paths' (cm2:(deps1' ++ deps2)) m mf
   let cm2' = CompileMetadata {
       cmVersionHash = cmVersionHash cm2,
       cmRoot = cmRoot cm2,
@@ -193,7 +194,6 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   writeMetadata (p </> d) cm2'
   let traces = Set.unions $ map coPossibleTraces $ hxx ++ other
   writePossibleTraces (p </> d) traces where
-    compilerHash = getCompilerHash backend
     ep' = fixPaths $ map (p </>) ep
     writeOutputFile paths ca@(CxxOutput _ f2 ns _ _ _ content) = do
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
@@ -245,7 +245,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
           fmap Just $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
-    createBinary paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
+    createBinary compilerHash paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
       f0 <- if null o
                 then errorFromIO $ canonicalizePath $ p </> d </> show n
                 else errorFromIO $ canonicalizePath $ p </> d </> o
@@ -269,11 +269,11 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
         getCommand LinkDynamic mainAbs f0 deps2 paths2 = do
           let objects = getLibrariesForDeps deps2
           return $ CompileToBinary mainAbs objects [] f0 paths2 []
-    createBinary _ _ (CompileBinary n _ _ _ _) [] =
+    createBinary _ _ _ (CompileBinary n _ _ _ _) [] =
       compilerErrorM $ "Main category " ++ show n ++ " not found."
-    createBinary _ _ (CompileBinary n _ _ _ _) _ =
+    createBinary _ _ _ (CompileBinary n _ _ _ _) _ =
       compilerErrorM $ "Multiple matches for main category " ++ show n ++ "."
-    createBinary _ _ _ _ = return []
+    createBinary _ _ _ _ _ = return []
     createLibrary _ _ [] [] = return []
     createLibrary name lf deps os = do
       let flags = lf ++ getLinkFlagsForDeps deps

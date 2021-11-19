@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 module Config.LoadConfig (
   localConfigPath,
   loadConfig,
@@ -29,6 +27,8 @@ import System.Directory
 
 import Base.CompilerError
 import Config.LocalConfig
+import Config.ParseConfig ()
+import Module.ParseMetadata (autoReadConfig)
 
 import Paths_zeolite_lang (getDataFileName)
 
@@ -39,16 +39,13 @@ loadConfig = do
   isFile <- liftIO $ doesFileExist configFile
   when (not isFile) $ compilerErrorM "Zeolite has not been configured. Please run zeolite-setup."
   configString <- liftIO $ readFile configFile
-  lc <- check $ (reads configString :: [(LocalConfig,String)])
+  lc <- autoReadConfig configFile configString <!! "Zeolite configuration is corrupt. Please rerun zeolite-setup."
   pathsFile   <- liftIO $ globalPathsPath
   pathsExists <- liftIO $ doesFileExist pathsFile
   paths <- if pathsExists
               then liftIO $ readFile pathsFile >>= return . lines
               else return []
-  return (addPaths (lcResolver lc) paths,lcBackend lc) where
-    check [(cm,"")]   = return cm
-    check [(cm,"\n")] = return cm
-    check _ = compilerErrorM "Zeolite configuration is corrupt. Please rerun zeolite-setup."
+  return (addPaths (lcResolver lc) paths,lcBackend lc)
 
 localConfigPath :: IO FilePath
 localConfigPath = getDataFileName localConfigFilename >>= canonicalizePath

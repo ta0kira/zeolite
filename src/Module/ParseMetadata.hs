@@ -17,9 +17,18 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Module.ParseMetadata (
-  ConfigFormat,
+  ConfigFormat(..),
   autoReadConfig,
   autoWriteConfig,
+  indent,
+  indents,
+  parseList,
+  parseOptional,
+  parseQuoted,
+  parseRequired,
+  prependFirst,
+  structClose,
+  structOpen,
 ) where
 
 import Control.Applicative.Permutations

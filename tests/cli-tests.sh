@@ -544,31 +544,31 @@ run_all() {
 }
 
 ALL_TESTS=(
-#   test_bad_path
-#   test_bad_system_include
-#   test_check_defs
-#   test_example_hello
-#   test_example_parser
-#   test_example_primes
-#   test_example_random
-#   test_fast_static
+  test_bad_path
+  test_bad_system_include
+  test_check_defs
+  test_example_hello
+  test_example_parser
+  test_example_primes
+  test_example_random
+  test_fast_static
   test_freshness
-#   test_global_include
-#   test_leak_check
-#   test_module_only
-#   test_module_only2
-#   test_module_only3
-#   test_module_only4
-#   test_self_offset
-#   test_show_deps
-#   test_simulate_refs
-#   test_templates
-#   test_tests_only
-#   test_tests_only2
-#   test_tests_only3
-#   test_tests_only4
-#   test_traces
-#   test_warn_public
+  test_global_include
+  test_leak_check
+  test_module_only
+  test_module_only2
+  test_module_only3
+  test_module_only4
+  test_self_offset
+  test_show_deps
+  test_simulate_refs
+  test_templates
+  test_tests_only
+  test_tests_only2
+  test_tests_only3
+  test_tests_only4
+  test_traces
+  test_warn_public
 )
 
 run_all "${ALL_TESTS[@]}" 1>&2

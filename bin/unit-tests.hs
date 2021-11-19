@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import qualified Test.TrackedErrors   as TestTrackedErrors
 import qualified Test.DefinedCategory as TestDefinedCategory
 import qualified Test.IntegrationTest as TestIntegrationTest
 import qualified Test.MergeTree       as TestMergeTree
+import qualified Test.ParseConfig     as TestParseConfig
 import qualified Test.ParseMetadata   as TestParseMetadata
 import qualified Test.Parser          as TestParser
 import qualified Test.Pragma          as TestPragma
@@ -38,6 +39,7 @@ main = runAllTests $ concat [
     labelWith "DefinedCategory" TestDefinedCategory.tests,
     labelWith "IntegrationTest" TestIntegrationTest.tests,
     labelWith "MergeTree"       TestMergeTree.tests,
+    labelWith "ParseConfig"     TestParseConfig.tests,
     labelWith "ParseMetadata"   TestParseMetadata.tests,
     labelWith "Parser"          TestParser.tests,
     labelWith "Pragma"          TestPragma.tests,

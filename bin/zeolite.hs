@@ -105,7 +105,7 @@ tryFastModes os0 = maybePath os0 where
   tryMode root ("--show-traces":ps) = do
     tryZeoliteIO $ do
       (_,backend) <- loadConfig
-      let h = getCompilerHash backend
+      h <- getCompilerHash backend
       mapCompilerM_ (showTraces h) ps
     exitSuccess where
       showTraces h p = do
@@ -118,7 +118,7 @@ tryFastModes os0 = maybePath os0 where
   tryMode root ("--missed-lines":l:ps) = do
     tryZeoliteIO $ do
       (_,backend) <- loadConfig
-      let h = getCompilerHash backend
+      h <- getCompilerHash backend
       expected <- fmap Set.unions $ mapCompilerM (getTraces h) ps
       actual <- loadTraces
       mapM_ (errorFromIO . hPutStrLn stdout) $ Set.toList $ expected `Set.difference` actual
@@ -140,7 +140,7 @@ tryFastModes os0 = maybePath os0 where
   tryMode root ("--show-deps":ps) = do
     tryZeoliteIO $ do
       (_,backend) <- loadConfig
-      let h = getCompilerHash backend
+      h <- getCompilerHash backend
       mapCompilerM_ (showDeps h) ps
     exitSuccess where
       showDeps h p = do
