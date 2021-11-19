@@ -46,10 +46,12 @@ class ReturnTuple {
  public:
   constexpr ReturnTuple() : data_() {}
 
-  ReturnTuple(int size) : data_(size-1) {}
+  explicit ReturnTuple(int size) : data_(size-1) {}
 
-  template<class T, class...Ts>
-  explicit ReturnTuple(T first, Ts... returns)
+  explicit ReturnTuple(BoxedValue first) : first_(std::move(first)), data_() {}
+
+  template<class...Ts>
+  explicit ReturnTuple(BoxedValue first, Ts... returns)
     : first_(std::move(first)), data_(sizeof...(Ts)) {
     data_.Init(std::move(returns)...);
   }
