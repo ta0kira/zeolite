@@ -27,8 +27,8 @@ module Config.CompilerConfig (
 
 data LocalConfig =
   LocalConfig {
-    lcBackend :: Backend,
-    lcResolver :: Resolver
+    lcResolver :: Resolver,
+    lcBackend :: Backend
   }
   deriving (Eq,Show)
 

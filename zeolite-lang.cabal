@@ -350,6 +350,7 @@ executable zeolite-setup
   build-depends:       base,
                        directory,
                        filepath,
+                       mtl,
                        zeolite-internal
 
 

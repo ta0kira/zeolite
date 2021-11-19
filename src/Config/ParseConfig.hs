@@ -78,9 +78,9 @@ instance ConfigFormat Resolver where
 
 instance ConfigFormat LocalConfig where
   readConfig = runPermutation $ LocalConfig
-    <$> parseRequired "backend:"  readConfig
-    <*> parseRequired "resolver:" readConfig
-  writeConfig (LocalConfig b r) = do
-    b' <- writeConfig b
+    <$> parseRequired "resolver:" readConfig
+    <*> parseRequired "backend:"  readConfig
+  writeConfig (LocalConfig r b) = do
     r' <- writeConfig r
-    return $ ("backend: " `prependFirst` b') ++ ("resolver:" `prependFirst` r')
+    b' <- writeConfig b
+    return $ ("resolver: " `prependFirst` r') ++ ("backend: " `prependFirst` b')

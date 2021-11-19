@@ -17,6 +17,7 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 import Control.Monad (when)
+import Control.Monad.Trans
 import System.Directory
 import System.Environment
 import System.Exit
@@ -29,22 +30,25 @@ import Cli.RunCompiler
 import Config.LoadConfig
 import Config.LocalConfig
 import Config.ParseConfig ()
-import Module.ParseMetadata (autoWriteConfig)
 
 
 main :: IO ()
-main = do
-  (cxxSpec:arSpec:_) <- fmap ((++ repeat Nothing) . map Just) getArgs
-  f <- localConfigPath
-  isFile <- doesFileExist f
-  when isFile $ do
-    hPutStrLn stderr $ "*** WARNING: Local config " ++ f ++ " will be overwritten. ***"
-  config <- createConfig cxxSpec arSpec
-  hPutStrLn stderr $ "Writing local config to " ++ f ++ "."
-  serialized <- tryTrackedErrorsIO "" "" $ autoWriteConfig config
-  writeFile f serialized
-  initLibraries config
-  hPutStrLn stderr "Setup is now complete!"
+main = tryTrackedErrorsIO "" "Zeolite setup failed:" (lift getArgs >>= handle) where
+  handle ("--reuse":_) = do
+    config <- loadConfig
+    runWith config
+  handle args = do
+    let (cxxSpec:arSpec:_) = (map Just $ args) ++ repeat Nothing
+    f <- lift $ localConfigPath
+    isFile <- lift $ doesFileExist f
+    when isFile $
+      lift $ hPutStrLn stderr $ "*** WARNING: Local config " ++ f ++ " will be overwritten. ***"
+    config <- lift $ createConfig cxxSpec arSpec
+    saveConfig config
+    runWith config
+  runWith config = do
+    initLibraries config
+    lift $ hPutStrLn stderr "Setup is now complete!"
 
 clangBinary :: String
 clangBinary = "clang++"
@@ -88,27 +92,25 @@ intOrString s = handle (reads s :: [(Int, String)]) where
   handle [(n,"")] = Left n
   handle _        = Right s
 
-createConfig :: Maybe String -> Maybe String -> IO LocalConfig
+createConfig :: Maybe String -> Maybe String -> IO (Resolver,Backend)
 createConfig cxxSpec arSpec = do
   clang <- findExecutables clangBinary
   gcc   <- findExecutables gccBinary
   ar    <- findExecutables arBinary
   compiler <- promptChoice "Which clang-compatible C++ compiler should be used?" cxxSpec (clang ++ gcc)
   archiver <- promptChoice "Which ar-compatible archiver should be used?"        arSpec  ar
-  let config = LocalConfig {
-      lcBackend = UnixBackend {
-        ucCxxBinary    = compiler,
-        ucCompileFlags = compileFlags,
-        ucLibraryFlags = libraryFlags,
-        ucBinaryFlags  = binaryFlags,
-        ucArBinary     = archiver
-      },
-      lcResolver = SimpleResolver {
-        srVisibleSystem = includePaths,
-        srExtraPaths = []
-      }
-    }
-  return config
+  return (
+    SimpleResolver {
+      srVisibleSystem = includePaths,
+      srExtraPaths = []
+    },
+    UnixBackend {
+      ucCxxBinary    = compiler,
+      ucCompileFlags = compileFlags,
+      ucLibraryFlags = libraryFlags,
+      ucBinaryFlags  = binaryFlags,
+      ucArBinary     = archiver
+    })
 
 promptChoice :: String -> Maybe String -> [String] -> IO String
 promptChoice _ (Just spec) cs = handle $ intOrString spec where
@@ -150,9 +152,9 @@ getInput = do
     exitFailure
   hGetLine stdin
 
-initLibraries :: LocalConfig -> IO ()
-initLibraries (LocalConfig backend resolver) = do
-  path <- rootPath >>= canonicalizePath
+initLibraries :: (Resolver,Backend) -> TrackedErrorsIO ()
+initLibraries (resolver,backend) = do
+  path <- lift $ rootPath >>= canonicalizePath
   let options = CompileOptions {
       coHelp = HelpNotNeeded,
       coPublicDeps = [],
@@ -164,7 +166,6 @@ initLibraries (LocalConfig backend resolver) = do
       coMode = CompileRecompileRecursive,
       coForce = ForceAll
     }
-  tryTrackedErrorsIO "Warnings:" "Zeolite setup failed:" $ do
-    runCompiler resolver backend options
-    mapM_ optionalWarning optionalLibraries where
-    optionalWarning library = compilerWarningM $ "Optional library " ++ library ++ " must be built manually if needed"
+  runCompiler resolver backend options
+  mapM_ optionalWarning optionalLibraries where
+  optionalWarning library = compilerWarningM $ "Optional library " ++ library ++ " must be built manually if needed"

@@ -19,21 +19,30 @@ limitations under the License.
 module Config.LoadConfig (
   localConfigPath,
   loadConfig,
+  saveConfig,
 ) where
 
 import Control.Monad (when)
 import Control.Monad.IO.Class
 import System.Directory
+import System.IO
 
 import Base.CompilerError
 import Config.LocalConfig
 import Config.ParseConfig ()
-import Module.ParseMetadata (autoReadConfig)
+import Module.ParseMetadata
 
 import Paths_zeolite_lang (getDataFileName)
 
 
-loadConfig :: (MonadIO m, ErrorContextM m) => m (Resolver,Backend)
+saveConfig :: (MonadIO m, CollectErrorsM m) => (Resolver,Backend) -> m ()
+saveConfig (resolver,backend) = do
+  configFile <- liftIO localConfigPath
+  liftIO $ hPutStrLn stderr $ "Writing local config to " ++ configFile ++ "."
+  serialized <- autoWriteConfig (LocalConfig resolver backend)
+  liftIO $ writeFile configFile serialized
+
+loadConfig :: (MonadIO m, CollectErrorsM m) => m (Resolver,Backend)
 loadConfig = do
   configFile <- liftIO localConfigPath
   isFile <- liftIO $ doesFileExist configFile
