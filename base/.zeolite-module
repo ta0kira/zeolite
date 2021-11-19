@@ -34,11 +34,12 @@ extra_files: [
   "base/thread-capture.h"
   "base/thread-crosser.h"
   "base/pooled.hpp"
+  "base/returns.hpp"
   "base/types.hpp"
   "base/src/boxed.cpp"
   "base/src/category-source.cpp"
   "base/src/logging.cpp"
+  "base/src/returns.cpp"
   "base/src/thread-crosser.cc"
-  "base/src/types.cpp"
 ]
 mode: incremental {}

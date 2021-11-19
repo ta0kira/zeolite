@@ -21,6 +21,7 @@ limitations under the License.
 
 #include <ostream>
 
+#include "returns.hpp"
 #include "types.hpp"
 
 

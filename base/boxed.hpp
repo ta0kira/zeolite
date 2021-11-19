@@ -23,9 +23,11 @@ limitations under the License.
 #include <cstdlib>
 #include <atomic>
 
-#include "function.hpp"
 #include "types.hpp"
 
+
+class ParamsArgs;
+class ValueFunction;
 
 namespace zeolite_internal {
 
@@ -228,7 +230,7 @@ class BoxedValue {
     return value;
   }
 
-  ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args) const;
+  ReturnTuple Dispatch(const ::ValueFunction& label, const ::ParamsArgs& params_args) const;
 
   void Cleanup();
 

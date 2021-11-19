@@ -26,8 +26,9 @@ limitations under the License.
 
 #include "boxed.hpp"
 #include "cycle-check.hpp"
-#include "types.hpp"
 #include "function.hpp"
+#include "returns.hpp"
+#include "types.hpp"
 
 
 #define BUILTIN_FAIL(e) { \
