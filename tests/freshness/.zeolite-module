@@ -1,0 +1,7 @@
+root: "../.."
+path: "tests/freshness"
+extra_paths: [
+  "tests/freshness/sub1"
+  "tests/../tests/freshness/sub2"
+]
+mode: incremental {}

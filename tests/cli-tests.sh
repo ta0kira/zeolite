@@ -78,6 +78,127 @@ test_check_defs() {
 }
 
 
+require_patterns() {
+  local output=$1
+  local error=0
+  while read pattern; do
+    if ! echo "$output" | egrep -q "$pattern"; then
+      show_message "Expected pattern \"$pattern\" in output"
+      error=1
+    fi
+  done
+  if ((error)); then
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
+exclude_patterns() {
+  local output=$1
+  local error=0
+  while read pattern; do
+    if echo "$output" | egrep -q "$pattern"; then
+      show_message "Unexpected pattern \"$pattern\" in output"
+      error=1
+    fi
+  done
+  if ((error)); then
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
+test_freshness() {
+  touch "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}{public{1,2}.0rp,private{1,2}.0rp,source{1,2}.0rx,test{1,2}.0rt}
+  echo '$ModuleOnly$' | tee "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}private{1,2}.0rp > /dev/null
+  echo 'concrete Type {} define Type {}' | tee "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}private{1,2}.0rx > /dev/null
+  rm -f "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}{public3.0rp,source3.0rx,test3.0rt}
+
+  # Compile and test normally.
+  do_zeolite -p "$ZEOLITE_PATH" -R tests/freshness/reverse -f
+  do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness/reverse
+
+  # Modify the module's files.
+  touch "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}{public{1,3}.0rp,source{1,3}.0rx,test{1,3}.0rt}
+  rm -f "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}{public2.0rp,private2.0rp,source2.0rx,test2.0rt}
+  rm -f "$ZEOLITE_PATH/tests/freshness/.zeolite-cache"/*.so
+
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness/reverse || true)
+  require_patterns "$output" <<END
+tests/freshness/reverse.+out of date
+freshness/public1\.0rp.+newer
+freshness/public2\.0rp.+missing
+freshness/sub1/public1\.0rp.+newer
+freshness/sub1/public2\.0rp.+missing
+freshness/sub2/public1\.0rp.+newer
+freshness/sub2/public2\.0rp.+missing
+END
+[[ $? -eq 0 ]] || return 1
+  exclude_patterns "$output" <<END
+private
+0rt
+0rx
+END
+[[ $? -eq 0 ]] || return 1
+
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness || true)
+  require_patterns "$output" <<END
+tests/freshness[^/].+out of date
+freshness/public3\.0rp.+not present
+freshness/source1\.0rx.+newer
+freshness/source2\.0rx.+missing
+freshness/source3\.0rx.+not present
+freshness/sub1/public3\.0rp.+not present
+freshness/sub1/source1\.0rx.+newer
+freshness/sub1/source2\.0rx.+missing
+freshness/sub1/source3\.0rx.+not present
+freshness/sub1/test1\.0rt.+newer
+freshness/sub1/test2\.0rt.+missing
+freshness/sub1/test3\.0rt.+not present
+freshness/sub2/public3\.0rp.+not present
+freshness/sub2/source1\.0rx.+newer
+freshness/sub2/source2\.0rx.+missing
+freshness/sub2/source3\.0rx.+not present
+freshness/sub2/test1\.0rt.+newer
+freshness/sub2/test2\.0rt.+missing
+freshness/sub2/test3\.0rt.+not present
+freshness/test1\.0rt.+newer
+freshness/test2\.0rt.+missing
+freshness/test3\.0rt.+not present
+freshness/.zeolite-cache/public_[a-f0-9]+\.so.+missing
+END
+[[ $? -eq 0 ]] || return 1
+  exclude_patterns "$output" <<END
+cpp
+hpp
+\.o\b
+END
+[[ $? -eq 0 ]] || return 1
+
+  do_zeolite -p "$ZEOLITE_PATH" -r tests/freshness
+
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness/reverse || true)
+  require_patterns "$output" <<END
+tests/freshness/reverse.+out of date
+freshness/public1\.0rp.+newer
+freshness/public3\.0rp.+newer
+freshness/sub1/public1\.0rp.+newer
+freshness/sub1/public3\.0rp.+newer
+freshness/sub2/public1\.0rp.+newer
+freshness/sub2/public3\.0rp.+newer
+END
+[[ $? -eq 0 ]] || return 1
+  exclude_patterns "$output" <<END
+private
+0rt
+0rx
+END
+[[ $? -eq 0 ]] || return 1
+}
+
+
 test_leak_check() {
   local binary="$ZEOLITE_PATH/tests/leak-check/LeakTest"
   rm -f "$binary"
@@ -423,30 +544,31 @@ run_all() {
 }
 
 ALL_TESTS=(
-  test_bad_path
-  test_bad_system_include
-  test_check_defs
-  test_example_hello
-  test_example_parser
-  test_example_primes
-  test_example_random
-  test_fast_static
-  test_global_include
-  test_leak_check
-  test_module_only
-  test_module_only2
-  test_module_only3
-  test_module_only4
-  test_self_offset
-  test_show_deps
-  test_simulate_refs
-  test_templates
-  test_tests_only
-  test_tests_only2
-  test_tests_only3
-  test_tests_only4
-  test_traces
-  test_warn_public
+#   test_bad_path
+#   test_bad_system_include
+#   test_check_defs
+#   test_example_hello
+#   test_example_parser
+#   test_example_primes
+#   test_example_random
+#   test_fast_static
+  test_freshness
+#   test_global_include
+#   test_leak_check
+#   test_module_only
+#   test_module_only2
+#   test_module_only3
+#   test_module_only4
+#   test_self_offset
+#   test_show_deps
+#   test_simulate_refs
+#   test_templates
+#   test_tests_only
+#   test_tests_only2
+#   test_tests_only3
+#   test_tests_only4
+#   test_traces
+#   test_warn_public
 )
 
 run_all "${ALL_TESTS[@]}" 1>&2

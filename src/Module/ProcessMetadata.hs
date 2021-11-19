@@ -325,13 +325,16 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p2 (d:ep)
   let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
+  expectedFiles <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps++xs++ts)
+  actualFiles   <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps2++xs2++ts2)
+  inputFiles    <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (xs++ts)
   collectAllM_ $ [
       checkHash,
       checkInput time (p </> moduleFilename),
-      mapCompilerM (errorFromIO . canonicalizePath) (ps2++xs2++ts2) >>= checkMissing (map (p2</>) $ ps++xs++ts)
+      checkMissing expectedFiles actualFiles
     ] ++
     (map (checkDep time) $ is ++ is2) ++
-    (map (checkInput time) $ ps ++ xs) ++
+    (map (checkInput time) inputFiles) ++
     (map (checkInput time . getCachedPath d "") $ hxx ++ cxx) ++
     (map checkOutput bs) ++
     (map checkOutput ls) ++
@@ -351,7 +354,8 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
       when (not exists) $ compilerErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
-      mapCompilerM_ (checkInput time . (cmRoot cm </>)) (cmPublicFiles cm)
+      files <- mapM (errorFromIO . canonicalizePath . (cmRoot cm </>)) (cmPublicFiles cm)
+      mapCompilerM_ (checkInput time) files
     checkObject (CategoryObjectFile _ _ fs) = mapCompilerM_ checkOutput fs
     checkObject (OtherObjectFile f)         = checkOutput f
     getRequires (CategoryObjectFile _ rs _) = rs
@@ -364,7 +368,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
       compilerErrorM $ "Required category " ++ show c ++ " is unresolved"
     checkMissing s0 s1 = do
       let missing = Set.toList $ Set.fromList s1 `Set.difference` Set.fromList s0
-      mapCompilerM_ (\f -> compilerErrorM $ "Required path \"" ++ f ++ "\" is not present in cached data") missing
+      mapCompilerM_ (\f -> compilerErrorM $ "Input path \"" ++ f ++ "\" is not present in cached data") missing
     doesFileOrDirExist f2 = do
       existF <- errorFromIO $ doesFileExist f2
       if existF
@@ -464,9 +468,9 @@ loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
       where
         loadPublic p3 = do
           (pragmas,cs) <- parsePublicSource p3
-          let xs = if any isModuleOnly pragmas
-                      then [fst p3]
-                      else []
+          xs <- if any isModuleOnly pragmas
+                   then errorFromIO $ fmap (:[]) $ canonicalizePath $ p </> fst p3
+                   else return []
           let tags = Set.fromList $
                      (if any isTestsOnly  pragmas then [TestsOnly]  else []) ++
                      (if any isModuleOnly pragmas then [ModuleOnly] else [])

@@ -118,8 +118,9 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   fs <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   eraseCachedData (p </> d)
-  let ps2 = filter (not . (`Set.member` private)) ps
-  let xs2 = xs ++ filter (`Set.member` private) ps
+  pps <- fmap (zip ps) $ mapCompilerM (errorFromIO . canonicalizePath . (p</>)) ps
+  let ps2 = map fst $ filter (not . ((`Set.member` private) . snd)) pps
+  let xs2 = xs ++ (map fst $ filter ((`Set.member` private) . snd) pps)
   let ts2 = ts
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs
   paths' <- mapM (errorFromIO . canonicalizePath) paths
