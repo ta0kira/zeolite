@@ -1,5 +1,14 @@
 # Revision history for zeolite-lang
 
+## 0.21.1.0  -- ????-??-??
+
+### Libraries
+
+* **[new]** Adds `LessThan2` `@value interface` to `lib/util`.
+
+* **[new]** Implements `Sorting` functions in `lib/container` that use  the new
+  `LessThan2` `interface`.
+
 ## 0.21.0.0  -- 2021-11-19
 
 ### Compiler CLI

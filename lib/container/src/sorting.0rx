@@ -22,7 +22,11 @@ define Sorting {
   }
 
   sortWith (seq) {
-    \ HeapSort<#x,#xx>.inPlace(seq)
+    \ seq `sortWith2` LessThanAs2<#x,#xx>.new()
+  }
+
+  sortWith2 (seq,compare) {
+    \ HeapSort<#x>.inPlace(seq,compare)
   }
 
   reverse (seq) {
@@ -44,7 +48,11 @@ define Sorting {
   }
 
   sortListWith (head) {
-    return MergeSort<#n,#x,#xx>.sort(head)
+    return head `sortListWith2` LessThanAs2<#x,#xx>.new()
+  }
+
+  sortListWith2 (head,compare) {
+    return MergeSort<#n,#x>.sort(head,compare)
   }
 
   reverseList (head) (head2) {
@@ -71,19 +79,18 @@ define Sorting {
 
 // Putting the params at the top level allows helpers to be called without
 // needing to pass the params every time.
-concrete HeapSort<#x,#xx> {
-  #xx defines LessThan<#x>
-
-  @type inPlace ([ReadAt<#x>&WriteAt<#x>]) -> ()
+concrete HeapSort<#x> {
+  @type inPlace ([ReadAt<#x>&WriteAt<#x>],LessThan2<#x>) -> ()
 }
 
 define HeapSort {
-  $ReadOnly[seq]$
+  $ReadOnly[seq,compare]$
 
   @value [ReadAt<#x>&WriteAt<#x>] seq
+  @value LessThan2<#x> compare
 
-  inPlace (seq) {
-    \ #self{ seq }.execute()
+  inPlace (seq,compare) {
+    \ #self{ seq, compare }.execute()
   }
 
   @value execute () -> ()
@@ -121,10 +128,10 @@ define HeapSort {
       Int left  <- 2*last+1
       Int right <- 2*last+2
       $ReadOnly[left,right]$
-      if (seq.readAt(indexLargest) `#xx.lessThan` seq.readAt(left)) {
+      if (seq.readAt(indexLargest) `compare.lessThan` seq.readAt(left)) {
         indexLargest <- left
       }
-      if (right < size && seq.readAt(indexLargest) `#xx.lessThan` seq.readAt(right)) {
+      if (right < size && seq.readAt(indexLargest) `compare.lessThan` seq.readAt(right)) {
         indexLargest <- right
       }
       if (indexLargest == last) {
@@ -148,15 +155,21 @@ define HeapSort {
 
 // Putting the params at the top level allows helpers to be called without
 // needing to pass the params every time.
-concrete MergeSort<#n,#x,#xx> {
-  #xx defines LessThan<#x>
+concrete MergeSort<#n,#x> {
   #n requires ListNode<#n,#x>
 
-  @type sort (optional #n) -> (optional #n)
+  @type sort (optional #n,LessThan2<#x>) -> (optional #n)
 }
 
 define MergeSort {
-  sort (head) (head2) {
+  @value LessThan2<#x> compare
+
+  sort (head,compare) {
+    return #self{ compare }.iterated(head)
+  }
+
+  @value iterated (optional #n) -> (optional #n)
+  iterated (head) (head2) {
     head2 <- head
     $Hidden[head]$
 
@@ -190,7 +203,7 @@ define MergeSort {
     }
   }
 
-  @type splitAt (optional #n,Int) -> (optional #n)
+  @value splitAt (optional #n,Int) -> (optional #n)
   splitAt (head,n) {
     optional #n head2 <- head
     $Hidden[head]$
@@ -210,7 +223,7 @@ define MergeSort {
     return empty
   }
 
-  @type merge (optional #n,optional #n) -> (optional #n,optional #n)
+  @value merge (optional #n,optional #n) -> (optional #n,optional #n)
   merge (left,right) (head,tail) {
     head <- empty
     tail <- empty
@@ -221,7 +234,7 @@ define MergeSort {
 
     while (present(left2) && present(right2)) {
       #n append <- defer
-      if (require(left2).get() `#xx.lessThan` require(right2).get()) {
+      if (require(left2).get() `compare.lessThan` require(right2).get()) {
         left2 <- (append <- require(left2)).next()
       } else {
         right2 <- (append <- require(right2)).next()
@@ -258,5 +271,23 @@ define MergeSort {
         break
       }
     }
+  }
+}
+
+concrete LessThanAs2<#x|#xx|> {
+  immutable
+  refines LessThan2<#x>
+  #xx defines LessThan<#x>
+
+  @type new () -> (#self)
+}
+
+define LessThanAs2 {
+  new () {
+    return #self{ }
+  }
+
+  lessThan (x,y) {
+    return x `#xx.lessThan` y
   }
 }

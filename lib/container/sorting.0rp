@@ -48,6 +48,10 @@ concrete Sorting {
     #xx defines LessThan<#x>
   ([ReadAt<#x>&WriteAt<#x>]) -> ()
 
+  // The same as sortWith, but with LessThan2 instead of LessThan.
+  @category sortWith2<#x>
+  ([ReadAt<#x>&WriteAt<#x>],LessThan2<#x>) -> ()
+
   // In-place order reversal of a random-access container.
   @category reverse<#x> ([ReadAt<#x>&WriteAt<#x>]) -> ()
 
@@ -94,6 +98,11 @@ concrete Sorting {
     #xx defines LessThan<#x>
     #n requires ListNode<#n,#x>
   (optional #n) -> (optional #n)
+
+  // The same as sortListWith, but with LessThan2 instead of LessThan.
+  @category sortListWith2<#n,#x>
+    #n requires ListNode<#n,#x>
+  (optional #n,LessThan2<#x>) -> (optional #n)
 
   // Reverses the list in place and returns the new head.
   //

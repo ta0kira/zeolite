@@ -27,3 +27,8 @@ limitations under the License.
   //   be a copy of the structure, while still referring to the same objects.
   duplicate () -> (#self)
 }
+
+// A @value version of the LessThan @type interface.
+@value interface LessThan2<#x|> {
+  lessThan (#x,#x) -> (Bool)
+}
