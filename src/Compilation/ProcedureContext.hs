@@ -89,7 +89,8 @@ data ProcedureContext c =
     _pcExprMap :: ExprMap c,
     _pcReservedMacros :: [(MacroName,[c])],
     _pcNoTrace :: Bool,
-    _pcTraces :: [String]
+    _pcTraces :: [String],
+    _pcParentCall :: Maybe (Positional ParamName,Positional VariableName)
   }
 
 $(makeLenses ''ProcedureContext)
@@ -401,6 +402,16 @@ instance (Show c, CollectErrorsM m) =>
   ccAddTrace ctx "" = return ctx
   ccAddTrace ctx t = return $ ctx & pcTraces <>~ [t]
   ccGetTraces = return . (^. pcTraces)
+  ccCanForward ctx ps as = handle (ctx ^. pcParentCall) where
+    handle Nothing = return False
+    handle (Just (ps0,as0)) = collectFirstM [checkMatch ps0 as0,return False]
+    checkMatch ps0 as0 = do
+      processPairs_ equalOrError ps0 (Positional ps)
+      processPairs_ equalOrError as0 (Positional as)
+      return True
+    equalOrError x y
+      | x == y    = return ()
+      | otherwise = emptyErrorM
 
 updateReturnVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->

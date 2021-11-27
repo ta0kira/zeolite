@@ -85,7 +85,8 @@ getContextForInit tm em t d s = do
       _pcExprMap = em,
       _pcReservedMacros = [],
       _pcNoTrace = False,
-      _pcTraces = []
+      _pcTraces = [],
+      _pcParentCall = Nothing
     }
 
 getProcedureContext :: (Show c, CollectErrorsM m) =>
@@ -145,10 +146,18 @@ getProcedureContext (ScopeContext tm t ps ms pa fa va em)
       _pcExprMap = em,
       _pcReservedMacros = [],
       _pcNoTrace = False,
-      _pcTraces = []
+      _pcTraces = [],
+      _pcParentCall = parentCall
     }
   where
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
+    psList = map vpParam $ pValues ps1
+    asList = sequence $ map maybeArgName $ pValues $ avNames as2
+    maybeArgName (InputValue _ n) = Just n
+    maybeArgName _                = Nothing
+    parentCall = case asList of
+                      Just as3 -> Just (Positional psList,Positional as3)
+                      Nothing  -> Nothing
 
 getMainContext :: CollectErrorsM m => CategoryMap c -> ExprMap c -> m (ProcedureContext c)
 getMainContext tm em = return $ ProcedureContext {
@@ -177,5 +186,6 @@ getMainContext tm em = return $ ProcedureContext {
     _pcExprMap = em,
     _pcReservedMacros = [],
     _pcNoTrace = False,
-    _pcTraces = []
+    _pcTraces = [],
+    _pcParentCall = Nothing
   }

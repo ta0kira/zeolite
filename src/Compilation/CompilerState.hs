@@ -43,6 +43,7 @@ module Compilation.CompilerState (
   csAddUsed,
   csAddVariable,
   csAllFilters,
+  csCanForward,
   csCheckValueInit,
   csCheckVariableInit,
   csClearOutput,
@@ -151,6 +152,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccGetNoTrace :: a -> m Bool
   ccAddTrace :: a -> String -> m a
   ccGetTraces :: a -> m [String]
+  ccCanForward :: a -> [ParamName] -> [VariableName] -> m Bool
 
 data MemberValue c =
   MemberValue {
@@ -359,6 +361,9 @@ csGetNoTrace = fmap ccGetNoTrace get >>= lift
 
 csAddTrace :: CompilerContext c m s a => String -> CompilerState a m ()
 csAddTrace t = fmap (\x -> ccAddTrace x t) get >>= lift >>= put
+
+csCanForward :: CompilerContext c m s a => [ParamName] -> [VariableName] -> CompilerState a m Bool
+csCanForward ps as = fmap (\x -> ccCanForward x ps as) get >>= lift
 
 data CompiledData s =
   CompiledData {
