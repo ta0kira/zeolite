@@ -995,7 +995,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   params <- expandParams2 ps2
   scope <- csCurrentScope
   scoped <- autoScope (sfScope f)
-  call <- assemble e scoped scope (sfScope f) params es''
+  paramsArgs <- getParamsArgs (pValues ps2) params es''
+  call <- assemble e scoped scope (sfScope f) paramsArgs
   return $ (ftReturns f'',OpaqueMulti call)
   where
     replaceSelfParam self (AssignedInstance c2 t) = do
@@ -1007,21 +1008,29 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
       compilerBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
-    joinParamsArgs ps2 es2 = "PassParamsArgs(" ++ intercalate ", " (ps2 ++ es2) ++ ")"
-    assemble Nothing _ ValueScope ValueScope ps2 es2 =
-      return $ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
-    assemble Nothing _ TypeScope TypeScope ps2 es2 =
-      return $ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
-    assemble Nothing scoped ValueScope TypeScope ps2 es2 =
-      return $ scoped ++ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
-    assemble Nothing scoped _ _ ps2 es2 =
-      return $ scoped ++ callName (sfName f) ++ "(" ++ joinParamsArgs ps2 es2 ++ ")"
-    assemble (Just e2) _ _ ValueScope ps2 es2 =
-      return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ joinParamsArgs ps2 es2 ++ ")"
-    assemble (Just e2) _ _ TypeScope ps2 es2 =
-      return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ joinParamsArgs ps2 es2 ++ ")"
-    assemble (Just e2) _ _ _ ps2 es2 =
-      return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ joinParamsArgs ps2 es2 ++ ")"
+    getParamsArgs ps2 paramEs argEs = do
+      psNames <- collectParamNames ps2
+      asNames <- collectArgNames $ pValues es
+      canForward <- case (psNames,asNames) of
+                         (Just pn,Just an) -> csCanForward pn an
+                         _                 -> return False
+      if canForward
+         then return "params_args"
+         else return $ "PassParamsArgs(" ++ intercalate ", " (paramEs ++ argEs) ++ ")"
+    assemble Nothing _ ValueScope ValueScope paramsArgs =
+      return $ callName (sfName f) ++ "(" ++ paramsArgs ++ ")"
+    assemble Nothing _ TypeScope TypeScope paramsArgs =
+      return $ callName (sfName f) ++ "(" ++ paramsArgs ++ ")"
+    assemble Nothing scoped ValueScope TypeScope paramsArgs =
+      return $ scoped ++ callName (sfName f) ++ "(" ++ paramsArgs ++ ")"
+    assemble Nothing scoped _ _ paramsArgs =
+      return $ scoped ++ callName (sfName f) ++ "(" ++ paramsArgs ++ ")"
+    assemble (Just e2) _ _ ValueScope paramsArgs =
+      return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
+    assemble (Just e2) _ _ TypeScope paramsArgs =
+      return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
+    assemble (Just e2) _ _ _ paramsArgs =
+      return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ paramsArgs ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
     getValues [(Positional ts,e2)] = return (ts,[useAsArgs e2])
@@ -1035,6 +1044,13 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
       compilerErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
       checkValueAssignment r fa t1 t0 <?? "In argument " ++ show i ++ " to " ++ show (sfName f)
+    collectParamNames = fmap sequence . lift . mapCompilerM collectParamName
+    collectParamName = fmap getParamName . tryCompilerM . matchOnlyLeaf
+    getParamName (Just (JustParamName _ n)) = Just n
+    getParamName _ = Nothing
+    collectArgNames = fmap sequence . lift . mapCompilerM collectArgName
+    collectArgName (Expression _ (NamedVariable (OutputValue _ n)) []) = return $ Just n
+    collectArgName _ = return Nothing
 
 guessParamsFromArgs :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
