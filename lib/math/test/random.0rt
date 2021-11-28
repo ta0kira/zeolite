@@ -45,6 +45,18 @@ unittest constant {
   Float value <- random.generate()
 }
 
+unittest categorical {
+  CategoricalTree<Float> tree <- CategoricalTree<Float>.new()
+      .setWeight(0.0,1)
+      .setWeight(1.0,1)
+      .setWeight(2.0,1)
+      .setWeight(3.0,1)
+      .setWeight(4.0,1)
+  RandomCategorical<Float> random <- tree `RandomCategorical:sampleWith` RandomUniform.probability()
+  \ Testing.checkFalse(random.isEmpty())
+  Float value <- random.generate()
+}
+
 
 testcase "negative lambda in exponential" {
   crash
@@ -76,6 +88,19 @@ testcase "empty range in uniform" {
 
 unittest test {
   Generator<Float> random <- RandomUniform.new(0.0,-1.0)
+}
+
+
+testcase "sampling with empty CategoricalTree" {
+  crash
+  require "less than the total"
+}
+
+unittest categorical {
+  CategoricalTree<Float> tree <- CategoricalTree<Float>.new()
+  RandomCategorical<Float> random <- tree `RandomCategorical:sampleWith` RandomUniform.probability()
+  \ Testing.checkTrue(random.isEmpty())
+  Float value <- random.generate()
 }
 
 
@@ -161,6 +186,28 @@ unittest constant { $DisableCoverage$
     Float value <- random.generate()
     \ Testing.checkEquals(constant,value)
   }
+}
+
+unittest categorical { $DisableCoverage$
+  Int count <- 10000
+  CategoricalTree<Float> tree <- CategoricalTree<Float>.new()
+      .setWeight(0.0,1)
+      .setWeight(1.0,1)
+      .setWeight(2.0,1)
+      .setWeight(3.0,1)
+      .setWeight(4.0,1)
+  $ReadOnly[count,tree]$
+
+  Generator<Float> random <- tree `RandomCategorical:sampleWith` RandomUniform.probability()
+
+  Float sum <- 0.0
+  traverse (Counter.zeroIndexed(count) -> _) {
+    Float value <- random.generate()
+    \ Testing.checkBetween(value,0.0,4.0)
+    sum <- sum+value
+  }
+
+  \ Testing.checkBetween(sum/count.asFloat(),1.9,2.1)
 }
 
 

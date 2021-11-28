@@ -40,13 +40,12 @@
 * **[new]** Implements `Sorting` functions in `lib/container` that use  the new
   `LessThan2` `interface`.
 
+* **[new]** Adds `CategoricalReader`, `RandomCategorical`, and
+  `GenerateConstant` to `lib/math`.
+
 * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
 
-* **[new]** Adds `CategoricalReader` to `lib/math`.
-
 * **[new]** Adds `probably` to `RandomUniform` in `lib/math`.
-
-* **[new]** Adds `GenerateConstant` in `lib/math`.
 
 ### Language
 

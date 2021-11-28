@@ -65,6 +65,27 @@ concrete GenerateConstant {
   @type new (Float) -> (#self)
 }
 
+// Generates values of the provided type.
+concrete RandomCategorical<|#c> {
+  refines Generator<#c>
+
+  // Creates a generator for the provided distribution.
+  //
+  // Notes:
+  // - The Generator<Float> *must* return values in the range [0,1).
+  // - The distribution is not copied; therefore, changes to the distribution
+  //   will affect the returned generator.
+  @category sampleWith<#c> (CategoricalReader<#c>,Generator<Float>) -> (RandomCategorical<#c>)
+
+  // Returns true if the distribution is empty.
+  //
+  // Note:
+  // - Do not call generate() if this returns true, since there are no values to
+  //   sample from.
+  @value isEmpty () -> (Bool)
+}
+
+// General randomization functions.
 concrete Randomize {
   // Creates a permutation from the CategoricalTree.
   //

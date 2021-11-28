@@ -53,9 +53,7 @@
         <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'y'</span>,<span style='color:#b08000;'>1974</span>)
         <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'z'</span>,<span style='color:#b08000;'>74</span>)
 
-    <span style='color:#898887;'>// We could use weights.getTotal() as the upper limit here, but setting it</span>
-    <span style='color:#898887;'>// to 1.0 allows us to account for changes to weights.</span>
-    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> letter &lt;- <span style='color:#0057ae;'>RandomUniform</span><span style='color:#644a9b;'>.</span>probability()
+    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>  letter &lt;- weights <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>RandomCategorical</span><span style='color:#644a9b;'>:</span>sampleWith<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>RandomUniform</span><span style='color:#644a9b;'>.</span>probability()
     <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> length &lt;- <span style='color:#0057ae;'>RandomGaussian</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>5.0</span>,<span style='color:#b08000;'>3.0</span>)
     <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> timing &lt;- <span style='color:#0057ae;'>RandomExponential</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>4.0</span>)
 
@@ -69,8 +67,7 @@
 
       <span style='color:#898887;'>// Populate the letters using their relative frequencies.</span>
       <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(buffer<span style='color:#644a9b;'>.</span>size()) -&gt; <i><span style='color:#0057ae;'>Int</span></i> pos) {
-        <i><span style='color:#0057ae;'>Int</span></i> offset &lt;- (weights<span style='color:#644a9b;'>.</span>getTotal()<span style='color:#644a9b;'>.</span>asFloat()*letter<span style='color:#644a9b;'>.</span>generate())<span style='color:#644a9b;'>.</span>asInt()
-        <span style='color:#006e28;'>\</span> buffer<span style='color:#644a9b;'>.</span>writeAt(pos,weights<span style='color:#644a9b;'>.</span>locate(offset))
+        <span style='color:#006e28;'>\</span> buffer<span style='color:#644a9b;'>.</span>writeAt(pos,letter<span style='color:#644a9b;'>.</span>generate())
       }
 
       <span style='color:#898887;'>// Print the word.</span>

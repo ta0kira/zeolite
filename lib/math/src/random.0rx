@@ -19,9 +19,10 @@ limitations under the License.
 define Randomize {
   permuteFrom (tree,random,output) {
     CategoricalTree<#c> copy <- tree.duplicate()
-    $Hidden[tree]$
+    Generator<#c> generator <- copy `RandomCategorical:sampleWith` random
+    $Hidden[tree,random]$
     while (copy.getTotal() > 0) {
-      #c cat <- copy.locate((random.generate()*copy.getTotal().asFloat()).asInt())
+      #c cat <- generator.generate()
       \ output.append(cat)
       \ copy.decrWeight(cat)
     }
@@ -29,9 +30,10 @@ define Randomize {
 
   permuteFromWeight (tree,random,output) {
     CategoricalTree<#c> copy <- tree.duplicate()
-    $Hidden[tree]$
+    Generator<#c> generator <- copy `RandomCategorical:sampleWith` random
+    $Hidden[tree,random]$
     while (copy.getTotal() > 0) {
-      #c cat <- copy.locate((random.generate()*copy.getTotal().asFloat()).asInt())
+      #c cat <- generator.generate()
       \ output.append(cat)
       \ copy.setWeight(cat,0)
     }
@@ -49,5 +51,24 @@ define GenerateConstant {
 
   generate () {
     return constant
+  }
+}
+
+define RandomCategorical {
+  $ReadOnly[categorical,random]$
+
+  @value CategoricalReader<#c> categorical
+  @value Generator<Float> random
+
+  sampleWith (categorical,random) {
+    return RandomCategorical<#c>{ categorical, random }
+  }
+
+  generate () {
+    return categorical.locate((categorical.getTotal().asFloat()*random.generate()).asInt())
+  }
+
+  isEmpty () {
+    return categorical.getTotal() == 0
   }
 }
