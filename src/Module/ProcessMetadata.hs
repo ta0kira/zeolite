@@ -327,7 +327,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
   let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
   expectedFiles <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps++xs++ts)
   actualFiles   <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps2++xs2++ts2)
-  inputFiles    <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) xs
+  inputFiles    <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps++xs)
   testFiles     <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) ts
   collectAllM_ $ [
       checkHash,

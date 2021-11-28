@@ -147,16 +147,25 @@ END
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness || true)
   require_patterns "$output" <<END
 tests/freshness[^/].+out of date
+freshness/private2\.0rp.+missing
+freshness/public1\.0rp.+newer
+freshness/public2\.0rp.+missing
 freshness/public3\.0rp.+not present
 freshness/source1\.0rx.+newer
 freshness/source2\.0rx.+missing
 freshness/source3\.0rx.+not present
+freshness/sub1/private2\.0rp.+missing
+freshness/sub1/public1\.0rp.+newer
+freshness/sub1/public2\.0rp.+missing
 freshness/sub1/public3\.0rp.+not present
 freshness/sub1/source1\.0rx.+newer
 freshness/sub1/source2\.0rx.+missing
 freshness/sub1/source3\.0rx.+not present
 freshness/sub1/test2\.0rt.+missing
 freshness/sub1/test3\.0rt.+not present
+freshness/sub2/private2\.0rp.+missing
+freshness/sub2/public1\.0rp.+newer
+freshness/sub2/public2\.0rp.+missing
 freshness/sub2/public3\.0rp.+not present
 freshness/sub2/source1\.0rx.+newer
 freshness/sub2/source2\.0rx.+missing
