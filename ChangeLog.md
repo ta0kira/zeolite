@@ -9,6 +9,8 @@
 * **[new]** Implements `Sorting` functions in `lib/container` that use  the new
   `LessThan2` `interface`.
 
+* **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
+
 ## 0.21.0.0  -- 2021-11-19
 
 ### Compiler CLI

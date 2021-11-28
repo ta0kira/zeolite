@@ -220,3 +220,28 @@ unittest permuteFrom {
   \ Testing.checkEquals(tree.getWeight("b"),3)
   \ Testing.checkEquals(tree.getWeight("c"),1)
 }
+
+unittest permuteFromWeight {
+  CategoricalTree<String> tree <- CategoricalTree<String>.new()
+      .setWeight("a",2)
+      .setWeight("b",3)
+      .setWeight("c",1)
+
+  Vector<String> expected <- Vector:create<String>()
+      .append("a")
+      .append("b")
+      .append("c")
+
+  Vector<String> output <- Vector:create<String>()
+  \ Randomize:permuteFromWeight(tree,RandomUniform.new(0.0,1.0),output)
+  \ Sorting:sort(output)
+
+  \ Testing.checkEquals(output.size(),expected.size())
+  traverse (Counter.zeroIndexed(output.size()) -> Int pos) {
+    \ Testing.checkEquals(output.readAt(pos),expected.readAt(pos))
+  }
+
+  \ Testing.checkEquals(tree.getWeight("a"),2)
+  \ Testing.checkEquals(tree.getWeight("b"),3)
+  \ Testing.checkEquals(tree.getWeight("c"),1)
+}

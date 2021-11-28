@@ -26,4 +26,14 @@ define Randomize {
       \ copy.decrWeight(cat)
     }
   }
+
+  permuteFromWeight (tree,random,output) {
+    CategoricalTree<#c> copy <- tree.duplicate()
+    $Hidden[tree]$
+    while (copy.getTotal() > 0) {
+      #c cat <- copy.locate((random.generate()*copy.getTotal().asFloat()).asInt())
+      \ output.append(cat)
+      \ copy.setWeight(cat,0)
+    }
+  }
 }

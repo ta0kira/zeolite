@@ -62,5 +62,17 @@ concrete Randomize {
   //
   // Notes:
   // - The Generator must only return values in [0,1).
+  // - If category c has a weight of n, it will occur n times in the output.
   @category permuteFrom<#c> (CategoricalTree<#c>,Generator<Float>,Append<#c>) -> ()
+
+  // Creates a permutation from the CategoricalTree.
+  //
+  // 1. Creates a copy of the CategoricalTree.
+  // 2. Samples from the copy *without* replacement until the tree is empty.
+  //
+  // Notes:
+  // - The Generator must only return values in [0,1).
+  // - If category c has a weight of n, it will occur *once* in the output, but
+  //   it will have a relative chance of n to be chosen ahead of others.
+  @category permuteFromWeight<#c> (CategoricalTree<#c>,Generator<Float>,Append<#c>) -> ()
 }
