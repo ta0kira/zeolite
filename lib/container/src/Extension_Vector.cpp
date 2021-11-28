@@ -53,12 +53,6 @@ struct ExtCategory_Vector : public Category_Vector {
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
 
-  ReturnTuple Call_create(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("Vector:create")
-    const S<const TypeInstance> Param_y = params_args.GetParam(0);
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), VectorType()));
-  }
-
   ReturnTuple Call_createSize(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("Vector:createSize")
     const S<const TypeInstance> Param_y = params_args.GetParam(0);
@@ -73,6 +67,11 @@ struct ExtCategory_Vector : public Category_Vector {
 
 struct ExtType_Vector : public Type_Vector {
   inline ExtType_Vector(Category_Vector& p, Params<1>::Type params) : Type_Vector(p, params) {}
+
+  ReturnTuple Call_new(const ParamsArgs& params_args) const final {
+    TRACE_FUNCTION("Vector.new")
+    return ReturnTuple(CreateValue_Vector(PARAM_SELF, VectorType()));
+  }
 };
 
 class VectorOrder : public TypeValue {

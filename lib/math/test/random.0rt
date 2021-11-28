@@ -238,7 +238,7 @@ unittest permuteFrom {
       .setWeight("b",3)
       .setWeight("c",1)
 
-  Vector<String> expected <- Vector:create<String>()
+  Vector<String> expected <- Vector<String>.new()
       .append("a")
       .append("a")
       .append("b")
@@ -246,7 +246,7 @@ unittest permuteFrom {
       .append("b")
       .append("c")
 
-  Vector<String> output <- Vector:create<String>()
+  Vector<String> output <- Vector<String>.new()
   \ Randomize:permuteFrom(tree,RandomUniform.new(0.0,1.0),output)
   \ Sorting:sort(output)
 
@@ -266,12 +266,12 @@ unittest permuteFromWeight {
       .setWeight("b",3)
       .setWeight("c",1)
 
-  Vector<String> expected <- Vector:create<String>()
+  Vector<String> expected <- Vector<String>.new()
       .append("a")
       .append("b")
       .append("c")
 
-  Vector<String> output <- Vector:create<String>()
+  Vector<String> output <- Vector<String>.new()
   \ Randomize:permuteFromWeight(tree,RandomUniform.new(0.0,1.0),output)
   \ Sorting:sort(output)
 

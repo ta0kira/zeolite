@@ -107,7 +107,7 @@ unittest reverseEmpty {
 
 unittest sortList {
   ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
-  Vector<Int> expected <- Vector:create<Int>()
+  Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 137
   $ReadOnly[hash,size]$
@@ -129,7 +129,7 @@ unittest sortList {
 
 unittest sortListSingle { $DisableCoverage$
   ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
-  Vector<Int> expected <- Vector:create<Int>()
+  Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 137
   $ReadOnly[hash,size]$
@@ -155,7 +155,7 @@ unittest sortListEmpty {
 
 unittest sortListPow2 { $DisableCoverage$
   ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
-  Vector<Int> expected <- Vector:create<Int>()
+  Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 256
   $ReadOnly[hash,size]$
@@ -177,7 +177,7 @@ unittest sortListPow2 { $DisableCoverage$
 
 unittest sortListWith { $DisableCoverage$
   ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
-  Vector<Int> expected <- Vector:create<Int>()
+  Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 137
   $ReadOnly[hash,size]$
@@ -199,7 +199,7 @@ unittest sortListWith { $DisableCoverage$
 
 unittest reverseList {
   ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
-  Vector<Int> expected <- Vector:create<Int>()
+  Vector<Int> expected <- Vector<Int>.new()
   Int size <- 101
   $ReadOnly[size]$
 
@@ -223,7 +223,7 @@ unittest reverseList {
 
 unittest reverseListSingle { $DisableCoverage$
   ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
-  Vector<Int> expected <- Vector:create<Int>()
+  Vector<Int> expected <- Vector<Int>.new()
   Int size <- 101
   $ReadOnly[size]$
 
@@ -263,7 +263,7 @@ define TestSequence {
   @value Vector<Int> seq
 
   create () {
-    return TestSequence{ Vector:create<Int>() }
+    return TestSequence{ Vector<Int>.new() }
   }
 
   formatted () {

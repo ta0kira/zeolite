@@ -379,6 +379,34 @@ digits.
   <span style='color:#644a9b;'>@category</span> copy (<span style='color:#0057ae;'>MyCategory</span>) -&gt; (<span style='color:#0057ae;'>MyCategory</span>)
 }</pre>
 
+In many cases, the choice between using a `@category` function or a `@type`
+function is arbitrary, but there are pros and cons of each:
+
+- **`@category` functions** *do not* inherit any of the
+  [category's parameters](#using-parameters), or their filters. This can be
+  useful in a few situations:
+
+  1. You want to impose additional restrictions on what parameters can be used.
+     For example, `Vector:createSize` ([`lib/container`][lib/container])
+     requires that param `#y defines Default` so that it can populate the
+     `Vector` with default values.
+
+  2. The caller will pass arguments that can be used to [infer the category's
+     parameters](#type-inference). For example, `Vector:copyFrom`
+     ([`lib/container`][lib/container]) takes a `ReadAt<#y>`. Since `#y` is a
+     function param, it can be inferred from the argument that gets passed.
+
+  If neither of these situations apply, a `@type` function might be better.
+
+- **`@type` functions** *do* inherit the
+  [category's parameters](#using-parameters) and their filters, which means that
+  they do not need to be specified again, and they do not need to be passed
+  again when calling from another `@type` or `@value` function. This is more
+  efficient to maintain and execute.
+
+  [`@type interface`s](#using-interfaces) are another advantage of `@type`
+  functions.
+
 ### Defining Functions
 
 Functions are defined in the category definition. They *do not* need to repeat

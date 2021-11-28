@@ -28,11 +28,11 @@ concrete Vector<#x> {
   refines ReadAt<#x>
   refines WriteAt<#x>
 
+  // Create an empty Vector.
+  @type new () -> (#self)
+
   // Create a copy from another random-access container.
   @category copyFrom<#y> (ReadAt<#y>) -> (Vector<#y>)
-
-  // Create an empty Vector.
-  @category create<#y> () -> (Vector<#y>)
 
   // Create a pre-sized vector of default values.
   //

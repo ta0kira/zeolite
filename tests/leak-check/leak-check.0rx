@@ -51,7 +51,7 @@ define LeakTest {
     $ReadOnly[checkedValue]$
 
     scoped {
-      Vector<Thread> threads <- Vector:create<Thread>()
+      Vector<Thread> threads <- Vector<Thread>.new()
     } in {
       traverse (Counter.zeroIndexed(barriers.size()-1) -> Int j) {
         \ threads.push(ProcessThread.from(#f.create(original,barriers.readAt(j+1))).start())

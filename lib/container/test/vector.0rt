@@ -48,7 +48,7 @@ unittest copyFrom {
 }
 
 unittest append {
-  Vector<Int> values <- Vector:create<Int>()
+  Vector<Int> values <- Vector<Int>.new()
 
   scoped {
     Int i <- 0
@@ -70,7 +70,7 @@ unittest append {
 }
 
 unittest pushAndPop {
-  Vector<Int> values <- Vector:create<Int>()
+  Vector<Int> values <- Vector<Int>.new()
 
   scoped {
     Int i <- 0
@@ -115,7 +115,7 @@ unittest writeAt {
 
 unittest traverseVector {
   Int index <- 0
-  Vector<Int> vector <- Vector:create<Int>()
+  Vector<Int> vector <- Vector<Int>.new()
   \ vector.push(2)
   \ vector.push(6)
   \ vector.push(3)
@@ -132,7 +132,7 @@ unittest traverseVector {
 }
 
 unittest duplicate {
-  Vector<Int> vector <- Vector:create<Int>().push(1).push(2)
+  Vector<Int> vector <- Vector<Int>.new().push(1).push(2)
 
   Vector<Int> copy <- vector.duplicate()
   \ Testing.checkEquals(copy.size(),2)
@@ -211,7 +211,7 @@ testcase "negative Vector index" {
 }
 
 unittest test {
-  Vector<Int> values <- Vector:create<Int>()
+  Vector<Int> values <- Vector<Int>.new()
   \ values.readAt(-1)
 }
 
@@ -221,6 +221,6 @@ testcase "Vector index out of bounds" {
 }
 
 unittest test {
-  Vector<Int> values <- Vector:create<Int>()
+  Vector<Int> values <- Vector<Int>.new()
   \ values.readAt(1)
 }

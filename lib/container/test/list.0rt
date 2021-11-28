@@ -31,7 +31,7 @@ unittest forwardTraverse {
       .append(4)
       .build()
 
-  DefaultOrder<Int> expected <- Vector:create<Int>()
+  DefaultOrder<Int> expected <- Vector<Int>.new()
       .append(3)
       .append(2)
       .append(5)
@@ -58,7 +58,7 @@ unittest reverseTraverse {
       .append(4)
       .build()
 
-  DefaultOrder<Int> expected <- Vector:create<Int>()
+  DefaultOrder<Int> expected <- Vector<Int>.new()
       .append(4)
       .append(6)
       .append(1)
@@ -228,7 +228,7 @@ unittest duplicate {
       .append(4)
       .build()
 
-  DefaultOrder<Int> expected <- Vector:create<Int>()
+  DefaultOrder<Int> expected <- Vector<Int>.new()
       .append(3)
       .append(2)
       .append(5)
@@ -266,7 +266,7 @@ unittest forwardTraverseSingle {
       .append(4)
       .build()
 
-  DefaultOrder<Int> expected <- Vector:create<Int>()
+  DefaultOrder<Int> expected <- Vector<Int>.new()
       .append(3)
       .append(2)
       .append(5)
@@ -292,7 +292,7 @@ unittest duplicateSingle {
       .append(4)
       .build()
 
-  DefaultOrder<Int> expected <- Vector:create<Int>()
+  DefaultOrder<Int> expected <- Vector<Int>.new()
       .append(3)
       .append(2)
       .append(5)

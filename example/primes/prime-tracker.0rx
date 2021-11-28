@@ -3,7 +3,7 @@ define PrimeTracker {
   @value Int nextPossible
 
   create () {
-    return PrimeTracker{ Vector:create<Int>(), 2 }
+    return PrimeTracker{ Vector<Int>.new(), 2 }
   }
 
   checkNextPossible (flag) {

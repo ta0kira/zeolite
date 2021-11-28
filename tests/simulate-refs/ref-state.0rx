@@ -25,7 +25,7 @@ define ReferenceState {
   @value [Append<Formatted>&DefaultOrder<Formatted>] operations
 
   new () {
-    return ReferenceState{ 0, 0, false, 0, 0, Vector:create<Formatted>() }
+    return ReferenceState{ 0, 0, false, 0, 0, Vector<Formatted>.new() }
   }
 
   addOperation (name) {
