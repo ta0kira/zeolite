@@ -16,10 +16,37 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// A read-only categorical distribution.
+//
+// Params:
+// - #c: The type of category (i.e., object) used in the distribution.
+@value interface CategoricalReader<#c> {
+  // Get the sum of all weights in the distribution.
+  getTotal () -> (Int)
+
+  // Get the relative weight of a value.
+  //
+  // Notes:
+  // - If the category isn't present, its weight is 0.
+  getWeight (#c) -> (Int)
+
+  // Return the value at the given offset.
+  //
+  // Notes:
+  // - The offset must be within [0,getTotal()). A uniform selection in that
+  //   range will provide samples that follow the categorical distribution
+  //   corresponding to the relative weights of the respective #c.
+  // - The return value is deterministic. If you were to iterate over
+  //   [0,getTotal()), you'd get an increasing sequence of all #c in the
+  //   CategoricalReader, each repeated the number of times indicated by its
+  //   respective weight.
+  locate (Int) -> (#c)
+}
+
 // A categorical distribution represented as a tree.
 //
 // Params:
-// #c: The type of category (i.e., object) used in the distribution.
+// - #c: The type of category (i.e., object) used in the distribution.
 //
 // Notes:
 // - CategoricalTree is intended for use in random sampling of arbitrary objects
@@ -31,16 +58,14 @@ limitations under the License.
 // - The required storage space is independent of the weights; it only depends
 //   on the number of distinct #c values with non-zero weights.
 concrete CategoricalTree<#c> {
-  refines ReadAt<#c>
+  refines CategoricalReader<#c>
   refines Duplicate
+  refines ReadAt<#c>
   #c immutable
   #c defines LessThan<#c>
 
   // Create a new distribution.
   @type new () -> (#self)
-
-  // Get the sum of all weights in the distribution.
-  @value getTotal () -> (Int)
 
   // Set the relative weight of a value.
   //
@@ -48,12 +73,6 @@ concrete CategoricalTree<#c> {
   // - The weight must not be negative.
   // - The sum of all weights (see getTotal()) must not exceed Int.maxBound().
   @value setWeight (#c,Int) -> (#self)
-
-  // Get the relative weight of a value.
-  //
-  // Notes:
-  // - If the category isn't in the tree, its weight is 0.
-  @value getWeight (#c) -> (Int)
 
   // Increments the weight of the value by 1.
   @value incrWeight (#c) -> (#self)
@@ -64,18 +83,6 @@ concrete CategoricalTree<#c> {
   // - Do not call this for values that already have 0 weight. This is primarily
   //   meant for use when locate is used to choose a value to decrement.
   @value decrWeight (#c) -> (#self)
-
-  // Return the value at the given offset.
-  //
-  // Notes:
-  // - The offset must be within [0,getTotal()). A uniform selection in that
-  //   range will provide samples that follow the categorical distribution
-  //   corresponding to the relative weights of the respective #c.
-  // - The return value is deterministic. If you were to iterate over
-  //   [0,getTotal()), you'd get an increasing sequence of all #c in the
-  //   CategoricalTree, each repeated the number of times indicated by its
-  //   respective weight.
-  @value locate (Int) -> (#c)
 
   // Identical to locate(). (From ReadAt.)
   @value readAt (Int) -> (#c)

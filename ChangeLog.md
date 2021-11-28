@@ -15,6 +15,8 @@
 
 * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
 
+* **[new]** Adds `CategoricalReader` to `lib/math`.
+
 ## 0.21.0.0  -- 2021-11-19
 
 ### Compiler CLI
