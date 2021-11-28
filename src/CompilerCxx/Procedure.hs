@@ -907,9 +907,10 @@ compileExpressionStart (InitializeValue c t es) = do
   sameType <- csSameType t'
   s <- csCurrentScope
   let typeInstance = getType t' sameType s params
+  args <- getArgs es''
   -- TODO: This is unsafe if used in a type or category constructor.
   return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
-          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", PassParamsArgs(" ++ es'' ++ "))")
+          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ args ++ ")")
   where
     getType _  True ValueScope _      = "parent"
     getType _  True TypeScope  _      = "PARAM_SELF"
@@ -924,6 +925,14 @@ compileExpressionStart (InitializeValue c t es) = do
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compilerErrorM $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+    getArgs argEs = do
+      asNames <- lift $ collectArgNames $ pValues es
+      canForward <- case asNames of
+                         Just an -> csCanForward [] an
+                         _       -> return False
+      if canForward
+         then return "params_args"
+         else return $ "PassParamsArgs(" ++ argEs ++ ")"
 compileExpressionStart (UnambiguousLiteral l) = compileValueLiteral l
 
 compileValueLiteral :: (Ord c, Show c, CollectErrorsM m,
@@ -1009,8 +1018,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
     getParamsArgs ps2 paramEs argEs = do
-      psNames <- collectParamNames ps2
-      asNames <- collectArgNames $ pValues es
+      psNames <- lift $ collectParamNames ps2
+      asNames <- lift $ collectArgNames $ pValues es
       canForward <- case (psNames,asNames) of
                          (Just pn,Just an) -> csCanForward pn an
                          _                 -> return False
@@ -1044,13 +1053,15 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
       compilerErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
       checkValueAssignment r fa t1 t0 <?? "In argument " ++ show i ++ " to " ++ show (sfName f)
-    collectParamNames = fmap sequence . lift . mapCompilerM collectParamName
+    collectParamNames = fmap sequence . mapCompilerM collectParamName
     collectParamName = fmap getParamName . tryCompilerM . matchOnlyLeaf
     getParamName (Just (JustParamName _ n)) = Just n
     getParamName _ = Nothing
-    collectArgNames = fmap sequence . lift . mapCompilerM collectArgName
-    collectArgName (Expression _ (NamedVariable (OutputValue _ n)) []) = return $ Just n
-    collectArgName _ = return Nothing
+
+collectArgNames :: CollectErrorsM m => [Expression c] -> m (Maybe [VariableName])
+collectArgNames = fmap sequence . mapCompilerM collectArgName where
+  collectArgName (Expression _ (NamedVariable (OutputValue _ n)) []) = return $ Just n
+  collectArgName _ = return Nothing
 
 guessParamsFromArgs :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
