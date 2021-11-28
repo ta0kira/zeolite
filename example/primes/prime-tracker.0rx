@@ -31,10 +31,10 @@ define PrimeTracker {
     nextPossible <- nextPossible+1
 
     if (isPrime) {
-      \ LazyStream<Formatted>.new()
-          .append("\r")
-          .append(toCheck)
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr()
+          .write("\r")
+          .write(toCheck)
+          .flush()
       \ primes.push(toCheck)
     }
     return self

@@ -1,15 +1,33 @@
 # Revision history for zeolite-lang
 
-## 0.21.1.0  -- ????-??-??
-
-### Language
-
-* **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.
-
-* **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
-  functions to have unary notation, e.g., ``y <- `require` x``.
+## 0.22.0.0  -- ????-??-??
 
 ### Libraries
+
+* **[breaking]** Revises basic input and output provided by `lib/util`:
+
+  - **[breaking]** Renames `SimpleInput` to `BasicInput`.
+
+  - **[breaking]** Renames `SimpleOutput` to `BasicOutput`.
+
+  - **[breaking]** Removes `LazyStream`. To construct and write output, there
+    are a few options:
+
+    ```text
+    // Incrementally.
+    \ BasicOutput.stderr()
+        .write(someValue)
+        .write("\n")
+        .flush()
+    ```
+
+    ```text
+    // Preformatted.
+    \ BasicOutput.stderr().writeNow(String.builder()
+        .append(someValue)
+        .append("\n")
+        .build())
+    ```
 
 * **[new]** Adds `LessThan2` `@value interface` to `lib/util`.
 
@@ -19,6 +37,13 @@
 * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
 
 * **[new]** Adds `CategoricalReader` to `lib/math`.
+
+### Language
+
+* **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.
+
+* **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
+  functions to have unary notation, e.g., ``y <- `require` x``.
 
 ## 0.21.0.0  -- 2021-11-19
 

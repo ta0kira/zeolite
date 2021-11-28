@@ -54,10 +54,10 @@ concrete TextReader {
   @value pastEnd () -> (Bool)
 }
 
-// Simple input sources.
-concrete SimpleInput {
+// Basic input sources.
+concrete BasicInput {
   refines BlockReader<String>
 
   // Returns a BlockReader for standard input.
-  @type stdin () -> (BlockReader<String>)
+  @type stdin () -> (#self)
 }

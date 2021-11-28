@@ -109,18 +109,18 @@ define ParseState {
   @value sanityCheck () -> ()
   sanityCheck () {
     if (hasBrokenInput()) {
-      \ LazyStream<Formatted>.new()
-          .append("Error at ")
-          .append(getPosition())
-          .append(": ")
-          .append(getError())
-          .writeTo(SimpleOutput.error())
+      \ BasicOutput.error()
+          .write("Error at ")
+          .write(getPosition())
+          .write(": ")
+          .write(getError())
+          .flush()
     }
     if (atEof()) {
-      \ LazyStream<Formatted>.new()
-          .append("Reached end of input at ")
-          .append(getPosition())
-          .writeTo(SimpleOutput.error())
+      \ BasicOutput.error()
+          .write("Reached end of input at ")
+          .write(getPosition())
+          .flush()
     }
   }
 }

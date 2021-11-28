@@ -20,7 +20,7 @@ limitations under the License.
 #include <unistd.h>
 
 #include "category-source.hpp"
-#include "Streamlined_SimpleInput.hpp"
+#include "Streamlined_BasicInput.hpp"
 #include "Category_Formatted.hpp"
 #include "Category_String.hpp"
 
@@ -32,30 +32,30 @@ namespace {
 extern const BoxedValue Var_stdin;
 }  // namespace
 
-struct ExtCategory_SimpleInput : public Category_SimpleInput {
+struct ExtCategory_BasicInput : public Category_BasicInput {
 };
 
-struct ExtType_SimpleInput : public Type_SimpleInput {
-  inline ExtType_SimpleInput(Category_SimpleInput& p, Params<0>::Type params) : Type_SimpleInput(p, params) {}
+struct ExtType_BasicInput : public Type_BasicInput {
+  inline ExtType_BasicInput(Category_BasicInput& p, Params<0>::Type params) : Type_BasicInput(p, params) {}
 
   ReturnTuple Call_stdin(const ParamsArgs& params_args) const final {
-    TRACE_FUNCTION("SimpleInput.stdin")
+    TRACE_FUNCTION("BasicInput.stdin")
     return ReturnTuple(Var_stdin);
   }
 };
 
-struct ExtValue_SimpleInput : public Value_SimpleInput {
-  inline ExtValue_SimpleInput(S<const Type_SimpleInput> p)
-    : Value_SimpleInput(std::move(p)) {}
+struct ExtValue_BasicInput : public Value_BasicInput {
+  inline ExtValue_BasicInput(S<const Type_BasicInput> p)
+    : Value_BasicInput(std::move(p)) {}
 
   ReturnTuple Call_pastEnd(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("SimpleInput.pastEnd")
+    TRACE_FUNCTION("BasicInput.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(zero_read));
   }
 
   ReturnTuple Call_readBlock(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("SimpleInput.readBlock")
+    TRACE_FUNCTION("BasicInput.readBlock")
     std::lock_guard<std::mutex> lock(mutex);
     const int size = params_args.GetArg(0).AsInt();
     if (size < 0) {
@@ -76,20 +76,20 @@ struct ExtValue_SimpleInput : public Value_SimpleInput {
 };
 
 namespace {
-const BoxedValue Var_stdin = BoxedValue::New<ExtValue_SimpleInput>(CreateType_SimpleInput(Params<0>::Type()));
+const BoxedValue Var_stdin = BoxedValue::New<ExtValue_BasicInput>(CreateType_BasicInput(Params<0>::Type()));
 }  // namespace
 
-Category_SimpleInput& CreateCategory_SimpleInput() {
-  static auto& category = *new ExtCategory_SimpleInput();
+Category_BasicInput& CreateCategory_BasicInput() {
+  static auto& category = *new ExtCategory_BasicInput();
   return category;
 }
 
-S<const Type_SimpleInput> CreateType_SimpleInput(const Params<0>::Type& params) {
-  static const auto cached = S_get(new ExtType_SimpleInput(CreateCategory_SimpleInput(), Params<0>::Type()));
+S<const Type_BasicInput> CreateType_BasicInput(const Params<0>::Type& params) {
+  static const auto cached = S_get(new ExtType_BasicInput(CreateCategory_BasicInput(), Params<0>::Type()));
   return cached;
 }
 
-void RemoveType_SimpleInput(const Params<0>::Type& params) {}
+void RemoveType_BasicInput(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

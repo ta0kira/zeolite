@@ -74,10 +74,10 @@
       }
 
       <span style='color:#898887;'>// Print the word.</span>
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-          <span style='color:#644a9b;'>.</span>append(<i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>fromCharBuffer(buffer))
-          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stdout())
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stdout()
+          <span style='color:#644a9b;'>.</span>write(<i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>fromCharBuffer(buffer))
+          <span style='color:#644a9b;'>.</span>write(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          <span style='color:#644a9b;'>.</span>flush()
 
       <span style='color:#898887;'>// Wait a random amount of time.</span>
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Realtime</span><span style='color:#644a9b;'>.</span>sleepSeconds(timing<span style='color:#644a9b;'>.</span>generate())

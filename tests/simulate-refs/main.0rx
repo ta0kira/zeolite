@@ -32,11 +32,11 @@ define SimulateRefs {
     }
 
     traverse (Counter.unlimited() -> Int i) {
-      \ LazyStream<Formatted>.new()
-          .append("Iteration ")
-          .append(i)
-          .append("\n")
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr()
+          .write("Iteration ")
+          .write(i)
+          .write("\n")
+          .flush()
 
       if (!runOnce(useBroken) && (errorLimit <- errorLimit-1) == 0) {
         break
@@ -80,19 +80,19 @@ define SimulateRefs {
         error <- "expected unlocked final reference"
       }
     } in if (present(error)) {
-      \ LazyStream<Formatted>.new()
-          .append("Error in final state: ")
-          .append(require(error))
-          .append("\nFinal state: ")
-          .append(state)
-          .append("\n")
-          .writeTo(SimpleOutput.stdout())
+      \ BasicOutput.stdout()
+          .write("Error in final state: ")
+          .write(require(error))
+          .write("\nFinal state: ")
+          .write(state)
+          .write("\n")
+          .flush()
       traverse (state.getOperations() -> Formatted operation) {
-        \ LazyStream<Formatted>.new()
-            .append("  ")
-            .append(operation)
-            .append("\n")
-            .writeTo(SimpleOutput.stdout())
+        \ BasicOutput.stdout()
+            .write("  ")
+            .write(operation)
+            .write("\n")
+            .flush()
       }
       return false
     } else {

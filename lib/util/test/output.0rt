@@ -23,7 +23,7 @@ testcase "stdout writer" {
 }
 
 unittest test {
-  \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stdout())
+  \ BasicOutput.stdout().writeNow("message")
 }
 
 
@@ -34,7 +34,7 @@ testcase "stderr writer" {
 }
 
 unittest test {
-  \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stderr())
+  \ BasicOutput.stderr().writeNow("message")
 }
 
 
@@ -44,5 +44,5 @@ testcase "error writer" {
 }
 
 unittest test {
-  \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.error())
+  \ BasicOutput.error().writeNow("message")
 }

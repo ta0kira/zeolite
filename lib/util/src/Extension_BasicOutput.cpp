@@ -21,7 +21,7 @@ limitations under the License.
 #include <sstream>
 
 #include "category-source.hpp"
-#include "Streamlined_SimpleOutput.hpp"
+#include "Streamlined_BasicOutput.hpp"
 #include "Category_Formatted.hpp"
 #include "Category_String.hpp"
 
@@ -35,24 +35,24 @@ extern const BoxedValue Var_stderr;
 extern const BoxedValue Var_error;
 }  // namespace
 
-struct ExtCategory_SimpleOutput : public Category_SimpleOutput {
+struct ExtCategory_BasicOutput : public Category_BasicOutput {
 };
 
-struct ExtType_SimpleOutput : public Type_SimpleOutput {
-  inline ExtType_SimpleOutput(Category_SimpleOutput& p, Params<0>::Type params) : Type_SimpleOutput(p, params) {}
+struct ExtType_BasicOutput : public Type_BasicOutput {
+  inline ExtType_BasicOutput(Category_BasicOutput& p, Params<0>::Type params) : Type_BasicOutput(p, params) {}
 
   ReturnTuple Call_error(const ParamsArgs& params_args) const final {
-    TRACE_FUNCTION("SimpleOutput.error")
+    TRACE_FUNCTION("BasicOutput.error")
     return ReturnTuple(Var_error);
   }
 
   ReturnTuple Call_stderr(const ParamsArgs& params_args) const final {
-    TRACE_FUNCTION("SimpleOutput.stderr")
+    TRACE_FUNCTION("BasicOutput.stderr")
     return ReturnTuple(Var_stderr);
   }
 
   ReturnTuple Call_stdout(const ParamsArgs& params_args) const final {
-    TRACE_FUNCTION("SimpleOutput.stdout")
+    TRACE_FUNCTION("BasicOutput.stdout")
     return ReturnTuple(Var_stdout);
   }
 };
@@ -65,24 +65,31 @@ struct Writer {
 };
 }  // namespace
 
-struct ExtValue_SimpleOutput : public Value_SimpleOutput {
-  inline ExtValue_SimpleOutput(S<const Type_SimpleOutput> p, S<Writer> w)
-    : Value_SimpleOutput(std::move(p)), writer(w) {}
+struct ExtValue_BasicOutput : public Value_BasicOutput {
+  inline ExtValue_BasicOutput(S<const Type_BasicOutput> p, S<Writer> w)
+    : Value_BasicOutput(std::move(p)), writer(w) {}
 
   ReturnTuple Call_flush(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("SimpleOutput.flush")
+    TRACE_FUNCTION("BasicOutput.flush")
     std::lock_guard<std::mutex> lock(mutex);
     writer->Flush();
-    return ReturnTuple();
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_write(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("SimpleOutput.write")
+    TRACE_FUNCTION("BasicOutput.write")
     const BoxedValue& Var_arg1 = (params_args.GetArg(0));
     std::lock_guard<std::mutex> lock(mutex);
     writer->Write(TypeValue::Call(params_args.GetArg(0), Function_Formatted_formatted,
                                   PassParamsArgs()).At(0).AsString());
-    return ReturnTuple();
+    return ReturnTuple(VAR_SELF);
+  }
+
+  ReturnTuple Call_writeNow(const ParamsArgs& params_args) final {
+    TRACE_FUNCTION("BasicOutput.writeNow")
+    (void) Call_write(params_args);
+    (void) Call_flush(PassParamsArgs());
+    return ReturnTuple(VAR_SELF);
   }
 
   std::mutex mutex;
@@ -118,23 +125,23 @@ class ErrorWriter : public Writer {
   std::ostringstream output;
 };
 
-const BoxedValue Var_stdout = BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout)));
-const BoxedValue Var_stderr = BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr)));
-const BoxedValue Var_error  = BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter()));
+const BoxedValue Var_stdout = BoxedValue::New<ExtValue_BasicOutput>(CreateType_BasicOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout)));
+const BoxedValue Var_stderr = BoxedValue::New<ExtValue_BasicOutput>(CreateType_BasicOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr)));
+const BoxedValue Var_error  = BoxedValue::New<ExtValue_BasicOutput>(CreateType_BasicOutput(Params<0>::Type()), S_get(new ErrorWriter()));
 
 }  // namespace
 
-Category_SimpleOutput& CreateCategory_SimpleOutput() {
-  static auto& category = *new ExtCategory_SimpleOutput();
+Category_BasicOutput& CreateCategory_BasicOutput() {
+  static auto& category = *new ExtCategory_BasicOutput();
   return category;
 }
 
-S<const Type_SimpleOutput> CreateType_SimpleOutput(const Params<0>::Type& params) {
-  static const auto cached = S_get(new ExtType_SimpleOutput(CreateCategory_SimpleOutput(), Params<0>::Type()));
+S<const Type_BasicOutput> CreateType_BasicOutput(const Params<0>::Type& params) {
+  static const auto cached = S_get(new ExtType_BasicOutput(CreateCategory_BasicOutput(), Params<0>::Type()));
   return cached;
 }
 
-void RemoveType_SimpleOutput(const Params<0>::Type& params) {}
+void RemoveType_BasicOutput(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

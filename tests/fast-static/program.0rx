@@ -4,9 +4,9 @@ concrete Program {
 
 define Program {
   run () {
-    \ LazyStream<Formatted>.new()
-        .append($ExprLookup[MODULE_PATH]$ + "\n")
-        .append("Static linking works!\n")
-        .writeTo(SimpleOutput.stdout())
+    \ BasicOutput.stdout()
+        .write($ExprLookup[MODULE_PATH]$ + "\n")
+        .write("Static linking works!\n")
+        .flush()
   }
 }

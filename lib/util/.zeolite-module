@@ -15,6 +15,14 @@ private_deps: [
 ]
 extra_files: [
   category_source {
+    source: "lib/util/src/Extension_BasicInput.cpp"
+    categories: [BasicInput]
+  }
+  category_source {
+    source: "lib/util/src/Extension_BasicOutput.cpp"
+    categories: [BasicOutput]
+  }
+  category_source {
     source: "lib/util/src/Extension_Argv.cpp"
     categories: [Argv]
   }
@@ -23,16 +31,8 @@ extra_files: [
     categories: [MutexLock]
   }
   category_source {
-    source: "lib/util/src/Extension_SimpleInput.cpp"
-    categories: [SimpleInput]
-  }
-  category_source {
     source: "lib/util/src/Extension_SimpleMutex.cpp"
     categories: [SimpleMutex]
-  }
-  category_source {
-    source: "lib/util/src/Extension_SimpleOutput.cpp"
-    categories: [SimpleOutput]
   }
   category_source {
     source: "lib/util/src/Extension_SpinlockMutex.cpp"

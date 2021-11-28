@@ -63,10 +63,10 @@ define RandomDemo {
       }
 
       // Print the word.
-      \ LazyStream<Formatted>.new()
-          .append(String.fromCharBuffer(buffer))
-          .append("\n")
-          .writeTo(SimpleOutput.stdout())
+      \ BasicOutput.stdout()
+          .write(String.fromCharBuffer(buffer))
+          .write("\n")
+          .flush()
 
       // Wait a random amount of time.
       \ Realtime.sleepSeconds(timing.generate())

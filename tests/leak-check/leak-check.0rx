@@ -10,9 +10,7 @@ define LeakTest {
       \ message()
     } elif (Argv.global().readAt(1) == "race") {
       \ runWith(1000,0)
-      \ LazyStream<Formatted>.new()
-          .append("no race conditions this time\n")
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr().writeNow("no race conditions this time\n")
     } elif (Argv.global().readAt(1) == "leak") {
       \ runWith(100,0)
     } elif (Argv.global().readAt(1) == "forever") {
@@ -41,12 +39,12 @@ define LeakTest {
     #f defines ThreadFactory
   (Int,Int,ReadAt<BarrierWait>) -> ()
   doIteration (i,size,barriers) {
-    \ LazyStream<Formatted>.new()
-        .append(typename<#f>())
-        .append(": iteration ")
-        .append(i)
-        .append("\n")
-        .writeTo(SimpleOutput.stderr())
+    \ BasicOutput.stderr()
+        .write(typename<#f>())
+        .write(": iteration ")
+        .write(i)
+        .write("\n")
+        .flush()
 
     optional LeakTest original <- LeakTest{ Vector:createSize<Int>(size) }
     weak LeakTest checkedValue <- original

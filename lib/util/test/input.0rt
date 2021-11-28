@@ -95,5 +95,5 @@ testcase "stdin is empty in tests" {
 }
 
 unittest test {
-  \ Testing.checkEquals(TextReader.readAll(SimpleInput.stdin()),"")
+  \ Testing.checkEquals(TextReader.readAll(BasicInput.stdin()),"")
 }

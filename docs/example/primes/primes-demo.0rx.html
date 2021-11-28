@@ -22,13 +22,12 @@
     <span style='color:#898887;'>// Interactive input loop.</span>
 
     <b>scoped</b> {
-      <span style='color:#0057ae;'>TextReader</span> reader &lt;- <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>.</span>fromBlockReader(<span style='color:#0057ae;'>SimpleInput</span><span style='color:#644a9b;'>.</span>stdin())
+      <span style='color:#0057ae;'>TextReader</span> reader &lt;- <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>.</span>fromBlockReader(<span style='color:#0057ae;'>BasicInput</span><span style='color:#644a9b;'>.</span>stdin())
     } <b>in</b> <b>while</b> (!reader<span style='color:#644a9b;'>.</span>pastEnd()) {
       <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>tracker,thread</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
 
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Press [Enter] to toggle start/stop computation thread. Type </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>exit</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> to exit.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()
+          <span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Press [Enter] to toggle start/stop computation thread. Type </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>exit</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> to exit.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
       <i><span style='color:#0057ae;'>String</span></i> input &lt;- reader<span style='color:#644a9b;'>.</span>readNextLine()
       <b>if</b> (reader<span style='color:#644a9b;'>.</span>pastEnd()) {
         <b>break</b>
@@ -37,37 +36,29 @@
       <b>if</b> (input == <span style='color:#bf0303;'>&quot;&quot;</span>) {
         <b>if</b> (flag<span style='color:#644a9b;'>.</span>getEnabled()) {
           <span style='color:#006e28;'>\</span> flag<span style='color:#644a9b;'>.</span>stop()
-          <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-              <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Stopped.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-              <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+          <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()<span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Stopped.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
         } <b>else</b> {
           <span style='color:#006e28;'>\</span> flag<span style='color:#644a9b;'>.</span>start()
-          <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-              <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Started.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-              <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+          <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()<span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Started.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
         }
       } <b>elif</b> (input == <span style='color:#bf0303;'>&quot;exit&quot;</span>) {
         <b>break</b>
       } <b>else</b> {
-        <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-            <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Please try again!</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-            <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+          <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()<span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Please try again!</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
       }
     }
 
     <span style='color:#898887;'>// Wait for the thread to exit, then print the results.</span>
 
     <span style='color:#006e28;'>\</span> flag<span style='color:#644a9b;'>.</span>cancel()
-    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-        <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Exiting.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-        <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()<span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Exiting.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
     <span style='color:#006e28;'>\</span> thread<span style='color:#644a9b;'>.</span>join()
 
     <b>traverse</b> (tracker<span style='color:#644a9b;'>.</span>getResults() -&gt; <i><span style='color:#0057ae;'>Int</span></i> prime) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-          <span style='color:#644a9b;'>.</span>append(prime)
-          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stdout())
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stdout()
+          <span style='color:#644a9b;'>.</span>write(prime)
+          <span style='color:#644a9b;'>.</span>write(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          <span style='color:#644a9b;'>.</span>flush()
     }
   }
 }

@@ -11,13 +11,12 @@ define PrimesDemo {
     // Interactive input loop.
 
     scoped {
-      TextReader reader <- TextReader.fromBlockReader(SimpleInput.stdin())
+      TextReader reader <- TextReader.fromBlockReader(BasicInput.stdin())
     } in while (!reader.pastEnd()) {
       $Hidden[tracker,thread]$
 
-      \ LazyStream<Formatted>.new()
-          .append("Press [Enter] to toggle start/stop computation thread. Type \"exit\" to exit.\n")
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr()
+          .writeNow("Press [Enter] to toggle start/stop computation thread. Type \"exit\" to exit.\n")
       String input <- reader.readNextLine()
       if (reader.pastEnd()) {
         break
@@ -26,37 +25,29 @@ define PrimesDemo {
       if (input == "") {
         if (flag.getEnabled()) {
           \ flag.stop()
-          \ LazyStream<Formatted>.new()
-              .append("Stopped.\n")
-              .writeTo(SimpleOutput.stderr())
+          \ BasicOutput.stderr().writeNow("Stopped.\n")
         } else {
           \ flag.start()
-          \ LazyStream<Formatted>.new()
-              .append("Started.\n")
-              .writeTo(SimpleOutput.stderr())
+          \ BasicOutput.stderr().writeNow("Started.\n")
         }
       } elif (input == "exit") {
         break
       } else {
-        \ LazyStream<Formatted>.new()
-            .append("Please try again!\n")
-            .writeTo(SimpleOutput.stderr())
+          \ BasicOutput.stderr().writeNow("Please try again!\n")
       }
     }
 
     // Wait for the thread to exit, then print the results.
 
     \ flag.cancel()
-    \ LazyStream<Formatted>.new()
-        .append("Exiting.\n")
-        .writeTo(SimpleOutput.stderr())
+    \ BasicOutput.stderr().writeNow("Exiting.\n")
     \ thread.join()
 
     traverse (tracker.getResults() -> Int prime) {
-      \ LazyStream<Formatted>.new()
-          .append(prime)
-          .append("\n")
-          .writeTo(SimpleOutput.stdout())
+      \ BasicOutput.stdout()
+          .write(prime)
+          .write("\n")
+          .flush()
     }
   }
 }

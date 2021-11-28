@@ -120,18 +120,18 @@
   <span style='color:#644a9b;'>@value</span> sanityCheck () -&gt; ()
   sanityCheck () {
     <b>if</b> (hasBrokenInput()) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Error at &quot;</span>)
-          <span style='color:#644a9b;'>.</span>append(getPosition())
-          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;: &quot;</span>)
-          <span style='color:#644a9b;'>.</span>append(getError())
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>error())
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>error()
+          <span style='color:#644a9b;'>.</span>write(<span style='color:#bf0303;'>&quot;Error at &quot;</span>)
+          <span style='color:#644a9b;'>.</span>write(getPosition())
+          <span style='color:#644a9b;'>.</span>write(<span style='color:#bf0303;'>&quot;: &quot;</span>)
+          <span style='color:#644a9b;'>.</span>write(getError())
+          <span style='color:#644a9b;'>.</span>flush()
     }
     <b>if</b> (atEof()) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Reached end of input at &quot;</span>)
-          <span style='color:#644a9b;'>.</span>append(getPosition())
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>error())
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>error()
+          <span style='color:#644a9b;'>.</span>write(<span style='color:#bf0303;'>&quot;Reached end of input at &quot;</span>)
+          <span style='color:#644a9b;'>.</span>write(getPosition())
+          <span style='color:#644a9b;'>.</span>flush()
     }
   }
 }

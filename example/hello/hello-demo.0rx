@@ -5,24 +5,20 @@ concrete HelloDemo {
 define HelloDemo {
   run () {
     scoped {
-      TextReader reader <- TextReader.fromBlockReader(SimpleInput.stdin())
+      TextReader reader <- TextReader.fromBlockReader(BasicInput.stdin())
     } cleanup {
-      \ LazyStream<Formatted>.new()
-          .append("Goodbye.\n")
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr().writeNow("Goodbye.\n")
     } in while (!reader.pastEnd()) {
-      \ LazyStream<Formatted>.new()
-          .append("What is your name? ")
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr().writeNow("What is your name? ")
       String name <- reader.readNextLine()
       if (name.size() == 0) {
         break
       }
-      \ LazyStream<Formatted>.new()
-          .append("Hello \"")
-          .append(name)
-          .append("\", if that's your real name.\n")
-          .writeTo(SimpleOutput.stderr())
+      \ BasicOutput.stderr()
+          .write("Hello \"")
+          .write(name)
+          .write("\", if that's your real name.\n")
+          .flush()
     }
   }
 }
