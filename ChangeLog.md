@@ -40,6 +40,8 @@
 
 * **[new]** Adds `probably` to `RandomUniform` in `lib/math`.
 
+* **[new]** Adds `GenerateConstant` in `lib/math`.
+
 ### Language
 
 * **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.

@@ -57,6 +57,14 @@ concrete RandomUniform {
   @value setSeed (Int) -> (#self)
 }
 
+// Always returns a constant value.
+concrete GenerateConstant {
+  refines Generator<Float>
+
+  // Creates a new generator with the specified constant values.
+  @type new (Float) -> (#self)
+}
+
 concrete Randomize {
   // Creates a permutation from the CategoricalTree.
   //

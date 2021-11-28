@@ -40,6 +40,11 @@ unittest probability {
   Float value <- random.generate()
 }
 
+unittest constant {
+  Generator<Float> random <- GenerateConstant.new(1.0)
+  Float value <- random.generate()
+}
+
 
 testcase "negative lambda in exponential" {
   crash
@@ -143,6 +148,19 @@ unittest probability { $DisableCoverage$
   }
 
   \ Testing.checkBetween(sum/count.asFloat(),0.4,0.6)
+}
+
+unittest constant { $DisableCoverage$
+  Int count <- 10000
+  Float constant <- 12345.0
+  $ReadOnly[count,constant]$
+
+  Generator<Float> random <- GenerateConstant.new(constant)
+
+  traverse (Counter.zeroIndexed(count) -> _) {
+    Float value <- random.generate()
+    \ Testing.checkEquals(constant,value)
+  }
 }
 
 

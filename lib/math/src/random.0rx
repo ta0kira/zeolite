@@ -37,3 +37,17 @@ define Randomize {
     }
   }
 }
+
+define GenerateConstant {
+  $ReadOnly[constant]$
+
+  @value Float constant
+
+  new (constant) {
+    return GenerateConstant{ constant }
+  }
+
+  generate () {
+    return constant
+  }
+}
