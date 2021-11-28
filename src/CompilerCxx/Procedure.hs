@@ -782,7 +782,7 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   compileFunctionCall (Just t2) f' f
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
-  f' <- lift $ collectFirstM [tryCategory ctx,tryNonCategory ctx]
+  f' <- lift $ collectFirstM [tryCategory ctx,tryNonCategory ctx] <?? "In function call at " ++ formatFullContext c
   csAddRequired $ Set.fromList [sfType f']
   compileFunctionCall Nothing f' f
   where
