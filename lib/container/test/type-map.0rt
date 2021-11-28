@@ -21,7 +21,7 @@ testcase "TypeMap tests" {
 }
 
 unittest basicOperations {
-  TypeMap tree <- TypeMap.new()
+  TypeMap tree <- TypeMap.default()
 
   TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
   TypeKey<String> keyString <- TypeKey<String>.new()

@@ -32,6 +32,9 @@
 * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` (in
   `lib/container`) for consistency with other `@value` construction.
 
+* **[new]** Implements `Default` for containers in `lib/container` and
+  `lib/math`.
+
 * **[new]** Adds `LessThan2` `@value interface` to `lib/util`.
 
 * **[new]** Implements `Sorting` functions in `lib/container` that use  the new

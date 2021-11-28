@@ -18,6 +18,7 @@ limitations under the License.
 
 // A map that stores values of arbitrary types.
 concrete TypeMap {
+  defines Default
   refines Duplicate
 
   // Create a new map.

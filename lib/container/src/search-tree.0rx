@@ -19,6 +19,10 @@ limitations under the License.
 define SearchTree {
   @value AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>> tree
 
+  default () {
+    return new()
+  }
+
   new () {
     return #self{ AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
   }

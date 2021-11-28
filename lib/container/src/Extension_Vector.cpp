@@ -72,6 +72,11 @@ struct ExtType_Vector : public Type_Vector {
     TRACE_FUNCTION("Vector.new")
     return ReturnTuple(CreateValue_Vector(PARAM_SELF, VectorType()));
   }
+
+  ReturnTuple Call_default(const ParamsArgs& params_args) const final {
+    TRACE_FUNCTION("Vector.default")
+    return Call_new(PassParamsArgs());
+  }
 };
 
 class VectorOrder : public TypeValue {

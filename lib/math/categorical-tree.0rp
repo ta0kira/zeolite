@@ -58,6 +58,7 @@ limitations under the License.
 // - The required storage space is independent of the weights; it only depends
 //   on the number of distinct #c values with non-zero weights.
 concrete CategoricalTree<#c> {
+  defines Default
   refines CategoricalReader<#c>
   refines Duplicate
   refines ReadAt<#c>

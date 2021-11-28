@@ -21,6 +21,7 @@ limitations under the License.
 // Params:
 // - #x: The value type contained.
 concrete Vector<#x> {
+  defines Default
   refines Append<#x>
   refines DefaultOrder<#x>
   refines Duplicate

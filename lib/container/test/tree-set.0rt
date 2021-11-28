@@ -21,7 +21,7 @@ testcase "TreeSet tests" {
 }
 
 unittest addAndRemove {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  TreeSet<Int> set <- TreeSet<Int>.default()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$

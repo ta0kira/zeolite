@@ -188,7 +188,7 @@ unittest getReverseNotFound {
 }
 
 unittest duplicate {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new().set(1,1).set(2,2).set(3,3)
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.default().set(1,1).set(2,2).set(3,3)
 
   SearchTree<Int,Int> copy <- tree.duplicate()
   \ Testing.checkEquals(copy.size(),3)
@@ -206,7 +206,7 @@ unittest duplicate {
 }
 
 unittest duplicateEmpty {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.default()
 
   SearchTree<Int,Int> copy <- tree.duplicate()
   \ Testing.checkEquals(copy.size(),0)

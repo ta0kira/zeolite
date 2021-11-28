@@ -19,6 +19,10 @@ limitations under the License.
 define TypeMap {
   @value SearchTree<TypeKey<any>,GenericValue<any>> tree
 
+  default () {
+    return new()
+  }
+
   new () {
     return TypeMap{ SearchTree<TypeKey<any>,GenericValue<any>>.new() }
   }

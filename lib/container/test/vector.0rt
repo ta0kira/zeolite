@@ -132,7 +132,7 @@ unittest traverseVector {
 }
 
 unittest duplicate {
-  Vector<Int> vector <- Vector<Int>.new().push(1).push(2)
+  Vector<Int> vector <- Vector<Int>.default().push(1).push(2)
 
   Vector<Int> copy <- vector.duplicate()
   \ Testing.checkEquals(copy.size(),2)
