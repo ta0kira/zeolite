@@ -44,7 +44,7 @@ define RandomDemo {
 
     // We could use weights.getTotal() as the upper limit here, but setting it
     // to 1.0 allows us to account for changes to weights.
-    Generator<Float> letter <- RandomUniform.new(0.0,1.0)
+    Generator<Float> letter <- RandomUniform.probability()
     Generator<Float> length <- RandomGaussian.new(5.0,3.0)
     Generator<Float> timing <- RandomExponential.new(4.0)
 

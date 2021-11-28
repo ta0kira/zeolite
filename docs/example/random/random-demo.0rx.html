@@ -55,7 +55,7 @@
 
     <span style='color:#898887;'>// We could use weights.getTotal() as the upper limit here, but setting it</span>
     <span style='color:#898887;'>// to 1.0 allows us to account for changes to weights.</span>
-    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> letter &lt;- <span style='color:#0057ae;'>RandomUniform</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>0.0</span>,<span style='color:#b08000;'>1.0</span>)
+    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> letter &lt;- <span style='color:#0057ae;'>RandomUniform</span><span style='color:#644a9b;'>.</span>probability()
     <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> length &lt;- <span style='color:#0057ae;'>RandomGaussian</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>5.0</span>,<span style='color:#b08000;'>3.0</span>)
     <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> timing &lt;- <span style='color:#0057ae;'>RandomExponential</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>4.0</span>)
 

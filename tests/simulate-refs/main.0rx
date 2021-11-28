@@ -22,7 +22,7 @@ concrete SimulateRefs {
 
 define SimulateRefs {
   @category Int errorLimit <- 10
-  @category RandomUniform random <- RandomUniform.new(0.0,1.0).setSeed(Realtime.monoSeconds().asInt())
+  @category RandomUniform random <- RandomUniform.probability().setSeed(Realtime.monoSeconds().asInt())
 
   run () {
     Bool useBroken <- Argv.global().size() > 1 && Argv.global().readAt(1) == "broken"
