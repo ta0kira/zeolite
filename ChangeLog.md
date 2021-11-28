@@ -6,6 +6,9 @@
 
 * **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.
 
+* **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
+  functions to have unary notation, e.g., ``y <- `require` x``.
+
 ### Libraries
 
 * **[new]** Adds `LessThan2` `@value interface` to `lib/util`.

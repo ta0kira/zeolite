@@ -405,7 +405,7 @@ instance ParseFromSource (Expression SourceContext) where
     asInfix [e] [] <|> return e
     where
       -- NOTE: InitializeValue is parsed as ExpressionStart.
-      notInfix = literal <|> unary <|> expression
+      notInfix = literal <|> try unaryBuiltin <|> unary <|> expression
       asInfix es os = do
         c <- getSourceContext
         o <- infixOperator <|> functionOperator
@@ -428,6 +428,16 @@ instance ParseFromSource (Expression SourceContext) where
       literal = do
         l <- sourceParser
         return $ Literal l
+      unaryBuiltin = do
+        c <- getSourceContext
+        infixFuncStart
+        n <- builtinUnary
+        ps <- try $ between (sepAfter $ string_ "<")
+                            (sepAfter $ string_ ">")
+                            (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
+        infixFuncEnd
+        e <- notInfix
+        return $ Expression [c] (BuiltinCall [c] $ FunctionCall [c] n (Positional ps) (Positional [e])) []
       unary = do
         c <- getSourceContext
         o <- unaryOperator <|> functionOperator
@@ -508,6 +518,14 @@ builtinFunction = foldr (<|>) empty $ map try [
     kwRequire >> return BuiltinRequire,
     kwStrong >> return BuiltinStrong,
     kwTypename >> return BuiltinTypename
+  ]
+
+builtinUnary :: TextParser FunctionName
+builtinUnary = foldr (<|>) empty $ map try [
+    kwPresent >> return BuiltinPresent,
+    kwReduce >> return BuiltinReduce,
+    kwRequire >> return BuiltinRequire,
+    kwStrong >> return BuiltinStrong
   ]
 
 instance ParseFromSource (ExpressionStart SourceContext) where

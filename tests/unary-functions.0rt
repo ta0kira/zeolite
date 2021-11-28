@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -138,4 +138,33 @@ define Test {
   neg (x) {
     return -x
   }
+}
+
+
+testcase "builtins as unary" {
+  success
+}
+
+unittest requireUnary {
+  optional Int value <- 1
+  \ Testing.checkEquals(`require` value,1)
+}
+
+unittest presentUnary {
+  optional Int value <- 1
+  \ Testing.checkTrue(`present` value)
+  value <- empty
+  \ Testing.checkTrue(! `present` value)
+}
+
+unittest strongUnary {
+  weak Int value <- 1
+  optional Int value2 <- `strong` value
+  \ Testing.checkTrue(present(value2))
+  \ Testing.checkTrue(`present` `strong` value)
+}
+
+unittest reduceUnary {
+  optional Formatted value <- `reduce<Int,Formatted>` 123
+  \ Testing.checkEquals(require(value).formatted(),"123")
 }

@@ -228,6 +228,12 @@ tests = [
     checkShortParseFail "\\ call(){x}",
     checkShortParseFail "\\ call(){-1}",
 
+    checkShortParseSuccess "x <- `strong` y",
+    checkShortParseSuccess "x <- `present` y",
+    checkShortParseSuccess "x <- `require` y",
+    checkShortParseSuccess "x <- `reduce<#x,#y>` y",
+    checkShortParseFail "x <- `typename<#y>` y",
+
     checkParsesAs "'\"'"
                   (\e -> case e of
                               (Expression _ (UnambiguousLiteral (CharLiteral _ '"')) []) -> True
