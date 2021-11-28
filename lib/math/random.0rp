@@ -50,6 +50,9 @@ concrete RandomUniform {
   // Creates a new generator with the specified min and max values.
   @type new (Float,Float) -> (#self)
 
+  // Creates a new generator for the range [0.0,1.0).
+  @type probability () -> (#self)
+
   // Resets the seed for RNG.
   @value setSeed (Int) -> (#self)
 }

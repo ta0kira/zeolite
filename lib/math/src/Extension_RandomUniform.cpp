@@ -45,6 +45,11 @@ struct ExtType_RandomUniform : public Type_RandomUniform {
     }
     return ReturnTuple(CreateValue_RandomUniform(PARAM_SELF, params_args));
   }
+
+  ReturnTuple Call_probability(const ParamsArgs& params_args) const final {
+    TRACE_FUNCTION("RandomUniform.probability")
+    return Call_new(PassParamsArgs(Box_Float(0.0), Box_Float(1.0)));
+  }
 };
 
 struct ExtValue_RandomUniform : public Value_RandomUniform {

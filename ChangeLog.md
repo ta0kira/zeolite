@@ -38,6 +38,8 @@
 
 * **[new]** Adds `CategoricalReader` to `lib/math`.
 
+* **[new]** Adds `probably` to `RandomUniform` in `lib/math`.
+
 ### Language
 
 * **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.
