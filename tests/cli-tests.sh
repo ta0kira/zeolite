@@ -155,23 +155,21 @@ freshness/sub1/public3\.0rp.+not present
 freshness/sub1/source1\.0rx.+newer
 freshness/sub1/source2\.0rx.+missing
 freshness/sub1/source3\.0rx.+not present
-freshness/sub1/test1\.0rt.+newer
 freshness/sub1/test2\.0rt.+missing
 freshness/sub1/test3\.0rt.+not present
 freshness/sub2/public3\.0rp.+not present
 freshness/sub2/source1\.0rx.+newer
 freshness/sub2/source2\.0rx.+missing
 freshness/sub2/source3\.0rx.+not present
-freshness/sub2/test1\.0rt.+newer
 freshness/sub2/test2\.0rt.+missing
 freshness/sub2/test3\.0rt.+not present
-freshness/test1\.0rt.+newer
 freshness/test2\.0rt.+missing
 freshness/test3\.0rt.+not present
 freshness/.zeolite-cache/public_[a-f0-9]+\.so.+missing
 END
 [[ $? -eq 0 ]] || return 1
   exclude_patterns "$output" <<END
+\.0rt.+newer
 cpp
 hpp
 \.o\b

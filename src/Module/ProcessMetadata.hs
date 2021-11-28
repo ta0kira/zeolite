@@ -328,6 +328,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
   expectedFiles <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps++xs++ts)
   actualFiles   <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) (ps2++xs2++ts2)
   inputFiles    <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) xs
+  testFiles     <- mapCompilerM (errorFromIO . canonicalizePath . (p2</>)) ts
   collectAllM_ $ [
       checkHash,
       checkInput time (p </> moduleFilename),
@@ -335,6 +336,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
     ] ++
     (map (checkDep time) $ is ++ is2) ++
     (map (checkInput time) inputFiles) ++
+    (map checkPresent testFiles) ++
     (map (checkInput time . getCachedPath d "") $ hxx ++ cxx) ++
     (map checkOutput bs) ++
     (map checkOutput ls) ++
@@ -344,6 +346,9 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 d ep _ _ is is2 _ _ _ _ ps x
     checkHash =
       when (not $ checkModuleVersionHash h m) $
         compilerErrorM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
+    checkPresent f = do
+      exists <- doesFileOrDirExist f
+      when (not exists) $ compilerErrorM $ "Required path \"" ++ f ++ "\" is missing"
     checkInput time f = do
       exists <- doesFileOrDirExist f
       when (not exists) $ compilerErrorM $ "Required path \"" ++ f ++ "\" is missing"
