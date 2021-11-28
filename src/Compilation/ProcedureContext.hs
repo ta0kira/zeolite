@@ -310,7 +310,8 @@ instance (Show c, CollectErrorsM m) =>
     combineParallel (da1,ValidateNames ns ts ra1,j1) (da2,ValidateNames _ _ ra2,j2) = (branchDeferred [da1,da2],ValidateNames ns ts $ branchDeferred [ra1,ra2],min j1 j2)
     combineParallel (da1,r@(ValidatePositions _),j1) (da2,_,j2) = (branchDeferred [da1,da2],r,min j1 j2)
     combineParallel (da1,_,j1) (da2,r@(ValidatePositions _),j2) = (branchDeferred [da1,da2],r,min j1 j2)
-  ccInheritDeferred ctx ds = return $ ctx & pcDeferred .~ ds
+  ccInheritDeferred ctx ds = return $ ctx & pcDeferred .~ deferred where
+    deferred = (ctx ^. pcDeferred) `followDeferred` ds
   ccInheritUsed ctx ctx2 = return $ ctx & pcUsedVars <>~ (ctx2 ^. pcUsedVars)
   ccRegisterReturn ctx c vs = do
     returns <- check (ctx ^. pcReturns)

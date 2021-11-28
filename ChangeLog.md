@@ -2,6 +2,10 @@
 
 ## 0.21.1.0  -- ????-??-??
 
+### Language
+
+* **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.
+
 ### Libraries
 
 * **[new]** Adds `LessThan2` `@value interface` to `lib/util`.

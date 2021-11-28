@@ -289,6 +289,22 @@ unittest test {
 }
 
 
+testcase "deferred propagated from scoped statement" {
+  compiles
+}
+
+unittest test {
+  Int value <- defer
+  scoped {
+  } in if (true) {
+    value <- 1
+  } else {
+    value <- 2
+  }
+  \ value
+}
+
+
 testcase "deferred missed before cleanup" {
   error
   require "cleanup"
