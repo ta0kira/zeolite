@@ -205,3 +205,14 @@ concrete AlwaysEqual {
   defines Equals<any>
   defines LessThan<any>
 }
+
+// Creates a LessThan2 from a LessThan.
+//
+// Params:
+// - #x: Object type to be compared.
+// - #xx: Comparator for #x.
+concrete AsLessThan2<#x|#xx|> {
+  #xx defines LessThan<#x>
+
+  @type new () -> (LessThan2<#x>)
+}

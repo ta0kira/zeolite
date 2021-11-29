@@ -22,7 +22,7 @@ define Sorting {
   }
 
   sortWith (seq) {
-    \ seq `sortWith2` LessThanAs2<#x,#xx>.new()
+    \ seq `sortWith2` AsLessThan2<#x,#xx>.new()
   }
 
   sortWith2 (seq,compare) {
@@ -48,7 +48,7 @@ define Sorting {
   }
 
   sortListWith (head) {
-    return head `sortListWith2` LessThanAs2<#x,#xx>.new()
+    return head `sortListWith2` AsLessThan2<#x,#xx>.new()
   }
 
   sortListWith2 (head,compare) {
@@ -271,23 +271,5 @@ define MergeSort {
         break
       }
     }
-  }
-}
-
-concrete LessThanAs2<#x|#xx|> {
-  immutable
-  refines LessThan2<#x>
-  #xx defines LessThan<#x>
-
-  @type new () -> (#self)
-}
-
-define LessThanAs2 {
-  new () {
-    return #self{ }
-  }
-
-  lessThan2 (x,y) {
-    return x `#xx.lessThan` y
   }
 }

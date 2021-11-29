@@ -152,3 +152,15 @@ define AlwaysEqual {
     return false
   }
 }
+
+define AsLessThan2 {
+  refines LessThan2<#x>
+
+  new () {
+    return #self{ }
+  }
+
+  lessThan2 (x,y) {
+    return x `#xx.lessThan` y
+  }
+}
