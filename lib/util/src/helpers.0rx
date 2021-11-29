@@ -58,6 +58,22 @@ define OrderH {
     }
     return !present(xx) && !present(yy)
   }
+
+  copyTo (input,output) (original) {
+    original <- output
+    $Hidden[original]$
+    traverse (input -> #x value) {
+      \ output.append(value)
+    }
+  }
+
+  duplicateTo (input,output) (original) {
+    original <- output
+    $Hidden[original]$
+    traverse (input -> #x value) {
+      \ output.append(value.duplicate())
+    }
+  }
 }
 
 define ReadAtH {
@@ -66,7 +82,7 @@ define ReadAtH {
   }
 
   lessThanWith (x,y) {
-    traverse (Counter.zeroIndexed(Ranges:min(x.size(),y.size())) -> Int i) {
+    traverse (`Counter.zeroIndexed` (x.size() `Ranges:min` y.size()) -> Int i) {
       $ReadOnly[i]$
       if (x.readAt(i) `#xx.lessThan` y.readAt(i)) {
         return true
@@ -85,13 +101,29 @@ define ReadAtH {
     if (x.size() != y.size()) {
       return false
     }
-    traverse (Counter.zeroIndexed(x.size()) -> Int i) {
+    traverse (`Counter.zeroIndexed` x.size() -> Int i) {
       $ReadOnly[i]$
       if (!(x.readAt(i) `#xx.equals` y.readAt(i))) {
         return false
       }
     }
     return true
+  }
+
+  copyTo (input,output) (original) {
+    original <- output
+    $Hidden[original]$
+    traverse (`Counter.zeroIndexed` input.size() -> Int i) {
+      \ output.append(input.readAt(i))
+    }
+  }
+
+  duplicateTo (input,output) (original) {
+    original <- output
+    $Hidden[original]$
+    traverse (`Counter.zeroIndexed` input.size() -> Int i) {
+      \ output.append(input.readAt(i).duplicate())
+    }
   }
 }
 

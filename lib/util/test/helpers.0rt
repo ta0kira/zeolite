@@ -137,3 +137,164 @@ unittest alwaysEqualEquals {
   \ Testing.checkTrue("ac" `AlwaysEqual.equals` "b")
   \ Testing.checkTrue("a"  `AlwaysEqual.equals` "b")
 }
+
+
+testcase "copying tests" {
+  success
+}
+
+unittest orderHCopyTo {
+  ValueCheck output <- ValueCheck.new(10)
+  \ ValueOrder.wrap(false,Counter.zeroIndexed(10)) `OrderH:copyTo` output
+  \ output.checkEnd()
+}
+
+unittest orderHDuplicateTo {
+  ValueCheck output <- ValueCheck.new(10)
+  \ ValueOrder.wrap(true,Counter.zeroIndexed(10)) `OrderH:duplicateTo` output
+  \ output.checkEnd()
+}
+
+unittest readAtHCopyTo {
+  ValueCheck output <- ValueCheck.new(10)
+  \ ValueSource.new(false,10) `ReadAtH:copyTo` output
+  \ output.checkEnd()
+}
+
+unittest readAtHDuplicateTo {
+  ValueCheck output <- ValueCheck.new(10)
+  \ ValueSource.new(true,10) `ReadAtH:duplicateTo` output
+  \ output.checkEnd()
+}
+
+concrete ValueOrder {
+  refines Order<Value>
+
+  @type wrap (Bool,optional Order<Int>) -> (optional Order<Value>)
+}
+
+define ValueOrder {
+  $ReadOnly[original]$
+
+  @value Bool original
+  @value Order<Int> order
+
+  wrap (original,order) {
+    if (!present(order)) {
+      return empty
+    } else {
+      return ValueOrder{ original, require(order) }
+    }
+  }
+
+  next () {
+    optional Order<Int> order2 <- order.next()
+    if (present(order2)) {
+      order <- require(order2)
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return Value.new(original,order.get())
+  }
+}
+
+concrete ValueCheck {
+  // Must append the next value in the sequence [0,size).
+  refines Append<Value>
+
+  @type new (Int) -> (ValueCheck)
+  @value checkEnd () -> ()
+}
+
+define ValueCheck {
+  $ReadOnly[target]$
+
+  @value Int current
+  @value Int target
+
+  new (target) {
+    return ValueCheck{ 0, target }
+  }
+
+  checkEnd () {
+    \ Testing.checkEquals(current,target)
+  }
+
+  append (x) {
+    \ Testing.checkEquals(x.get(),current)
+    current <- current+1
+    return self
+  }
+}
+
+concrete Value {
+  // Crashes if "original" is already false.
+  refines Duplicate
+
+  // Args:
+  // - Bool: Whether or not the value is "original".
+  // - Int: Value to return from get().
+  @type new (Bool,Int) -> (Value)
+
+  // Crashes if "original" is true.
+  @value get () -> (Int)
+}
+
+define Value {
+  $ReadOnly[original,value]$
+
+  @value Bool original
+  @value Int value
+
+  new (original,value) {
+    return Value{ original, value }
+  }
+
+  get () {
+    if (original) {
+      fail("not duplicated")
+    }
+    return value
+  }
+
+  duplicate () {
+    if (!original) {
+      fail("already duplicated")
+    }
+    return Value{ false, value }
+  }
+}
+
+concrete ValueSource {
+  // readAt(i) returns Value.new(original,i).
+  refines ReadAt<Value>
+
+  // Args:
+  // - Bool: Whether or not to mark new values as "original".
+  // - Int: Total size.
+  @type new (Bool,Int) -> (ValueSource)
+}
+
+define ValueSource {
+  $ReadOnly[original,size]$
+
+  @value Bool original
+  @value Int size
+
+  new (original,size) {
+    return ValueSource{ original, size }
+  }
+
+  size () {
+    return size
+  }
+
+  readAt (i) {
+    \ Testing.checkBetween(i,0,size-1)
+    return Value.new(original,i)
+  }
+}

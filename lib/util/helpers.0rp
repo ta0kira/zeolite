@@ -65,6 +65,39 @@ concrete OrderH {
   @category equalsWith<#x,#xx>
     #xx defines Equals<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
+
+  // Copies references to all elements to the destination.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #c: Container type.
+  //
+  // Args:
+  // - optional Order<#x>: Element source.
+  // - #c: Output container.
+  //
+  // Returns:
+  // - #c: The container originally passed.
+  @category copyTo<#x,#c>
+    #c requires Append<#x>
+  (optional Order<#x>,#c) -> (#c)
+
+  // Duplicates references to all elements to the destination.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #c: Container type.
+  //
+  // Args:
+  // - optional Order<#x>: Element source.
+  // - #c: Output container.
+  //
+  // Returns:
+  // - #c: The container originally passed.
+  @category duplicateTo<#x,#c>
+    #x requires Duplicate
+    #c requires Append<#x>
+  (optional Order<#x>,#c) -> (#c)
 }
 
 // Helpers to extend functionality to the ReadAt<#x> built-in.
@@ -116,6 +149,39 @@ concrete ReadAtH {
   @category equalsWith<#x,#xx>
     #xx defines Equals<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+
+  // Copies references to all elements to the destination.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #c: Container type.
+  //
+  // Args:
+  // - ReadAt<#x>: Element source.
+  // - #c: Output container.
+  //
+  // Returns:
+  // - #c: The container originally passed.
+  @category copyTo<#x,#c>
+    #c requires Append<#x>
+  (ReadAt<#x>,#c) -> (#c)
+
+  // Duplicates references to all elements to the destination.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #c: Container type.
+  //
+  // Args:
+  // - ReadAt<#x>: Element source.
+  // - #c: Output container.
+  //
+  // Returns:
+  // - #c: The container originally passed.
+  @category duplicateTo<#x,#c>
+    #x requires Duplicate
+    #c requires Append<#x>
+  (ReadAt<#x>,#c) -> (#c)
 }
 
 // Reverse an existing LessThan<#x> comparison.
