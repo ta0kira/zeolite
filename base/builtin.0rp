@@ -29,6 +29,7 @@ concrete Bool {
   refines AsBool
   refines AsInt
   refines AsFloat
+  refines Duplicate
   refines Formatted
 
   defines Default
@@ -55,6 +56,7 @@ concrete Char {
   refines AsChar
   refines AsInt
   refines AsFloat
+  refines Duplicate
   refines Formatted
 
   defines Bounded
@@ -77,6 +79,7 @@ concrete Float {
   refines AsBool
   refines AsInt
   refines AsFloat
+  refines Duplicate
   refines Formatted
 
   defines Default
@@ -108,6 +111,7 @@ concrete Int {
   refines AsChar
   refines AsInt
   refines AsFloat
+  refines Duplicate
   refines Formatted
 
   defines Bounded
@@ -128,6 +132,7 @@ concrete String {
 
   refines AsBool
   refines DefaultOrder<Char>
+  refines Duplicate
   refines Formatted
   refines ReadAt<Char>
   refines SubSequence
@@ -262,6 +267,18 @@ concrete CharBuffer {
 @value interface Container {
   // Return the number of values.
   size () -> (Int)
+}
+
+// Can be duplicated.
+@value interface Duplicate {
+  // Creates a duplicate that can be mutated without changing the original.
+  //
+  // Notes:
+  // - This does not need to be a deep copy. The only requirement is that
+  //   mutating functions can be called on the copy without counterintuitive
+  //   results. For example, if the object is a container, the duplicate could
+  //   be a copy of the structure, while still referring to the same objects.
+  duplicate () -> (#self)
 }
 
 // Random-access reading from a container.

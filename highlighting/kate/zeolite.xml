@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.17"
+    version="3.18"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -102,6 +102,7 @@
       <item> Container </item>
       <item> Default </item>
       <item> DefaultOrder </item>
+      <item> Duplicate </item>
       <item> Equals </item>
       <item> Float </item>
       <item> Formatted </item>

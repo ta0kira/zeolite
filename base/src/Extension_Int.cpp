@@ -28,6 +28,7 @@ limitations under the License.
 #include "Category_Bool.hpp"
 #include "Category_Char.hpp"
 #include "Category_Default.hpp"
+#include "Category_Duplicate.hpp"
 #include "Category_Equals.hpp"
 #include "Category_Float.hpp"
 #include "Category_Formatted.hpp"
@@ -85,6 +86,8 @@ ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
     case CategoryId_AsFloat:
       return ReturnTuple(Box_Float(value));
     case CategoryId_AsInt:
+      return ReturnTuple(Box_Int(value));
+    case CategoryId_Duplicate:
       return ReturnTuple(Box_Int(value));
     case CategoryId_Formatted:
       return ReturnTuple(Box_String(std::to_string(value)));

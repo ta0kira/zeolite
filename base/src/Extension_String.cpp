@@ -27,6 +27,7 @@ limitations under the License.
 #include "Category_Container.hpp"
 #include "Category_Default.hpp"
 #include "Category_DefaultOrder.hpp"
+#include "Category_Duplicate.hpp"
 #include "Category_Equals.hpp"
 #include "Category_Formatted.hpp"
 #include "Category_Int.hpp"
@@ -151,6 +152,11 @@ struct ExtValue_String : public Value_String {
     } else {
       return ReturnTuple(BoxedValue::New<StringOrder>(VAR_SELF, value_));
     }
+  }
+
+  ReturnTuple Call_duplicate(const ParamsArgs& params_args) const final {
+    TRACE_FUNCTION("String.duplicate")
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_formatted(const ParamsArgs& params_args) const final {

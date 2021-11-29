@@ -321,6 +321,26 @@ unittest stringDefault {
   \ Testing.checkEquals(String.default(),"")
 }
 
+unittest boolDuplicate {
+  \ Testing.checkTrue(true.duplicate())
+}
+
+unittest charDuplicate {
+  \ Testing.checkEquals('a'.duplicate(),'a')
+}
+
+unittest floatDuplicate {
+  \ Testing.checkEquals((1.1).duplicate(),1.1)
+}
+
+unittest intDuplicate {
+  \ Testing.checkEquals((123).duplicate(),123)
+}
+
+unittest stringDuplicate {
+  \ Testing.checkEquals("string".duplicate(),"string")
+}
+
 unittest stringLessThan {
   if (!("x" `String.lessThan` "y")) {
     fail("Failed")

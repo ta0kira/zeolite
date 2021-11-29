@@ -16,18 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// Can be duplicated.
-@value interface Duplicate {
-  // Creates a duplicate that can be mutated without changing the original.
-  //
-  // Notes:
-  // - This does not need to be a deep copy. The only requirement is that
-  //   mutating functions can be called on the copy without counterintuitive
-  //   results. For example, if the object is a container, the duplicate could
-  //   be a copy of the structure, while still referring to the same objects.
-  duplicate () -> (#self)
-}
-
 // A @value version of the LessThan @type interface.
 @value interface LessThan2<#x|> {
   lessThan (#x,#x) -> (Bool)
