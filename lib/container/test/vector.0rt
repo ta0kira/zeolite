@@ -46,20 +46,6 @@ unittest duplicateSize {
   }
 }
 
-unittest copyFrom {
-  String original <- "abcde"
-  Vector<Char> values <- Vector:copyFrom(original)
-  \ Testing.checkEquals(values.size(),original.size())
-
-  scoped {
-    Int i <- 0
-  } in while (i < original.size()) {
-    \ Testing.checkEquals(values.readAt(i),original.readAt(i))
-  } update {
-    i <- i+1
-  }
-}
-
 unittest append {
   Vector<Int> values <- Vector<Int>.new()
 

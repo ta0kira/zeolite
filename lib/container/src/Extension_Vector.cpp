@@ -42,18 +42,6 @@ using VectorType = std::vector<BoxedValue>;
 BoxedValue CreateValue_Vector(S<const Type_Vector> parent, VectorType values);
 
 struct ExtCategory_Vector : public Category_Vector {
-  ReturnTuple Call_copyFrom(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("Vector:copyFrom")
-    const S<const TypeInstance> Param_y = params_args.GetParam(0);
-    const BoxedValue& Var_arg1 = (params_args.GetArg(0));
-    VectorType values;
-    const PrimInt size = TypeValue::Call(Var_arg1, Function_Container_size, PassParamsArgs()).At(0).AsInt();
-    for (int i = 0; i < size; ++i) {
-      values.push_back(TypeValue::Call(Var_arg1, Function_ReadAt_readAt, PassParamsArgs(Box_Int(i))).At(0));
-    }
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
-  }
-
   ReturnTuple Call_createSize(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("Vector:createSize")
     const S<const TypeInstance> Param_y = params_args.GetParam(0);

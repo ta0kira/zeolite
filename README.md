@@ -392,9 +392,10 @@ function is arbitrary, but there are pros and cons of each:
      `Vector` with default values.
 
   2. The caller will pass arguments that can be used to [infer the category's
-     parameters](#type-inference). For example, `Vector:copyFrom`
-     ([`lib/container`][lib/container]) takes a `ReadAt<#y>`. Since `#y` is a
-     function param, it can be inferred from the argument that gets passed.
+     parameters](#type-inference). For example, `Vector:duplicateSize`
+     ([`lib/container`][lib/container]) takes a single `#y`. Since `#y` is a
+     function param, it can be inferred from the argument that gets passed,
+     e.g., `Vector:duplicateSize(0,25)`.
 
   If neither of these situations apply, a `@type` function might be better.
 

@@ -32,6 +32,9 @@
 * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` (in
   `lib/container`) for consistency with other `@value` construction.
 
+* **[breaking]** Removes `Vector:copyFrom` (in`lib/container`) since it was too
+  specific.
+
 * **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
   duplicating an single value.
 
