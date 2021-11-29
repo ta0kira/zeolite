@@ -32,6 +32,9 @@
 * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` (in
   `lib/container`) for consistency with other `@value` construction.
 
+* **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
+  duplicating an single value.
+
 * **[new]** Implements `Default` for containers in `lib/container` and
   `lib/math`.
 

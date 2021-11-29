@@ -24,6 +24,7 @@ concrete Vector<#x> {
   defines Default
   refines Append<#x>
   refines DefaultOrder<#x>
+  // Does not duplicate individual elements.
   refines Duplicate
   refines Stack<#x>
   refines ReadAt<#x>
@@ -43,4 +44,9 @@ concrete Vector<#x> {
   @category createSize<#y>
     #y defines Default
   (Int) -> (Vector<#y>)
+
+  // Create a pre-sized vector of copied values.
+  @category duplicateSize<#y>
+    #y requires Duplicate
+  (#y,Int) -> (Vector<#y>)
 }

@@ -24,6 +24,7 @@ limitations under the License.
 #include "Category_Container.hpp"
 #include "Category_Default.hpp"
 #include "Category_DefaultOrder.hpp"
+#include "Category_Duplicate.hpp"
 #include "Category_Formatted.hpp"
 #include "Category_Order.hpp"
 #include "Category_ReadAt.hpp"
@@ -60,6 +61,18 @@ struct ExtCategory_Vector : public Category_Vector {
     VectorType values;
     for (int i = 0; i < Var_arg1; ++i) {
       values.push_back(TypeInstance::Call(Param_y, Function_Default_default, PassParamsArgs()).At(0));
+    }
+    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
+  }
+
+  ReturnTuple Call_duplicateSize(const ParamsArgs& params_args) final {
+    TRACE_FUNCTION("Vector:duplicateSize")
+    const S<const TypeInstance> Param_y = params_args.GetParam(0);
+    const BoxedValue& Var_arg1 = (params_args.GetArg(0));
+    const PrimInt Var_arg2 = (params_args.GetArg(1)).AsInt();
+    VectorType values;
+    for (int i = 0; i < Var_arg2; ++i) {
+      values.push_back(TypeValue::Call(Var_arg1, Function_Duplicate_duplicate, PassParamsArgs()).At(0));
     }
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
