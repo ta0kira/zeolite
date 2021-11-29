@@ -61,7 +61,7 @@
 * **[breaking]** Makes the `Duplicate` `@value interface` from `lib/util` a
   builtin and implements it for `Bool`, `Char`, `Float`, `Int`, and `String`.
 
-* **[fix]** Fixes checking of `defer`ed initialization in `scoped` blocks.
+* **[fix]** Fixes checking of `defer` in `scoped` blocks.
 
 * **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
   functions to have unary notation, e.g., ``y <- `require` x``.
