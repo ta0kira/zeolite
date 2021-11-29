@@ -18,5 +18,5 @@ limitations under the License.
 
 // A @value version of the LessThan @type interface.
 @value interface LessThan2<#x|> {
-  lessThan (#x,#x) -> (Bool)
+  lessThan2 (#x,#x) -> (Bool)
 }

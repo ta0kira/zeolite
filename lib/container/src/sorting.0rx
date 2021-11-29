@@ -128,10 +128,10 @@ define HeapSort {
       Int left  <- 2*last+1
       Int right <- 2*last+2
       $ReadOnly[left,right]$
-      if (seq.readAt(indexLargest) `compare.lessThan` seq.readAt(left)) {
+      if (seq.readAt(indexLargest) `compare.lessThan2` seq.readAt(left)) {
         indexLargest <- left
       }
-      if (right < size && seq.readAt(indexLargest) `compare.lessThan` seq.readAt(right)) {
+      if (right < size && seq.readAt(indexLargest) `compare.lessThan2` seq.readAt(right)) {
         indexLargest <- right
       }
       if (indexLargest == last) {
@@ -234,7 +234,7 @@ define MergeSort {
 
     while (present(left2) && present(right2)) {
       #n append <- defer
-      if (require(left2).get() `compare.lessThan` require(right2).get()) {
+      if (require(left2).get() `compare.lessThan2` require(right2).get()) {
         left2 <- (append <- require(left2)).next()
       } else {
         right2 <- (append <- require(right2)).next()
@@ -287,7 +287,7 @@ define LessThanAs2 {
     return #self{ }
   }
 
-  lessThan (x,y) {
+  lessThan2 (x,y) {
     return x `#xx.lessThan` y
   }
 }
