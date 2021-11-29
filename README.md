@@ -1544,7 +1544,6 @@ Builtin `concrete` types:
 
 Builtin `@value interface`s:
 
-  built-in loop iteration.
 - **`Append<#x>`**: Supports appending `#x`.
 - **`AsBool`**: Convert a value to `Bool` using `asBool()`.
 - **`AsChar`**: Convert a value to `Char` using `asChar()`.
@@ -1554,7 +1553,8 @@ Builtin `@value interface`s:
 - **`Container`**: Contains multiple values.
 - **`DefaultOrder<#x>`**: The container provides a default `Order<#x>` for use
   with `traverse`.
-- **`Formatted`**: Format a value as a `String` using `formatted()`.
+- **`Duplicate`**: Duplicate the value with `duplicate()`.
+- **`Formatted`**: Format the value as a `String` using `formatted()`.
 - **`Order<#x>`**: An ordering of `#x` values, for use with the `traverse`
 - **`ReadAt<#x>`**: Random access reads from a container with values of type
   `#x`.
