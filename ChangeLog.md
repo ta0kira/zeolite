@@ -48,7 +48,7 @@
 
 * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
 
-* **[new]** Adds `probably` to `RandomUniform` in `lib/math`.
+* **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
 
 ### Language
 
