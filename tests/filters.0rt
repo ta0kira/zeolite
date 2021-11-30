@@ -364,3 +364,45 @@ define Test {
     \ call<Char>(empty)
   }
 }
+
+
+testcase "filters with internal functions" {
+  compiles
+}
+
+concrete Test {}
+
+define Test {
+  @category call1<#x,#y>
+    #y immutable
+    #x defines LessThan<#x>
+    #x requires Formatted
+    #y allows Int
+  (#x,#y) -> ()
+  call1 (x,y) {
+    \ call1<#x,#y>(x,y)
+  }
+
+  @type call2<#x,#y>
+    #y immutable
+    #x defines LessThan<#x>
+    #x requires Formatted
+    #y allows Int
+  (#x,#y) -> ()
+  call2 (x,y) {
+    \ call2<#x,#y>(x,y)
+    \ call1<#x,#y>(x,y)
+  }
+
+  @value call3<#x,#y>
+    #y immutable
+    #x defines LessThan<#x>
+    #x requires Formatted
+    #y allows Int
+  (#x,#y) -> ()
+  call3 (x,y) {
+    \ call3<#x,#y>(x,y)
+    \ call2<#x,#y>(x,y)
+    \ call1<#x,#y>(x,y)
+  }
+}
