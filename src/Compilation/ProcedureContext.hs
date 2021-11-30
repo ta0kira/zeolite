@@ -225,6 +225,8 @@ instance (Show c, CollectErrorsM m) =>
       validateTypeInstanceForCall r allFilters t'
       -- Check initializer types.
       ms <- fmap Positional $ mapCompilerM (subSingle pa) (ctx ^. pcMembers)
+      -- Do a size comparison first so that the error message is readable.
+      processPairs_ alwaysPair (fmap mvType ms) ts
       processPairs_ (checkInit r allFilters) ms (Positional $ zip ([1..] :: [Int]) $ pValues ts)
       return ()
       where
