@@ -878,7 +878,7 @@ mergeFunctions r tm pm fm rs ds fs = do
   let inheritByName  = fmap (nubBy sameFunction) $ Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
   let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
   let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
-  mapCompilerM (mergeByName r fm inheritByName explicitByName) allNames where
+  mapCompilerM (mergeByName inheritByName explicitByName) allNames where
     getRefinesFuncs tm2 (ValueRefine c (TypeInstance n ts2)) = do
       (_,t) <- getValueCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
@@ -893,27 +893,27 @@ mergeFunctions r tm pm fm rs ds fs = do
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList $ (ParamSelf,selfType):paired
       mapCompilerM (unfixedSubFunction assigned) fs2
-    mergeByName r2 fm2 im em n =
-      tryMerge r2 fm2 n (n `Map.lookup` im) (n `Map.lookup` em)
+    mergeByName im em n =
+      tryMerge n (n `Map.lookup` im) (n `Map.lookup` em)
     -- Inherited without an override.
-    tryMerge _ _ n (Just is) Nothing
+    tryMerge n (Just is) Nothing
       | length is == 1 = return $ head is
       | otherwise = compilerErrorM $ "Function " ++ show n ++ " is inherited " ++
                                      show (length is) ++ " times:\n---\n" ++
                                      intercalate "\n---\n" (map show is)
     -- Not inherited.
-    tryMerge r2 fm2 n Nothing es = tryMerge r2 fm2 n (Just []) es
+    tryMerge n Nothing es = tryMerge n (Just []) es
     -- Explicit override, possibly inherited.
-    tryMerge r2 fm2 n (Just is) (Just es)
+    tryMerge n (Just is) (Just es)
       | length es /= 1 = compilerErrorM $ "Function " ++ show n ++ " is declared " ++
                                           show (length es) ++ " times:\n---\n" ++
                                           intercalate "\n---\n" (map show es)
       | otherwise = do
         let ff@(ScopedFunction c n2 t s as rs2 ps fa ms) = head es
-        mapCompilerM_ (checkMerge r2 fm2 ff) is
+        mapCompilerM_ (checkMerge ff) is
         return $ ScopedFunction c n2 t s as rs2 ps fa (ms ++ is)
         where
-          checkMerge r3 fm3 f1 f2
+          checkMerge f1 f2
             | sfScope f1 /= sfScope f2 =
               compilerErrorM $ "Cannot merge " ++ show (sfScope f2) ++ " with " ++
                                show (sfScope f1) ++ " in function merge:\n---\n" ++
@@ -922,7 +922,9 @@ mergeFunctions r tm pm fm rs ds fs = do
               "In function merge:\n---\n" ++ show f2 ++ "\n  ->\n" ++ show f1 ++ "\n---\n" ??> do
                 f1' <- parsedToFunctionType f1
                 f2' <- parsedToFunctionType f2
-                checkFunctionConvert r3 fm3 pm f2' f1'
+                case sfScope f1 of
+                     CategoryScope -> checkFunctionConvert r Map.empty Map.empty f2' f1'
+                     _             -> checkFunctionConvert r fm pm f2' f1'
 
 data FunctionName =
   FunctionName {

@@ -66,6 +66,10 @@
 
 * **[fix]** Fixes checking of `defer` in `scoped` blocks.
 
+* **[fix]** Fixes bug in validation of internal `@category` functions with a
+  param that has the same name as a category param, where the `@category`
+  function has a filter that the category does not have.
+
 * **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
   functions to have unary notation, e.g., ``y <- `require` x``.
 

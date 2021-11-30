@@ -142,7 +142,9 @@ setInternalFunctions r t fs = do
              "\n  ->\n" ++ show f ++ "\n---\n") ??> do
               f0' <- parsedToFunctionType f0
               f' <- parsedToFunctionType f
-              checkFunctionConvert r fm pm f0' f'
+              case s of
+                   CategoryScope -> checkFunctionConvert r Map.empty Map.empty f0' f'
+                   _             -> checkFunctionConvert r fm pm f0' f'
            return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs2 ([f0]++ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, CollectErrorsM m) =>

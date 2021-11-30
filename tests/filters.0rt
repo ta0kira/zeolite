@@ -406,3 +406,22 @@ define Test {
     \ call1<#x,#y>(x,y)
   }
 }
+
+
+testcase "filters on internal @category function with same param names as category" {
+  compiles
+}
+
+concrete Test<#x,#y> {}
+
+define Test {
+  @category call<#x,#y>
+    #y immutable
+    #x defines LessThan<#x>
+    #x requires Formatted
+    #y allows Int
+  (#x,#y) -> ()
+  call (x,y) {
+    \ call<#x,#y>(x,y)
+  }
+}
