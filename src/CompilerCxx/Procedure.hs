@@ -704,16 +704,15 @@ compileExpression = compile where
                                  show t2 ++ formatFullContextBrace c
       glueInfix t1 t2 e3 o2 e4 =
         UnboxedPrimitive t2 $ "(" ++ useAsUnboxed t1 e3 ++ ")" ++ o2 ++ "(" ++ useAsUnboxed t1 e4 ++ ")"
-  transform e (ConvertedCall c t f) = do
+  transform e (TypeConversion c t) = do
     (Positional ts,e') <- e
     t' <- requireSingle c ts
     r <- csResolver
     fa <- csAllFilters
-    let vt = ValueType RequiredValue $ singleType $ JustTypeInstance t
+    let vt = ValueType RequiredValue t
     (lift $ checkValueAssignment r fa t' vt) <??
-      "In converted call at " ++ formatFullContext c
-    f' <- lookupValueFunction vt f
-    compileFunctionCall (Just $ useAsUnwrapped e') f' f
+      "In explicit type conversion at " ++ formatFullContext c
+    return (Positional [vt],e')
   transform e (ValueCall c f) = do
     (Positional ts,e') <- e
     t' <- requireSingle c ts

@@ -330,7 +330,7 @@ getValueLiteralContext (BoolLiteral c _)      = c
 getValueLiteralContext (EmptyLiteral c)       = c
 
 data ValueOperation c =
-  ConvertedCall [c] TypeInstance (FunctionCall c) |
+  TypeConversion [c] GeneralInstance |
   ValueCall [c] (FunctionCall c) |
   SelectReturn [c] Int
   deriving (Show)

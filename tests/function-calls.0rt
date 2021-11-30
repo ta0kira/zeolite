@@ -16,62 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "converted call" {
-  success
-}
-
-unittest test {
-  Value value <- Value.create()
-  \ value.Base.call()
-}
-
-@value interface Base {
-  call () -> ()
-}
-
-concrete Value {
-  refines Base
-
-  @type create () -> (Value)
-}
-
-define Value {
-  call () {}
-
-  create () {
-    return Value{}
-  }
-}
-
-
-testcase "converted call bad type" {
-  error
-  require "Base"
-}
-
-unittest test {
-  Value value <- Value.create()
-  \ value.Base.call()
-}
-
-@value interface Base {
-  call () -> ()
-}
-
-concrete Value {
-  @value call () -> ()
-  @type create () -> (Value)
-}
-
-define Value {
-  call () {}
-
-  create () {
-    return Value{}
-  }
-}
-
-
 testcase "call from union" {
   error
   require "\[Base\|Value\]"
@@ -136,37 +80,6 @@ testcase "call from intersect" {
 unittest test {
   [Base1&Base2] value <- Value.create()
   \ value.call()
-}
-
-@value interface Base1 {
-  call () -> ()
-}
-
-@value interface Base2 {}
-
-concrete Value {
-  refines Base1
-  refines Base2
-
-  @type create () -> (Value)
-}
-
-define Value {
-  call () {}
-
-  create () {
-    return Value{}
-  }
-}
-
-
-testcase "call from intersect with conversion" {
-  success
-}
-
-unittest test {
-  [Base1&Base2] value <- Value.create()
-  \ value.Base1.call()
 }
 
 @value interface Base1 {

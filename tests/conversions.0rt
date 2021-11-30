@@ -1,0 +1,129 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "type conversions" {
+  success
+}
+
+unittest toType {
+  \ Testing.checkEquals(Helper.getType(Value.create().Base1),"Base1")
+}
+
+unittest toAny {
+  \ Testing.checkEquals(Helper.getType(Value.create().any),"any")
+}
+
+unittest toUnion {
+  \ Testing.checkEquals(Helper.getType(Value.create().[Base1|Base2]),"[Base1|Base2]")
+}
+
+unittest toIntersect {
+  \ Testing.checkEquals(Helper.getType(Value.create().[Base1&Base2]),"[Base1&Base2]")
+}
+
+unittest toParam {
+  \ Testing.checkEquals(Helper.toParam<Value,Base1>(Value.create()),"Base1")
+}
+
+unittest convertedCall {
+  Value value <- Value.create()
+  \ value.Base1.call()
+}
+
+concrete Helper {
+  @type toParam<#x,#y>
+    #x requires #y
+  (#x) -> (String)
+
+  @type getType<#x> (#x) -> (String)
+}
+
+define Helper {
+  toParam (x) {
+    return getType(x.#y)
+  }
+
+  getType (_) {
+    return typename<#x>().formatted()
+  }
+}
+
+@value interface Base2 {
+  call () -> ()
+}
+
+@value interface Base1 {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+  @value call () -> ()
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+
+testcase "conversion bad type" {
+  error
+  require "Base"
+  require "Value"
+}
+
+unittest test {
+  Value value <- Value.create()
+  \ value.Base
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  @value call () -> ()
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+
+testcase "conversion of optional" {
+  error
+  require "storage modifier"
+  require "type conversion"
+}
+
+unittest test {
+  optional Int value <- empty
+  \ value.Formatted
+}

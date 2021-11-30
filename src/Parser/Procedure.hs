@@ -687,10 +687,7 @@ instance ParseFromSource (ValueOperation SourceContext) where
       c <- getSourceContext
       valueSymbolGet
       t <- sourceParser -- NOTE: Should not need try here.
-      typeSymbolGet
-      n <- sourceParser
-      f <- parseFunctionCall c n
-      return $ ConvertedCall [c] t f
+      return $ TypeConversion [c] t
     selectReturn = labeled "return selection" $ do
       c <- getSourceContext
       sepAfter_ (string_ "{")

@@ -73,6 +73,16 @@
 * **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
   functions to have unary notation, e.g., ``y <- `require` x``.
 
+* **[new]** Allows explicit `@value` type conversions.
+
+  ```text
+  // Explicitly converts foo to Base. This can be useful for type inference.
+  \ call(foo.Base)
+  ```
+
+  This was previously only allowed for selecting a function to call, e.g.,
+  `foo.Base.call()`.
+
 ## 0.21.0.0  -- 2021-11-19
 
 ### Compiler CLI
