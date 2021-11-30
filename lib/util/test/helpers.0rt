@@ -139,7 +139,7 @@ unittest alwaysEqualEquals {
 }
 
 
-testcase "copying tests" {
+testcase "iteration tests" {
   success
 }
 
@@ -165,6 +165,28 @@ unittest readAtHDuplicateTo {
   ValueCheck output <- ValueCheck.new(10)
   \ ValueSource.new(true,10) `ReadAtH:duplicateTo` output
   \ output.checkEnd()
+}
+
+unittest readAtHForwardOrder {
+  ValueSource source <- ValueSource.new(false,10)
+  Int expected <- 0
+  traverse (`ReadAtH:forwardOrder` source -> Value actual) {
+    \ Testing.checkEquals(actual.get(),expected)
+  } update {
+    expected <- expected+1
+  }
+  \ Testing.checkEquals(expected,10)
+}
+
+unittest readAtHReverseOrder {
+  ValueSource source <- ValueSource.new(false,10)
+  Int expected <- 9
+  traverse (`ReadAtH:reverseOrder` source -> Value actual) {
+    \ Testing.checkEquals(actual.get(),expected)
+  } update {
+    expected <- expected-1
+  }
+  \ Testing.checkEquals(expected,-1)
 }
 
 concrete ValueOrder {

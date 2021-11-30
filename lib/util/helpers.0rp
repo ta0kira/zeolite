@@ -182,6 +182,12 @@ concrete ReadAtH {
     #x requires Duplicate
     #c requires Append<#x>
   (ReadAt<#x>,#c) -> (#c)
+
+  // Iterates over the container from 0 to the end.
+  @category forwardOrder<#x> (ReadAt<#x>) -> (optional Order<#x>)
+
+  // Iterates over the container from the end to 0.
+  @category reverseOrder<#x> (ReadAt<#x>) -> (optional Order<#x>)
 }
 
 // Reverse an existing LessThan<#x> comparison.

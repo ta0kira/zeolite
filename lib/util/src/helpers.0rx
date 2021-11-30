@@ -125,6 +125,50 @@ define ReadAtH {
       \ output.append(input.readAt(i).duplicate())
     }
   }
+
+  forwardOrder (input) {
+    return input `IndexOrder:iterateWith` `Counter.zeroIndexed` input.size()
+  }
+
+  reverseOrder (input) {
+    return input `IndexOrder:iterateWith` `Counter.revZeroIndexed` input.size()
+  }
+}
+
+concrete IndexOrder<#x> {
+  refines Order<#x>
+
+  @category iterateWith<#x> (ReadAt<#x>,optional Order<Int>) -> (optional Order<#x>)
+}
+
+define IndexOrder {
+  $ReadOnly[container]$
+
+  @value ReadAt<#x> container
+  @value Order<Int> index
+
+  iterateWith(container,index) {
+    if (`present` index) {
+      return IndexOrder<#x>{ container, `require` index }
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return container.readAt(index.get())
+  }
+
+  next () {
+    scoped {
+      optional Order<Int> index2 <- index.next()
+    } in if (`present` index2) {
+      index <- `require` index2
+      return self
+    } else {
+      return empty
+    }
+  }
 }
 
 define Reversed {

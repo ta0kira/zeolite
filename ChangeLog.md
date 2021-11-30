@@ -38,6 +38,9 @@
 * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
   `lib/util` for general container duplication.
 
+* **[new]** Adds `forwardOrder` and `reverseOrder` to `ReadAtH` in `lib/util`
+  for iterating over `ReadAt` containers.
+
 * **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
   duplicating an single value.
 
