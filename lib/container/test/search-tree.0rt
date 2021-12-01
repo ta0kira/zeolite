@@ -196,6 +196,7 @@ unittest duplicate {
   \ Testing.checkOptional(copy.get(2),2)
   \ Testing.checkOptional(copy.get(3),3)
 
+  \ copy.set(2,5)
   \ copy.remove(2)
   $Hidden[copy]$
 

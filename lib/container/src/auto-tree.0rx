@@ -234,20 +234,16 @@ define AutoBinaryTree {
   }
 }
 
-concrete TreeKeyValue<|#k,#v> {
-  refines KeyValue<#k,#v>
-
-  @category create<#k,#v> (#k,#v) -> (TreeKeyValue<#k,#v>)
-}
-
-define TreeKeyValue {
+define SimpleKeyValue {
   $ReadOnly[key,value]$
+
+  refines KeyValue<#k,#v>
 
   @value #k key
   @value #v value
 
   create (key,value) {
-    return TreeKeyValue<#k,#v>{ key, value }
+    return SimpleKeyValue<#k,#v>{ key, value }
   }
 
   getKey () {
@@ -304,7 +300,7 @@ define ForwardTreeOrder {
   }
 
   get () {
-    return TreeKeyValue:create(node.getKey(),node.getValue())
+    return SimpleKeyValue:create(node.getKey(),node.getValue())
   }
 }
 
@@ -353,6 +349,6 @@ define ReverseTreeOrder {
   }
 
   get () {
-    return TreeKeyValue:create(node.getKey(),node.getValue())
+    return SimpleKeyValue:create(node.getKey(),node.getValue())
   }
 }

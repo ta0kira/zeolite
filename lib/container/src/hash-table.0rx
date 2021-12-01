@@ -1,0 +1,271 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define HashTable {
+  @value Int itemCount
+  @value [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] table
+
+  new () {
+    return #self{ 0, Vector:createSize<HashRoot<#k,#v>>($ExprLookup[HASH_TABLE_MIN_SIZE]$) }
+  }
+
+  default () {
+    return new()
+  }
+
+  duplicate () {
+    Vector<HashRoot<#k,#v>> table2 <- Vector:createSize<HashRoot<#k,#v>>(table.size())
+    traverse (`Counter.zeroIndexed` table.size() -> Int i) {
+      \ table2.writeAt(i,table.readAt(i).duplicate())
+    }
+    return #self{ itemCount, table2 }
+  }
+
+  size () {
+    return itemCount
+  }
+
+  defaultOrder () {
+    return HashTableOrder<#k,#v>.new(itemCount,table)
+  }
+
+  set (k,v) {
+    if (table.readAt(getBin(k.hashed())).replace(k,v)) {
+      itemCount <- itemCount+1
+      \ maybeResize()
+    }
+    return self
+  }
+
+  remove (k) {
+    if (table.readAt(getBin(k.hashed())).remove(k)) {
+      itemCount <- itemCount-1
+      \ maybeResize()
+    }
+    return self
+  }
+
+  get (k) {
+    return table.readAt(getBin(k.hashed())).find(k)
+  }
+
+  @value getBin (Int) -> (Int)
+  getBin (hash) {
+    if (hash < 0) {
+      return -hash % table.size()
+    } else {
+      return hash % table.size()
+    }
+  }
+
+  @value maybeResize () -> ()
+  maybeResize () {
+    optional [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] newTable <- empty
+    if (itemCount >= $ExprLookup[HASH_TABLE_EXPAND_RATIO]$*table.size()) {
+      newTable <- Vector:createSize<HashRoot<#k,#v>>(2*table.size())
+    } elif ($ExprLookup[HASH_TABLE_CONTRACT_RATIO]$*itemCount < table.size() && table.size() > $ExprLookup[HASH_TABLE_MIN_SIZE]$) {
+      newTable <- Vector:createSize<HashRoot<#k,#v>>(table.size()/2)
+    }
+    if (`present` newTable) {
+      [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] oldTable <- table
+      table <- `require` newTable
+      $Hidden[newTable]$
+      traverse (oldTable.defaultOrder() -> HashRoot<#k,#v> root) {
+        traverse (root.defaultOrder() -> HashNode<#k,#v> node) {
+          \ table.readAt(getBin(node.getKey().hashed())).replace(node.getKey(),node.getValue())
+        }
+      }
+    }
+  }
+}
+
+concrete HashNode<#k,#v> {
+  refines Duplicate
+  refines Order<HashNode<#k,#v>>
+
+  @type new (#k,#v,optional HashNode<#k,#v>) -> (#self)
+  @value getKey () -> (#k)
+  @value getValue () -> (#v)
+  @value setValue (#v) -> ()
+  @value setNext (optional HashNode<#k,#v>) -> (optional #self)
+}
+
+define HashNode {
+  $ReadOnly[key]$
+
+  @value #k key
+  @value #v value
+  @value optional HashNode<#k,#v> next
+
+  new (key,value,next) {
+    return #self{ key, value, next }
+  }
+
+  duplicate () {
+    optional HashNode<#k,#v> next2 <- empty
+    if (`present` next) {
+      next2 <- require(next).duplicate()
+    }
+    return #self{ key, value, next2 }
+  }
+
+  getKey () { return key }
+  getValue () { return value }
+  setValue (value2) { value <- value2 }
+  get () { return self }
+  next () { return next }
+  setNext (next2) {
+    cleanup {
+      next <- next2
+    } in return next
+  }
+}
+
+concrete HashRoot<#k,#v> {
+  defines Default
+  refines DefaultOrder<HashNode<#k,#v>>
+  refines Duplicate
+  #k defines Equals<#k>
+
+  @value replace (#k,#v) -> (Bool)
+  @value find (#k) -> (optional #v)
+  @value remove (#k) -> (Bool)
+  @value defaultOrder () -> (optional HashNode<#k,#v>)
+}
+
+define HashRoot {
+  @value optional HashNode<#k,#v> root
+
+  default () {
+    return #self{ empty }
+  }
+
+  defaultOrder () {
+    return root
+  }
+
+  duplicate () {
+    if (`present` root) {
+      return #self{ require(root).duplicate() }
+    } else {
+      return #self{ empty }
+    }
+  }
+
+  replace (k,v) {
+    traverse (root -> HashNode<#k,#v> node) {
+      if (node.getKey() `#k.equals` k) {
+        \ node.setValue(v)
+        return false
+      }
+    }
+    root <- HashNode<#k,#v>.new(k,v,root)
+    return true
+  }
+
+  find (k) (v) {
+    v <- empty
+    traverse (root -> HashNode<#k,#v> node) {
+      if (node.getKey() `#k.equals` k) {
+        return node.getValue()
+      }
+    }
+  }
+
+  remove (k) {
+    scoped {
+      optional HashNode<#k,#v> prev <- empty
+    } in traverse (root -> HashNode<#k,#v> node) {
+      if (node.getKey() `#k.equals` k) {
+        optional HashNode<#k,#v> next <- node.setNext(empty)
+        if (`present` prev) {
+          \ require(prev).setNext(next)
+        } else {
+          root <- next
+        }
+        return true
+      }
+    } update {
+      prev <- node
+    }
+    return false
+  }
+}
+
+concrete HashTableOrder<#k,#v> {
+  refines Order<KeyValue<#k,#v>>
+
+  @type new (Int,DefaultOrder<HashRoot<#k,#v>>) -> (optional #self)
+}
+
+define HashTableOrder {
+  @value Int count
+  @value optional Order<HashRoot<#k,#v>> root
+  @value HashNode<#k,#v> node
+
+  new (count,table) {
+    if (count < 1) {
+      return empty
+    }
+    scoped {
+      optional Order<HashRoot<#k,#v>> root, optional HashNode<#k,#v> node <- seekNext(table.defaultOrder())
+    } in if (`present` node) {
+      return #self{ count, root, `require` node }
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return SimpleKeyValue:create(node.getKey(),node.getValue())
+  }
+
+  next () {
+    if ((count <- count-1) < 1) {
+      return empty
+    }
+    scoped {
+      optional HashNode<#k,#v> newNode <- node.next()
+    } in if (`present` newNode) {
+      node <- `require` newNode
+      return self
+    }
+    scoped {
+      root, optional HashNode<#k,#v> newNode <- seekNext(root)
+    } in if (`present` newNode) {
+      node <- `require` newNode
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  @type seekNext (optional Order<HashRoot<#k,#v>>) -> (optional Order<HashRoot<#k,#v>>,optional HashNode<#k,#v>)
+  seekNext (start) (root,node) {
+    root <- start
+    node <- empty
+    $Hidden[start]$
+    while (`present` root) {
+      node <- require(root).get().defaultOrder()
+      root <- require(root).next()
+      if (`present` node) {
+        return _
+      }
+    }
+  }
+}

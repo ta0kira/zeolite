@@ -142,3 +142,9 @@ concrete ReverseTreeOrder<|#k,#v> {
     #k defines LessThan<#k>
   (#k,optional BinaryTreeNode<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
 }
+
+// A simple KeyValue implementation.
+concrete SimpleKeyValue<|#k,#v> {
+  // Create a new value.
+  @category create<#k,#v> (#k,#v) -> (KeyValue<#k,#v>)
+}

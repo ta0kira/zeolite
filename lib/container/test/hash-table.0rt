@@ -1,0 +1,104 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "SearchTree tests" {
+  success
+}
+
+unittest integrationTest {
+  HashTable<Int,Int> tree <- HashTable<Int,Int>.default()
+  Int count <- 33
+  $ReadOnly[count]$
+
+  // Insert values.
+  traverse (Counter.zeroIndexed(count) -> Int i) {
+    Int new <- ((i + 13) * 3547) % count
+    \ tree.set(new,i)
+    \ Testing.checkEquals(tree.size(),i+1)
+  }
+
+  // Check and remove values.
+  traverse (Counter.zeroIndexed(count) -> Int i) {
+    Int new <- ((i + 13) * 3547) % count
+    scoped {
+      optional Int value <- tree.get(new)
+    } in if (!present(value)) {
+      \ BasicOutput.error()
+          .write("Not found ")
+          .write(new)
+          .write(" but should have been ")
+          .write(i)
+          .flush()
+    } elif (require(value) != i) {
+      \ BasicOutput.error()
+          .write("Element ")
+          .write(new)
+          .write(" should have been ")
+          .write(i)
+          .write(" but was ")
+          .write(require(value))
+          .flush()
+    }
+    \ tree.remove(new)
+    \ Testing.checkEquals(tree.size(),count-i-1)
+  }
+}
+
+unittest defaultOrder {
+  HashTable<Int,Int> tree <- HashTable<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the tree in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `tree.set` i
+  }
+
+  Vector<Bool> visited <- Vector:createSize<Bool>(max)
+
+  // Validate traversal coverage.
+  Int index <- 0
+  traverse (tree.defaultOrder() -> KeyValue<Int,Int> entry) {
+    \ Testing.checkFalse(visited.readAt(entry.getKey()))
+    \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
+    \ visited.writeAt(entry.getKey(),true)
+    index <- index+1
+  }
+
+  \ Testing.checkEquals(index,max)
+}
+
+unittest duplicate {
+  HashTable<Int,Int> tree <- HashTable<Int,Int>.default().set(1,1).set(2,2).set(3,3)
+
+  HashTable<Int,Int> copy <- tree.duplicate()
+  \ Testing.checkEquals(copy.size(),3)
+  \ Testing.checkOptional(copy.get(1),1)
+  \ Testing.checkOptional(copy.get(2),2)
+  \ Testing.checkOptional(copy.get(3),3)
+
+  \ copy.set(2,5)
+  \ copy.remove(2)
+  $Hidden[copy]$
+
+  \ Testing.checkEquals(tree.size(),3)
+  \ Testing.checkOptional(tree.get(1),1)
+  \ Testing.checkOptional(tree.get(2),2)
+  \ Testing.checkOptional(tree.get(3),3)
+}

@@ -1,5 +1,19 @@
 root: "../.."
 path: "lib/container"
+expression_map: [
+  expression_macro {
+    name: HASH_TABLE_MIN_SIZE
+    expression: 8
+  }
+  expression_macro {
+    name: HASH_TABLE_EXPAND_RATIO
+    expression: 2
+  }
+  expression_macro {
+    name: HASH_TABLE_CONTRACT_RATIO
+    expression: 2
+  }
+]
 extra_paths: [
   "lib/container/src"
   "lib/container/test"

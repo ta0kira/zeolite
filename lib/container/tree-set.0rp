@@ -16,6 +16,10 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// A tree-based set.
+//
+// Params:
+// - #k: The element type.
 concrete TreeSet<#k> {
   defines Default
   refines Append<#k>

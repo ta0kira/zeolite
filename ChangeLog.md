@@ -35,6 +35,11 @@
 * **[breaking]** Removes `Vector:copyFrom` (in`lib/container`) since it was too
   specific.
 
+* **[new]** Adds the `HashTable` and `HashSet` containers to `lib/container`.
+
+* **[new]** Adds `CategoricalReader`, `RandomCategorical`, and
+  `GenerateConstant` to `lib/math`.
+
 * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
   `lib/util` for general container duplication.
 
@@ -51,9 +56,6 @@
 
 * **[new]** Implements `Sorting` functions in `lib/container` that use  the new
   `LessThan2` `interface`.
-
-* **[new]** Adds `CategoricalReader`, `RandomCategorical`, and
-  `GenerateConstant` to `lib/math`.
 
 * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
 
