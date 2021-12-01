@@ -22,6 +22,7 @@ concrete Token {
   defines Equals<Token>
   // LessThan is not lexicographical.
   defines LessThan<Token>
+  refines Hashed
   refines Formatted
 
   // Get a Token from the provided String.

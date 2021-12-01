@@ -43,6 +43,10 @@ define Token {
     return string
   }
 
+  hashed () {
+    return value.hashed()
+  }
+
   equals (x,y) {
     return x.get() == y.get()
   }

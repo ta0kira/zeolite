@@ -57,6 +57,7 @@ concrete TypeKey<|#x> {
   immutable
 
   refines Formatted
+  refines Hashed
   defines LessThan<TypeKey<any>>
   defines Equals<TypeKey<any>>
 

@@ -87,6 +87,10 @@ define TypeKey {
         .build()
   }
 
+  hashed () {
+    return index.hashed()
+  }
+
   lessThan (l,r) {
     return l.get() < r.get()
   }
