@@ -46,9 +46,9 @@ struct ExtCategory_Vector : public Category_Vector {
     TRACE_FUNCTION("Vector:createSize")
     const S<const TypeInstance> Param_y = params_args.GetParam(0);
     const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
-    VectorType values;
+    VectorType values(Var_arg1);
     for (int i = 0; i < Var_arg1; ++i) {
-      values.push_back(TypeInstance::Call(Param_y, Function_Default_default, PassParamsArgs()).At(0));
+      values[i] = TypeInstance::Call(Param_y, Function_Default_default, PassParamsArgs()).At(0);
     }
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
@@ -58,9 +58,9 @@ struct ExtCategory_Vector : public Category_Vector {
     const S<const TypeInstance> Param_y = params_args.GetParam(0);
     const BoxedValue& Var_arg1 = (params_args.GetArg(0));
     const PrimInt Var_arg2 = (params_args.GetArg(1)).AsInt();
-    VectorType values;
+    VectorType values(Var_arg2);
     for (int i = 0; i < Var_arg2; ++i) {
-      values.push_back(TypeValue::Call(Var_arg1, Function_Duplicate_duplicate, PassParamsArgs()).At(0));
+      values[i] = TypeValue::Call(Var_arg1, Function_Duplicate_duplicate, PassParamsArgs()).At(0);
     }
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
