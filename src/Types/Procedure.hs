@@ -51,6 +51,7 @@ module Types.Procedure (
   getOperatorContext,
   getOperatorName,
   getStatementContext,
+  inputValueName,
   isAssignableDiscard,
   isDiscardedInput,
   isFunctionOperator,
@@ -131,6 +132,10 @@ data InputValue c =
   DiscardInput {
     iiContext :: [c]
   }
+
+inputValueName :: InputValue c -> VariableName
+inputValueName (DiscardInput _) = discardInputName
+inputValueName (InputValue _ n) = n
 
 isDiscardedInput :: InputValue c -> Bool
 isDiscardedInput (DiscardInput _) = True
