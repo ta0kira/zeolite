@@ -320,3 +320,21 @@ define ValueSource {
     return Value.new(original,i)
   }
 }
+
+
+testcase "formatting tests" {
+  success
+}
+
+unittest emptyValue {
+  \ Testing.checkEquals(FormattedH:try<Char>(empty).formatted(),"Char{empty}")
+  \ Testing.checkEquals(FormattedH:try(empty).formatted(),"all{empty}")
+}
+
+unittest formattedValue {
+  \ Testing.checkEquals(FormattedH:try(123).formatted(),"123")
+}
+
+unittest nonFormattedValue {
+  \ Testing.checkEquals(FormattedH:try(String.builder()).formatted(),"[Append<Formatted>&Build<String>]{?}")
+}

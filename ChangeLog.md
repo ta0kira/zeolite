@@ -59,6 +59,9 @@
 
 * **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
 
+* **[new]** Adds `FormattedH:try` to `lib/util` for formatting values during
+  debugging and logging.
+
 ### Language
 
 * **[breaking]** Makes the `Duplicate` `@value interface` from `lib/util` a

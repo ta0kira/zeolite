@@ -135,6 +135,28 @@ define ReadAtH {
   }
 }
 
+define FormattedH {
+  try (x) {
+    if (present(x)) {
+      scoped {
+        optional Formatted formatted <- reduce<#x,Formatted>(x)
+      } in if (present(formatted)) {
+        return require(formatted)
+      } else {
+        return String.builder()
+            .append(typename<#x>())
+            .append("{?}")
+            .build()
+      }
+    } else {
+        return String.builder()
+            .append(typename<#x>())
+            .append("{empty}")
+            .build()
+    }
+  }
+}
+
 concrete IndexOrder<#x> {
   refines Order<#x>
 
