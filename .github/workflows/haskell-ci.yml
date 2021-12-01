@@ -197,5 +197,5 @@ jobs:
           # Run extra CLI tests
           if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then bash $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE; fi
           # Show lines missed by test execution
-          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH --missed-lines traces.csv $TEST_MODULES; fi
+          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH --missed-lines traces.csv $TEST_MODULES | sort -n -k2,2 | sort -s -k6,6; fi
       # <<< MANUAL EDIT ***
