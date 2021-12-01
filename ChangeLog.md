@@ -35,6 +35,9 @@
 * **[breaking]** Removes `Vector:copyFrom` (in`lib/container`) since it was too
   specific.
 
+* **[breaking]** Adds `setWeak` to `KVWriter`, which also requires `#v` to be
+  invariant instead of contravariant.
+
 * **[new]** Adds the `HashTable` and `HashSet` containers to `lib/container`.
 
 * **[new]** Adds `CategoricalReader`, `RandomCategorical`, and

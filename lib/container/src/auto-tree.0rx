@@ -51,6 +51,16 @@ define AutoBinaryTree {
     }
   }
 
+  weakSet (k,v) {
+    root, optional #v v2 <- insertWeak(root,k,v)
+    if (`present` v2) {
+      return `require` v2
+    } else {
+      treeSize <- treeSize+1
+      return v
+    }
+  }
+
   remove (k) {
     root, Bool removed <- delete(root,k)
     if (removed) {
@@ -77,6 +87,26 @@ define AutoBinaryTree {
       \ node2.setValue(v)
       \ node2.updateNode()
       return node2, false
+    }
+  }
+
+
+  @type insertWeak (optional #n,#k,#v) -> (optional #n,optional #v)
+  insertWeak (node,k,v) (newRoot,value) {
+    if (!present(node)) {
+      return #n.newNode(k,v), empty
+    }
+    #n node2 <- require(node)
+    if (k `#k.lessThan` node2.getKey()) {
+      newRoot, value <- insertWeak(node2.getLower(),k,v)
+      \ node2.setLower(newRoot)
+      newRoot <- rebalance(node2)
+    } elif (node2.getKey() `#k.lessThan` k) {
+      newRoot, value <- insertWeak(node2.getHigher(),k,v)
+      \ node2.setHigher(newRoot)
+      newRoot <- rebalance(node2)
+    } else {
+      return node2, node2.getValue()
     }
   }
 

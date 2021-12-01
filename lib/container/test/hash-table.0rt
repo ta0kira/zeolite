@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "SearchTree tests" {
+testcase "HashTable tests" {
   success
 }
 
@@ -101,4 +101,65 @@ unittest duplicate {
   \ Testing.checkOptional(tree.get(1),1)
   \ Testing.checkOptional(tree.get(2),2)
   \ Testing.checkOptional(tree.get(3),3)
+}
+
+unittest weakSetExists {
+  HashTable<Int,Value> tree <- HashTable<Int,Value>.default()
+      .set(1,Value.new(1))
+      .set(2,Value.new(2))
+      .set(3,Value.new(3))
+
+  Value value0 <- Value.new(5)
+  Value value1 <- tree.weakSet(1,value0)
+  \ Testing.checkEquals(tree.size(),3)
+
+  \ Testing.checkEquals(value0.get(),5)
+  \ Testing.checkEquals(value1.get(),1)
+
+  \ value0.set(10)
+  \ Testing.checkEquals(value1.get(),1)
+  \ Testing.checkOptional(tree.get(1),Value.new(1))
+}
+
+unittest weakSetMissing {
+  HashTable<Int,Value> tree <- HashTable<Int,Value>.default()
+      .set(1,Value.new(1))
+      .set(2,Value.new(2))
+      .set(3,Value.new(3))
+
+  Value value0 <- Value.new(5)
+  Value value1 <- tree.weakSet(7,value0)
+  \ Testing.checkEquals(tree.size(),4)
+
+  \ Testing.checkEquals(value0.get(),5)
+  \ Testing.checkEquals(value1.get(),5)
+
+  \ value0.set(10)
+  \ Testing.checkEquals(value1.get(),10)
+  \ Testing.checkOptional(tree.get(7),Value.new(10))
+}
+
+concrete Value {
+  defines Equals<Value>
+  refines Formatted
+
+  @type new (Int) -> (Value)
+  @value get () -> (Int)
+  @value set (Int) -> ()
+}
+
+define Value {
+  @value Int value
+
+  new (value) { return Value{ value } }
+  get () { return value }
+  set (value2) { value <- value2 }
+
+  formatted () {
+    return value.formatted()
+  }
+
+  equals (x,y) {
+    return x.get() == y.get()
+  }
 }

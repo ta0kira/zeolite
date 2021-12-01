@@ -40,6 +40,10 @@ define SearchTree {
     return self
   }
 
+  weakSet (k,v) {
+    return tree.weakSet(k,v)
+  }
+
   remove (k) {
     \ tree.remove(k)
     return self
@@ -81,6 +85,11 @@ define ValidatedTree {
     \ tree.set(k,v)
     \ validate(tree.getRoot())
     return self
+  }
+
+  weakSet (k,v) (v2) { $NoTrace$
+    v2 <- tree.weakSet(k,v)
+    \ validate(tree.getRoot())
   }
 
   remove (k) { $NoTrace$

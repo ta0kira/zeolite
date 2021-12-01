@@ -52,6 +52,17 @@ define HashTable {
     return self
   }
 
+  weakSet (k,v) {
+    optional #v value <- table.readAt(getBin(k.hashed())).weakReplace(k,v)
+    if (`present` value) {
+      return `require` value
+    } else {
+      itemCount <- itemCount+1
+      \ maybeResize()
+      return v
+    }
+  }
+
   remove (k) {
     if (table.readAt(getBin(k.hashed())).remove(k)) {
       itemCount <- itemCount-1
@@ -143,6 +154,7 @@ concrete HashRoot<#k,#v> {
   #k defines Equals<#k>
 
   @value replace (#k,#v) -> (Bool)
+  @value weakReplace (#k,#v) -> (optional #v)
   @value find (#k) -> (optional #v)
   @value remove (#k) -> (Bool)
   @value defaultOrder () -> (optional HashNode<#k,#v>)
@@ -176,6 +188,16 @@ define HashRoot {
     }
     root <- HashNode<#k,#v>.new(k,v,root)
     return true
+  }
+
+  weakReplace (k,v) {
+    traverse (root -> HashNode<#k,#v> node) {
+      if (node.getKey() `#k.equals` k) {
+        return node.getValue()
+      }
+    }
+    root <- HashNode<#k,#v>.new(k,v,root)
+    return empty
   }
 
   find (k) (v) {
