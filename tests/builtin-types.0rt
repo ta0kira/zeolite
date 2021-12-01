@@ -367,12 +367,6 @@ unittest stringLessThan {
   }
 }
 
-unittest boolEquals {
-  if (!(true `Bool.equals` true)) {
-    fail("Failed")
-  }
-}
-
 unittest stringEquals {
   if (!("x" `String.equals` "x")) {
     fail("Failed")
@@ -468,6 +462,27 @@ unittest floatFormatted {
   String s <- (1.1).formatted()
   if (s != "1.1") {  // precision might vary
     fail(s)
+  }
+}
+
+unittest boolEquals {
+  if (!(true `Bool.equals` true)) {
+    fail("Failed")
+  }
+}
+
+unittest boolLessThan {
+  if (!(false `Bool.lessThan` true)) {
+    fail("Failed")
+  }
+  if (true `Bool.lessThan` true) {
+    fail("Failed")
+  }
+  if (true `Bool.lessThan` false) {
+    fail("Failed")
+  }
+  if (false `Bool.lessThan` false) {
+    fail("Failed")
   }
 }
 

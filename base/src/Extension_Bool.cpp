@@ -52,6 +52,13 @@ struct ExtType_Bool : public Type_Bool {
     const PrimBool Var_arg2 = (params_args.GetArg(1)).AsBool();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
+
+  ReturnTuple Call_lessThan(const ParamsArgs& params_args) const final {
+    TRACE_FUNCTION("Bool.lessThan")
+    const PrimBool Var_arg1 = (params_args.GetArg(0)).AsBool();
+    const PrimBool Var_arg2 = (params_args.GetArg(1)).AsBool();
+    return ReturnTuple(Box_Bool(!Var_arg1 && Var_arg2));
+  }
 };
 
 ReturnTuple DispatchBool(PrimBool value, const ValueFunction& label,

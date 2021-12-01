@@ -78,6 +78,8 @@
 * **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
   functions to have unary notation, e.g., ``y <- `require` x``.
 
+* **[new]** Implements `LessThan` for `Bool`.
+
 * **[new]** Allows explicit `@value` type conversions.
 
   ```text

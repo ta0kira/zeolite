@@ -35,6 +35,7 @@ concrete Bool {
 
   defines Default
   defines Equals<Bool>
+  defines LessThan<Bool>
 }
 
 // Built-in 8-bit character type.
