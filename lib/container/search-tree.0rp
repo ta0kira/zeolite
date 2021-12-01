@@ -34,6 +34,9 @@ concrete SearchTree<#k,#v> {
   // Create an empty tree.
   @type new () -> (#self)
 
+  // Replaces the value if it does not exist and returns the final value.
+  @value weakSet (#k,#v) -> (#v)
+
   // Traverse in the default order.
   //
   // Notes:

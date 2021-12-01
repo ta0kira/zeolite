@@ -87,11 +87,6 @@ define ValidatedTree {
     return self
   }
 
-  weakSet (k,v) (v2) { $NoTrace$
-    v2 <- tree.weakSet(k,v)
-    \ validate(tree.getRoot())
-  }
-
   remove (k) { $NoTrace$
     \ tree.remove(k)
     \ validate(tree.getRoot())

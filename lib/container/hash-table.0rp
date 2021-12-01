@@ -34,4 +34,7 @@ concrete HashTable<#k,#v> {
 
   // Create an empty table.
   @type new () -> (#self)
+
+  // Replaces the value if it does not exist and returns the final value.
+  @value weakSet (#k,#v) -> (#v)
 }

@@ -34,11 +34,9 @@ limitations under the License.
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-@value interface KVWriter<#k|#v|> {
+@value interface KVWriter<#k,#v|> {
   // Sets or replaces the value associated with the key and returns self.
   set (#k,#v) -> (#self)
-  // Replaces the value if it does not exist and returns the final value.
-  weakSet (#k,#v) -> (#v)
   // Removes the value associated with the key if present and returns self.
   remove (#k) -> (#self)
 }
