@@ -30,6 +30,7 @@ limitations under the License.
 #include "Category_Duplicate.hpp"
 #include "Category_Equals.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Hashed.hpp"
 #include "Category_Int.hpp"
 #include "Category_LessThan.hpp"
 #include "Category_Order.hpp"
@@ -162,6 +163,15 @@ struct ExtValue_String : public Value_String {
   ReturnTuple Call_formatted(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("String.formatted")
     return ReturnTuple(VAR_SELF);
+  }
+
+  ReturnTuple Call_hashed(const ParamsArgs& params_args) const final {
+    TRACE_FUNCTION("String.hashed")
+    PrimInt hash = 1000000009ULL;
+    for (char c : value_) {
+      hash = hash + (unsigned long long) c * 1000000007ULL;
+    }
+    return ReturnTuple(Box_Int(hash));
   }
 
   ReturnTuple Call_readAt(const ParamsArgs& params_args) const final {

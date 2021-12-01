@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.18"
+    version="3.19"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -106,6 +106,7 @@
       <item> Equals </item>
       <item> Float </item>
       <item> Formatted </item>
+      <item> Hashed </item>
       <item> Int </item>
       <item> LessThan </item>
       <item> Order </item>

@@ -29,6 +29,7 @@ limitations under the License.
 #include "Category_Equals.hpp"
 #include "Category_Float.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Hashed.hpp"
 #include "Category_Int.hpp"
 #include "Category_LessThan.hpp"
 #include "Category_String.hpp"
@@ -80,6 +81,8 @@ ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
       output << value;
       return ReturnTuple(Box_String(output.str()));
     }
+    case CategoryId_Hashed:
+      return ReturnTuple(Box_Int(1000000009ULL * reinterpret_cast<uint64_t&>(value)));
     default:
       FAIL() << "Float does not implement " << label;
       __builtin_unreachable();

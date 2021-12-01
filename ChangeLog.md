@@ -67,6 +67,8 @@
 * **[breaking]** Makes the `Duplicate` `@value interface` from `lib/util` a
   builtin and implements it for `Bool`, `Char`, `Float`, `Int`, and `String`.
 
+* **[breaking]** Adds the `Hashed` `@value interface`.
+
 * **[fix]** Fixes checking of `defer` in `scoped` blocks.
 
 * **[fix]** Fixes bug in validation of internal `@category` functions with a

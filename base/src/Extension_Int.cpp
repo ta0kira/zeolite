@@ -32,6 +32,7 @@ limitations under the License.
 #include "Category_Equals.hpp"
 #include "Category_Float.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Hashed.hpp"
 #include "Category_Int.hpp"
 #include "Category_LessThan.hpp"
 #include "Category_String.hpp"
@@ -91,6 +92,8 @@ ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
       return ReturnTuple(Box_Int(value));
     case CategoryId_Formatted:
       return ReturnTuple(Box_String(std::to_string(value)));
+    case CategoryId_Hashed:
+      return ReturnTuple(Box_Int(1000000007ULL * value));
     default:
       FAIL() << "Int does not implement " << label;
       __builtin_unreachable();

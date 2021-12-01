@@ -341,6 +341,26 @@ unittest stringDuplicate {
   \ Testing.checkEquals("string".duplicate(),"string")
 }
 
+unittest boolHashed {
+  \ Testing.checkFalse(true.hashed() == false.hashed())
+}
+
+unittest charHashed {
+  \ Testing.checkFalse('a'.hashed() == 'b'.hashed())
+}
+
+unittest floatHashed {
+  \ Testing.checkFalse((1.1).hashed() == (1.2).hashed())
+}
+
+unittest intHashed {
+  \ Testing.checkFalse((123).hashed() == (124).hashed())
+}
+
+unittest stringHashed {
+  \ Testing.checkFalse("string1".hashed() == "string2".hashed())
+}
+
 unittest stringLessThan {
   if (!("x" `String.lessThan` "y")) {
     fail("Failed")

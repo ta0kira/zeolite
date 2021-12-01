@@ -1556,6 +1556,7 @@ Builtin `@value interface`s:
   with `traverse`.
 - **`Duplicate`**: Duplicate the value with `duplicate()`.
 - **`Formatted`**: Format the value as a `String` using `formatted()`.
+- **`Hashed`**: Hash the value as an `Int` using `hashed()`.
 - **`Order<#x>`**: An ordering of `#x` values, for use with the `traverse`
 - **`ReadAt<#x>`**: Random access reads from a container with values of type
   `#x`.

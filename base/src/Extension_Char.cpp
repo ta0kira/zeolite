@@ -29,6 +29,7 @@ limitations under the License.
 #include "Category_Equals.hpp"
 #include "Category_Float.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Hashed.hpp"
 #include "Category_Int.hpp"
 #include "Category_LessThan.hpp"
 #include "Category_String.hpp"
@@ -88,6 +89,8 @@ ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
       return ReturnTuple(Box_Char(value));
     case CategoryId_Formatted:
       return ReturnTuple(Box_String(PrimString(1, value)));
+    case CategoryId_Hashed:
+      return ReturnTuple(Box_Int(1000000009ULL * ((unsigned long long) value + 1000000007ULL)));
     default:
       FAIL() << "Char does not implement " << label;
       __builtin_unreachable();

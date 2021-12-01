@@ -31,6 +31,7 @@ concrete Bool {
   refines AsFloat
   refines Duplicate
   refines Formatted
+  refines Hashed
 
   defines Default
   defines Equals<Bool>
@@ -58,6 +59,7 @@ concrete Char {
   refines AsFloat
   refines Duplicate
   refines Formatted
+  refines Hashed
 
   defines Bounded
   defines Default
@@ -81,6 +83,7 @@ concrete Float {
   refines AsFloat
   refines Duplicate
   refines Formatted
+  refines Hashed
 
   defines Default
   defines Equals<Float>
@@ -113,6 +116,7 @@ concrete Int {
   refines AsFloat
   refines Duplicate
   refines Formatted
+  refines Hashed
 
   defines Bounded
   defines Default
@@ -134,6 +138,7 @@ concrete String {
   refines DefaultOrder<Char>
   refines Duplicate
   refines Formatted
+  refines Hashed
   refines ReadAt<Char>
   refines SubSequence
 
@@ -261,6 +266,17 @@ concrete CharBuffer {
 @value interface DefaultOrder<|#x> {
   // Returns the default Order for the container.
   defaultOrder () -> (optional Order<#x>)
+}
+
+// Can be hashed.
+//
+// Notes:
+// - This interface is primarily intended for use with containers.
+// - The returned hash does not need to match across different executions of the
+//  same program.
+@value interface Hashed {
+  // Hashes the object.
+  hashed () -> (Int)
 }
 
 // Contains a flexible number of values of some type.
