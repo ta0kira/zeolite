@@ -82,8 +82,9 @@
 
 * **[fix]** Fixes checking of `defer` in `scoped` blocks.
 
-* **[fix]** Fixes bug in type checking conversions to a parent `interface` when
-  that interface contains `#self`.
+* **[fix]** Fixes bug in type checking conversions to a parent
+  `@value interface` when the `refines` contains `#self`, e.g.,
+  `refines Order<#self>`.
 
 * **[fix]** Fixes bug in validation of internal `@category` functions with a
   param that has the same name as a category param, where the `@category`
