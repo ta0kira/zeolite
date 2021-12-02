@@ -15,7 +15,7 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
-
+/*
 testcase "#self disallowed in @category functions" {
   error
   require "#self not found"
@@ -583,4 +583,34 @@ testcase "#self disallowed in contravariant position of function param filter" {
   call<#x>
     #x requires #self
   () -> ()
+}*/
+
+
+testcase "convert self to interface with #self as param" {
+  compiles
+}
+
+@value interface Reader<|#x> {
+  call () -> (Reader<#x>)
+}
+
+@type interface Factory<|#x> {
+  create () -> (Reader<#x>)
+}
+
+concrete Type {
+  defines Factory<#self>
+  refines Reader<#self>
+}
+
+define Type {
+  call () (y) {
+    y <- self
+    return self
+  }
+
+  create () (y) {
+    y <- Type{ }
+    return Type{ }
+  }
 }

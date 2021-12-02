@@ -357,12 +357,13 @@ newtype CategoryResolver c =
   }
 
 instance Show c => TypeResolver (CategoryResolver c) where
-    trRefines (CategoryResolver tm) (TypeInstance n1 ps1) n2
+    trRefines (CategoryResolver tm) ta@(TypeInstance n1 ps1) n2
       | n1 == n2 = do
         (_,t) <- getValueCategory tm ([],n1)
         processPairs_ alwaysPair (Positional $ map vpParam $ getCategoryParams t) ps1
         return ps1
       | otherwise = do
+        let self = singleType $ JustTypeInstance ta
         (_,t) <- getValueCategory tm ([],n1)
         let params = map vpParam $ getCategoryParams t
         assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps1
@@ -370,8 +371,9 @@ instance Show c => TypeResolver (CategoryResolver c) where
         ps2 <- case n2 `Map.lookup` pa of
                     (Just x) -> return x
                     _ -> compilerErrorM $ "Category " ++ show n1 ++ " does not refine " ++ show n2
-        fmap Positional $ mapCompilerM (subAllParams assigned) $ pValues ps2
-    trDefines (CategoryResolver tm) (TypeInstance n1 ps1) n2 = do
+        fmap Positional $ mapCompilerM (subAllParams assigned >=> replaceSelfInstance self) $ pValues ps2
+    trDefines (CategoryResolver tm) ta@(TypeInstance n1 ps1) n2 = do
+      let self = singleType $ JustTypeInstance ta
       (_,t) <- getValueCategory tm ([],n1)
       let params = map vpParam $ getCategoryParams t
       assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps1
@@ -379,7 +381,7 @@ instance Show c => TypeResolver (CategoryResolver c) where
       ps2 <- case n2 `Map.lookup` pa of
                   (Just x) -> return x
                   _ -> compilerErrorM $ "Category " ++ show n1 ++ " does not define " ++ show n2
-      fmap Positional $ mapCompilerM (subAllParams assigned) $ pValues ps2
+      fmap Positional $ mapCompilerM (subAllParams assigned >=> replaceSelfInstance self) $ pValues ps2
     trVariance (CategoryResolver tm) n = do
       (_,t) <- getCategory tm ([],n)
       return $ Positional $ map vpVariance $ getCategoryParams t

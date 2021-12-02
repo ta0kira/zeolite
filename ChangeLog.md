@@ -29,43 +29,49 @@
         .build())
     ```
 
-* **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` (in
-  `lib/container`) for consistency with other `@value` construction.
+* **[breaking]** `Vector` changes (`lib/container`):
 
-* **[breaking]** Removes `Vector:copyFrom` (in`lib/container`) since it was too
-  specific.
+  * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` (in
+    `lib/container`) for consistency with other `@value` construction.
 
-* **[new]** Adds the `HashTable` and `HashSet` containers to `lib/container`.
+  * **[breaking]** Removes `Vector:copyFrom` (in`lib/container`) since it was
+    too specific.
 
-* **[new]** Adds `CategoricalReader`, `RandomCategorical`, and
-  `GenerateConstant` to `lib/math`.
+  * **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
+    duplicating an single value.
 
-* **[new]** Adds `setWeak` to `SearchTree` to allow setting a value only if it
-  is not already present.
+* **[new]** New categories:
 
-* **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
-  `lib/util` for general container duplication.
+  * **[new]** Adds the `HashTable` and `HashSet` containers to `lib/container`.
 
-* **[new]** Adds `forwardOrder` and `reverseOrder` to `ReadAtH` in `lib/util`
-  for iterating over `ReadAt` containers.
+  * **[new]** Adds `CategoricalReader`, `RandomCategorical`, and
+    `GenerateConstant` to `lib/math`.
 
-* **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
-  duplicating an single value.
+  * **[new]** Adds `FormattedH:try` to `lib/util` for formatting values during
+    debugging and logging.
 
-* **[new]** Implements `Default` for containers in `lib/container` and
-  `lib/math`.
+  * **[new]** Adds `LessThan2` `@value interface` to `lib/util`.
 
-* **[new]** Adds `LessThan2` `@value interface` to `lib/util`.
+* **[new]** New functionality for existing categories:
 
-* **[new]** Implements `Sorting` functions in `lib/container` that use  the new
-  `LessThan2` `interface`.
+  * **[new]** Adds `setWeak` to `SearchTree` to allow setting a value only if it
+    is not already present.
 
-* **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
+  * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
+    `lib/util` for general container duplication.
 
-* **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
+  * **[new]** Adds `forwardOrder` and `reverseOrder` to `ReadAtH` in `lib/util`
+    for iterating over `ReadAt` containers.
 
-* **[new]** Adds `FormattedH:try` to `lib/util` for formatting values during
-  debugging and logging.
+  * **[new]** Implements `Default` for containers in `lib/container` and
+    `lib/math`.
+
+  * **[new]** Implements `Sorting` functions in `lib/container` that use  the
+    new `LessThan2` `interface`.
+
+  * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
+
+  * **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
 
 ### Language
 
@@ -75,6 +81,9 @@
 * **[breaking]** Adds the `Hashed` `@value interface`.
 
 * **[fix]** Fixes checking of `defer` in `scoped` blocks.
+
+* **[fix]** Fixes bug in type checking conversions to a parent `interface` when
+  that interface contains `#self`.
 
 * **[fix]** Fixes bug in validation of internal `@category` functions with a
   param that has the same name as a category param, where the `@category`

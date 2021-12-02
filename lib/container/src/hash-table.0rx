@@ -107,7 +107,7 @@ define HashTable {
 
 concrete HashNode<#k,#v> {
   refines Duplicate
-  refines Order<HashNode<#k,#v>>
+  refines Order<#self>
 
   @type new (#k,#v,optional HashNode<#k,#v>) -> (#self)
   @value getKey () -> (#k)
@@ -157,6 +157,7 @@ concrete HashRoot<#k,#v> {
   @value weakReplace (#k,#v) -> (optional #v)
   @value find (#k) -> (optional #v)
   @value remove (#k) -> (Bool)
+  // Override to allow returning HashNode directly.
   @value defaultOrder () -> (optional HashNode<#k,#v>)
 }
 
