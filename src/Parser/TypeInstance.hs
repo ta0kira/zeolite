@@ -126,11 +126,11 @@ instance ParseFromSource TypeFilter where
     requires = labeled "requires filter" $ do
       kwRequires
       t <- sourceParser
-      return $ TypeFilter FilterRequires $ singleType t
+      return $ TypeFilter FilterRequires t
     allows = labeled "allows filter" $ do
       kwAllows
       t <- sourceParser
-      return $ TypeFilter FilterAllows $ singleType t
+      return $ TypeFilter FilterAllows t
     defines = labeled "defines filter" $ do
       kwDefines
       t <- sourceParser

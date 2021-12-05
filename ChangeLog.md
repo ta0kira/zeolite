@@ -93,6 +93,9 @@
 * **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
   functions to have unary notation, e.g., ``y <- `require` x``.
 
+* **[new]** Allows `requires` and `allows` filters to use unions and
+  intersections on the right side, e.g., `#x allows [Foo&Bar]`.
+
 * **[new]** Implements `LessThan` for `Bool`.
 
 * **[new]** Allows explicit `@value` type conversions.

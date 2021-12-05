@@ -425,3 +425,94 @@ define Test {
     \ call<#x,#y>(x,y)
   }
 }
+
+
+testcase "allows intersection success" {
+  compiles
+}
+
+unittest test {
+  \ Test.call<AsBool>()
+}
+
+concrete Test {
+  @type call<#x>
+    #x allows [Formatted&AsBool]
+  () -> (#x)
+}
+
+define Test {
+  call () {
+    return "message"
+  }
+}
+
+
+testcase "allows intersection fail" {
+  error
+  require "Int"
+  require "Formatted"
+  require "AsBool"
+  exclude "String"
+}
+
+unittest test {
+  \ Test.call<Int>()
+}
+
+concrete Test {
+  @type call<#x>
+    #x allows [Formatted&AsBool]
+  () -> (#x)
+}
+
+define Test {
+  call () {
+    return "message"
+  }
+}
+
+
+testcase "requires union success" {
+  compiles
+}
+
+unittest test {
+  \ Test.call<Int>(1)
+}
+
+concrete Test {
+  @type call<#x>
+    #x requires [Int|String]
+  (#x) -> ()
+}
+
+define Test {
+  call (x) {
+    \ x.Formatted.formatted()
+  }
+}
+
+
+testcase "requires union fail" {
+  error
+  require "Formatted"
+  require "Int"
+  require "String"
+}
+
+unittest test {
+  \ Test.call<Formatted>(1)
+}
+
+concrete Test {
+  @type call<#x>
+    #x requires [Int|String]
+  (#x) -> ()
+}
+
+define Test {
+  call (x) {
+    \ x.Formatted.formatted()
+  }
+}
