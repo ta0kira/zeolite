@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define HashTable {
+define HashedMap {
   @value Int itemCount
   @value [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] table
 
@@ -41,7 +41,7 @@ define HashTable {
   }
 
   defaultOrder () {
-    return HashTableOrder<#k,#v>.new(itemCount,table)
+    return HashedMapOrder<#k,#v>.new(itemCount,table)
   }
 
   get (k) {
@@ -231,13 +231,13 @@ define HashRoot {
   }
 }
 
-concrete HashTableOrder<#k,#v> {
+concrete HashedMapOrder<#k,#v> {
   refines Order<KeyValue<#k,#v>>
 
   @type new (Int,DefaultOrder<HashRoot<#k,#v>>) -> (optional #self)
 }
 
-define HashTableOrder {
+define HashedMapOrder {
   @value Int count
   @value optional Order<HashRoot<#k,#v>> root
   @value HashNode<#k,#v> node

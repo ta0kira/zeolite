@@ -126,8 +126,8 @@ unittest duplicate {
 }
 
 unittest integrationTest { $DisableCoverage$
-  ValidatedTree<Int> tree      <- ValidatedTree<Int>.new()
-  SearchTree<Int,Int> expected <- SearchTree<Int,Int>.new()
+  ValidatedTree<Int> tree     <- ValidatedTree<Int>.new()
+  SortedMap<Int,Int> expected <- SortedMap<Int,Int>.new()
 
   Int count   <- 137
   Int maxSize <- 15

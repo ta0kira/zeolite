@@ -16,12 +16,12 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// A binary search tree for key-value storage.
+// A binary search map for key-value storage.
 //
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-concrete SearchTree<#k,#v> {
+concrete SortedMap<#k,#v> {
   defines Default
   refines Container
   refines DefaultOrder<KeyValue<#k,#v>>
@@ -32,22 +32,22 @@ concrete SearchTree<#k,#v> {
   #k immutable
   #k defines LessThan<#k>
 
-  // Create an empty tree.
+  // Create an empty map.
   @type new () -> (#self)
 
   // Traverse in the default order.
   //
   // Notes:
   // - This is from DefaultOrder, but is made explicit for documentation.
-  // - Traversal of the entire tree is amortized O(n); however, the cost of any
+  // - Traversal of the entire map is amortized O(n); however, the cost of any
   //   particular iteration could be up to O(log n).
   // - The overall memory cost is O(log n).
   @value defaultOrder () -> (optional Order<KeyValue<#k,#v>>)
 
-  // Traverse the tree in the reverse order of defaultOrder().
+  // Traverse the map in the reverse order of defaultOrder().
   //
   // Notes:
-  // - Traversal of the entire tree is amortized O(n); however, the cost of any
+  // - Traversal of the entire map is amortized O(n); however, the cost of any
   //   particular iteration could be up to O(log n).
   // - The overall memory cost is O(log n).
   @value reverseOrder () -> (optional Order<KeyValue<#k,#v>>)
@@ -55,14 +55,14 @@ concrete SearchTree<#k,#v> {
   // Start forward traversal (same as defaultOrder()) from the specified key.
   //
   // Notes:
-  // - If the key does not exist in the SearchTree, the position right after
+  // - If the key does not exist in the SortedMap, the position right after
   //   where it would be (in the forward direction) is returned.
   @value getForward (#k) -> (optional Order<KeyValue<#k,#v>>)
 
   // Start reverse traversal (same as reverseOrder()) from the specified key.
   //
   // Notes:
-  // - If the key does not exist in the SearchTree, the position right after
+  // - If the key does not exist in the SortedMap, the position right after
   //   where it would be (in the reverse direction) is returned.
   @value getReverse (#k) -> (optional Order<KeyValue<#k,#v>>)
 }

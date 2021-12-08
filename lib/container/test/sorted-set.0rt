@@ -16,12 +16,12 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "TreeSet tests" {
+testcase "SortedSet tests" {
   success
 }
 
 unittest addAndRemove {
-  TreeSet<Int> set <- TreeSet<Int>.default()
+  SortedSet<Int> set <- SortedSet<Int>.default()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
@@ -48,20 +48,20 @@ unittest addAndRemove {
 }
 
 unittest append {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   \ set.append(3)
   \ Testing.checkEquals(set.size(),1)
   \ Testing.checkTrue(set.member(3))
 }
 
 unittest removeNotPresent {
-  TreeSet<Int> set <- TreeSet<Int>.new().add(1).add(2).add(4)
+  SortedSet<Int> set <- SortedSet<Int>.new().add(1).add(2).add(4)
   \ set.remove(3)
   \ Testing.checkEquals(set.size(),3)
 }
 
 unittest defaultOrder {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
@@ -82,13 +82,13 @@ unittest defaultOrder {
 }
 
 unittest defaultOrderEmpty {
-  traverse (TreeSet<Int>.new().defaultOrder() -> _) {
+  traverse (SortedSet<Int>.new().defaultOrder() -> _) {
     fail("not empty")
   }
 }
 
 unittest reverseOrder {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
@@ -109,7 +109,7 @@ unittest reverseOrder {
 }
 
 unittest getForward {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
@@ -131,7 +131,7 @@ unittest getForward {
 }
 
 unittest getForwardNotFound {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   \ set.add(1).add(3).add(5)
 
   scoped {
@@ -150,7 +150,7 @@ unittest getForwardNotFound {
 }
 
 unittest getReverse {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
@@ -172,7 +172,7 @@ unittest getReverse {
 }
 
 unittest getReverseNotFound {
-  TreeSet<Int> set <- TreeSet<Int>.new()
+  SortedSet<Int> set <- SortedSet<Int>.new()
   \ set.add(1).add(3).add(5)
 
   scoped {
@@ -191,9 +191,9 @@ unittest getReverseNotFound {
 }
 
 unittest duplicate {
-  TreeSet<Int> set <- TreeSet<Int>.new().add(1).add(2)
+  SortedSet<Int> set <- SortedSet<Int>.new().add(1).add(2)
 
-  TreeSet<Int> copy <- set.duplicate()
+  SortedSet<Int> copy <- set.duplicate()
   \ Testing.checkEquals(copy.size(),2)
   \ Testing.checkTrue(copy.member(1))
   \ Testing.checkTrue(copy.member(1))

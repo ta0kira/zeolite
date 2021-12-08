@@ -16,11 +16,11 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// A tree-based set.
+// A map-based set.
 //
 // Params:
 // - #k: The element type.
-concrete TreeSet<#k> {
+concrete SortedSet<#k> {
   defines Default
   refines Append<#k>
   refines Container
@@ -54,14 +54,14 @@ concrete TreeSet<#k> {
   // Start forward traversal (same as defaultOrder()) from the specified key.
   //
   // Notes:
-  // - If the key does not exist in the SearchTree, the position right after
+  // - If the key does not exist in the SortedMap, the position right after
   //   where it would be (in the forward direction) is returned.
   @value getForward (#k) -> (optional Order<#k>)
 
   // Start reverse traversal (same as reverseOrder()) from the specified key.
   //
   // Notes:
-  // - If the key does not exist in the SearchTree, the position right after
+  // - If the key does not exist in the SortedMap, the position right after
   //   where it would be (in the reverse direction) is returned.
   @value getReverse (#k) -> (optional Order<#k>)
 }

@@ -21,66 +21,66 @@ testcase "TypeMap tests" {
 }
 
 unittest basicOperations {
-  TypeMap tree <- TypeMap.default()
+  TypeMap map <- TypeMap.default()
 
   TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
   TypeKey<String> keyString <- TypeKey<String>.new()
   TypeKey<Value>  keyValue  <- TypeKey<Value>.new()
 
-  \ Testing.checkOptional(tree.get(keyInt),   empty)
-  \ Testing.checkOptional(tree.get(keyString),empty)
-  \ Testing.checkOptional(tree.get(keyValue), empty)
+  \ Testing.checkOptional(map.get(keyInt),   empty)
+  \ Testing.checkOptional(map.get(keyString),empty)
+  \ Testing.checkOptional(map.get(keyValue), empty)
 
-  \ tree.set(keyInt,1)
-  \ tree.set(keyString,"a")
-  \ tree.set(keyValue,Value.new())
+  \ map.set(keyInt,1)
+  \ map.set(keyString,"a")
+  \ map.set(keyValue,Value.new())
 
-  \ Testing.checkOptional(tree.get(keyInt),   1)
-  \ Testing.checkOptional(tree.get(keyString),"a")
-  \ Testing.checkOptional(tree.get(keyValue), Value.new())
+  \ Testing.checkOptional(map.get(keyInt),   1)
+  \ Testing.checkOptional(map.get(keyString),"a")
+  \ Testing.checkOptional(map.get(keyValue), Value.new())
 
-  \ tree.remove(keyString)
+  \ map.remove(keyString)
 
-  \ Testing.checkOptional(tree.get(keyString),empty)
+  \ Testing.checkOptional(map.get(keyString),empty)
 }
 
 unittest wrongReturnType {
-  TypeMap tree <- TypeMap.new()
+  TypeMap map <- TypeMap.new()
 
   TypeKey<String> keyString <- TypeKey<String>.new()
 
   // Added as Formatted, which means it cannot be retrieved as String later.
-  \ tree.set<Formatted>(keyString,"a")
-  \ Testing.checkOptional(tree.get<String>(keyString),empty)
+  \ map.set<Formatted>(keyString,"a")
+  \ Testing.checkOptional(map.get<String>(keyString),empty)
 
-  \ tree.set<String>(keyString,"a")
-  \ Testing.checkOptional(tree.get<String>(keyString),"a")
+  \ map.set<String>(keyString,"a")
+  \ Testing.checkOptional(map.get<String>(keyString),"a")
 }
 
 unittest duplicate {
   TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
   TypeKey<String> keyString <- TypeKey<String>.new()
 
-  TypeMap tree <- TypeMap.new().set(keyInt,1).set(keyString,"a")
+  TypeMap map <- TypeMap.new().set(keyInt,1).set(keyString,"a")
 
-  TypeMap copy <- tree.duplicate()
+  TypeMap copy <- map.duplicate()
   \ Testing.checkOptional(copy.get(keyInt),1)
   \ Testing.checkOptional(copy.get(keyString),"a")
 
   \ copy.remove(keyString)
   \ Testing.checkOptional(copy.get(keyInt),1)
   \ Testing.checkOptional(copy.get(keyString),empty)
-  \ Testing.checkOptional(tree.get(keyString),"a")
+  \ Testing.checkOptional(map.get(keyString),"a")
 }
 
 unittest getValues {
-  TypeMap tree <- TypeMap.new()
+  TypeMap map <- TypeMap.new()
       .set(TypeKey<String>.new(),"one")
       .set(TypeKey<Int>.new(),2)
       .set(TypeKey<String>.new(),"two")
       .set(TypeKey<Int>.new(),1)
 
-  [Container&SetReader<String>] actual <- tree.getAll(TreeSet<String>.new())
+  [Container&SetReader<String>] actual <- map.getAll(SortedSet<String>.new())
 
   \ Testing.checkEquals(actual.size(),2)
   \ Testing.checkTrue(actual.member("one"))

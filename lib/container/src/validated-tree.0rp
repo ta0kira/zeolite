@@ -21,7 +21,7 @@ $ModuleOnly$
 // A validated binary search tree for key-value storage.
 //
 // Notes:
-// - This is the same as SearchTree, but it validates the tree structure every
+// - This is the same as SortedMap, but it validates the tree structure every
 //   time there is a modification, which is extremely inefficient. This should
 //   therefore only be used in tests.
 concrete ValidatedTree<#k|#v|> {

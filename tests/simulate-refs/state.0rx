@@ -18,7 +18,7 @@ limitations under the License.
 
 define StateExecutor {
   multiplexStates (original,random) {
-    SearchTree<Int,StateMachine> states <- SearchTree<Int,StateMachine>.new()
+    HashedMap<Int,StateMachine> states <- HashedMap<Int,StateMachine>.new()
     CategoricalTree<Int> weights <- CategoricalTree<Int>.new()
 
     scoped {

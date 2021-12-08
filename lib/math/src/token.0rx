@@ -20,7 +20,7 @@ define Token {
   $ReadOnly[mutex,toToken]$
 
   @category Mutex mutex <- SpinlockMutex.new()
-  @category SearchTree<String,Token> toToken <- SearchTree<String,Token>.new()
+  @category HashedMap<String,Token> toToken <- HashedMap<String,Token>.new()
   @category Int counter <- 0
 
   @value String string

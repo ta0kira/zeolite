@@ -29,6 +29,10 @@
         .build())
     ```
 
+* **[breaking]** Renames `SearchTree` to `SortedMap` in `lib/container`.
+
+* **[breaking]** Renames `TreeSet` to `SortedSet` in `lib/container`.
+
 * **[breaking]** `Vector` changes (`lib/container`):
 
   * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` for
@@ -48,7 +52,8 @@
 
 * **[new]** New categories:
 
-  * **[new]** Adds the `HashTable` and `HashSet` containers to `lib/container`.
+  * **[new]** Adds the `HashedMap` and `HashedSet` containers to
+    `lib/container`.
 
   * **[new]** Adds `CategoricalReader`, `RandomCategorical`, and
     `GenerateConstant` to `lib/math`.
@@ -63,7 +68,7 @@
 
 * **[new]** New functionality for existing categories:
 
-  * **[new]** Implements the new `KVExchange` interface for `SearchTree` in
+  * **[new]** Implements the new `KVExchange` interface for `SortedMap` in
     `lib/container`.
 
   * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in

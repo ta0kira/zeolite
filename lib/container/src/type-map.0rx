@@ -17,33 +17,33 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define TypeMap {
-  @value SearchTree<TypeKey<any>,GenericValue<any>> tree
+  @value SortedMap<TypeKey<any>,GenericValue<any>> map
 
   default () {
     return new()
   }
 
   new () {
-    return TypeMap{ SearchTree<TypeKey<any>,GenericValue<any>>.new() }
+    return TypeMap{ SortedMap<TypeKey<any>,GenericValue<any>>.new() }
   }
 
   duplicate () {
-    return #self{ tree.duplicate() }
+    return #self{ map.duplicate() }
   }
 
   set (k,v) {
-    \ tree.set(k,GenericValue:create(v))
+    \ map.set(k,GenericValue:create(v))
     return self
   }
 
   remove (k) {
-    \ tree.remove(k)
+    \ map.remove(k)
     return self
   }
 
   get (k) {
     scoped {
-      optional GenericValue<any> value <- tree.get(k)
+      optional GenericValue<any> value <- map.get(k)
     } in if (present(value)) {
       return require(value).check<#x>()
     } else {
@@ -52,7 +52,7 @@ define TypeMap {
   }
 
   getAll (output) {
-    traverse (tree.defaultOrder() -> KeyValue<any,GenericValue<any>> pair) {
+    traverse (map.defaultOrder() -> KeyValue<any,GenericValue<any>> pair) {
       scoped {
         optional #x value <- pair.getValue().check<#x>()
       } in if (present(value)) {

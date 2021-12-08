@@ -20,7 +20,7 @@ limitations under the License.
 //
 // Params:
 // - #k: The element type.
-concrete HashSet<#k> {
+concrete HashedSet<#k> {
   defines Default
   refines Append<#k>
   refines Container

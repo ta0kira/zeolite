@@ -59,14 +59,14 @@ unittest keyValueHEqualsWith {
 }
 
 unittest integrationTest {
-  SearchTree<Int,String> tree1 <- SearchTree<Int,String>.new()
+  SortedMap<Int,String> map1 <- SortedMap<Int,String>.new()
       .set(1,"d").set(2,"c").set(3,"b").set(4,"a")
-  SearchTree<Int,String> tree2 <- SearchTree<Int,String>.new()
+  SortedMap<Int,String> map2 <- SortedMap<Int,String>.new()
       .set(1,"a").set(2,"b").set(3,"c").set(4,"d")
 
-  \ Testing.checkTrue(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    tree2.defaultOrder())
-  \ Testing.checkFalse(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         tree2.defaultOrder())
-  \ Testing.checkFalse(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` tree2.defaultOrder())
+  \ Testing.checkTrue(map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    map2.defaultOrder())
+  \ Testing.checkFalse(map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         map2.defaultOrder())
+  \ Testing.checkFalse(map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` map2.defaultOrder())
 }
 
 concrete KVEquals<#k,#v> {

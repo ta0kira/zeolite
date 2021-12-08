@@ -16,27 +16,27 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define HashSet {
-  @value HashTable<#k,any> tree
+define HashedSet {
+  @value HashedMap<#k,any> map
 
   default () {
     return new()
   }
 
   new () {
-    return #self{ HashTable<#k,any>.new() }
+    return #self{ HashedMap<#k,any>.new() }
   }
 
   size () {
-    return tree.size()
+    return map.size()
   }
 
   duplicate () {
-    return #self{ tree.duplicate() }
+    return #self{ map.duplicate() }
   }
 
   add (k) {
-    \ tree.set(k,Void.default())
+    \ map.set(k,Void.default())
     return self
   }
 
@@ -45,31 +45,31 @@ define HashSet {
   }
 
   remove (k) {
-    \ tree.remove(k)
+    \ map.remove(k)
     return self
   }
 
   member (k) {
-    return present(tree.get(k))
+    return present(map.get(k))
   }
 
   defaultOrder () {
-    return HashSetOrder<#k>.new(tree)
+    return HashedSetOrder<#k>.new(map)
   }
 }
 
-concrete HashSetOrder<#k> {
+concrete HashedSetOrder<#k> {
   refines Order<#k>
 
-  @type new (HashTable<#k,any>) -> (optional #self)
+  @type new (HashedMap<#k,any>) -> (optional #self)
 }
 
-define HashSetOrder {
+define HashedSetOrder {
   @value Order<KeyValue<#k,any>> keyValue
 
-  new (tree) {
+  new (map) {
     scoped {
-      optional Order<KeyValue<#k,any>> keyValue <- tree.defaultOrder()
+      optional Order<KeyValue<#k,any>> keyValue <- map.defaultOrder()
     } in if (`present` keyValue) {
       return #self{ `require` keyValue }
     } else {

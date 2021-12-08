@@ -16,27 +16,27 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "SearchTree tests" {
+testcase "SortedMap tests" {
   success
 }
 
 unittest integrationTest {
-  ValidatedTree<Int,Int> tree <- ValidatedTree<Int,Int>.new()
+  ValidatedTree<Int,Int> map <- ValidatedTree<Int,Int>.new()
   Int count <- 33
   $ReadOnly[count]$
 
   // Insert values.
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
-    \ tree.set(new,i)
-    \ Testing.checkEquals(tree.size(),i+1)
+    \ map.set(new,i)
+    \ Testing.checkEquals(map.size(),i+1)
   }
 
   // Check and remove values.
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     scoped {
-      optional Int value <- tree.get(new)
+      optional Int value <- map.get(new)
     } in if (!present(value)) {
       \ BasicOutput.error()
           .write("Not found ")
@@ -54,31 +54,31 @@ unittest integrationTest {
           .write(require(value))
           .flush()
     }
-    \ tree.remove(new)
-    \ Testing.checkEquals(tree.size(),count-i-1)
+    \ map.remove(new)
+    \ Testing.checkEquals(map.size(),count-i-1)
   }
 }
 
 unittest removeNotPresent {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new().set(1,1).set(2,2).set(4,4)
-  \ tree.remove(3)
-  \ Testing.checkEquals(tree.size(),3)
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new().set(1,1).set(2,2).set(4,4)
+  \ map.remove(3)
+  \ Testing.checkEquals(map.size(),3)
 }
 
 unittest defaultOrder {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
 
-  // Populate the tree in a pseudo-random order.
+  // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ ((i*hash)%max) `tree.set` i
+    \ ((i*hash)%max) `map.set` i
   }
 
   // Validate the traversal order.
   Int index <- 0
-  traverse (tree.defaultOrder() -> KeyValue<Int,Int> entry) {
+  traverse (map.defaultOrder() -> KeyValue<Int,Int> entry) {
     \ Testing.checkEquals(entry.getKey(),index)
     \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
     index <- index+1
@@ -88,25 +88,25 @@ unittest defaultOrder {
 }
 
 unittest defaultOrderEmpty {
-  traverse (SearchTree<Int,Int>.new().defaultOrder() -> _) {
+  traverse (SortedMap<Int,Int>.new().defaultOrder() -> _) {
     fail("not empty")
   }
 }
 
 unittest reverseOrder {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
 
-  // Populate the tree in a pseudo-random order.
+  // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ ((i*hash)%max) `tree.set` i
+    \ ((i*hash)%max) `map.set` i
   }
 
   // Validate the traversal order.
   Int index <- max
-  traverse (tree.reverseOrder() -> KeyValue<Int,Int> entry) {
+  traverse (map.reverseOrder() -> KeyValue<Int,Int> entry) {
     index <- index-1
     \ Testing.checkEquals(entry.getKey(),index)
     \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
@@ -116,20 +116,20 @@ unittest reverseOrder {
 }
 
 unittest getForward {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
 
-  // Populate the tree in a pseudo-random order.
+  // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ ((i*hash)%max) `tree.set` i
+    \ ((i*hash)%max) `map.set` i
   }
 
   // Validate the traversal order from every starting point.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
-    traverse (tree.getForward(index) -> KeyValue<Int,Int> entry) {
+    traverse (map.getForward(index) -> KeyValue<Int,Int> entry) {
       \ Testing.checkEquals(entry.getKey(),index)
       \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
       index <- index+1
@@ -139,11 +139,11 @@ unittest getForward {
 }
 
 unittest getForwardNotFound {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
-  \ tree.set(1,1).set(3,3).set(5,5)
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
+  \ map.set(1,1).set(3,3).set(5,5)
 
   scoped {
-    optional Order<KeyValue<Int,Int>> start <- tree.getForward(4)
+    optional Order<KeyValue<Int,Int>> start <- map.getForward(4)
   } in if (!present(start)) {
     fail("Failed")
   } else {
@@ -151,27 +151,27 @@ unittest getForwardNotFound {
   }
 
   scoped {
-    optional Order<KeyValue<Int,Int>> start <- tree.getForward(6)
+    optional Order<KeyValue<Int,Int>> start <- map.getForward(6)
   } in if (present(start)) {
     fail("Failed")
   }
 }
 
 unittest getReverse {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
 
-  // Populate the tree in a pseudo-random order.
+  // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ ((i*hash)%max) `tree.set` i
+    \ ((i*hash)%max) `map.set` i
   }
 
   // Validate the traversal order from every starting point.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
-    traverse (tree.getReverse(index) -> KeyValue<Int,Int> entry) {
+    traverse (map.getReverse(index) -> KeyValue<Int,Int> entry) {
       \ Testing.checkEquals(entry.getKey(),index)
       \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
       index <- index-1
@@ -181,11 +181,11 @@ unittest getReverse {
 }
 
 unittest getReverseNotFound {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
-  \ tree.set(1,1).set(3,3).set(5,5)
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
+  \ map.set(1,1).set(3,3).set(5,5)
 
   scoped {
-    optional Order<KeyValue<Int,Int>> start <- tree.getReverse(2)
+    optional Order<KeyValue<Int,Int>> start <- map.getReverse(2)
   } in if (!present(start)) {
     fail("Failed")
   } else {
@@ -193,25 +193,25 @@ unittest getReverseNotFound {
   }
 
   scoped {
-    optional Order<KeyValue<Int,Int>> start <- tree.getReverse(0)
+    optional Order<KeyValue<Int,Int>> start <- map.getReverse(0)
   } in if (present(start)) {
     fail("Failed")
   }
 }
 
 unittest duplicate {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.default()
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.default()
   Int max <- 31
   $ReadOnly[max]$
 
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ tree.set(i,i)
+    \ map.set(i,i)
   }
 
-  SearchTree<Int,Int> copy <- tree.duplicate()
-  \ Testing.checkEquals(copy.size(),tree.size())
+  SortedMap<Int,Int> copy <- map.duplicate()
+  \ Testing.checkEquals(copy.size(),map.size())
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    $Hidden[tree]$
+    $Hidden[map]$
     \ Testing.checkOptional(copy.get(i),i)
   }
 
@@ -219,53 +219,53 @@ unittest duplicate {
   \ copy.remove(7)
   $Hidden[copy]$
 
-  \ Testing.checkEquals(tree.size(),max)
+  \ Testing.checkEquals(map.size(),max)
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkOptional(tree.get(i),i)
+    \ Testing.checkOptional(map.get(i),i)
   }
 }
 
 unittest duplicateEmpty {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
-  SearchTree<Int,Int> copy <- tree.duplicate()
-  \ tree.set(1,1)
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
+  SortedMap<Int,Int> copy <- map.duplicate()
+  \ map.set(1,1)
   \ Testing.checkEquals(copy.size(),0)
 }
 
 unittest weakSetExists {
-  SearchTree<Int,Value> tree <- SearchTree<Int,Value>.default()
+  SortedMap<Int,Value> map <- SortedMap<Int,Value>.default()
       .set(1,Value.new(1))
       .set(2,Value.new(2))
       .set(3,Value.new(3))
 
   Value value0 <- Value.new(5)
-  Value value1 <- tree.weakSet(1,value0)
-  \ Testing.checkEquals(tree.size(),3)
+  Value value1 <- map.weakSet(1,value0)
+  \ Testing.checkEquals(map.size(),3)
 
   \ Testing.checkEquals(value0.get(),5)
   \ Testing.checkEquals(value1.get(),1)
 
   \ value0.set(10)
   \ Testing.checkEquals(value1.get(),1)
-  \ Testing.checkOptional(tree.get(1),Value.new(1))
+  \ Testing.checkOptional(map.get(1),Value.new(1))
 }
 
 unittest weakSetMissing {
-  SearchTree<Int,Value> tree <- SearchTree<Int,Value>.default()
+  SortedMap<Int,Value> map <- SortedMap<Int,Value>.default()
       .set(1,Value.new(1))
       .set(2,Value.new(2))
       .set(3,Value.new(3))
 
   Value value0 <- Value.new(5)
-  Value value1 <- tree.weakSet(7,value0)
-  \ Testing.checkEquals(tree.size(),4)
+  Value value1 <- map.weakSet(7,value0)
+  \ Testing.checkEquals(map.size(),4)
 
   \ Testing.checkEquals(value0.get(),5)
   \ Testing.checkEquals(value1.get(),5)
 
   \ value0.set(10)
   \ Testing.checkEquals(value1.get(),10)
-  \ Testing.checkOptional(tree.get(7),Value.new(10))
+  \ Testing.checkOptional(map.get(7),Value.new(10))
 }
 
 concrete Value {

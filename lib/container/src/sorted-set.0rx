@@ -16,27 +16,27 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define TreeSet {
-  @value SearchTree<#k,any> tree
+define SortedSet {
+  @value SortedMap<#k,any> map
 
   default () {
     return new()
   }
 
   new () {
-    return #self{ SearchTree<#k,any>.new() }
+    return #self{ SortedMap<#k,any>.new() }
   }
 
   size () {
-    return tree.size()
+    return map.size()
   }
 
   duplicate () {
-    return #self{ tree.duplicate() }
+    return #self{ map.duplicate() }
   }
 
   add (k) {
-    \ tree.set(k,Void.default())
+    \ map.set(k,Void.default())
     return self
   }
 
@@ -45,38 +45,38 @@ define TreeSet {
   }
 
   remove (k) {
-    \ tree.remove(k)
+    \ map.remove(k)
     return self
   }
 
   member (k) {
-    return present(tree.get(k))
+    return present(map.get(k))
   }
 
   defaultOrder () {
-    return TreeSetOrder<#k>.wrap(tree.defaultOrder())
+    return SortedSetOrder<#k>.wrap(map.defaultOrder())
   }
 
   reverseOrder () {
-    return TreeSetOrder<#k>.wrap(tree.reverseOrder())
+    return SortedSetOrder<#k>.wrap(map.reverseOrder())
   }
 
   getForward (k) {
-    return TreeSetOrder<#k>.wrap(tree.getForward(k))
+    return SortedSetOrder<#k>.wrap(map.getForward(k))
   }
 
   getReverse (k) {
-    return TreeSetOrder<#k>.wrap(tree.getReverse(k))
+    return SortedSetOrder<#k>.wrap(map.getReverse(k))
   }
 }
 
-concrete TreeSetOrder<#k> {
+concrete SortedSetOrder<#k> {
   refines Order<#k>
 
-  @type wrap (optional Order<KeyValue<#k,any>>) -> (optional TreeSetOrder<#k>)
+  @type wrap (optional Order<KeyValue<#k,any>>) -> (optional SortedSetOrder<#k>)
 }
 
-define TreeSetOrder {
+define SortedSetOrder {
   @value Order<KeyValue<#k,any>> order
 
   wrap (order) {

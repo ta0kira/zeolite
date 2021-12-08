@@ -21,7 +21,7 @@ limitations under the License.
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-concrete HashTable<#k,#v> {
+concrete HashedMap<#k,#v> {
   defines Default
   refines Container
   refines DefaultOrder<KeyValue<#k,#v>>

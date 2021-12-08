@@ -16,27 +16,27 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "HashTable tests" {
+testcase "HashedMap tests" {
   success
 }
 
 unittest integrationTest {
-  HashTable<Int,Int> tree <- HashTable<Int,Int>.default()
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.default()
   Int count <- 33
   $ReadOnly[count]$
 
   // Insert values.
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
-    \ tree.set(new,i)
-    \ Testing.checkEquals(tree.size(),i+1)
+    \ map.set(new,i)
+    \ Testing.checkEquals(map.size(),i+1)
   }
 
   // Check and remove values.
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     scoped {
-      optional Int value <- tree.get(new)
+      optional Int value <- map.get(new)
     } in if (!present(value)) {
       \ BasicOutput.error()
           .write("Not found ")
@@ -54,33 +54,33 @@ unittest integrationTest {
           .write(require(value))
           .flush()
     }
-    \ tree.remove(new)
-    \ Testing.checkEquals(tree.size(),count-i-1)
+    \ map.remove(new)
+    \ Testing.checkEquals(map.size(),count-i-1)
   }
 }
 
 unittest removeNotPresent {
-  HashTable<Int,Int> tree <- HashTable<Int,Int>.new().set(1,1).set(2,2).set(4,4)
-  \ tree.remove(3)
-  \ Testing.checkEquals(tree.size(),3)
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new().set(1,1).set(2,2).set(4,4)
+  \ map.remove(3)
+  \ Testing.checkEquals(map.size(),3)
 }
 
 unittest defaultOrder {
-  HashTable<Int,Int> tree <- HashTable<Int,Int>.new()
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
   Int hash <- 13
   Int max  <- 20
   $ReadOnly[hash,max]$
 
-  // Populate the tree in a pseudo-random order.
+  // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ ((i*hash)%max) `tree.set` i
+    \ ((i*hash)%max) `map.set` i
   }
 
   Vector<Bool> visited <- Vector:createSize<Bool>(max)
 
   // Validate traversal coverage.
   Int index <- 0
-  traverse (tree.defaultOrder() -> KeyValue<Int,Int> entry) {
+  traverse (map.defaultOrder() -> KeyValue<Int,Int> entry) {
     \ Testing.checkFalse(visited.readAt(entry.getKey()))
     \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
     \ visited.writeAt(entry.getKey(),true)
@@ -91,24 +91,24 @@ unittest defaultOrder {
 }
 
 unittest defaultOrderEmpty {
-  traverse (HashTable<Int,Int>.new().defaultOrder() -> _) {
+  traverse (HashedMap<Int,Int>.new().defaultOrder() -> _) {
     fail("not empty")
   }
 }
 
 unittest duplicate {
-  HashTable<Int,Int> tree <- HashTable<Int,Int>.default()
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.default()
   Int max <- 31
   $ReadOnly[max]$
 
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ tree.set(i,i)
+    \ map.set(i,i)
   }
 
-  HashTable<Int,Int> copy <- tree.duplicate()
-  \ Testing.checkEquals(copy.size(),tree.size())
+  HashedMap<Int,Int> copy <- map.duplicate()
+  \ Testing.checkEquals(copy.size(),map.size())
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    $Hidden[tree]$
+    $Hidden[map]$
     \ Testing.checkOptional(copy.get(i),i)
   }
 
@@ -116,53 +116,53 @@ unittest duplicate {
   \ copy.remove(7)
   $Hidden[copy]$
 
-  \ Testing.checkEquals(tree.size(),max)
+  \ Testing.checkEquals(map.size(),max)
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkOptional(tree.get(i),i)
+    \ Testing.checkOptional(map.get(i),i)
   }
 }
 
 unittest duplicateEmpty {
-  HashTable<Int,Int> tree <- HashTable<Int,Int>.new()
-  HashTable<Int,Int> copy <- tree.duplicate()
-  \ tree.set(1,1)
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
+  HashedMap<Int,Int> copy <- map.duplicate()
+  \ map.set(1,1)
   \ Testing.checkEquals(copy.size(),0)
 }
 
 unittest weakSetExists {
-  HashTable<Int,Value> tree <- HashTable<Int,Value>.default()
+  HashedMap<Int,Value> map <- HashedMap<Int,Value>.default()
       .set(1,Value.new(1))
       .set(2,Value.new(2))
       .set(3,Value.new(3))
 
   Value value0 <- Value.new(5)
-  Value value1 <- tree.weakSet(1,value0)
-  \ Testing.checkEquals(tree.size(),3)
+  Value value1 <- map.weakSet(1,value0)
+  \ Testing.checkEquals(map.size(),3)
 
   \ Testing.checkEquals(value0.get(),5)
   \ Testing.checkEquals(value1.get(),1)
 
   \ value0.set(10)
   \ Testing.checkEquals(value1.get(),1)
-  \ Testing.checkOptional(tree.get(1),Value.new(1))
+  \ Testing.checkOptional(map.get(1),Value.new(1))
 }
 
 unittest weakSetMissing {
-  HashTable<Int,Value> tree <- HashTable<Int,Value>.default()
+  HashedMap<Int,Value> map <- HashedMap<Int,Value>.default()
       .set(1,Value.new(1))
       .set(2,Value.new(2))
       .set(3,Value.new(3))
 
   Value value0 <- Value.new(5)
-  Value value1 <- tree.weakSet(7,value0)
-  \ Testing.checkEquals(tree.size(),4)
+  Value value1 <- map.weakSet(7,value0)
+  \ Testing.checkEquals(map.size(),4)
 
   \ Testing.checkEquals(value0.get(),5)
   \ Testing.checkEquals(value1.get(),5)
 
   \ value0.set(10)
   \ Testing.checkEquals(value1.get(),10)
-  \ Testing.checkOptional(tree.get(7),Value.new(10))
+  \ Testing.checkOptional(map.get(7),Value.new(10))
 }
 
 concrete Value {
