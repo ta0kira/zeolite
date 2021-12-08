@@ -26,6 +26,7 @@ concrete SearchTree<#k,#v> {
   refines Container
   refines DefaultOrder<KeyValue<#k,#v>>
   refines Duplicate
+  refines KVExchange<#k,#v>
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
   #k immutable
@@ -33,9 +34,6 @@ concrete SearchTree<#k,#v> {
 
   // Create an empty tree.
   @type new () -> (#self)
-
-  // Replaces the value if it does not exist and returns the final value.
-  @value weakSet (#k,#v) -> (#v)
 
   // Traverse in the default order.
   //

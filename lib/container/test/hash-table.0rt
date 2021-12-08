@@ -59,6 +59,12 @@ unittest integrationTest {
   }
 }
 
+unittest removeNotPresent {
+  HashTable<Int,Int> tree <- HashTable<Int,Int>.new().set(1,1).set(2,2).set(4,4)
+  \ tree.remove(3)
+  \ Testing.checkEquals(tree.size(),3)
+}
+
 unittest defaultOrder {
   HashTable<Int,Int> tree <- HashTable<Int,Int>.new()
   Int hash <- 13

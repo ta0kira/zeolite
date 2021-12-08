@@ -39,9 +39,9 @@ define CategoricalTree {
     if (size < 0) {
       fail("size must not be negative")
     } elif (size > 0) {
-      \ tree.set(cat,size)
+      \ tree.swap(cat,size)
     } else {
-      \ tree.remove(cat)
+      \ tree.swap(cat,empty)
     }
     return self
   }
@@ -100,9 +100,9 @@ define ValidatedTree {
     if (size < 0) {
       fail("size must not be negative")
     } elif (size > 0) {
-      \ tree.set(cat,size)
+      \ tree.swap(cat,size)
     } else {
-      \ tree.remove(cat)
+      \ tree.swap(cat,empty)
     }
     \ validateTotal(tree.getRoot())
     return self

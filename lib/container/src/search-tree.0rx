@@ -35,8 +35,17 @@ define SearchTree {
     return #self{ tree.duplicate() }
   }
 
+  get (k) {
+    return tree.get(k)
+  }
+
   set (k,v) {
-    \ tree.set(k,v)
+    \ swap(k,v)
+    return self
+  }
+
+  remove (k) {
+    \ swap(k,empty)
     return self
   }
 
@@ -44,13 +53,8 @@ define SearchTree {
     return tree.weakSet(k,v)
   }
 
-  remove (k) {
-    \ tree.remove(k)
-    return self
-  }
-
-  get (k) {
-    return tree.get(k)
+  swap (k,v) {
+    return tree.swap(k,v)
   }
 
   defaultOrder () {
@@ -82,13 +86,13 @@ define ValidatedTree {
   }
 
   set (k,v) { $NoTrace$
-    \ tree.set(k,v)
+    \ tree.swap(k,v)
     \ validate(tree.getRoot())
     return self
   }
 
   remove (k) { $NoTrace$
-    \ tree.remove(k)
+    \ tree.swap(k,empty)
     \ validate(tree.getRoot())
     return self
   }

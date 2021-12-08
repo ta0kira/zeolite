@@ -31,14 +31,17 @@
 
 * **[breaking]** `Vector` changes (`lib/container`):
 
-  * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` (in
-    `lib/container`) for consistency with other `@value` construction.
+  * **[breaking]** Replaces `Vector:create<#x>()` with `Vector<#x>.new()` for
+    consistency with other `@value` construction.
 
-  * **[breaking]** Removes `Vector:copyFrom` (in`lib/container`) since it was
-    too specific.
+  * **[breaking]** Removes `Vector:copyFrom` since it was too specific.
 
   * **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
     duplicating an single value.
+    ```
+
+* **[breaking]** Removes `set` and `remove` from `AutoBinaryTree`, and adds the
+  `swap` function, which can handle both `set` and `remove` operations.
 
 * **[new]** New categories:
 
@@ -50,12 +53,15 @@
   * **[new]** Adds `FormattedH:try` to `lib/util` for formatting values during
     debugging and logging.
 
-  * **[new]** Adds `LessThan2` `@value interface` to `lib/util`.
+  * **[new]** Adds the `LessThan2` `@value interface` to `lib/util`.
+
+  * **[new]** Adds the `KVExchange` `@value interface` in `lib/container` for
+    key-value operations that read and write in the same call.
 
 * **[new]** New functionality for existing categories:
 
-  * **[new]** Adds `setWeak` to `SearchTree` to allow setting a value only if it
-    is not already present.
+  * **[new]** Implements the new `KVExchange` interface for `SearchTree` in
+    `lib/container`.
 
   * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
     `lib/util` for general container duplication.

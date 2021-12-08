@@ -52,13 +52,6 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
   // Get the value associated with the key.
   @value get (#k) -> (optional #v)
 
-  // Set the value associated with the key.
-  //
-  // Notes:
-  // - updateNode() will be called on every affected node, starting with the
-  //   deepest node. It might be called an arbitrary number of times per node.
-  @value set (#k,#v) -> ()
-
   // Set the value associated with the key if it is not present.
   //
   // Notes:
@@ -66,12 +59,12 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
   //   deepest node. It might be called an arbitrary number of times per node.
   @value weakSet (#k,#v) -> (#v)
 
-  // Remove the node associated with the key.
+  // Swap the value associated with the key if it is not present.
   //
   // Notes:
   // - updateNode() will be called on every affected node, starting with the
   //   deepest node. It might be called an arbitrary number of times per node.
-  @value remove (#k) -> ()
+  @value swap (#k,optional #v) -> (optional #v)
 }
 
 // An interface for reading the state of a BST node.

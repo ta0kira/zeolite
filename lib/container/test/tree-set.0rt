@@ -47,6 +47,12 @@ unittest addAndRemove {
   }
 }
 
+unittest removeNotPresent {
+  TreeSet<Int> set <- TreeSet<Int>.new().add(1).add(2).add(4)
+  \ set.remove(3)
+  \ Testing.checkEquals(set.size(),3)
+}
+
 unittest defaultOrder {
   TreeSet<Int> set <- TreeSet<Int>.new()
   Int hash <- 13

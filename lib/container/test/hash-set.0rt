@@ -47,6 +47,12 @@ unittest addAndRemove {
   }
 }
 
+unittest removeNotPresent {
+  HashSet<Int> set <- HashSet<Int>.new().add(1).add(2).add(4)
+  \ set.remove(3)
+  \ Testing.checkEquals(set.size(),3)
+}
+
 unittest defaultOrder {
   HashSet<Int> set <- HashSet<Int>.new()
   Int hash <- 13

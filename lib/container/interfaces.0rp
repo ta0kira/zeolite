@@ -51,6 +51,26 @@ limitations under the License.
   get (#k) -> (optional #v)
 }
 
+// Exchanging values in key-value storage.
+//
+// Params:
+// - #k: The key type.
+// - #v: The value type.
+@value interface KVExchange<#k|#v|> {
+  // Replaces the value if it does not exist and returns the final value.
+  weakSet (#k,#v) -> (#v)
+
+  // Swap the value associated with the key.
+  //
+  // Args:
+  // - #k: Key to look up.
+  // - optional #v: Replacement value. If empty, remove the entry.
+  //
+  // Returns:
+  // - optional #v: Previous value, or empty if none existed.
+  swap (#k,optional #v) -> (optional #v)
+}
+
 // Writing to a set of values.
 //
 // Params:

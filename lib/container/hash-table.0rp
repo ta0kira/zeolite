@@ -26,6 +26,7 @@ concrete HashTable<#k,#v> {
   refines Container
   refines DefaultOrder<KeyValue<#k,#v>>
   refines Duplicate
+  refines KVExchange<#k,#v>
   refines KVReader<#k,#v>
   refines KVWriter<#k,#v>
   #k immutable
@@ -34,7 +35,4 @@ concrete HashTable<#k,#v> {
 
   // Create an empty table.
   @type new () -> (#self)
-
-  // Replaces the value if it does not exist and returns the final value.
-  @value weakSet (#k,#v) -> (#v)
 }

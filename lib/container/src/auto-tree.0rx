@@ -44,13 +44,6 @@ define AutoBinaryTree {
     return find(root,k)
   }
 
-  set (k,v) {
-    root, Bool added <- insert(root,k,v)
-    if (added) {
-      treeSize <- treeSize+1
-    }
-  }
-
   weakSet (k,v) {
     root, optional #v v2 <- insertWeak(root,k,v)
     if (`present` v2) {
@@ -61,32 +54,41 @@ define AutoBinaryTree {
     }
   }
 
-  remove (k) {
-    root, Bool removed <- delete(root,k)
-    if (removed) {
+  swap (k,v) (old) {
+    root, old <- exchange(root,k,v)
+    if (!present(v) && present(old)) {
       treeSize <- treeSize-1
+    } elif (present(v) && !present(old)) {
+      treeSize <- treeSize+1
     }
   }
 
-
-  @type insert (optional #n,#k,#v) -> (optional #n,Bool)
-  insert (node,k,v) (newRoot,added) {
+  @type exchange (optional #n,#k,optional #v) -> (optional #n,optional #v)
+  exchange (node,k,v) (newRoot,old) {
     if (!present(node)) {
-      return #n.newNode(k,v), true
+      if (present(v)) {
+        return #n.newNode(k,require(v)), empty
+      } else {
+        return empty, empty
+      }
     }
     #n node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {
-      newRoot, added <- insert(node2.getLower(),k,v)
+      newRoot, old <- exchange(node2.getLower(),k,v)
       \ node2.setLower(newRoot)
       newRoot <- rebalance(node2)
     } elif (node2.getKey() `#k.lessThan` k) {
-      newRoot, added <- insert(node2.getHigher(),k,v)
+      newRoot, old <- exchange(node2.getHigher(),k,v)
       \ node2.setHigher(newRoot)
       newRoot <- rebalance(node2)
-    } else {
-      \ node2.setValue(v)
+    } elif (present(v)) {
+      old <- node2.getValue()
+      newRoot <- node2
+      \ node2.setValue(require(v))
       \ node2.updateNode()
-      return node2, false
+    } else {
+      old <- node2.getValue()
+      newRoot <- rebalance(removeNode(node2))
     }
   }
 
@@ -107,25 +109,6 @@ define AutoBinaryTree {
       newRoot <- rebalance(node2)
     } else {
       return node2, node2.getValue()
-    }
-  }
-
-  @type delete (optional #n,#k) -> (optional #n,Bool)
-  delete (node,k) (newRoot,removed) {
-    if (!present(node)) {
-      return empty, false
-    }
-    #n node2 <- require(node)
-    if (k `#k.lessThan` node2.getKey()) {
-      newRoot, removed <- delete(node2.getLower(),k)
-      \ node2.setLower(newRoot)
-      newRoot <- rebalance(node2)
-    } elif (node2.getKey() `#k.lessThan` k) {
-      newRoot, removed <- delete(node2.getHigher(),k)
-      \ node2.setHigher(newRoot)
-      newRoot <- rebalance(node2)
-    } else {
-      return rebalance(removeNode(node2)), true
     }
   }
 

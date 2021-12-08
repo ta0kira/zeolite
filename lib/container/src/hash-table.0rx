@@ -44,11 +44,17 @@ define HashTable {
     return HashTableOrder<#k,#v>.new(itemCount,table)
   }
 
+  get (k) {
+    return table.readAt(getBin(k.hashed())).find(k)
+  }
+
   set (k,v) {
-    if (table.readAt(getBin(k.hashed())).replace(k,v)) {
-      itemCount <- itemCount+1
-      \ maybeResize()
-    }
+    \ swap(k,v)
+    return self
+  }
+
+  remove (k) {
+    \ swap(k,empty)
     return self
   }
 
@@ -63,16 +69,15 @@ define HashTable {
     }
   }
 
-  remove (k) {
-    if (table.readAt(getBin(k.hashed())).remove(k)) {
+  swap (k,v) (old) {
+    old <- table.readAt(getBin(k.hashed())).exchange(k,v)
+    if (!present(v) && present(old)) {
       itemCount <- itemCount-1
       \ maybeResize()
+    } elif (present(v) && !present(old)) {
+      itemCount <- itemCount+1
+      \ maybeResize()
     }
-    return self
-  }
-
-  get (k) {
-    return table.readAt(getBin(k.hashed())).find(k)
   }
 
   @value getBin (Int) -> (Int)
@@ -98,7 +103,7 @@ define HashTable {
       $Hidden[newTable]$
       traverse (oldTable.defaultOrder() -> HashRoot<#k,#v> root) {
         traverse (root.defaultOrder() -> HashNode<#k,#v> node) {
-          \ table.readAt(getBin(node.getKey().hashed())).replace(node.getKey(),node.getValue())
+          \ table.readAt(getBin(node.getKey().hashed())).exchange(node.getKey(),node.getValue())
         }
       }
     }
@@ -153,10 +158,9 @@ concrete HashRoot<#k,#v> {
   refines Duplicate
   #k defines Equals<#k>
 
-  @value replace (#k,#v) -> (Bool)
+  @value exchange (#k,optional #v) -> (optional #v)
   @value weakReplace (#k,#v) -> (optional #v)
   @value find (#k) -> (optional #v)
-  @value remove (#k) -> (Bool)
   // Override to allow returning HashNode directly.
   @value defaultOrder () -> (optional HashNode<#k,#v>)
 }
@@ -180,15 +184,31 @@ define HashRoot {
     }
   }
 
-  replace (k,v) {
-    traverse (root -> HashNode<#k,#v> node) {
+  exchange (k,v) (old) {
+    old <- empty
+    scoped {
+      optional HashNode<#k,#v> prev <- empty
+    } in traverse (root -> HashNode<#k,#v> node) {
       if (node.getKey() `#k.equals` k) {
-        \ node.setValue(v)
-        return false
+        old <- node.getValue()
+        if (`present` v) {
+          \ node.setValue(`require` v)
+        } else {
+          optional HashNode<#k,#v> next <- node.setNext(empty)
+          if (`present` prev) {
+            \ require(prev).setNext(next)
+          } else {
+            root <- next
+          }
+        }
+        return _
       }
+    } update {
+      prev <- node
     }
-    root <- HashNode<#k,#v>.new(k,v,root)
-    return true
+    if (`present` v) {
+      root <- HashNode<#k,#v>.new(k,`require` v,root)
+    }
   }
 
   weakReplace (k,v) {
@@ -208,25 +228,6 @@ define HashRoot {
         return node.getValue()
       }
     }
-  }
-
-  remove (k) {
-    scoped {
-      optional HashNode<#k,#v> prev <- empty
-    } in traverse (root -> HashNode<#k,#v> node) {
-      if (node.getKey() `#k.equals` k) {
-        optional HashNode<#k,#v> next <- node.setNext(empty)
-        if (`present` prev) {
-          \ require(prev).setNext(next)
-        } else {
-          root <- next
-        }
-        return true
-      }
-    } update {
-      prev <- node
-    }
-    return false
   }
 }
 
