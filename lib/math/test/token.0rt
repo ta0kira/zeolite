@@ -34,3 +34,9 @@ unittest lessThan {
 unittest formatted {
   \ Testing.checkEquals(Token.from("message").formatted(),"message")
 }
+
+unittest hashed {
+  \ Testing.checkFalse(Token.from("message").hashed() == Token.from("other").hashed())
+  \ Testing.checkFalse(Token.from("message").hashed() == "message".hashed())
+  \ Testing.checkTrue(Token.from("message").hashed() == Token.from("message").hashed())
+}

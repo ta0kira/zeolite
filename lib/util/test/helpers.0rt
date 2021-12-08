@@ -178,6 +178,13 @@ unittest readAtHForwardOrder {
   \ Testing.checkEquals(expected,10)
 }
 
+unittest readAtHForwardOrderEmpty {
+  ValueSource source <- ValueSource.new(false,0)
+  traverse (`ReadAtH:forwardOrder` source -> _) {
+    fail("not empty")
+  }
+}
+
 unittest readAtHReverseOrder {
   ValueSource source <- ValueSource.new(false,10)
   Int expected <- 9
@@ -187,6 +194,13 @@ unittest readAtHReverseOrder {
     expected <- expected-1
   }
   \ Testing.checkEquals(expected,-1)
+}
+
+unittest readAtHReverseOrderEmpty {
+  ValueSource source <- ValueSource.new(false,0)
+  traverse (`ReadAtH:reverseOrder` source -> _) {
+    fail("not empty")
+  }
 }
 
 concrete ValueOrder {

@@ -47,6 +47,13 @@ unittest addAndRemove {
   }
 }
 
+unittest append {
+  HashSet<Int> set <- HashSet<Int>.new()
+  \ set.append(3)
+  \ Testing.checkEquals(set.size(),1)
+  \ Testing.checkTrue(set.member(3))
+}
+
 unittest removeNotPresent {
   HashSet<Int> set <- HashSet<Int>.new().add(1).add(2).add(4)
   \ set.remove(3)
@@ -75,6 +82,12 @@ unittest defaultOrder {
   }
 
   \ Testing.checkEquals(index,max)
+}
+
+unittest defaultOrderEmpty {
+  traverse (HashSet<Int>.new().defaultOrder() -> _) {
+    fail("not empty")
+  }
 }
 
 unittest duplicate {

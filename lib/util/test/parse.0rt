@@ -108,6 +108,14 @@ unittest floatExponentExcessData {
   \ UtilTesting.checkError(ParseChars.float("123E5Q"))
 }
 
+unittest floatBadCharAfterDigit {
+  \ UtilTesting.checkError(ParseChars.float("123X"))
+}
+
+unittest floatMissingExponentDigits {
+  \ UtilTesting.checkError(ParseChars.float("123E"))
+}
+
 unittest int {
   \ UtilTesting.checkSuccess(ParseChars.int("1234"),1234)
 }

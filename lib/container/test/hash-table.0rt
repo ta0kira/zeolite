@@ -90,23 +90,43 @@ unittest defaultOrder {
   \ Testing.checkEquals(index,max)
 }
 
+unittest defaultOrderEmpty {
+  traverse (HashTable<Int,Int>.new().defaultOrder() -> _) {
+    fail("not empty")
+  }
+}
+
 unittest duplicate {
-  HashTable<Int,Int> tree <- HashTable<Int,Int>.default().set(1,1).set(2,2).set(3,3)
+  HashTable<Int,Int> tree <- HashTable<Int,Int>.default()
+  Int max <- 31
+  $ReadOnly[max]$
+
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ tree.set(i,i)
+  }
 
   HashTable<Int,Int> copy <- tree.duplicate()
-  \ Testing.checkEquals(copy.size(),3)
-  \ Testing.checkOptional(copy.get(1),1)
-  \ Testing.checkOptional(copy.get(2),2)
-  \ Testing.checkOptional(copy.get(3),3)
+  \ Testing.checkEquals(copy.size(),tree.size())
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    $Hidden[tree]$
+    \ Testing.checkOptional(copy.get(i),i)
+  }
 
   \ copy.set(2,5)
-  \ copy.remove(2)
+  \ copy.remove(7)
   $Hidden[copy]$
 
-  \ Testing.checkEquals(tree.size(),3)
-  \ Testing.checkOptional(tree.get(1),1)
-  \ Testing.checkOptional(tree.get(2),2)
-  \ Testing.checkOptional(tree.get(3),3)
+  \ Testing.checkEquals(tree.size(),max)
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ Testing.checkOptional(tree.get(i),i)
+  }
+}
+
+unittest duplicateEmpty {
+  HashTable<Int,Int> tree <- HashTable<Int,Int>.new()
+  HashTable<Int,Int> copy <- tree.duplicate()
+  \ tree.set(1,1)
+  \ Testing.checkEquals(copy.size(),0)
 }
 
 unittest weakSetExists {

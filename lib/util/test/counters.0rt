@@ -31,6 +31,12 @@ unittest zeroIndexed {
   \ Testing.checkEquals(index,10)
 }
 
+unittest zeroIndexedEmpty {
+  traverse (Counter.zeroIndexed(0) -> Int i) {
+    fail("not empty")
+  }
+}
+
 unittest revZeroIndexed {
   Int index <- 10
 
@@ -40,6 +46,12 @@ unittest revZeroIndexed {
   }
 
   \ Testing.checkEquals(index,0)
+}
+
+unittest revZeroIndexedEmpty {
+  traverse (Counter.revZeroIndexed(0) -> Int i) {
+    fail("not empty")
+  }
 }
 
 unittest unlimitedCount {
@@ -64,6 +76,12 @@ unittest times {
   }
 
   \ Testing.checkEquals(index,10)
+}
+
+unittest timesEmpty {
+  traverse ("message" `Repeat:times` 0 -> _) {
+    fail("not empty")
+  }
 }
 
 unittest unlimitedValue {

@@ -169,7 +169,7 @@ define IndexOrder {
   @value ReadAt<#x> container
   @value Order<Int> index
 
-  iterateWith(container,index) {
+  iterateWith (container,index) {
     if (`present` index) {
       return IndexOrder<#x>{ container, `require` index }
     } else {

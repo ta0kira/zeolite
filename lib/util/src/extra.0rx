@@ -20,7 +20,7 @@ define Void {
   @category Void singleton <- Void{ }
 
   formatted () {
-    return "void"
+    return "Void"
   }
 
   equals (_,_) {
@@ -28,7 +28,7 @@ define Void {
   }
 
   lessThan (_,_) {
-    return true
+    return false
   }
 
   void () {

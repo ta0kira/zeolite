@@ -242,16 +242,14 @@ define HashTableOrder {
   @value optional Order<HashRoot<#k,#v>> root
   @value HashNode<#k,#v> node
 
-  new (count,table) {
-    if (count < 1) {
-      return empty
-    }
-    scoped {
-      optional Order<HashRoot<#k,#v>> root, optional HashNode<#k,#v> node <- seekNext(table.defaultOrder())
-    } in if (`present` node) {
-      return #self{ count, root, `require` node }
-    } else {
-      return empty
+  new (count,table) (next) {
+    next <- empty
+    if (count > 0) {
+      scoped {
+        optional Order<HashRoot<#k,#v>> root, optional HashNode<#k,#v> node <- seekNext(table.defaultOrder())
+      } in if (`present` node) {
+        next <- #self{ count, root, `require` node }
+      }
     }
   }
 
@@ -259,23 +257,21 @@ define HashTableOrder {
     return SimpleKeyValue:create(node.getKey(),node.getValue())
   }
 
-  next () {
-    if ((count <- count-1) < 1) {
-      return empty
-    }
-    scoped {
-      optional HashNode<#k,#v> newNode <- node.next()
-    } in if (`present` newNode) {
-      node <- `require` newNode
-      return self
-    }
-    scoped {
-      root, optional HashNode<#k,#v> newNode <- seekNext(root)
-    } in if (`present` newNode) {
-      node <- `require` newNode
-      return self
-    } else {
-      return empty
+  next () (next) {
+    next <- empty
+    if ((count <- count-1) > 0) {
+      scoped {
+        optional HashNode<#k,#v> newNode <- node.next()
+      } in if (`present` newNode) {
+        node <- `require` newNode
+        return self
+      }
+      scoped {
+        root, optional HashNode<#k,#v> newNode <- seekNext(root)
+      } in if (`present` newNode) {
+        node <- `require` newNode
+        return self
+      }
     }
   }
 

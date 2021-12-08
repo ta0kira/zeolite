@@ -21,7 +21,7 @@ testcase "CategoricalTree tests" {
 }
 
 unittest simpleInsertion {
-  CategoricalTree<Int> tree <- CategoricalTree<Int>.new()
+  CategoricalTree<Int> tree <- CategoricalTree<Int>.default()
       .setWeight(1,3)
       .setWeight(6,2)
       .setWeight(3,1)

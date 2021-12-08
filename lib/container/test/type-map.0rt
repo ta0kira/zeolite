@@ -96,6 +96,12 @@ unittest keyEquals {
   \ Testing.checkFalse(key1 `TypeKey<any>.equals` key3)
 }
 
+unittest keyHashed {
+  TypeKey<Int> key1 <- TypeKey<Int>.new()
+  TypeKey<Int> key2 <- TypeKey<Int>.new()
+  \ Testing.checkFalse(key1.hashed() == key2.hashed())
+}
+
 concrete Value {
   refines Formatted
   defines Equals<Value>

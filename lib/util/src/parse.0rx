@@ -129,10 +129,6 @@ define ParseChars {
 
     }
 
-    if (present(curr)) {
-      return autoFail<Float>(require(curr).get())
-    }
-
     if (needExpDigits) {
       return ErrorOr:error("missing digits in Float exponent")
     }

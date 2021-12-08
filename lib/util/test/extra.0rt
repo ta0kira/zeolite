@@ -116,3 +116,19 @@ unittest test {
   \ value.convertError()
 }
 
+
+testcase "Void tests" {
+  success
+}
+
+unittest formatted {
+  \ Testing.checkEquals(Void.void().formatted(),"Void")
+}
+
+unittest lessThan {
+  \ Testing.checkFalse(Void.void() `Void.lessThan` Void.void())
+}
+
+unittest equals {
+  \ Testing.checkTrue(Void.void() `Void.equals` Void.void())
+}

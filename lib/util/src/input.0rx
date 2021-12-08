@@ -32,14 +32,15 @@ define TextReader {
     return builder.build()
   }
 
-  readNextLine () {
+  readNextLine () (line) {
+    line <- ""
     while (true) {
       Int newline <- findNewline()
       if (newline < 0) {
         if (reader.pastEnd()) {
-          cleanup {
-            buffer <- ""
-          } in return buffer
+          line <- buffer
+          buffer <- ""
+          break
         } else {
           buffer <- buffer+reader.readBlock($ExprLookup[BLOCK_READ_SIZE]$)
         }
@@ -47,7 +48,6 @@ define TextReader {
         return takeLine(newline)
       }
     }
-    return ""
   }
 
   pastEnd () {

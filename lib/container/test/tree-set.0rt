@@ -47,6 +47,13 @@ unittest addAndRemove {
   }
 }
 
+unittest append {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  \ set.append(3)
+  \ Testing.checkEquals(set.size(),1)
+  \ Testing.checkTrue(set.member(3))
+}
+
 unittest removeNotPresent {
   TreeSet<Int> set <- TreeSet<Int>.new().add(1).add(2).add(4)
   \ set.remove(3)
@@ -72,6 +79,12 @@ unittest defaultOrder {
   }
 
   \ Testing.checkEquals(index,max)
+}
+
+unittest defaultOrderEmpty {
+  traverse (TreeSet<Int>.new().defaultOrder() -> _) {
+    fail("not empty")
+  }
 }
 
 unittest reverseOrder {
