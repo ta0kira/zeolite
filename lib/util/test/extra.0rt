@@ -132,3 +132,7 @@ unittest lessThan {
 unittest equals {
   \ Testing.checkTrue(Void.void() `Void.equals` Void.void())
 }
+
+unittest hashed {
+  \ Testing.checkTrue(Void.void().duplicate().hashed() == Void.default().hashed())
+}

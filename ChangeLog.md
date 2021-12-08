@@ -79,6 +79,9 @@
 
   * **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
 
+  * **[new]** Implements `Default`, `Duplicate`, and `Hashed` for `Void` in
+    `lib/util`.
+
 ### Language
 
 * **[breaking]** Makes the `Duplicate` `@value interface` from `lib/util` a

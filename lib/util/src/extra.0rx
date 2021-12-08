@@ -19,6 +19,14 @@ limitations under the License.
 define Void {
   @category Void singleton <- Void{ }
 
+  default () {
+    return void()
+  }
+
+  duplicate () {
+    return void()
+  }
+
   formatted () {
     return "Void"
   }
@@ -29,6 +37,10 @@ define Void {
 
   lessThan (_,_) {
     return false
+  }
+
+  hashed () {
+    return 123456789
   }
 
   void () {

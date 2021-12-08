@@ -24,7 +24,10 @@ limitations under the License.
 concrete Void {
   immutable
 
+  defines Default
+  refines Duplicate
   refines Formatted
+  refines Hashed
 
   defines Equals<Void>
   defines LessThan<Void>
