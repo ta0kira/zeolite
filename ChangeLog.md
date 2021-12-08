@@ -43,6 +43,9 @@
 * **[breaking]** Removes `set` and `remove` from `AutoBinaryTree`, and adds the
   `swap` function, which can handle both `set` and `remove` operations.
 
+* **[breaking]** Removes `void` from `Void` in `lib/util`. Use `Void.default()`
+  instead.
+
 * **[new]** New categories:
 
   * **[new]** Adds the `HashTable` and `HashSet` containers to `lib/container`.

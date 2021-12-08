@@ -20,11 +20,11 @@ define Void {
   @category Void singleton <- Void{ }
 
   default () {
-    return void()
+    return singleton
   }
 
   duplicate () {
-    return void()
+    return singleton
   }
 
   formatted () {
@@ -41,10 +41,6 @@ define Void {
 
   hashed () {
     return 123456789
-  }
-
-  void () {
-    return singleton
   }
 }
 

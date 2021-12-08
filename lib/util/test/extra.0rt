@@ -122,17 +122,17 @@ testcase "Void tests" {
 }
 
 unittest formatted {
-  \ Testing.checkEquals(Void.void().formatted(),"Void")
+  \ Testing.checkEquals(Void.default().formatted(),"Void")
 }
 
 unittest lessThan {
-  \ Testing.checkFalse(Void.void() `Void.lessThan` Void.void())
+  \ Testing.checkFalse(Void.default() `Void.lessThan` Void.default())
 }
 
 unittest equals {
-  \ Testing.checkTrue(Void.void() `Void.equals` Void.void())
+  \ Testing.checkTrue(Void.default() `Void.equals` Void.default())
 }
 
 unittest hashed {
-  \ Testing.checkTrue(Void.void().duplicate().hashed() == Void.default().hashed())
+  \ Testing.checkTrue(Void.default().duplicate().hashed() == Void.default().hashed())
 }

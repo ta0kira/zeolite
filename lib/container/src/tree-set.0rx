@@ -36,7 +36,7 @@ define TreeSet {
   }
 
   add (k) {
-    \ tree.set(k,Void.void())
+    \ tree.set(k,Void.default())
     return self
   }
 
