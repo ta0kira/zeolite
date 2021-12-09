@@ -169,7 +169,7 @@ struct ExtValue_String : public Value_String {
     TRACE_FUNCTION("String.hashed")
     PrimInt hash = 1000000009ULL;
     for (char c : value_) {
-      hash = hash + (unsigned long long) c * 1000000007ULL;
+      hash = hash * 1000000009ULL + (unsigned long long) c * 1000000007ULL;
     }
     return ReturnTuple(Box_Int(hash));
   }
