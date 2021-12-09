@@ -36,7 +36,7 @@ unittest formatted {
 }
 
 unittest hashed {
-  \ Testing.checkFalse(Token.from("message").hashed() == Token.from("other").hashed())
-  \ Testing.checkFalse(Token.from("message").hashed() == "message".hashed())
-  \ Testing.checkTrue(Token.from("message").hashed() == Token.from("message").hashed())
+  \ Testing.checkNotEquals(Token.from("message").hashed(),Token.from("other").hashed())
+  \ Testing.checkNotEquals(Token.from("message").hashed(),"message".hashed())
+  \ Testing.checkEquals(Token.from("message").hashed(),Token.from("message").hashed())
 }

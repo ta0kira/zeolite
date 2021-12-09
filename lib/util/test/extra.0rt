@@ -134,5 +134,5 @@ unittest equals {
 }
 
 unittest hashed {
-  \ Testing.checkTrue(Void.default().duplicate().hashed() == Void.default().hashed())
+  \ Testing.checkEquals(Void.default().duplicate().hashed(),Void.default().hashed())
 }

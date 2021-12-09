@@ -342,23 +342,23 @@ unittest stringDuplicate {
 }
 
 unittest boolHashed {
-  \ Testing.checkFalse(true.hashed() == false.hashed())
+  \ Testing.checkNotEquals(true.hashed(),false.hashed())
 }
 
 unittest charHashed {
-  \ Testing.checkFalse('a'.hashed() == 'b'.hashed())
+  \ Testing.checkNotEquals('a'.hashed(),'b'.hashed())
 }
 
 unittest floatHashed {
-  \ Testing.checkFalse((1.1).hashed() == (1.2).hashed())
+  \ Testing.checkNotEquals((1.1).hashed(),(1.2).hashed())
 }
 
 unittest intHashed {
-  \ Testing.checkFalse((123).hashed() == (124).hashed())
+  \ Testing.checkNotEquals((123).hashed(),(124).hashed())
 }
 
 unittest stringHashed {
-  \ Testing.checkFalse("string12".hashed() == "string21".hashed())
+  \ Testing.checkNotEquals("string12".hashed(),"string21".hashed())
 }
 
 unittest stringLessThan {
