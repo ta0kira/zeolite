@@ -82,14 +82,19 @@
   * **[new]** Implements `Sorting` functions in `lib/container` that use  the
     new `LessThan2` `interface`.
 
-  * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
-
-  * **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
+  * **[new]** Implements the new `KVExchange` interface for `SortedMap` in
+    `lib/container`.
 
   * **[new]** Implements `Default`, `Duplicate`, and `Hashed` for `Void` in
     `lib/util`.
 
   * **[new]** Implements `Append<Formatted>` for `BasicOutput` in `lib/util`.
+
+  * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
+
+  * **[new]** Adds `probability` to `RandomUniform` in `lib/math`.
+
+  * **[new]** Adds `checkNotEquals` to `Testing` in `lib/testing`.
 
 ### Language
 

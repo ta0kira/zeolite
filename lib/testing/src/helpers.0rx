@@ -29,6 +29,16 @@ define Testing {
     }
   }
 
+  checkNotEquals (x,y) { $NoTrace$
+    if (#x.equals(x,y)) {
+      fail(String.builder()
+          .append(x)
+          .append(" is equal to ")
+          .append(y)
+          .build())
+    }
+  }
+
   checkEmpty (x) { $NoTrace$
     if (present(x)) {
       scoped {

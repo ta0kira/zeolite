@@ -36,6 +36,25 @@ unittest test {
 }
 
 
+testcase "checkNotEquals success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkNotEquals(12,13)
+}
+
+
+testcase "checkNotEquals fail" {
+  crash
+  require stderr "13.*13"
+}
+
+unittest test {
+  \ Testing.checkNotEquals(13,13)
+}
+
+
 testcase "checkEmpty success" {
   success
 }

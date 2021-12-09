@@ -30,6 +30,16 @@ concrete Testing {
     #x defines Equals<#x>
   (#x,#x) -> ()
 
+  // Check the values for inequality. Crashes if they are equal.
+  //
+  // Args:
+  // - #x: Actual value.
+  // - #x: Expected value.
+  @type checkNotEquals<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (#x,#x) -> ()
+
   // Check the value for empty. Crashes if present.
   //
   // Args:
