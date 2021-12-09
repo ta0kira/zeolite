@@ -29,11 +29,7 @@ define HashedMap {
   }
 
   duplicate () {
-    Vector<HashRoot<#k,#v>> table2 <- Vector:createSize<HashRoot<#k,#v>>(table.size())
-    traverse (`Counter.zeroIndexed` table.size() -> Int i) {
-      \ table2.writeAt(i,table.readAt(i).duplicate())
-    }
-    return #self{ itemCount, table2 }
+    return #self{ itemCount, table.defaultOrder() `OrderH:duplicateTo` Vector<HashRoot<#k,#v>>.new() }
   }
 
   size () {
