@@ -89,6 +89,8 @@
   * **[new]** Implements `Default`, `Duplicate`, and `Hashed` for `Void` in
     `lib/util`.
 
+  * **[new]** Implements `Append<Formatted>` for `BasicOutput` in `lib/util`.
+
 ### Language
 
 * **[breaking]** Makes the `Duplicate` `@value interface` from `lib/util` a

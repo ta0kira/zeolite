@@ -69,6 +69,11 @@ struct ExtValue_BasicOutput : public Value_BasicOutput {
   inline ExtValue_BasicOutput(S<const Type_BasicOutput> p, S<Writer> w)
     : Value_BasicOutput(std::move(p)), writer(w) {}
 
+  ReturnTuple Call_append(const ParamsArgs& params_args) final {
+    TRACE_FUNCTION("BasicOutput.append")
+    return Call_write(params_args);
+  }
+
   ReturnTuple Call_flush(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("BasicOutput.flush")
     std::lock_guard<std::mutex> lock(mutex);

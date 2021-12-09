@@ -45,15 +45,16 @@ limitations under the License.
 
 // Basic output destinations.
 concrete BasicOutput {
+  refines Append<Formatted>
   refines BufferedWriter<Formatted>
 
   // Immediately writes the data and flushes the buffer.
   @value writeNow (Formatted) -> (#self)
 
-  // Returns a BufferedWriter for standard output.
+  // Standard output writer.
   @type stdout () -> (#self)
-  // Returns a BufferedWriter for standard error.
+  // Standard error writer.
   @type stderr () -> (#self)
-  // Returns a BufferedWriter that crashes with the output as the error message.
+  // Crashes with the written data as the error when flushed.
   @type error () -> (#self)
 }

@@ -18,31 +18,43 @@ limitations under the License.
 
 testcase "stdout writer" {
   success
-  require stdout "message"
+  require stdout "message1"
+  require stdout "message2"
+  require stdout "message3"
   exclude stderr "message"
 }
 
 unittest test {
-  \ BasicOutput.stdout().writeNow("message")
+  \ BasicOutput.stdout().write("message1\n")
+  \ BasicOutput.stdout().append("message2\n")
+  \ BasicOutput.stdout().writeNow("message3\n")
 }
 
 
 testcase "stderr writer" {
   success
-  require stderr "message"
+  require stderr "message1"
+  require stderr "message2"
+  require stderr "message3"
   exclude stdout "message"
 }
 
 unittest test {
-  \ BasicOutput.stderr().writeNow("message")
+  \ BasicOutput.stderr().write("message1\n")
+  \ BasicOutput.stderr().append("message2\n")
+  \ BasicOutput.stderr().writeNow("message3\n")
 }
 
 
 testcase "error writer" {
   crash
-  require "message"
+  require "message1"
+  require "message2"
+  require "message3"
 }
 
 unittest test {
-  \ BasicOutput.error().writeNow("message")
+  \ BasicOutput.error().write("message1\n")
+  \ BasicOutput.error().append("message2\n")
+  \ BasicOutput.error().writeNow("message3\n")
 }
