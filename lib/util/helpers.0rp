@@ -188,6 +188,9 @@ concrete ReadAtH {
 
   // Iterates over the container from the end to 0.
   @category reverseOrder<#x> (ReadAt<#x>) -> (optional Order<#x>)
+
+  // Iterates over the container using the provided index order.
+  @category iterateWith<#x> (ReadAt<#x>,optional Order<Int>) -> (optional Order<#x>)
 }
 
 // Helpers to extend functionality to the Formatted built-in.

@@ -203,6 +203,17 @@ unittest readAtHReverseOrderEmpty {
   }
 }
 
+unittest readAtHIterateWith {
+  ValueSource source <- ValueSource.new(false,10)
+  Int expected <- 0
+  traverse (source `ReadAtH:iterateWith` `Counter.zeroIndexed` 5 -> Value actual) {
+    \ Testing.checkEquals(actual.get(),expected)
+  } update {
+    expected <- expected+1
+  }
+  \ Testing.checkEquals(expected,5)
+}
+
 concrete ValueOrder {
   refines Order<Value>
 

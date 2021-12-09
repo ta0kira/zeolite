@@ -73,8 +73,8 @@
   * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
     `lib/util` for general container duplication.
 
-  * **[new]** Adds `forwardOrder` and `reverseOrder` to `ReadAtH` in `lib/util`
-    for iterating over `ReadAt` containers.
+  * **[new]** Adds `forwardOrder`, `reverseOrder`, and `iterateWith` to
+    `ReadAtH` in `lib/util` for iterating over `ReadAt` containers.
 
   * **[new]** Implements `Default` for containers in `lib/container` and
     `lib/math`.

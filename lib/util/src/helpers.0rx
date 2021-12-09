@@ -127,11 +127,15 @@ define ReadAtH {
   }
 
   forwardOrder (input) {
-    return input `IndexOrder:iterateWith` `Counter.zeroIndexed` input.size()
+    return input `iterateWith` `Counter.zeroIndexed` input.size()
   }
 
   reverseOrder (input) {
-    return input `IndexOrder:iterateWith` `Counter.revZeroIndexed` input.size()
+    return input `iterateWith` `Counter.revZeroIndexed` input.size()
+  }
+
+  iterateWith (input,order) {
+    return input `IndexOrder:iterateWith` order
   }
 }
 
