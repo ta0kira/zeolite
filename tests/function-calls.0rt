@@ -649,3 +649,59 @@ define Value {
     return x+y.formatted()
   }
 }
+
+
+testcase "@type function calls" {
+  success
+}
+
+unittest sameType {
+  \ Testing.checkEquals(Value<Int>.sameType(),"Value<Int>")
+}
+
+unittest sameValue {
+  \ Testing.checkEquals(Value<Int>.create().sameValue(),"Value<Int>")
+}
+
+unittest diffType {
+  \ Testing.checkEquals(Value<Int>.diffType<String>(),"Value<String>")
+}
+
+unittest diffValue {
+  \ Testing.checkEquals(Value<Int>.create().diffValue<String>(),"Value<String>")
+}
+
+concrete Value<#x> {
+  @type create () -> (#self)
+  @type call () -> (String)
+  @type  sameType      () -> (String)
+  @value sameValue     () -> (String)
+  @type  diffType<#y>  () -> (String)
+  @value diffValue<#y> () -> (String)
+}
+
+define Value {
+  create () {
+    return #self{ }
+  }
+
+  call () {
+    return typename<#self>().formatted()
+  }
+
+  sameType () {
+    return Value<#x>.call()
+  }
+
+  sameValue () {
+    return Value<#x>.call()
+  }
+
+  diffType () {
+    return Value<#y>.call()
+  }
+
+  diffValue () {
+    return Value<#y>.call()
+  }
+}

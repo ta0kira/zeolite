@@ -777,8 +777,15 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
                                                     formatFullContextBrace c
   csAddRequired $ Set.unions $ map categoriesFromTypes [t']
   csAddRequired $ Set.fromList [sfType f']
-  t2 <- expandGeneralInstance t'
-  compileFunctionCall (Just t2) f' f
+  same <- maybeSingleType t' >>= checkSame
+  t2 <- if same
+           then return Nothing
+           else fmap Just $ expandGeneralInstance t'
+  compileFunctionCall t2 f' f
+  where
+    maybeSingleType = lift . tryCompilerM . matchOnlyLeaf
+    checkSame (Just (JustTypeInstance t2)) = csSameType t2
+    checkSame _ = return False
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
   f' <- lift $ collectFirstM [tryCategory ctx,tryNonCategory ctx] <?? "In function call at " ++ formatFullContext c
