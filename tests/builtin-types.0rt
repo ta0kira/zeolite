@@ -358,7 +358,7 @@ unittest intHashed {
 }
 
 unittest stringHashed {
-  \ Testing.checkFalse("string1".hashed() == "string2".hashed())
+  \ Testing.checkFalse("string12".hashed() == "string21".hashed())
 }
 
 unittest stringLessThan {
