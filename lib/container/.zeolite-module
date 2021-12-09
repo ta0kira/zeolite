@@ -3,15 +3,19 @@ path: "lib/container"
 expression_map: [
   expression_macro {
     name: HASH_TABLE_MIN_SIZE
-    expression: 8
+    expression: 1
   }
   expression_macro {
+    // Overfilling bins makes container iteration more efficient because we
+    // don't have as many empty bins to skip over.
     name: HASH_TABLE_EXPAND_RATIO
     expression: 2
   }
   expression_macro {
+    // Assumption: Container iteration is less likely when the caller is
+    // removing a lot of elements, so we allow more underfilled bins.
     name: HASH_TABLE_CONTRACT_RATIO
-    expression: 2
+    expression: 3
   }
 ]
 extra_paths: [
