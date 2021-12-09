@@ -410,10 +410,12 @@ generateCategoryDefinition testing = common where
       return $ onlyCode "};"
     ] where
       members = filter ((== CategoryScope). dmScope) $ dcMembers d
+
   defineConcreteType fs t = concatM [
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       fmap indentCompiled $ inlineTypeDestructor False t,
+      fmap indentCompiled $ inlineTypeParamSelf t,
       return declareTypeOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       return $ indentCompiled $ createParams $ getCategoryParams t,
@@ -425,6 +427,7 @@ generateCategoryDefinition testing = common where
   defineConcreteValue r params fs t d = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ inlineValueConstructor t d,
+      fmap indentCompiled $ inlineValueParamSelf t,
       fmap indentCompiled $ inlineFlatCleanup d,
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
@@ -446,10 +449,12 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "  virtual inline ~" ++ categoryName (getCategoryName t) ++ "() {}",
       return $ onlyCode "};"
     ]
+
   defineAbstractType t = concatM [
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       fmap indentCompiled $ inlineTypeDestructor True t,
+      fmap indentCompiled $ inlineTypeParamSelf t,
       return declareTypeOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== TypeScope). sfScope) $ getCategoryFunctions t,
       return $ indentCompiled $ createParams $ getCategoryParams t,
@@ -457,9 +462,11 @@ generateCategoryDefinition testing = common where
       return $ onlyCode "};"
     ] where
       className = typeName (getCategoryName t)
+
   defineAbstractValue t = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ abstractValueConstructor t,
+      fmap indentCompiled $ inlineValueParamSelf t,
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== ValueScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ valueName (getCategoryName t) ++ "() {}",
@@ -608,7 +615,7 @@ generateCategoryDefinition testing = common where
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let argsPassed = "const ParamsArgs& params_args"
     let allArgs = intercalate ", " [argParent,argsPassed]
-    let initParent = "parent(p)"
+    let initParent = "parent(std::move(p))"
     let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(" ++ unwrappedArg i m ++ ")") $ zip ([0..] :: [Int]) members
     let allInit = intercalate ", " $ initParent:initArgs
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}" where
@@ -618,7 +625,7 @@ generateCategoryDefinition testing = common where
   abstractValueConstructor t = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let allArgs = intercalate ", " [argParent]
-    let initParent = "parent(p)"
+    let initParent = "parent(std::move(p))"
     let allInit = initParent
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
@@ -629,12 +636,25 @@ generateCategoryDefinition testing = common where
     let allArgs = intercalate ", " [argParent,paramsPassed]
     let allInit = typeName (getCategoryName t) ++ "(p, params)"
     return $ onlyCode $ "inline " ++ typeCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
+
   customValueConstructor t = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let argsPassed = "const ParamsArgs& params_args"
     let allArgs = intercalate ", " [argParent,argsPassed]
     let allInit = valueName (getCategoryName t) ++ "(std::move(p))"
     return $ onlyCode $ "inline " ++ valueCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
+
+  inlineTypeParamSelf t = return $ onlyCodes [
+      "inline S<const " ++ typeName (getCategoryName t) ++ "> Param_self() const {",
+      "  return shared_from_this();",
+      "}"
+    ]
+
+  inlineValueParamSelf t = return $ onlyCodes [
+      "inline S<const " ++ typeName (getCategoryName t) ++ "> Param_self() const {",
+      "  return parent;",
+      "}"
+    ]
 
   allowTestsOnly
     | testing   = (testsOnlySourceGuard ++)

@@ -911,7 +911,7 @@ compileExpressionStart (InitializeValue c t es) = do
   return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
           UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ args ++ ")")
   where
-    getType _  True ValueScope _      = "parent"
+    getType _  True ValueScope _      = "PARAM_SELF"
     getType _  True TypeScope  _      = "PARAM_SELF"
     getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
     -- Single expression, but possibly multi-return.
@@ -1197,19 +1197,28 @@ expandCategory t = return $ categoryGetter t ++ "()"
 
 expandGeneralInstance :: (CollectErrorsM m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
-expandGeneralInstance t
-  | t == minBound = return $ allGetter ++ "()"
-  | t == maxBound = return $ anyGetter ++ "()"
 expandGeneralInstance t = do
   r <- csResolver
   f <- csAllFilters
+  scope <- csCurrentScope
   t' <- lift $ dedupGeneralInstance r f t
-  reduceMergeTree getAny getAll getSingle t' where
+  t'' <-  case scope of
+               CategoryScope -> return t'
+               _ -> do
+                 self <- csSelfType
+                 lift $ reverseSelfInstance self t'
+  expand t'' where
+    expand t2
+      | t2 == minBound = return $ allGetter ++ "()"
+      | t2 == maxBound = return $ anyGetter ++ "()"
+      | otherwise = reduceMergeTree getAny getAll getSingle t2
     getAny ts = combine ts >>= return . (unionGetter ++)
     getAll ts = combine ts >>= return . (intersectGetter ++)
     getSingle (JustTypeInstance (TypeInstance t2 ps)) = do
-      ps' <- sequence $ map expandGeneralInstance $ pValues ps
-      return $ typeGetter t2 ++ "(T_get(" ++ intercalate "," ps' ++ "))"
+      ps' <- sequence $ map expand $ pValues ps
+      let count = length ps'
+      return $ typeGetter t2 ++ "(Params<" ++ show count ++ ">::Type(" ++ intercalate "," ps' ++ "))"
+    getSingle (JustParamName _ ParamSelf) = return "S<const TypeInstance>(PARAM_SELF)"
     getSingle (JustParamName _ p)  = do
       s <- csGetParamScope p
       scoped <- autoScope s

@@ -84,9 +84,9 @@ struct PassArgs : public ParamsArgs {
   template<int Pn, int An>
   void Init() {}
 
-  template<int Pn, int An, class... Ps>
-  void Init(const S<const TypeInstance>& param, const Ps&... passed) {
-    params[Pn] = &param;
+  template<int Pn, int An, class T, class... Ps>
+  void Init(const S<const T>& param, const Ps&... passed) {
+    params[Pn] = param;
     Init<Pn+1, An>(passed...);
   }
 
@@ -102,7 +102,7 @@ struct PassArgs : public ParamsArgs {
     if (pos < 0 || pos >= P) {
       FAIL() << "Bad param index";
     }
-    return *params[pos];
+    return params[pos];
   }
 
   int NumArgs() const final { return A; }
@@ -114,8 +114,8 @@ struct PassArgs : public ParamsArgs {
     return *args[pos];
   }
 
-  const S<const TypeInstance>* params[P];
-  const BoxedValue*   args[A];
+  S<const TypeInstance> params[P];
+  const BoxedValue* args[A];
 };
 
 template<>
@@ -144,9 +144,9 @@ struct PassReturns : public ParamsArgs {
     Init<0>(passed...);
   }
 
-  template<int Pn, class... Ps>
-  void Init(const S<const TypeInstance>& param, const Ps&... passed) {
-    params[Pn] = &param;
+  template<int Pn, class T, class... Ps>
+  void Init(const S<const T>& param, const Ps&... passed) {
+    params[Pn] = param;
     Init<Pn+1>(passed...);
   }
 
@@ -161,13 +161,13 @@ struct PassReturns : public ParamsArgs {
     if (pos < 0 || pos >= P) {
       FAIL() << "Bad param index";
     }
-    return *params[pos];
+    return params[pos];
   }
 
   int NumArgs() const final                     { return returns->Size(); }
   const BoxedValue& GetArg(int pos) const final { return returns->At(pos); }
 
-  const S<const TypeInstance>* params[P];
+  S<const TypeInstance> params[P];
   const ReturnTuple* returns;
 };
 
@@ -194,8 +194,8 @@ struct AutoCall<P, ReturnTuple> {
   using Type = PassReturns<P>;
 };
 
-template<int P, class... Ps>
-struct AutoCall<P, S<const TypeInstance>, Ps...> {
+template<int P, class T, class... Ps>
+struct AutoCall<P, S<const T>, Ps...> {
   using Type = typename AutoCall<P+1, Ps...>::Type;
 };
 

@@ -62,6 +62,7 @@ module Types.TypeInstance (
   replaceSelfValueType,
   requiredParam,
   requiredSingleton,
+  reverseSelfInstance,
   selfType,
   uncheckedSubFilter,
   uncheckedSubFilters,
@@ -724,6 +725,16 @@ uncheckedSubFilters replace fa = do
       fs' <- mapCompilerM (uncheckedSubFilter replace) fs
       return (n,fs')
 
+reverseSelfInstance :: CollectErrorsM m =>
+  TypeInstance -> GeneralInstance -> m GeneralInstance
+reverseSelfInstance self = reduceMergeTree subAny subAll subSingle where
+  -- NOTE: Don't use mergeAnyM because it will fail if the union is empty.
+  subAny = fmap mergeAny . sequence
+  subAll = fmap mergeAll . sequence
+  -- NOTE: Equality should be fine here, since self should only have param names.
+  subSingle (JustTypeInstance t) | t == self = return $ singleType $ JustParamName True ParamSelf
+  subSingle t = return $ singleType t
+
 replaceSelfValueType :: CollectErrorsM m =>
   GeneralInstance -> ValueType -> m ValueType
 replaceSelfValueType self (ValueType s t) = do
@@ -738,7 +749,7 @@ replaceSelfInstance self = reduceMergeTree subAny subAll subSingle where
   subAll = fmap mergeAll . sequence
   subSingle (JustParamName _ ParamSelf) = return self
   subSingle (JustTypeInstance t)        = fmap (singleType . JustTypeInstance) $ replaceSelfSingle self t
-  subSingle p                           = return $ singleType p
+  subSingle t                           = return $ singleType t
 
 replaceSelfSingle :: CollectErrorsM m =>
   GeneralInstance -> TypeInstance -> m TypeInstance

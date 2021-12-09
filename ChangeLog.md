@@ -124,6 +124,11 @@
   This was previously only allowed for selecting a function to call, e.g.,
   `foo.Base.call()`.
 
+### Compiler CLI
+
+* **[fix]** Makes `PARAM_SELF` work when used in `@value` implementations in C++
+  extensions.
+
 ## 0.21.0.0  -- 2021-11-19
 
 ### Compiler CLI

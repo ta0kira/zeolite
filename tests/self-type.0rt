@@ -730,3 +730,29 @@ concrete Type {
 }
 
 define Type {}
+
+
+testcase "#self nested in value init with filters" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Type<Int>.create().formatted(),"Type<Type<Int>>")
+}
+
+concrete Type<|#x> {
+  refines Formatted
+  #x requires Formatted
+
+  @type create () -> (Type<#self>)
+}
+
+define Type {
+  create () {
+    return Type<#self>{ }
+  }
+
+  formatted () {
+    return typename<#self>().formatted()
+  }
+}

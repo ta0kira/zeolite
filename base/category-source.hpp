@@ -44,7 +44,7 @@ limitations under the License.
 
 #define VAR_SELF TypeValue::Var_self(this)
 
-#define PARAM_SELF shared_from_this()
+#define PARAM_SELF Param_self()
 
 BoxedValue Box_Bool(PrimBool value);
 BoxedValue Box_String(const PrimString& value);
