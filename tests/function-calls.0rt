@@ -16,60 +16,259 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "call from union" {
+testcase "call from union failed merge" {
   error
-  require "\[Base\|Value\]"
+  require "\[Value1\|Value2\]"
+  require "get"
+  require "[Mm]ultiple"
 }
 
 unittest test {
-  [Base|Value] value <- Value.create()
-  \ value.call()
+  [Value1|Value2] value <- Value1.create()
+  \ value.get()
 }
 
-@value interface Base {
-  call () -> ()
+@value interface Base<|#x> {
+  get () -> (#x)
 }
 
-concrete Value {
-  refines Base
-
-  @type create () -> (Value)
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
 }
 
-define Value {
-  call () {}
+define Value1 {
+  get () {
+    return 1
+  }
 
   create () {
-    return Value{}
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
   }
 }
 
 
-testcase "call from union with conversion" {
+testcase "call from union ambiguous base" {
+  error
+  require "\[Value1\|Value2\]"
+  require "get"
+  require "explicit"
+  require "Base"
+}
+
+unittest test {
+  [Value1|Value2] value <- Value1.create()
+  \ value.get()
+}
+
+@value interface Base<|#x> {
+  get () -> (#x)
+}
+
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
+  @value get () -> (Int)
+}
+
+define Value1 {
+  get () {
+    return 1
+  }
+
+  create () {
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
+  }
+}
+
+
+testcase "call from union bad function name" {
+  error
+  require "\[Int\|String\]"
+  require "asFloat"
+}
+
+unittest test {
+  [Int|String] value <- 1
+  \ value.asFloat()
+}
+
+
+testcase "call from union automatic merge" {
   success
 }
 
 unittest test {
-  [Base|Value] value <- Value.create()
-  \ value?Base.call()
+  [Value1|Value2] value <- Value1.create()
+  \ Testing.checkEquals(value.get().formatted(),"1")
 }
 
-@value interface Base {
-  call () -> ()
+@value interface Base<|#x> {
+  get () -> (#x)
 }
 
-concrete Value {
-  refines Base
-
-  @type create () -> (Value)
+concrete Value1 {
+  refines Base<Formatted>
+  @type create () -> (Value1)
 }
 
-define Value {
-  call () {}
+define Value1 {
+  get () {
+    return 1
+  }
 
   create () {
-    return Value{}
+    return Value1{ }
   }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
+  }
+}
+
+
+testcase "call from union automatic merge correct direction" {
+  error
+  require "Formatted.+Int"
+  require "\+"
+  exclude "\[Value1\|Value2\]"
+  exclude "get"
+}
+
+unittest test {
+  [Value1|Value2] value <- Value1.create()
+  \ value.get()+1
+}
+
+@value interface Base<|#x> {
+  get () -> (#x)
+}
+
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
+}
+
+define Value1 {
+  get () {
+    return 1
+  }
+
+  create () {
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<Formatted>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
+  }
+}
+
+
+testcase "call from union explicit conversion" {
+  success
+}
+
+unittest test {
+  [Value1|Value2] value <- Value1.create()
+  \ Testing.checkEquals(value?Base<Formatted>.get().formatted(),"1")
+}
+
+@value interface Base<|#x> {
+  get () -> (#x)
+}
+
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
+}
+
+define Value1 {
+  get () {
+    return 1
+  }
+
+  create () {
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
+  }
+}
+
+
+testcase "call from all fails" {
+  error
+  require "formatted"
+  require "all"
+}
+
+unittest test {
+  optional all value <- empty
+  \ require(value).formatted()
 }
 
 

@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.19"
+    version="3.20"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -302,6 +302,8 @@
         <keyword attribute="Keyword" context="#stay" String="builtins" />
         <DetectChar attribute="Keyword" context="#stay" char="?" />
         <DetectChar attribute="Normal Text" context="Initializer" char="{" />
+        <RegExpr attribute="Error" context="#stay" String="\.[#A-Z][A-Za-z0-9]*" />
+        <RegExpr attribute="Error" context="#stay" String="\.\[" />
         <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+\b" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[dD][0-9]+\b" />

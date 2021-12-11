@@ -155,6 +155,9 @@ instance (Show c, CollectErrorsM m) =>
       tryMergeFrom fs f = do
         mapCompilerM_ (tryMergeFunc f) fs
         return f
+      tryMergeTo fs f = do
+        mapCompilerM_ (flip tryMergeFunc f) fs
+        return f
       tryMergeFunc f1 f2 = do
         f1' <- parsedToFunctionType f1
         f2' <- parsedToFunctionType f2
@@ -162,14 +165,21 @@ instance (Show c, CollectErrorsM m) =>
         allFilters <- ccAllFilters ctx
         silenceErrorsM $ checkFunctionConvert r allFilters Map.empty f2' f1'
       getFunction t0 t2 = reduceMergeTree getFromAny getFromAll (getFromSingle t0) t2
-      getFromAny _ =
-        compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
+      getFromAny fs = do
+        let (Just t') = t  -- #self will never be a union.
+        fs2 <- fmap concat (collectAllM fs) <!! "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
+        case Map.toList $ Map.fromList $ map (\f -> (sfType f,sfContext f)) fs2 of
+             -- For unions, we want the most general rather than the least
+             -- general. Since the top level finds the least general, we can
+             -- only return one match here.
+             [_] -> fmap (:[]) $ collectFirstM $ map (tryMergeTo fs2) fs2 ++ [multipleMatchError t' fs2]
+             [] -> compilerErrorM $ "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
+             cs -> "Use an explicit conversion to call " ++ show n ++ " for type " ++ show t' ++ formatFullContextBrace c !!>
+               mapErrorsM (map (\(t2,c2) -> "Function " ++ show n ++ " in " ++ show t2 ++ formatFullContextBrace c2) cs)
       getFromAll fs = do
-        t' <- case t of
-                   Just t2 -> return t2
-                   Nothing -> fmap (singleType . JustTypeInstance) $ ccSelfType ctx
+        let (Just t') = t  -- #self will never be an intersection.
         collectFirstM_ fs <!!
-          "Function " ++ show n ++ " not available for type " ++ show t' ++ formatFullContextBrace c
+          "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
         fmap concat $ collectAnyM fs
       getFromSingle t0 (JustParamName _ p) = do
         fa <- ccAllFilters ctx

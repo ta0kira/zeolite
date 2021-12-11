@@ -1410,17 +1410,33 @@ In some situations, you might want to peform an explicit type conversion on a
 *`value`* is any `@value` and *`Type`* is any type, including params and
 [meta types](#meta-types).
 
-- With values that have a [union type](#meta-types) (e.g., `[A|B]`), you must
-  use an explicit type conversion when making a function call.
+- With values that have a [union type](#meta-types) (e.g., `[A|B]`), you might
+  need an explicit type conversion when making a function call.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val &lt;- <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>.</span>new()
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Object</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+    get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+  }
 
-  <span style='color:#898887;'>// Convert to Printable first.</span>
-  <span style='color:#006e28;'>\</span> val<b>?</b><span style='color:#0057ae;'>Printable</span><span style='color:#644a9b;'>.</span>print()
+  <b>concrete</b> <b><span style='color:#0057ae;'>IntObject</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Object</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>
+    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<span style='color:#0057ae;'>IntObject</span>)
+  }
 
-  <span style='color:#898887;'>// This will cause an error, since print() is ambiguous.</span>
-  <span style='color:#898887;'>// \ val.print()</span></pre>
+  <b>concrete</b> <b><span style='color:#0057ae;'>StringObject</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Object</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>
+    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>StringObject</span>)
+  }
+
+  <span style='color:#898887;'>// ...</span>
+
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>IntObject</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>StringObject</span><b><span style='color:#006e28;'>]</span></b> value &lt;- <span style='color:#0057ae;'>StringObject</span><span style='color:#644a9b;'>.</span>new(<span style='color:#bf0303;'>&quot;message&quot;</span>)
+
+  <span style='color:#898887;'>// Convert to Object&lt;Formatted&gt; before calling get().</span>
+  <i><span style='color:#0057ae;'>Formatted</span></i> formatted &lt;- value<b>?</b><span style='color:#0057ae;'>Object</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>get()
+
+  <span style='color:#898887;'>// Should get() return Int or String here?</span>
+  <span style='color:#898887;'>// Formatted formatted &lt;- value.get()</span></pre>
 
 - Type conversions of function arguments can be used for influencing
   [type inference](#type-inference).
@@ -1437,18 +1453,17 @@ In some situations, you might want to peform an explicit type conversion on a
   <span style='color:#898887;'>// #x will be inferred as Formatted rather than as Int here.</span>
   <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>:</span>call(value<b>?</b><i><span style='color:#0057ae;'>Formatted</span></i>)</pre>
 
-You can also explicitly convert `optional` and `weak` values, although they will
-still retain their original storage modifier.
+- You can also explicitly convert `optional` and `weak` values, although they
+  will still retain their original storage modifier.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
   <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value &lt;- <span style='color:#b08000;'>1</span>
 
   <span style='color:#898887;'>// Passed as optional Formatted.</span>
-  <span style='color:#006e28;'>\</span> call(value<span style='color:#644a9b;'>.</span><i><span style='color:#0057ae;'>Formatted</span></i>)
+  <span style='color:#006e28;'>\</span> call(value<b>?</b><i><span style='color:#0057ae;'>Formatted</span></i>)
 
   <span style='color:#898887;'>// Not allowed, since value.Formatted is still optional.</span>
-  <span style='color:#898887;'>// String string &lt;- value.Formatted.formatted()</span></pre>
-
+  <span style='color:#898887;'>// String string &lt;- value?Formatted.formatted()</span></pre>
 
 #### Runtime Type Reduction
 

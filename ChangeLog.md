@@ -159,6 +159,10 @@
 * **[new]** Allows `present`, `require`, `strong`, and `reduce<#x,#y>` builtin
   functions to have unary notation, e.g., ``y <- `require` x``.
 
+* **[new]** Compiler now does more work attempting to resolve function calls for
+  `@value`s with union types. Previously, explicit type conversions were always
+  required to make calls from unions.
+
 * **[new]** Allows `requires` and `allows` filters to use unions and
   intersections on the right side, e.g., `#x allows [Foo&Bar]`.
 
