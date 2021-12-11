@@ -709,7 +709,7 @@ compileExpression = compile where
     t' <- requireSingle c ts
     r <- csResolver
     fa <- csAllFilters
-    let vt = ValueType RequiredValue t
+    let vt = ValueType (vtRequired t') t
     (lift $ checkValueAssignment r fa t' vt) <??
       "In explicit type conversion at " ++ formatFullContext c
     return (Positional [vt],e')
@@ -734,10 +734,10 @@ lookupValueFunction :: (Ord c, Show c, CollectErrorsM m,
                         CompilerContext c m [String] a) =>
   ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
 lookupValueFunction (ValueType WeakValue t) (FunctionCall c _ _ _) =
-  compilerErrorM $ "Use strong to convert " ++ show t ++
+  compilerErrorM $ "Use strong to convert weak " ++ show t ++
                         " to optional first" ++ formatFullContextBrace c
 lookupValueFunction (ValueType OptionalValue t) (FunctionCall c _ _ _) =
-  compilerErrorM $ "Use require to convert " ++ show t ++
+  compilerErrorM $ "Use require to convert optional " ++ show t ++
                         " to required first" ++ formatFullContextBrace c
 lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
   csGetTypeFunction c (Just t) n

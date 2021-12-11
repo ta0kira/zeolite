@@ -122,6 +122,9 @@
   \ call<?>(foo?any)
   ```
 
+  This can also be used to convert the underlying types of `optional` and `weak`
+  values, while still preserving the `optional`/`weak` storage modifier.
+
 * **[fix]** Fixes checking of `defer` in `in` blocks of `scoped`. Previously, a
   `defer`red variable was only marked as set if the `cleanup` set it, even if
   all paths through the `in` actually set it.

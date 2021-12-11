@@ -40,6 +40,16 @@ unittest toParam {
   \ Testing.checkEquals(Helper.toParam<Value,Base1>(Value.create()),"Base1")
 }
 
+unittest toTypeOptional {
+  optional Value value <- Value.create()
+  \ Testing.checkEquals(Helper.getType2(value?Base1),"Base1")
+}
+
+unittest toAnyOptional {
+  optional Value value <- Value.create()
+  \ Testing.checkEquals(Helper.getType2(value?any),"any")
+}
+
 unittest convertedCall {
   Value value <- Value.create()
   \ value?Base1.call()
@@ -51,6 +61,7 @@ concrete Helper {
   (#x) -> (String)
 
   @type getType<#x> (#x) -> (String)
+  @type getType2<#x> (optional #x) -> (String)
 }
 
 define Helper {
@@ -59,6 +70,10 @@ define Helper {
   }
 
   getType (_) {
+    return typename<#x>().formatted()
+  }
+
+  getType2 (_) {
     return typename<#x>().formatted()
   }
 }
@@ -117,13 +132,13 @@ define Value {
 }
 
 
-testcase "conversion of optional" {
+testcase "conversion of optional preserves optional" {
   error
-  require "storage modifier"
-  require "type conversion"
+  require "require"
+  require "optional Formatted"
 }
 
 unittest test {
   optional Int value <- empty
-  \ value?Formatted
+  \ value?Formatted.formatted()
 }

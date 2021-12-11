@@ -57,6 +57,7 @@ of this document.
   - [Type Inference](#type-inference)
   - [Other Features](#other-features)
     - [Meta Types](#meta-types)
+    - [Explicit Type Conversion](#explicit-type-conversion)
     - [Runtime Type Reduction](#runtime-type-reduction)
   - [Builtins](#builtins)
     - [Reserved Words](#reserved-words)
@@ -79,7 +80,6 @@ of this document.
   - [Expression Macros](#expression-macros)
 - [Known Language Limitations](#known-language-limitations)
   - [Reference Counting](#reference-counting)
-
 ## Project Status
 
 Zeolite is still evolving in all areas (syntax, build system, etc.), and it
@@ -1384,22 +1384,71 @@ types.
   a specific set of "verified" implementations.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {}
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {
+    print () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
+  }
 
   <b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
     <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-    <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Newspaper</span>)
+    <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Newspaper</span>)
   }
 
   <b>concrete</b> <b><span style='color:#0057ae;'>Magazine</span></b> {
     <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-    <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Magazine</span>)
+    <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Magazine</span>)
   }
 
   <span style='color:#898887;'>// ...</span>
 
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>.</span>new()
-  <span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val &lt;- <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>.</span>new()
+  <span style='color:#0057ae;'>Printable</span> val2 &lt;- val</pre>
+
+#### Explicit Type Conversion
+
+In some situations, you might want to peform an explicit type conversion on a
+`@value`. The syntax for such conversions is _`value`_**`?`**_`Type`_, where
+*`value`* is any `@value` and *`Type`* is any type, including params and
+[meta types](#meta-types).
+
+- With values that have a [union type](#meta-types) (e.g., `[A|B]`), you must
+  use an explicit type conversion when making a function call.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val &lt;- <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>.</span>new()
+
+  <span style='color:#898887;'>// Convert to Printable first.</span>
+  <span style='color:#006e28;'>\</span> val<b>?</b><span style='color:#0057ae;'>Printable</span><span style='color:#644a9b;'>.</span>print()
+
+  <span style='color:#898887;'>// This will cause an error, since print() is ambiguous.</span>
+  <span style='color:#898887;'>// \ val.print()</span></pre>
+
+- Type conversions of function arguments can be used for influencing
+  [type inference](#type-inference).
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+    <span style='color:#644a9b;'>@category</span> call&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; ()
+  }
+
+  <span style='color:#898887;'>// ...</span>
+
+  <i><span style='color:#0057ae;'>Int</span></i> value &lt;- <span style='color:#b08000;'>1</span>
+
+  <span style='color:#898887;'>// #x will be inferred as Formatted rather than as Int here.</span>
+  <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>:</span>call(value<b>?</b><i><span style='color:#0057ae;'>Formatted</span></i>)</pre>
+
+You can also explicitly convert `optional` and `weak` values, although they will
+still retain their original storage modifier.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value &lt;- <span style='color:#b08000;'>1</span>
+
+  <span style='color:#898887;'>// Passed as optional Formatted.</span>
+  <span style='color:#006e28;'>\</span> call(value<span style='color:#644a9b;'>.</span><i><span style='color:#0057ae;'>Formatted</span></i>)
+
+  <span style='color:#898887;'>// Not allowed, since value.Formatted is still optional.</span>
+  <span style='color:#898887;'>// String string &lt;- value.Formatted.formatted()</span></pre>
+
 
 #### Runtime Type Reduction
 
