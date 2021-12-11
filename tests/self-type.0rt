@@ -663,7 +663,7 @@ concrete Type {
 define Type {
   @value call () -> ()
   call () {
-    \ self.Reader<Int>
+    \ self?Reader<Int>
   }
 }
 

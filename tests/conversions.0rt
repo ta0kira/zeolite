@@ -21,19 +21,19 @@ testcase "type conversions" {
 }
 
 unittest toType {
-  \ Testing.checkEquals(Helper.getType(Value.create().Base1),"Base1")
+  \ Testing.checkEquals(Helper.getType(Value.create()?Base1),"Base1")
 }
 
 unittest toAny {
-  \ Testing.checkEquals(Helper.getType(Value.create().any),"any")
+  \ Testing.checkEquals(Helper.getType(Value.create()?any),"any")
 }
 
 unittest toUnion {
-  \ Testing.checkEquals(Helper.getType(Value.create().[Base1|Base2]),"[Base1|Base2]")
+  \ Testing.checkEquals(Helper.getType(Value.create()?[Base1|Base2]),"[Base1|Base2]")
 }
 
 unittest toIntersect {
-  \ Testing.checkEquals(Helper.getType(Value.create().[Base1&Base2]),"[Base1&Base2]")
+  \ Testing.checkEquals(Helper.getType(Value.create()?[Base1&Base2]),"[Base1&Base2]")
 }
 
 unittest toParam {
@@ -42,7 +42,7 @@ unittest toParam {
 
 unittest convertedCall {
   Value value <- Value.create()
-  \ value.Base1.call()
+  \ value?Base1.call()
 }
 
 concrete Helper {
@@ -55,7 +55,7 @@ concrete Helper {
 
 define Helper {
   toParam (x) {
-    return getType(x.#y)
+    return getType(x?#y)
   }
 
   getType (_) {
@@ -96,7 +96,7 @@ testcase "conversion bad type" {
 
 unittest test {
   Value value <- Value.create()
-  \ value.Base
+  \ value?Base
 }
 
 @value interface Base {
@@ -125,5 +125,5 @@ testcase "conversion of optional" {
 
 unittest test {
   optional Int value <- empty
-  \ value.Formatted
+  \ value?Formatted
 }

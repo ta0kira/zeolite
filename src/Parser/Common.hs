@@ -311,7 +311,7 @@ noParamSelf = (<|> return ()) $ do
   compilerErrorM "#self is not allowed here"
 
 operatorSymbol :: TextParser Char
-operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|?")
+operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|")
 
 isKeyword :: TextParser ()
 isKeyword = foldr (<|>) empty $ map try [

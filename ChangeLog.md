@@ -102,6 +102,26 @@
 * **[breaking]** Adds the `Hashed` builtin `@value interface` and implements it
   for `Bool`, `Char`, `Float`, `Int`, and `String`.
 
+* **[breaking]** Replaces `@value` conversion for function calls (e.g.,
+  `foo.Base.call()` to choose `call` from `Base`) with general type conversions
+  using `value?Type` syntax.
+
+  ```text
+  // Explicitly converts foo to Base.
+  \ foo?Base.call()
+  ```
+
+  The primary use-case is still to convert a union or interesection value to a
+  specific type to resolve an ambiguity in function selection. Conversions can
+  also be used to influence type inference in function calls by changing the
+  type of a passed argument.
+
+  ```text
+  // Convert the argument when using type inference.
+  \ call<?>(foo?[Container&ReadAt<#x>])
+  \ call<?>(foo?any)
+  ```
+
 * **[fix]** Fixes checking of `defer` in `in` blocks of `scoped`. Previously, a
   `defer`red variable was only marked as set if the `cleanup` set it, even if
   all paths through the `in` actually set it.
@@ -140,25 +160,6 @@
   intersections on the right side, e.g., `#x allows [Foo&Bar]`.
 
 * **[new]** Implements `LessThan` for `Bool`.
-
-* **[new]** Allows explicit `@value` type conversions. This was previously only
-  allowed for selecting a function to call, e.g., `foo.Base.call()`.
-
-  ```text
-  // Explicitly converts foo to Base.
-  \ call(foo.Base)
-
-  // Any valid type can be used.
-  \ call(foo.[Container&ReadAt<#x>])
-  \ call(foo.any)
-  ```
-
-  There isn't really an intended use-case; this was just added because the
-  syntax `foo.Base.call()` looks like a conversion to `Base`, rather than an
-  explicit scope for `call`.
-
-  One possible use-case is to influence param inference by forcing an argument
-  to be of a specific type.
 
 ### Compiler CLI
 

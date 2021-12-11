@@ -489,7 +489,7 @@ concrete Test {
 
 define Test {
   call (x) {
-    \ x.Formatted.formatted()
+    \ x?Formatted.formatted()
   }
 }
 
@@ -513,6 +513,6 @@ concrete Test {
 
 define Test {
   call (x) {
-    \ x.Formatted.formatted()
+    \ x?Formatted.formatted()
   }
 }

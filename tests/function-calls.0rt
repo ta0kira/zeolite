@@ -51,7 +51,7 @@ testcase "call from union with conversion" {
 
 unittest test {
   [Base|Value] value <- Value.create()
-  \ value.Base.call()
+  \ value?Base.call()
 }
 
 @value interface Base {
@@ -110,7 +110,7 @@ testcase "call from intersect with conversion" {
 
 unittest test {
   [Base1&Base2] value <- Value.create()
-  \ value.Base1.call()
+  \ value?Base1.call()
 }
 
 @value interface Base1 {

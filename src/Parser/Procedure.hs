@@ -685,7 +685,7 @@ instance ParseFromSource (ValueOperation SourceContext) where
       return $ ValueCall [c] f
     conversion = labeled "type conversion" $ do
       c <- getSourceContext
-      valueSymbolGet
+      inferredParam
       t <- sourceParser -- NOTE: Should not need try here.
       return $ TypeConversion [c] t
     selectReturn = labeled "return selection" $ do
