@@ -54,41 +54,6 @@ define HashedSet {
   }
 
   defaultOrder () {
-    return HashedSetOrder<#k>.new(map)
-  }
-}
-
-concrete HashedSetOrder<#k> {
-  refines Order<#k>
-
-  @type new (HashedMap<#k,any>) -> (optional #self)
-}
-
-define HashedSetOrder {
-  @value Order<KeyValue<#k,any>> keyValue
-
-  new (map) {
-    scoped {
-      optional Order<KeyValue<#k,any>> keyValue <- map.defaultOrder()
-    } in if (`present` keyValue) {
-      return #self{ `require` keyValue }
-    } else {
-      return empty
-    }
-  }
-
-  get () {
-    return keyValue.get().getKey()
-  }
-
-  next () {
-    scoped {
-      optional Order<KeyValue<#k,any>> keyValue2 <- keyValue.next()
-    } in if (`present` keyValue2) {
-      keyValue <- `require` keyValue2
-      return self
-    } else {
-      return empty
-    }
+    return MapKeyOrder:new(map.defaultOrder())
   }
 }

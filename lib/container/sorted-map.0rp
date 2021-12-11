@@ -26,9 +26,11 @@ concrete SortedMap<#k,#v> {
   refines Container
   refines DefaultOrder<KeyValue<#k,#v>>
   refines Duplicate
+  refines KeyOrder<#k>
   refines KVExchange<#k,#v>
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
+  refines ValueOrder<#v>
   #k immutable
   #k defines LessThan<#k>
 

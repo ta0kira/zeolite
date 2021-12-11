@@ -1,0 +1,96 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define SimpleKeyValue {
+  $ReadOnly[key,value]$
+
+  refines KeyValue<#k,#v>
+
+  @value #k key
+  @value #v value
+
+  new (key,value) {
+    return SimpleKeyValue<#k,#v>{ key, value }
+  }
+
+  getKey () {
+    return key
+  }
+
+  getValue () {
+    return value
+  }
+}
+
+define MapKeyOrder {
+  refines Order<#k>
+
+  @value Order<KeyValue<#k,any>> order
+
+  new (order) {
+    if (!present(order)) {
+      return empty
+    } else {
+      return MapKeyOrder<#k>{ require(order) }
+    }
+  }
+
+  next () {
+    scoped {
+      optional Order<KeyValue<#k,any>> order2 <- order.next()
+    } in if (present(order2)) {
+      order <- require(order2)
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return order.get().getKey()
+  }
+}
+
+define MapValueOrder {
+  refines Order<#v>
+
+  @value Order<KeyValue<any,#v>> order
+
+  new (order) {
+    if (!present(order)) {
+      return empty
+    } else {
+      return MapValueOrder<#v>{ require(order) }
+    }
+  }
+
+  next () {
+    scoped {
+      optional Order<KeyValue<any,#v>> order2 <- order.next()
+    } in if (present(order2)) {
+      order <- require(order2)
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return order.get().getValue()
+  }
+}

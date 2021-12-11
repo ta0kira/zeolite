@@ -93,6 +93,48 @@ unittest defaultOrderEmpty {
   }
 }
 
+unittest keyOrder {
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the map in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `map.set` i
+  }
+
+  // Validate the traversal order.
+  Int index <- 0
+  traverse (map.keyOrder() -> Int key) {
+    \ Testing.checkEquals(key,index)
+    index <- index+1
+  }
+
+  \ Testing.checkEquals(index,max)
+}
+
+unittest valueOrder {
+  SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the map in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `map.set` i
+  }
+
+  // Validate the traversal order.
+  Int index <- 0
+  traverse (map.valueOrder() -> Int value) {
+    \ Testing.checkEquals((value*hash)%max,index)
+    index <- index+1
+  }
+
+  \ Testing.checkEquals(index,max)
+}
+
 unittest reverseOrder {
   SortedMap<Int,Int> map <- SortedMap<Int,Int>.new()
   Int hash <- 13

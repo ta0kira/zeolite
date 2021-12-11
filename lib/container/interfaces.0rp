@@ -51,6 +51,18 @@ limitations under the License.
   get (#k) -> (optional #v)
 }
 
+// Reading keys from key-value storage.
+@value interface KeyOrder<|#k> {
+  // Returns an iterator for the container's keys.
+  keyOrder () -> (optional Order<#k>)
+}
+
+// Reading values from key-value storage.
+@value interface ValueOrder<|#v> {
+  // Returns an iterator for the container's values.
+  valueOrder () -> (optional Order<#v>)
+}
+
 // Exchanging values in key-value storage.
 //
 // Params:

@@ -54,51 +54,18 @@ define SortedSet {
   }
 
   defaultOrder () {
-    return SortedSetOrder<#k>.wrap(map.defaultOrder())
+    return MapKeyOrder:new(map.defaultOrder())
   }
 
   reverseOrder () {
-    return SortedSetOrder<#k>.wrap(map.reverseOrder())
+    return MapKeyOrder:new(map.reverseOrder())
   }
 
   getForward (k) {
-    return SortedSetOrder<#k>.wrap(map.getForward(k))
+    return MapKeyOrder:new(map.getForward(k))
   }
 
   getReverse (k) {
-    return SortedSetOrder<#k>.wrap(map.getReverse(k))
-  }
-}
-
-concrete SortedSetOrder<#k> {
-  refines Order<#k>
-
-  @type wrap (optional Order<KeyValue<#k,any>>) -> (optional SortedSetOrder<#k>)
-}
-
-define SortedSetOrder {
-  @value Order<KeyValue<#k,any>> order
-
-  wrap (order) {
-    if (!present(order)) {
-      return empty
-    } else {
-      return #self{ require(order) }
-    }
-  }
-
-  next () {
-    scoped {
-      optional Order<KeyValue<#k,any>> order2 <- order.next()
-    } in if (present(order2)) {
-      order <- require(order2)
-      return self
-    } else {
-      return empty
-    }
-  }
-
-  get () {
-    return order.get().getKey()
+    return MapKeyOrder:new(map.getReverse(k))
   }
 }

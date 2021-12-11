@@ -96,6 +96,54 @@ unittest defaultOrderEmpty {
   }
 }
 
+unittest keyOrder {
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the map in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `map.set` i
+  }
+
+  Vector<Bool> visited <- Vector:createSize<Bool>(max)
+
+  // Validate traversal coverage.
+  Int index <- 0
+  traverse (map.keyOrder() -> Int key) {
+    \ Testing.checkFalse(visited.readAt(key))
+    \ visited.writeAt(key,true)
+    index <- index+1
+  }
+
+  \ Testing.checkEquals(index,max)
+}
+
+unittest valueOrder {
+  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the map in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `map.set` i
+  }
+
+  Vector<Bool> visited <- Vector:createSize<Bool>(max)
+
+  // Validate traversal coverage.
+  Int index <- 0
+  traverse (map.valueOrder() -> Int value) {
+    \ Testing.checkFalse(visited.readAt(value))
+    \ visited.writeAt(value,true)
+    index <- index+1
+  }
+
+  \ Testing.checkEquals(index,max)
+}
+
 unittest duplicate {
   HashedMap<Int,Int> map <- HashedMap<Int,Int>.default()
   Int max <- 31

@@ -62,13 +62,13 @@
 
   * **[new]** Adds the `LessThan2` `@value interface` to `lib/util`.
 
-  * **[new]** Adds the `KVExchange` `@value interface` in `lib/container` for
-    key-value operations that read and write in the same call.
+  * **[new]** Adds the `KVExchange`, `KeyOrder`, and `ValueOrder`
+    `@value interface`s in `lib/container` for additional map operations.
 
 * **[new]** New functionality for existing categories:
 
-  * **[new]** Implements the new `KVExchange` interface for `SortedMap` in
-    `lib/container`.
+  * **[new]** Implements the new `KVExchange`, `KeyOrder`, and `ValueOrder`
+    `interface`s for `SortedMap` (previously `SearchTree`) in `lib/container`.
 
   * **[new]** Adds `copyTo` and `duplicateTo` to `OrderH` and `ReadAtH` in
     `lib/util` for general container duplication.
@@ -79,16 +79,14 @@
   * **[new]** Implements `Default` for containers in `lib/container` and
     `lib/math`.
 
-  * **[new]** Implements `Sorting` functions in `lib/container` that use  the
-    new `LessThan2` `interface`.
-
-  * **[new]** Implements the new `KVExchange` interface for `SortedMap` in
-    `lib/container`.
-
   * **[new]** Implements `Default`, `Duplicate`, and `Hashed` for `Void` in
     `lib/util`.
 
-  * **[new]** Implements `Append<Formatted>` for `BasicOutput` in `lib/util`.
+  * **[new]** Implements `Sorting` functions in `lib/container` that use  the
+    new `LessThan2` `interface`.
+
+  * **[new]** Implements `Append<Formatted>` for `BasicOutput` (previously
+    `SimpleOutput`) in `lib/util`.
 
   * **[new]** Adds `permuteFromWeight` to `Randomize` in `lib/math`.
 
@@ -101,13 +99,35 @@
 * **[breaking]** Makes the `Duplicate` `@value interface` from `lib/util` a
   builtin and implements it for `Bool`, `Char`, `Float`, `Int`, and `String`.
 
-* **[breaking]** Adds the `Hashed` `@value interface`.
+* **[breaking]** Adds the `Hashed` builtin `@value interface` and implements it
+  for `Bool`, `Char`, `Float`, `Int`, and `String`.
 
-* **[fix]** Fixes checking of `defer` in `scoped` blocks.
+* **[fix]** Fixes checking of `defer` in `in` blocks of `scoped`. Previously, a
+  `defer`red variable was only marked as set if the `cleanup` set it, even if
+  all paths through the `in` actually set it.
 
-* **[fix]** Fixes bug in type checking conversions to a parent
-  `@value interface` when the `refines` contains `#self`, e.g.,
-  `refines Order<#self>`.
+  ```text
+  Int value <- defer
+  scoped {
+    // ...
+  } in if (true) {
+    value <- 1
+  } else {
+    value <- 2
+  }
+  // Previously, value appeared to be unintialized here.
+  \ foo(value)
+  ```
+
+* **[fix]** Fixes a bug in type checking of conversions to a parent
+  `@value interface` when the `refines` contains `#self`.
+
+  ```text
+  concrete Foo {
+    // Previously, there would have been an error converting Foo -> Bar<Foo>.
+    refines Bar<#self>
+  }
+  ```
 
 * **[fix]** Fixes bug in validation of internal `@category` functions with a
   param that has the same name as a category param, where the `@category`
@@ -121,15 +141,24 @@
 
 * **[new]** Implements `LessThan` for `Bool`.
 
-* **[new]** Allows explicit `@value` type conversions.
+* **[new]** Allows explicit `@value` type conversions. This was previously only
+  allowed for selecting a function to call, e.g., `foo.Base.call()`.
 
   ```text
-  // Explicitly converts foo to Base. This can be useful for type inference.
+  // Explicitly converts foo to Base.
   \ call(foo.Base)
+
+  // Any valid type can be used.
+  \ call(foo.[Container&ReadAt<#x>])
+  \ call(foo.any)
   ```
 
-  This was previously only allowed for selecting a function to call, e.g.,
-  `foo.Base.call()`.
+  There isn't really an intended use-case; this was just added because the
+  syntax `foo.Base.call()` looks like a conversion to `Base`, rather than an
+  explicit scope for `call`.
+
+  One possible use-case is to influence param inference by forcing an argument
+  to be of a specific type.
 
 ### Compiler CLI
 

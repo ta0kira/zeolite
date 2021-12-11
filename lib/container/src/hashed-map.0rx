@@ -36,10 +36,6 @@ define HashedMap {
     return itemCount
   }
 
-  defaultOrder () {
-    return HashedMapOrder<#k,#v>.new(itemCount,table)
-  }
-
   get (k) {
     return table.readAt(getBin(k.hashed())).find(k)
   }
@@ -74,6 +70,18 @@ define HashedMap {
       itemCount <- itemCount+1
       \ maybeResize()
     }
+  }
+
+  defaultOrder () {
+    return HashedMapOrder<#k,#v>.new(itemCount,table)
+  }
+
+  keyOrder () {
+    return MapKeyOrder:new(defaultOrder())
+  }
+
+  valueOrder () {
+    return MapValueOrder:new(defaultOrder())
   }
 
   @value getBin (Int) -> (Int)
@@ -250,7 +258,7 @@ define HashedMapOrder {
   }
 
   get () {
-    return SimpleKeyValue:create(node.getKey(),node.getValue())
+    return SimpleKeyValue:new(node.getKey(),node.getValue())
   }
 
   next () (next) {

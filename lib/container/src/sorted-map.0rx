@@ -72,6 +72,14 @@ define SortedMap {
   getReverse (k) {
     return ReverseTreeOrder:seek(k,map.getRoot())
   }
+
+  keyOrder () {
+    return MapKeyOrder:new(defaultOrder())
+  }
+
+  valueOrder () {
+    return MapValueOrder:new(defaultOrder())
+  }
 }
 
 define ValidatedTree {
