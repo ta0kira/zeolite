@@ -414,6 +414,9 @@ Functions are defined in the category definition. They *do not* need to repeat
 the function declaration; however, they can do so in order to refine the
 argument and return types for internal use.
 
+All function names start with a lowercase letter and contain only letters and
+digits.
+
 The category definition can also declare *additional* functions that are not
 visible externally.
 
@@ -451,9 +454,11 @@ the object against which the function was called.
 (However, see `optional` later on.)
 
 All variable names start with a lowercase letter and contain only letters and
-digits. When a location is needed for assignment (e.g., handling a function
-return, taking a function argument), you can use `_` in place of a variable
-name to ignore the value.
+digits.
+
+When a location is needed for assignment (e.g., handling a function return,
+taking a function argument), you can use `_` in place of a variable name to
+ignore the value.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// Initialize with a literal.</span>
@@ -811,6 +816,9 @@ were enclosed in  `{}`, e.g., `return { x, y }`.)
      }
    }</pre>
 
+3. To return early when using named returns or when the function has no returns,
+   use `return _`. You will get an error if a named return might not be set.
+
 The caller of a function with multiple returns also has a few options:
 
 1. Assign the returns to a set of variables. You can ignore a position by using
@@ -969,7 +977,15 @@ so would just create more opportunity for unnecessary compile-time errors.)
 <b>concrete</b> <b><span style='color:#0057ae;'>List</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   <span style='color:#644a9b;'>@value</span> append (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; ()
   <span style='color:#644a9b;'>@value</span> head () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<span style='color:#898887;'>// Use , to separate multiple parameters that have the same variance.</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>KeyValue</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i>) -&gt; (<b>#self</b>)
+  <span style='color:#644a9b;'>@value</span> key   () -&gt; (<i><span style='color:#0057ae;'>#k</span></i>)
+  <span style='color:#644a9b;'>@value</span> value () -&gt; (<i><span style='color:#0057ae;'>#v</span></i>)
 }</pre>
+
 
 - Specifying parameter variance allows the compiler to automatically convert
   between different types. This is done recursively in terms of parameter
@@ -997,73 +1013,48 @@ so would just create more opportunity for unnecessary compile-time errors.)
   parameters and their values in procedure definitions.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b>concrete</b> <b><span style='color:#0057ae;'>Box</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-    <span style='color:#898887;'>// #x must implement the Formatted builtin @value interface.</span>
-    <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+  <b>concrete</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+    <span style='color:#644a9b;'>@type</span> format&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+      <span style='color:#898887;'>// Ensures that #x -&gt; Formatted. (Like T extends Foo in Java.)</span>
+      <span style='color:#898887;'>// Example: String f &lt;- Helper.format(123)</span>
+      <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+    (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
 
-    <span style='color:#644a9b;'>@type</span> asString (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
+    <span style='color:#644a9b;'>@type</span> get&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+      <span style='color:#898887;'>// Ensures that #x &lt;- String. (Like T super Foo in Java.)</span>
+      <span style='color:#898887;'>// Example: AsBool v &lt;- Helper.get&lt;AsBool&gt;()</span>
+      <i><span style='color:#0057ae;'>#x</span></i> <b>allows</b> <i><span style='color:#0057ae;'>String</span></i>
+    () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+
+    <span style='color:#644a9b;'>@type</span> create&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+      <span style='color:#898887;'>// Ensures that #x defines the Default @type interface.</span>
+      <span style='color:#898887;'>// Example: Int v &lt;- Helper.create&lt;Int&gt;()</span>
+      <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>Default</span></i>
+    () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
   }
 
-  <b>define</b> <b><span style='color:#0057ae;'>Box</span></b> {
-    asString (x) {
-      <span style='color:#898887;'>// The &quot;requires&quot; filter allows you to call Formatted functions.</span>
+  <b>define</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+    format (x) {
+      <span style='color:#898887;'>// #x -&gt; Formatted means x has formatted().</span>
       <b>return</b> x<span style='color:#644a9b;'>.</span>formatted()
+    }
+
+    get () {
+      <span style='color:#898887;'>// #x &lt;- String means we can return a String here.</span>
+      <b>return</b> <span style='color:#bf0303;'>&quot;message&quot;</span>
+    }
+
+    create () {
+      <span style='color:#898887;'>// #x defines Default means #x has default().</span>
+      <b>return</b> <i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>default()
     }
   }</pre>
 
+  Filters on category params must be specified after all `refines`/`defines` and
+  before any function declarations.
+
   **IMPORTANT:** As of compiler version `0.16.0.0`, you can no longer use
   parameter filters in `@value interface`s and `@type interface`s.
-
-- You can call `@type` functions on parameters as if they were regular types.
-  You can only call functions that are implied by a `defines` filter.
-
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-    <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
-    <span style='color:#644a9b;'>@type</span> compare (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
-  }
-
-  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-    compare (x,y) {
-      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(x,y)) {
-        <b>return</b> -<span style='color:#b08000;'>1</span>
-      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(y,x)) {
-        <b>return</b> <span style='color:#b08000;'>1</span>
-      } <b>else</b> {
-        <b>return</b> <span style='color:#b08000;'>0</span>
-      }
-    }
-  }
-
-  <span style='color:#898887;'>// ...</span>
-
-  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>compare(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
-
-- All of the above is also possible with **function parameters**, aside from
-  specifying parameter variance.
-
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-    <span style='color:#644a9b;'>@type</span> compare&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
-      <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
-    (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
-  }
-
-  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-    compare (x,y) {
-      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(x,y)) {
-        <b>return</b> -<span style='color:#b08000;'>1</span>
-      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(y,x)) {
-        <b>return</b> <span style='color:#b08000;'>1</span>
-      } <b>else</b> {
-        <b>return</b> <span style='color:#b08000;'>0</span>
-      }
-    }
-  }
-
-  <span style='color:#898887;'>// ...</span>
-
-  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>.</span>compare&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
 
 ### Using Interfaces
 
@@ -1092,8 +1083,23 @@ has `@type interface`s that declare `@type` functions that must be defined.
   <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
     <b>refines</b> <span style='color:#0057ae;'>Printable</span>
 
+    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<span style='color:#0057ae;'>MyValue</span>)
+
     <span style='color:#898887;'>// The functions of Printable do not need to be declared again, but you can do</span>
     <span style='color:#898887;'>// so to refine the argument and return types.</span>
+  }
+
+  <b>define</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+    <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
+
+    new (value) {
+      <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ value }
+    }
+
+    <span style='color:#898887;'>// Define Printable.print like any other MyValue function.</span>
+    print () {
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>writeNow(value)
+    }
   }</pre>
 
 - `@type interface`s can only be **inherited** by `concrete` categories.
@@ -1102,8 +1108,29 @@ has `@type interface`s that declare `@type` functions that must be defined.
   <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
     <b>defines</b> <span style='color:#0057ae;'>Diffable</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span>
 
+    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<span style='color:#0057ae;'>MyValue</span>)
+
     <span style='color:#898887;'>// The functions of Diffable do not need to be declared again, but you can do</span>
     <span style='color:#898887;'>// so to refine the argument and return types.</span>
+  }
+
+  <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+    <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
+
+    new (value) {
+      <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ value }
+    }
+
+    <span style='color:#898887;'>// Define Diffable.diff like any other MyValue function.</span>
+    diff (x,y) {
+      <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ x<span style='color:#644a9b;'>.</span>get()-y<span style='color:#644a9b;'>.</span>get() }
+    }
+
+    <span style='color:#898887;'>// A getter is needed to access the value outside of the object that owns it.</span>
+    <span style='color:#644a9b;'>@value</span> get () -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
+    get () {
+      <b>return</b> value
+    }
   }</pre>
 
 - You can also specify `refines` and `defines` when *defining* a `concrete`
@@ -1794,10 +1821,22 @@ slightly different, and `unittest` was not available.
   <span style='color:#898887;'>// Use the fail built-in to cause a test failure.</span>
   <b>fail</b>(<span style='color:#bf0303;'>&quot;message&quot;</span>)
 }
+
+
+<b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;compilation tests&quot;</span> {
+  <span style='color:#898887;'>// Use compiles to check only Zeolite compilation, with no C++ compilation or</span>
+  <span style='color:#898887;'>// execution of tests.</span>
+  <span style='color:#04e040;'>compiles</span>
+}
+
+<b>unittest</b> <b><span style='color:#0057ae;'>myTest</span></b> {
+  <span style='color:#898887;'>// unittest is optional in this mode, but can still be used if the tests does</span>
+  <span style='color:#898887;'>// not require any new types.</span>
+}
 </pre>
 
-Unit tests have access to all public symbols in the module. You can run all
-tests for module `myprogram` using `zeolite -t myprogram`.
+Unit tests have access to all public and `$ModuleOnly$` symbols in the module.
+You can run all tests for module `myprogram` using `zeolite -t myprogram`.
 
 Specific things to keep in mind with `testcase`:
 
