@@ -33,19 +33,6 @@ unittest createSize {
   }
 }
 
-unittest duplicateSize {
-  Vector<Int> values <- Vector:duplicateSize(10,10)
-  \ Testing.checkEquals(values.size(),10)
-
-  scoped {
-    Int i <- 0
-  } in while (i < values.size()) {
-    \ Testing.checkEquals(values.readAt(i),10)
-  } update {
-    i <- i+1
-  }
-}
-
 unittest append {
   Vector<Int> values <- Vector<Int>.new()
 
@@ -143,23 +130,6 @@ unittest duplicate {
   \ Testing.checkEquals(copy.size(),1)
   \ Testing.checkEquals(copy.readAt(0),1)
   \ Testing.checkEquals(vector.readAt(1),2)
-}
-
-unittest mutateDuplicatedElement {
-  Vector<Value> values <- Vector:duplicateSize(Value.new(12),10)
-  \ values.readAt(5).set(-12)
-
-  scoped {
-    Int i <- 0
-  } in while (i < values.size()) {
-    if (i == 5) {
-      \ Testing.checkEquals(values.readAt(i).get(),-12)
-    } else {
-      \ Testing.checkEquals(values.readAt(i).get(),12)
-    }
-  } update {
-    i <- i+1
-  }
 }
 
 concrete Value {

@@ -41,9 +41,4 @@ concrete Vector<#x> {
   @category createSize<#y>
     #y defines Default
   (Int) -> (Vector<#y>)
-
-  // Create a pre-sized vector of copied values.
-  @category duplicateSize<#y>
-    #y requires Duplicate
-  (#y,Int) -> (Vector<#y>)
 }

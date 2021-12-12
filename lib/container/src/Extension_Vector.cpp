@@ -52,18 +52,6 @@ struct ExtCategory_Vector : public Category_Vector {
     }
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
-
-  ReturnTuple Call_duplicateSize(const ParamsArgs& params_args) final {
-    TRACE_FUNCTION("Vector:duplicateSize")
-    const S<const TypeInstance> Param_y = params_args.GetParam(0);
-    const BoxedValue& Var_arg1 = (params_args.GetArg(0));
-    const PrimInt Var_arg2 = (params_args.GetArg(1)).AsInt();
-    VectorType values(Var_arg2);
-    for (int i = 0; i < Var_arg2; ++i) {
-      values[i] = TypeValue::Call(Var_arg1, Function_Duplicate_duplicate, PassParamsArgs()).At(0);
-    }
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
-  }
 };
 
 struct ExtType_Vector : public Type_Vector {

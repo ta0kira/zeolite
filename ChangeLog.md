@@ -40,9 +40,6 @@
 
   * **[breaking]** Removes `Vector:copyFrom` since it was too specific.
 
-  * **[new]** Adds `duplicateSize` to `Vector` to construct a `Vector` by
-    duplicating an single value.
-
 * **[breaking]** Removes `set` and `remove` from `AutoBinaryTree`, and adds the
   `swap` function, which can handle both `set` and `remove` operations.
 
