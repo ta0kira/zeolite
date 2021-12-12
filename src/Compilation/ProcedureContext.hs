@@ -267,10 +267,7 @@ instance (Show c, CollectErrorsM m) =>
     (VariableValue c2 s t _) <- ccGetVariable ctx v
     return $ ctx & pcVariables %~ Map.insert n (VariableValue c2 s t (VariableReadOnly c))
   ccSetDeferred ctx v@(UsedVariable c n) = do
-    (VariableValue c2 s t r) <- ccGetVariable ctx v
-    when (s /= LocalScope) $
-      compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c2 ++
-        " cannot be marked as deferred because it is not locally scoped" ++ formatFullContextBrace c
+    (VariableValue c2 _ t r) <- ccGetVariable ctx v
     case r of
          VariableReadOnly c3 -> compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c2 ++
                                   " cannot be marked as deferred " ++ formatFullContextBrace c ++

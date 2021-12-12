@@ -86,11 +86,10 @@ unittest test {
 }
 
 
-testcase "cannot defer @value member" {
+testcase "can defer @value member" {
   error
-  require "defer"
   require "value"
-  require "local"
+  require "initialized"
 }
 
 concrete Type {}
@@ -101,15 +100,15 @@ define Type {
   @value call () -> ()
   call () {
     value <- defer
+    \ value
   }
 }
 
 
-testcase "cannot defer @category member" {
+testcase "can defer @category member" {
   error
-  require "defer"
   require "value"
-  require "local"
+  require "initialized"
 }
 
 concrete Type {}
@@ -120,6 +119,7 @@ define Type {
   @value call () -> ()
   call () {
     value <- defer
+    \ value
   }
 }
 

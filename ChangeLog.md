@@ -166,6 +166,9 @@
 * **[new]** Allows `requires` and `allows` filters to use unions and
   intersections on the right side, e.g., `#x allows [Foo&Bar]`.
 
+* **[new]** Allows `defer` to be used with `@value` and `@category` members.
+  This is primarily because the restriction was somewhat arbitrary.
+
 * **[new]** Implements `LessThan` for `Bool`.
 
 ### Compiler CLI
