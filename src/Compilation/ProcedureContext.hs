@@ -146,9 +146,7 @@ instance (Show c, CollectErrorsM m) =>
                  case t of
                       Just t0 -> replaceSelfInstance self t0
                       Nothing -> return self
-    getFunction t' t' >>= onlyFunc t' where
-      onlyFunc _ [f] = return f
-      onlyFunc t2 fs = collectFirstM $ map (tryMergeFrom fs) fs ++ [multipleMatchError t2 fs]
+    getFunction t' t' where
       multipleMatchError t2 fs = do
         "Multiple matches for function " ++ show n ++ " called on " ++ show t2 ++ formatFullContextBrace c !!>
           mapErrorsM (map show fs)
@@ -167,12 +165,12 @@ instance (Show c, CollectErrorsM m) =>
       getFunction t0 t2 = reduceMergeTree getFromAny getFromAll (getFromSingle t0) t2
       getFromAny fs = do
         let (Just t') = t  -- #self will never be a union.
-        fs2 <- fmap concat (collectAllM fs) <!! "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
+        fs2 <- collectAllM fs <!! "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
         case Map.toList $ Map.fromList $ map (\f -> (sfType f,sfContext f)) fs2 of
              -- For unions, we want the most general rather than the least
              -- general. Since the top level finds the least general, we can
              -- only return one match here.
-             [_] -> fmap (:[]) $ collectFirstM $ map (tryMergeTo fs2) fs2 ++ [multipleMatchError t' fs2]
+             [_] -> collectFirstM $ map (tryMergeTo fs2) fs2 ++ [multipleMatchError t' fs2]
              [] -> compilerErrorM $ "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
              cs -> "Use an explicit conversion to call " ++ show n ++ " for type " ++ show t' ++ formatFullContextBrace c !!>
                mapErrorsM (map (\(t2,c2) -> "Function " ++ show n ++ " in " ++ show t2 ++ formatFullContextBrace c2) cs)
@@ -180,7 +178,8 @@ instance (Show c, CollectErrorsM m) =>
         let (Just t') = t  -- #self will never be an intersection.
         collectFirstM_ fs <!!
           "Function " ++ show n ++ " is not available for type " ++ show t' ++ formatFullContextBrace c
-        fmap concat $ collectAnyM fs
+        fs2 <- collectAnyM fs
+        collectFirstM $ map (tryMergeFrom fs2) fs2 ++ [multipleMatchError t' fs2]
       getFromSingle t0 (JustParamName _ p) = do
         fa <- ccAllFilters ctx
         ff <- case p `Map.lookup` fa of
@@ -191,7 +190,8 @@ instance (Show c, CollectErrorsM m) =>
         let fs = map (getFunction t0) ts ++ map (checkDefine t0) ds
         collectFirstM_ fs <!!
           "Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c
-        fmap concat $ collectAnyM fs
+        fs2 <- collectAnyM fs
+        collectFirstM $ map (tryMergeFrom fs2) fs2 ++ [multipleMatchError p fs2]
       getFromSingle t0 (JustTypeInstance t2)
         -- Same category as the procedure itself.
         | tiName t2 == ctx ^. pcType =
@@ -218,7 +218,7 @@ instance (Show c, CollectErrorsM m) =>
         paired <- processPairs alwaysPair ps1 ps2 <??
           "In external function call at " ++ formatFullContext c
         let assigned = Map.fromList paired
-        uncheckedSubFunction assigned f >>= replaceSelfFunction (fixTypeParams t0) >>= return . (:[])
+        uncheckedSubFunction assigned f >>= replaceSelfFunction (fixTypeParams t0)
       subAndCheckFunction _ t2 _ _ _ =
         compilerErrorM $ "Category " ++ show t2 ++
                          " does not have a type or value function named " ++ show n ++

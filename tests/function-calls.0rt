@@ -272,64 +272,149 @@ unittest test {
 }
 
 
-testcase "call from intersect" {
-  success
+testcase "call from intersect failed merge" {
+  error
+  require "\[Base<AsBool>&Base<Formatted>\]"
+  require "get"
+  require "[Mm]ultiple"
 }
 
 unittest test {
-  [Base1&Base2] value <- Value.create()
-  \ value.call()
+  [Base<AsBool>&Base<Formatted>] value <- Value1.create()
+  \ value.get()
 }
 
-@value interface Base1 {
-  call () -> ()
+@value interface Base<|#x> {
+  get () -> (#x)
 }
 
-@value interface Base2 {}
-
-concrete Value {
-  refines Base1
-  refines Base2
-
-  @type create () -> (Value)
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
 }
 
-define Value {
-  call () {}
+define Value1 {
+  get () {
+    return 1
+  }
 
   create () {
-    return Value{}
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
   }
 }
 
 
-testcase "call from intersect with conversion" {
+testcase "call from intersect bad function name" {
+  error
+  require "\[AsBool&Formatted\]"
+  require "asFloat"
+}
+
+unittest test {
+  [AsBool&Formatted] value <- 1
+  \ value.asFloat()
+}
+
+
+testcase "call from intersect automatic merge" {
   success
 }
 
 unittest test {
-  [Base1&Base2] value <- Value.create()
-  \ value?Base1.call()
+  [Base<Int>&Base<Formatted>] value <- Value1.create()
+  \ Testing.checkEquals(value.get(),1)
 }
 
-@value interface Base1 {
-  call () -> ()
+@value interface Base<|#x> {
+  get () -> (#x)
 }
 
-@value interface Base2 {}
-
-concrete Value {
-  refines Base1
-  refines Base2
-
-  @type create () -> (Value)
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
 }
 
-define Value {
-  call () {}
+define Value1 {
+  get () {
+    return 1
+  }
 
   create () {
-    return Value{}
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
+  }
+}
+
+
+testcase "call from intersect explicit conversion" {
+  success
+}
+
+unittest test {
+  [Base<AsBool>&Base<Formatted>] value <- Value1.create()
+  \ Testing.checkEquals(value?Base<Formatted>.get().formatted(),"1")
+}
+
+@value interface Base<|#x> {
+  get () -> (#x)
+}
+
+concrete Value1 {
+  refines Base<Int>
+  @type create () -> (Value1)
+}
+
+define Value1 {
+  get () {
+    return 1
+  }
+
+  create () {
+    return Value1{ }
+  }
+}
+
+concrete Value2 {
+  refines Base<String>
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  get () {
+    return "message"
+  }
+
+  create () {
+    return Value2{ }
   }
 }
 
@@ -385,6 +470,7 @@ define Test {
 }
 
 concrete Test {}
+
 
 
 testcase "call from param value" {
@@ -701,28 +787,6 @@ define Test {
 }
 
 
-testcase "multiple mergeable @value functions match from intersection" {
-  compiles
-}
-
-@value interface Type1 {
-  execute (Int) -> ()
-}
-
-@value interface Type2 {
-  execute (Formatted) -> ()
-}
-
-concrete Test {}
-
-define Test {
-  @type test ([Type1&Type2]) -> ()
-  test (x) {
-    \ x.execute("message")
-  }
-}
-
-
 testcase "multiple mergeable @type functions match from filters" {
   compiles
 }
@@ -769,30 +833,6 @@ define Test {
     #x requires Type1
     #x requires Type2
   (#x) -> ()
-  test (x) {
-    \ x.execute()
-  }
-}
-
-
-testcase "multiple unmergeable @value functions match from intersection" {
-  error
-  require "[Mm]ultiple"
-  require "execute"
-}
-
-@value interface Type1 {
-  execute () -> (Int)
-}
-
-@value interface Type2 {
-  execute () -> (String)
-}
-
-concrete Test {}
-
-define Test {
-  @type test ([Type1&Type2]) -> ()
   test (x) {
     \ x.execute()
   }
