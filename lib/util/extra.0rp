@@ -32,6 +32,21 @@ concrete Void {
   refines Hashed
 }
 
+// A container that is always empty.
+//
+// Notes:
+// - Get the AlwaysEmpty value using AlwaysEmpty.default().
+// - readAt and writeAt will always fail, but most use-cases will check the size
+//   before calling either.
+concrete AlwaysEmpty {
+  immutable
+  defines Default
+  refines Container
+  refines Duplicate
+  refines ReadAt<all>
+  refines WriteAt<any>
+}
+
 // Contains either a value or an error message.
 //
 // Params:

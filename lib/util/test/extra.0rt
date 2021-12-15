@@ -136,3 +136,41 @@ unittest equals {
 unittest hashed {
   \ Testing.checkEquals(Void.default().duplicate().hashed(),Void.default().hashed())
 }
+
+
+testcase "AlwaysEmpty tests" {
+  success
+}
+
+unittest conversions {
+  ReadAt<Int>  read  <- AlwaysEmpty.default()
+  WriteAt<Int> write <- AlwaysEmpty.default()
+}
+
+unittest size {
+  \ Testing.checkEquals(AlwaysEmpty.default().size(),0)
+}
+
+unittest duplicate {
+  \ Testing.checkEquals(AlwaysEmpty.default().duplicate().size(),0)
+}
+
+
+testcase "AlwaysEmpty.readAt fails" {
+  crash
+  require "empty"
+}
+
+unittest readAt {
+  \ AlwaysEmpty.default().readAt(0)
+}
+
+
+testcase "AlwaysEmpty.writeAt fails" {
+  crash
+  require "empty"
+}
+
+unittest readAt {
+  \ AlwaysEmpty.default().writeAt(0,123)
+}

@@ -1,6 +1,10 @@
 # Revision history for zeolite-lang
 
-## 0.22.0.1  -- ????-??-??
+## 0.22.1.0  -- ????-??-??
+
+### Libraries
+
+* **[new]** Adds the `AlwaysEmpty` empty container to `lib/util`.
 
 ### Compiler CLI
 

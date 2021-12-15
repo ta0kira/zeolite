@@ -44,6 +44,30 @@ define Void {
   }
 }
 
+define AlwaysEmpty {
+  @category AlwaysEmpty singleton <- AlwaysEmpty{ }
+
+  default () {
+    return singleton
+  }
+
+  size () {
+    return 0
+  }
+
+  duplicate () {
+    return singleton
+  }
+
+  readAt (_) {
+    fail("container is always empty")
+  }
+
+  writeAt (_,_) {
+    fail("container is always empty")
+  }
+}
+
 define ErrorOr {
   @value optional #x maybeValue
   @value optional Formatted maybeError
