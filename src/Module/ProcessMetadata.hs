@@ -18,6 +18,7 @@ limitations under the License.
 
 module Module.ProcessMetadata (
   MetadataMap,
+  createCachedDir,
   createCachePath,
   eraseCachedData,
   findSourceFiles,
@@ -181,6 +182,13 @@ createCachePath p = do
   let f = p </> cachedDataPath
   exists <- errorFromIO $ doesDirectoryExist f
   when (not exists) $ errorFromIO $ createDirectoryIfMissing False f
+
+createCachedDir :: FilePath -> FilePath -> TrackedErrorsIO FilePath
+createCachedDir p d = do
+  createCachePath p
+  let d2 = p </> cachedDataPath </> d
+  errorFromIO $ createDirectoryIfMissing False d2
+  return d2
 
 writeCachedFile :: FilePath -> String -> FilePath -> String -> TrackedErrorsIO ()
 writeCachedFile p ns f c = do

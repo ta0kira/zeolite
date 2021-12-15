@@ -241,7 +241,8 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
           let f2' = p </> f2
           createCachePath (p </> d)
           let ms = [(publicNamespaceMacro,Just $ show ns0),(privateNamespaceMacro,Just $ show ns1)]
-          let command = CompileToObject f2' (getCachedPath (p </> d) (show ns0) "") ms paths e
+          objPath <- createCachedDir (p </> d) "extra"
+          let command = CompileToObject f2' objPath ms paths e
           fmap Just $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing

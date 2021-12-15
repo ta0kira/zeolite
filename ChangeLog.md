@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.22.0.1  -- ????-??-??
+
+### Compiler CLI
+
+* **[fix]** Fixes bug where `extra_files` listed in `.zeolite-module` would fail
+  to compile if the module contained no public categories.
+
 ## 0.22.0.0  -- 2021-12-11
 
 ### Libraries
