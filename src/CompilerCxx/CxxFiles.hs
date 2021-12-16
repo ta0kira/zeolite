@@ -97,10 +97,10 @@ generateNativeInterface testing ns t = do
   return (dec:def)
 
 generateStreamlinedExtension :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> Set.Set Namespace -> AnyCategory c -> m [CxxOutput]
-generateStreamlinedExtension testing ns t = do
+  FileContext c -> AnyCategory c -> [ValueRefine c] -> [ValueDefine c] -> m [CxxOutput]
+generateStreamlinedExtension (FileContext testing tm ns _) t rs ds = do
   dec <- compileCategoryDeclaration testing ns t
-  def <- generateCategoryDefinition testing (StreamlinedExtension t ns)
+  def <- generateCategoryDefinition testing (StreamlinedExtension (getCategoryName t) tm ns rs ds)
   return (dec:def)
 
 generateVerboseExtension :: (Ord c, Show c, CollectErrorsM m) =>
@@ -170,8 +170,11 @@ data CategoryDefinition c =
     ncExprMap :: ExprMap c
   } |
   StreamlinedExtension {
-    seCategory :: AnyCategory c,
-    ncNamespaces :: Set.Set Namespace
+    seType :: CategoryName,
+    seCategories :: CategoryMap c,
+    seNamespaces :: Set.Set Namespace,
+    seRefines :: [ValueRefine c],
+    seDefines :: [ValueDefine c]
   } |
   StreamlinedTemplate {
     stCategory :: AnyCategory c,
@@ -204,47 +207,60 @@ generateCategoryDefinition testing = common where
                          req'
                          traces
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
-  common (StreamlinedExtension t ns) = sequence [streamlinedHeader,streamlinedSource] where
-    streamlinedHeader = do
-      let filename = headerStreamlined (getCategoryName t)
-      let maybeValue = if hasPrimitiveValue (getCategoryName t)
-                          then []
-                          else [defineAbstractValue t]
-      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
-          defineAbstractCategory t,
-          return $ declareInternalType t (length $ getCategoryParams t),
-          defineAbstractType t
-        ] ++ maybeValue ++ [
-          declareAbstractGetters t
-        ]
-      return $ CxxOutput (Just $ getCategoryName t)
-                         filename
-                         (getCategoryNamespace t)
-                         (getCategoryNamespace t `Set.insert` ns)
-                         req
-                         traces
-                         (headerGuard (getCategoryName t) $ allowTestsOnly $ addTemplateIncludes $ addCategoryHeader t $ addIncludes req out)
-    streamlinedSource = do
-      let filename = sourceStreamlined (getCategoryName t)
-      let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
-      let maybeValue = if hasPrimitiveValue (getCategoryName t)
-                          then []
-                          else [defineValueOverrides t (getCategoryFunctions t)]
-      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
-          defineFunctions t cf tf vf,
-          defineCategoryOverrides t (getCategoryFunctions t),
-          defineTypeOverrides     t (getCategoryFunctions t)
-        ] ++ maybeValue ++ [
-          defineExternalGetters t
-        ]
-      let req' = Set.unions [req,getCategoryMentions t,integratedCategoryDeps]
-      return $ CxxOutput (Just $ getCategoryName t)
-                         filename
-                         (getCategoryNamespace t)
-                         (getCategoryNamespace t `Set.insert` ns)
-                         req'
-                         traces
-                         (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
+  common (StreamlinedExtension n ta ns rs ds) = do
+    ta' <- mergeInternalInheritance ta defined
+    (_,t) <- getConcreteCategory ta' ([],n)
+    sequence [streamlinedHeader t,streamlinedSource t] where
+      defined = DefinedCategory {
+          dcContext = [],
+          dcPragmas = [],
+          dcName = n,
+          dcRefines = rs,
+          dcDefines = ds,
+          dcMembers = [],
+          dcProcedures = [],
+          dcFunctions = []
+        }
+      streamlinedHeader t = do
+        let filename = headerStreamlined (n)
+        let maybeValue = if hasPrimitiveValue (n)
+                            then []
+                            else [defineAbstractValue t]
+        (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
+            defineAbstractCategory t,
+            return $ declareInternalType t (length $ getCategoryParams t),
+            defineAbstractType t
+          ] ++ maybeValue ++ [
+            declareAbstractGetters t
+          ]
+        return $ CxxOutput (Just $ n)
+                           filename
+                           (getCategoryNamespace t)
+                           (getCategoryNamespace t `Set.insert` ns)
+                           req
+                           traces
+                           (headerGuard (n) $ allowTestsOnly $ addTemplateIncludes $ addCategoryHeader t $ addIncludes req out)
+      streamlinedSource t = do
+        let filename = sourceStreamlined (n)
+        let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
+        let maybeValue = if hasPrimitiveValue (n)
+                            then []
+                            else [defineValueOverrides t (getCategoryFunctions t)]
+        (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
+            defineFunctions t cf tf vf,
+            defineCategoryOverrides t (getCategoryFunctions t),
+            defineTypeOverrides     t (getCategoryFunctions t)
+          ] ++ maybeValue ++ [
+            defineExternalGetters t
+          ]
+        let req' = Set.unions [req,getCategoryMentions t,integratedCategoryDeps]
+        return $ CxxOutput (Just $ n)
+                           filename
+                           (getCategoryNamespace t)
+                           (getCategoryNamespace t `Set.insert` ns)
+                           req'
+                           traces
+                           (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
   common (StreamlinedTemplate t tm) = fmap (:[]) streamlinedTemplate where
     streamlinedTemplate = do
       [cp,tp,vp] <- getProcedureScopes tm Map.empty defined
