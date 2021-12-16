@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -213,4 +213,53 @@ define Value {
   get () {
     return value
   }
+}
+
+
+testcase "internal inheritance wrong interface type" {
+  error
+  require "Base"
+  require "type interface"
+}
+
+@value interface Base {}
+
+concrete Type {}
+
+define Type {
+  defines Base
+}
+
+
+testcase "internal inheritance bad refines variance" {
+  error
+  require "#x.+invariant"
+  exclude "call"
+}
+
+@value interface Base<#x> {
+  call (#x) -> ()
+}
+
+concrete Type<|#x> {}
+
+define Type {
+  refines Base<#x>
+}
+
+
+testcase "internal inheritance bad defines variance" {
+  error
+  require "#x.+invariant"
+  exclude "call"
+}
+
+@type interface Base<#x> {
+  call (#x) -> ()
+}
+
+concrete Type<|#x> {}
+
+define Type {
+  defines Base<#x>
 }

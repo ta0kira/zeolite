@@ -2,6 +2,11 @@
 
 ## 0.22.1.0  -- ????-??-??
 
+### Language
+
+* **[fix]** Fixes checking of parameter variances in the context of internal
+  inheritance.
+
 ### Libraries
 
 * **[new]** Adds the `AlwaysEmpty` empty container to `lib/util`.

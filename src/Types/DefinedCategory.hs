@@ -39,11 +39,13 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.Positional
 import Types.Function
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
+import Types.Variance
 
 
 data DefinedCategory c =
@@ -231,6 +233,9 @@ mergeInternalInheritance tm d = do
   noDuplicateRefines [] n rs'
   ds' <- mergeDefines r fm (ds++ds2)
   noDuplicateDefines [] n ds'
+  let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
+  mapCompilerM_ (checkRefinesVariance r vm) rs2
+  mapCompilerM_ (checkDefinesVariance r vm) ds2
   pg2 <- fmap concat $ mapCompilerM getRefinesPragmas rs2
   pg3 <- fmap concat $ mapCompilerM getDefinesPragmas ds2
   let fs2 = mergeInternalFunctions fs (dcFunctions d)
@@ -262,6 +267,12 @@ mergeInternalInheritance tm d = do
                sfFilters = sfFilters f,
                sfMerges = sfMerges f ++ [f2]
              }) fm
+    checkRefinesVariance r vm (ValueRefine c t) =
+      validateInstanceVariance r vm Covariant (singleType $ JustTypeInstance t) <??
+        "In " ++ show t ++ formatFullContextBrace c
+    checkDefinesVariance r vm (ValueDefine c t) =
+      validateDefinesVariance r vm Covariant t <??
+        "In " ++ show t ++ formatFullContextBrace c
 
 replaceSelfMember :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> DefinedMember c -> m (DefinedMember c)
