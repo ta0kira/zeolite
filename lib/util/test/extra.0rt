@@ -155,6 +155,12 @@ unittest duplicate {
   \ Testing.checkEquals(AlwaysEmpty.default().duplicate().size(),0)
 }
 
+unittest defaultOrder {
+  traverse (AlwaysEmpty.default().defaultOrder() -> _) {
+    fail("expected empty")
+  }
+}
+
 
 testcase "AlwaysEmpty.readAt fails" {
   crash

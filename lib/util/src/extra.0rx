@@ -59,6 +59,10 @@ define AlwaysEmpty {
     return singleton
   }
 
+  defaultOrder () {
+    return empty
+  }
+
   readAt (_) {
     fail("container is always empty")
   }

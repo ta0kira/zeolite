@@ -42,6 +42,7 @@ concrete AlwaysEmpty {
   immutable
   defines Default
   refines Container
+  refines DefaultOrder<all>
   refines Duplicate
   refines ReadAt<all>
   refines WriteAt<any>
