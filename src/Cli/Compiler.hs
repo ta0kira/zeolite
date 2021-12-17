@@ -315,8 +315,8 @@ createModuleTemplates resolver p d ds cm deps1 deps2 = do
   mapCompilerM_ writeTemplate ts where
     generate testing tm n = do
       (_,t) <- getConcreteCategory tm ([],n)
-      let (CategorySpec _ rs2 ds2) = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
-      generateStreamlinedTemplate testing tm t rs2 ds2
+      let spec = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
+      generateStreamlinedTemplate testing tm t spec
     writeTemplate (CxxOutput _ n _ _ _ _ content) = do
       let n' = p </> d </> n
       exists <- errorFromIO $ doesFileExist n'

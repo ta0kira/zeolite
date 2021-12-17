@@ -17,7 +17,6 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE Safe #-}
 
 module CompilerCxx.CxxFiles (
   CxxOutput(..),
@@ -54,6 +53,7 @@ import CompilerCxx.CategoryContext
 import CompilerCxx.Code
 import CompilerCxx.Naming
 import CompilerCxx.Procedure
+import Module.CompileMetadata (CategorySpec(..))
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Procedure
@@ -97,10 +97,10 @@ generateNativeInterface testing ns t = do
   return (dec:def)
 
 generateStreamlinedExtension :: (Ord c, Show c, CollectErrorsM m) =>
-  FileContext c -> AnyCategory c -> [ValueRefine c] -> [ValueDefine c] -> m [CxxOutput]
-generateStreamlinedExtension (FileContext testing tm ns _) t rs ds = do
+  FileContext c -> AnyCategory c -> CategorySpec c -> m [CxxOutput]
+generateStreamlinedExtension (FileContext testing tm ns _) t spec = do
   dec <- compileCategoryDeclaration testing ns t
-  def <- generateCategoryDefinition testing (StreamlinedExtension (getCategoryName t) tm ns rs ds)
+  def <- generateCategoryDefinition testing (StreamlinedExtension (getCategoryName t) tm ns spec)
   return (dec:def)
 
 generateVerboseExtension :: (Ord c, Show c, CollectErrorsM m) =>
@@ -109,9 +109,9 @@ generateVerboseExtension testing t =
   fmap (:[]) $ compileCategoryDeclaration testing Set.empty t
 
 generateStreamlinedTemplate :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> CategoryMap c -> AnyCategory c -> [ValueRefine c] -> [ValueDefine c] -> m [CxxOutput]
-generateStreamlinedTemplate testing tm t rs ds =
-  generateCategoryDefinition testing (StreamlinedTemplate (getCategoryName t) tm rs ds)
+  Bool -> CategoryMap c -> AnyCategory c -> CategorySpec c -> m [CxxOutput]
+generateStreamlinedTemplate testing tm t spec =
+  generateCategoryDefinition testing (StreamlinedTemplate (getCategoryName t) tm spec)
 
 compileCategoryDeclaration :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
@@ -173,14 +173,12 @@ data CategoryDefinition c =
     seType :: CategoryName,
     seCategories :: CategoryMap c,
     seNamespaces :: Set.Set Namespace,
-    seRefines :: [ValueRefine c],
-    seDefines :: [ValueDefine c]
+    scSpec :: CategorySpec c
   } |
   StreamlinedTemplate {
     stName :: CategoryName,
     stCategories :: CategoryMap c,
-    scRefines :: [ValueRefine c],
-    scDefines :: [ValueDefine c]
+    scSpec :: CategorySpec c
   }
 
 generateCategoryDefinition :: (Ord c, Show c, CollectErrorsM m) =>
@@ -209,12 +207,12 @@ generateCategoryDefinition testing = common where
                          req'
                          traces
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
-  common (StreamlinedExtension n ta ns rs ds) = do
+  common (StreamlinedExtension n ta ns (CategorySpec c rs ds)) = do
     ta' <- mergeInternalInheritance ta defined
     (_,t) <- getConcreteCategory ta' ([],n)
     sequence [streamlinedHeader t,streamlinedSource t] where
       defined = DefinedCategory {
-          dcContext = [],
+          dcContext = c,
           dcPragmas = [],
           dcName = n,
           dcRefines = rs,
@@ -263,7 +261,7 @@ generateCategoryDefinition testing = common where
                            req'
                            traces
                            (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
-  common (StreamlinedTemplate n tm rs ds) = fmap (:[]) streamlinedTemplate where
+  common (StreamlinedTemplate n tm (CategorySpec c rs ds)) = fmap (:[]) streamlinedTemplate where
     streamlinedTemplate = do
       tm' <- mergeInternalInheritance tm defined0
       (_,t) <- getConcreteCategory tm' ([],n)
@@ -294,7 +292,7 @@ generateCategoryDefinition testing = common where
                          (addTemplateIncludes $ addStreamlinedHeader t $ addIncludes req' out)
     filename = templateStreamlined n
     defined0 = DefinedCategory {
-        dcContext = [],
+        dcContext = c,
         dcPragmas = [],
         dcName = n,
         dcRefines = rs,

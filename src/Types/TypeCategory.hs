@@ -91,7 +91,7 @@ module Types.TypeCategory (
 
 import Control.Arrow (second)
 import Control.Monad ((>=>),foldM,when)
-import Data.List (group,groupBy,intercalate,nub,nubBy,sort,sortBy)
+import Data.List (group,intercalate,nub,nubBy,sort)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -779,14 +779,14 @@ noDuplicateDefines c n ds = do
 
 noDuplicateCategories :: (Show c, Show a, CollectErrorsM m) =>
   [c] -> CategoryName -> [(CategoryName,a)] -> m ()
-noDuplicateCategories c n ns =
-  mapCompilerM_ checkCount $ groupBy (\x y -> fst x == fst y) $
-                               sortBy (\x y -> fst x `compare` fst y) ns where
-    checkCount xa@(x:_:_) =
-      compilerErrorM $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
-                       " times in " ++ show n ++ formatFullContextBrace c ++ " :\n---\n" ++
-                       intercalate "\n---\n" (map (show . snd) xa)
-    checkCount _ = return ()
+noDuplicateCategories c n ns = do
+  let byName = Map.fromListWith (++) $ map (second (:[])) ns
+  mapCompilerM_ checkCount $ Map.toList byName where
+    checkCount (_,[_]) = return ()
+    checkCount (n2,xs) =
+      compilerErrorM $ show n2 ++ " occurs " ++ show (length xs) ++
+                       " times in " ++ show n ++ formatFullContextBrace c ++ ":\n---\n" ++
+                       intercalate "\n---\n" (map show xs)
 
 flattenAllConnections :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]

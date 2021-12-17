@@ -95,8 +95,8 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
       let ctx = FileContext (n `Set.member` testingCats) tm nsPrivate Map.empty
-      let (CategorySpec _ rs ds) = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
-      generateStreamlinedExtension ctx t rs ds
+      let spec = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
+      generateStreamlinedExtension ctx t spec
     compilePrivate tmPrivate tmTesting (PrivateSource ns3 testing cs2 ds) = do
       let tm = if testing
                   then tmTesting

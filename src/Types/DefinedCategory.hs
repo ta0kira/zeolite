@@ -220,7 +220,7 @@ mapMembers readOnly hidden ms = foldr update (return Map.empty) ms where
 -- TODO: Most of this duplicates parts of flattenAllConnections.
 mergeInternalInheritance :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> DefinedCategory c -> m (CategoryMap c)
-mergeInternalInheritance tm d = do
+mergeInternalInheritance tm d = "In definition of " ++ show (dcName d) ++ formatFullContextBrace (dcContext d) ??> do
   let rs2 = dcRefines d
   let ds2 = dcDefines d
   (_,t@(ValueConcrete c ns n pg ps rs ds vs fs)) <- getConcreteCategory tm (dcContext d,dcName d)
@@ -229,10 +229,11 @@ mergeInternalInheritance tm d = do
   let r = CategoryResolver tm'
   fm <- getCategoryFilterMap t
   let pm = getCategoryParamMap t
-  rs' <- mergeRefines r fm (rs++rs2)
-  noDuplicateRefines [] n rs'
+  rs2' <- fmap concat $ mapCompilerM (flattenRefine r) rs2
+  rs' <- mergeRefines r fm (rs++rs2')
+  noDuplicateRefines (dcContext d) n rs'
   ds' <- mergeDefines r fm (ds++ds2)
-  noDuplicateDefines [] n ds'
+  noDuplicateDefines (dcContext d) n ds'
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
   mapCompilerM_ (checkRefinesVariance r vm) rs2
   mapCompilerM_ (checkDefinesVariance r vm) ds2
@@ -273,6 +274,13 @@ mergeInternalInheritance tm d = do
     checkDefinesVariance r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t <??
         "In " ++ show t ++ formatFullContextBrace c
+    flattenRefine r ra@(ValueRefine c t) = do
+      (_,t2) <- getValueCategory tm (c,tiName t)
+      rs <- mapCompilerM (singleRefine r ra) (getCategoryRefines t2)
+      return (ra:rs)
+    singleRefine r (ValueRefine c t) (ValueRefine c2 t2) = do
+      ps <- trRefines r t (tiName t2)
+      return $ ValueRefine (c++c2) (TypeInstance (tiName t2) ps)
 
 replaceSelfMember :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> DefinedMember c -> m (DefinedMember c)
