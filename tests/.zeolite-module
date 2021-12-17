@@ -37,12 +37,14 @@ private_deps: [
   "visibility2"
 ]
 extra_files: [
+  // See extension.0rp and extension.0rt.
   category_source {
     source: "tests/Extension_Extension.cpp"
     categories: [Extension]
   }
 ]
 extension_specs: [
+  // See extension.0rp and extension.0rt.
   category {
     name: Extension
     refines: [Formatted]
