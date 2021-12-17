@@ -159,6 +159,7 @@ hugeModuleConfig = ModuleConfig {
         osSource = "extra2.cpp"
       }
     ],
+    mcCategories = [],
     mcExtraPaths = [
       "extra1",
       "extra2"
@@ -309,6 +310,7 @@ tests = [
       mcPublicDeps = [],
       mcPrivateDeps = [],
       mcExtraFiles = [],
+      mcCategories = [],
       mcExtraPaths = [],
       mcMode = CompileIncremental {
         ciLinkFlags = []

@@ -66,6 +66,7 @@ data ModuleSpec =
     msPrivateFiles :: [FilePath],
     msTestFiles :: [FilePath],
     msExtraFiles :: [ExtraSource],
+    msCategories :: [(CategoryName,CategorySpec SourceContext)],
     msExtraPaths :: [FilePath],
     msMode :: CompileMode,
     msForce :: ForceMode
@@ -82,7 +83,7 @@ data LoadedTests =
   deriving (Show)
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> TrackedErrorsIO ()
-compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) = do
+compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m f) = do
   as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
@@ -109,14 +110,15 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let extensions = concat $ map getSourceCategories es
-  (cs,private) <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
-  let cm = createLanguageModule extensions em cs
-  let cs2 = filter (not . hasCodeVisibility FromDependency) cs
-  let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
-  let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
-  let dc = map (getCategoryName . wvData) $ filter (hasCodeVisibility FromDependency) $ filter (not . hasCodeVisibility ModuleOnly) cs
+  (cs2,private) <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
+  let cm = createLanguageModule extensions em cs2
+  let cs2' = filter (not . hasCodeVisibility FromDependency) cs2
+  let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2'
+  let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2'
+  let dc = map (getCategoryName . wvData) $ filter (hasCodeVisibility FromDependency) $ filter (not . hasCodeVisibility ModuleOnly) cs2
   xa <- mapCompilerM (loadPrivateSource resolver compilerHash p) xs
-  fs <- compileLanguageModule cm xa
+  cs' <- foldM includeSpec Map.empty cs
+  fs <- compileLanguageModule cm cs' xa
   mf <- maybeCreateMain cm xa m
   eraseCachedData (p </> d)
   pps <- fmap (zip ps) $ mapCompilerM (errorFromIO . canonicalizePath . (p</>)) ps
@@ -195,6 +197,13 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
   let traces = Set.unions $ map coPossibleTraces $ hxx ++ other
   writePossibleTraces (p </> d) traces where
     ep' = fixPaths $ map (p </>) ep
+    includeSpec cm (n,cc) = do
+      case n `Map.lookup` cm of
+           Just cc2 -> compilerErrorM $
+             "Internal specs for category " ++ show n ++ formatFullContextBrace (csContext cc) ++
+             " already defined at " ++ formatFullContextBrace (csContext cc2)
+           Nothing -> return ()
+      return $ Map.insert n cc cm
     writeOutputFile paths ca@(CxxOutput _ f2 ns _ _ _ content) = do
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
       writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
@@ -209,13 +218,13 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
            o2 <- runCxxCommand backend command
            return $ ([o2],ca)
          else return ([],ca)
-    compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs ds2) = do
+    compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs2 ds2) = do
       f2' <- compileExtraFile False (ns0,ns1) paths f2
       case f2' of
            Nothing -> return []
-           Just o  -> return $ map (\c -> Left $ ([o],fakeCxx c)) cs
+           Just o  -> return $ map (\c -> Left $ ([o],fakeCxx c)) cs2
       where
-        allDeps = Set.fromList (cs ++ ds2)
+        allDeps = Set.fromList (cs2 ++ ds2)
         fakeCxx c = CxxOutput {
             coCategory = Just c,
             coFilename = "",

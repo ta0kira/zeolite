@@ -295,9 +295,10 @@ instance ConfigFormat ModuleConfig where
     <*> parseOptional "public_deps:"    [] (parseList parseQuoted)
     <*> parseOptional "private_deps:"   [] (parseList parseQuoted)
     <*> parseOptional "extra_files:"    [] (parseList readConfig)
+    <*> toPermutation (return [])
     <*> parseOptional "include_paths:"  [] (parseList parseQuoted)
     <*> parseRequired "mode:"              readConfig
-  writeConfig (ModuleConfig p d ee em is is2 es ep m) = do
+  writeConfig (ModuleConfig p d ee em is is2 es _ ep m) = do
     es' <- fmap concat $ mapCompilerM writeConfig es
     m' <- writeConfig m
     when (not $ null em) $ compilerErrorM "Only empty expression maps are allowed when writing"

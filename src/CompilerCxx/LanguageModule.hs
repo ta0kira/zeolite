@@ -16,8 +16,6 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 module CompilerCxx.LanguageModule (
   LanguageModule(..),
   PrivateSource(..),
@@ -36,6 +34,7 @@ import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.CxxFiles
 import CompilerCxx.Naming
+import Module.CompileMetadata (CategorySpec(..))
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Procedure
@@ -67,10 +66,11 @@ data PrivateSource c =
   }
 
 compileLanguageModule :: (Ord c, Show c, CollectErrorsM m) =>
-  LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
-compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em) xa = do
+  LanguageModule c -> Map.Map CategoryName (CategorySpec c) ->
+  [PrivateSource c] -> m [CxxOutput]
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em) cm xa = do
   let dm = mapDefByName $ concat $ map psDefine xa
-  checkDefined dm extensions $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+  checkDefined dm extensions allExternal $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
   checkSupefluous $ Set.toList $ extensions `Set.difference` ca
   tmPublic  <- foldM includeNewTypes defaultCategories [cs0,cs1]
   tmPrivate <- foldM includeNewTypes tmPublic          [ps0,ps1]
@@ -87,6 +87,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
     nsPublic  = ns0 `Set.union` ns2
     nsPrivate = ns1 `Set.union` nsPublic
     extensions = Set.fromList ss
+    allExternal = Set.unions [extensions,Map.keysSet cm]
     testingCats = Set.fromList $ map getCategoryName ts1
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
     localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ ts1
@@ -94,7 +95,8 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
       let ctx = FileContext (n `Set.member` testingCats) tm nsPrivate Map.empty
-      generateStreamlinedExtension ctx t [] []
+      let (CategorySpec _ rs ds) = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
+      generateStreamlinedExtension ctx t rs ds
     compilePrivate tmPrivate tmTesting (PrivateSource ns3 testing cs2 ds) = do
       let tm = if testing
                   then tmTesting
@@ -107,7 +109,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       checkLocals ds $ Map.keysSet tm'
       when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapDefByName ds
-      checkDefined dm Set.empty $ filter isValueConcrete cs2
+      checkDefined dm Set.empty Set.empty $ filter isValueConcrete cs2
       xxInterfaces <- fmap concat $ mapCompilerM (generateNativeInterface testing nsPrivate) (filter (not . isValueConcrete) cs2)
       xxConcrete   <- fmap concat $ mapCompilerM (generateConcrete cs ctx) ds
       return $ xxInterfaces ++ xxConcrete
@@ -136,20 +138,20 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
              compilerErrorM ("Category " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
                             " was not declared as $TestsOnly$" ++ formatFullContextBrace c)
-    checkDefined dm ext = mapCompilerM_ (checkSingle dm ext)
-    checkSingle dm ext t =
-      case (getCategoryName t `Set.member` ext,getCategoryName t `Map.lookup` dm) of
-           (False,Just [_]) -> return ()
-           (True,Nothing)   -> return ()
-           (True,Just [d]) ->
+    checkDefined dm ext extAll = mapCompilerM_ (checkSingle dm ext extAll)
+    checkSingle dm ext extAll t =
+      case (getCategoryName t `Set.member` ext,getCategoryName t `Set.member` extAll,getCategoryName t `Map.lookup` dm) of
+           (False,False,Just [_]) -> return ()
+           (True,_,Nothing) -> return ()
+           (False,_,Nothing) ->
              compilerErrorM ("Category " ++ show (getCategoryName t) ++
-                           formatFullContextBrace (getCategoryContext t) ++
-                           " was declared external but is also defined at " ++ formatFullContext (dcContext d))
-           (False,Nothing) ->
+                             formatFullContextBrace (getCategoryContext t) ++
+                             " has not been defined or declared external")
+           (_,True,Just [d]) ->
              compilerErrorM ("Category " ++ show (getCategoryName t) ++
-                           formatFullContextBrace (getCategoryContext t) ++
-                           " has not been defined or declared external")
-           (_,Just ds) ->
+                             formatFullContextBrace (getCategoryContext t) ++
+                             " was declared external but is also defined at " ++ formatFullContext (dcContext d))
+           (_,_,Just ds) ->
              ("Category " ++ show (getCategoryName t) ++
               formatFullContextBrace (getCategoryContext t) ++
               " is defined " ++ show (length ds) ++ " times") !!>
@@ -175,7 +177,7 @@ compileTestsModule cm ns args cs ds ts = do
       psCategory = cs,
       psDefine = ds
     }
-  xx <- compileLanguageModule cm [xs]
+  xx <- compileLanguageModule cm Map.empty [xs]
   (main,fs) <- compileTestMain cm args xs ts
   return (xx,main,fs)
 

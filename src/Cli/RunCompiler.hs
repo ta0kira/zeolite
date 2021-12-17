@@ -97,6 +97,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     mcPublicDeps = [],
     mcPrivateDeps = [],
     mcExtraFiles = [],
+    mcCategories = [],
     mcExtraPaths = [],
     mcMode = CompileUnspecified
   }
@@ -112,6 +113,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msPrivateFiles = [f2'],
     msTestFiles = [],
     msExtraFiles = [],
+    msCategories = [],
     msExtraPaths = [],
     msMode = (CompileBinary c fn LinkStatic (absolute </> show c) []),
     msForce = f
@@ -147,7 +149,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     if isError
        then return ([],is,is2)
        else do
-         (ModuleConfig p2 _ ep _ is3 is4 _ _ _) <- rm
+         (ModuleConfig p2 _ ep _ is3 is4  _ _ _ _) <- rm
          return (map (p2 </>) ep,nub $ is ++ is3,nub $ is2 ++ is4)
 
 runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
@@ -167,6 +169,7 @@ runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileS
       mcPublicDeps = as,
       mcPrivateDeps = as2,
       mcExtraFiles = es,
+      mcCategories = [],
       mcExtraPaths = ep,
       mcMode = m
     }
@@ -237,7 +240,7 @@ runRecompileCommon resolver backend f rec p ds = do
       if f < ForceAll && upToDate
          then compilerWarningM $ "Path " ++ d ++ " is up to date"
          else do
-           rm@(ModuleConfig p2 d2 ee _ is is2 es ep m) <- loadRecompile d
+           rm@(ModuleConfig p2 d2 ee _ is is2 es cs ep m) <- loadRecompile d
            let fixed = fixPath (d </> p2)
            (ps,xs,ts) <- findSourceFiles fixed (d2:ee)
            em <- getExprMap d rm
@@ -252,6 +255,7 @@ runRecompileCommon resolver backend f rec p ds = do
              msPrivateFiles = xs,
              msTestFiles = ts,
              msExtraFiles = es,
+             msCategories = cs,
              msExtraPaths = ep,
              msMode = m,
              msForce = f

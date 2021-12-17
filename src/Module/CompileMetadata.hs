@@ -18,6 +18,7 @@ limitations under the License.
 
 module Module.CompileMetadata (
   CategoryIdentifier(..),
+  CategorySpec(..),
   CompileMetadata(..),
   ModuleConfig(..),
   ObjectFile(..),
@@ -32,7 +33,7 @@ import Cli.CompileOptions
 import Cli.Programs (VersionHash)
 import Parser.TextParser (SourceContext)
 import Types.Procedure (Expression,MacroName)
-import Types.TypeCategory (Namespace)
+import Types.TypeCategory
 import Types.TypeInstance (CategoryName)
 
 
@@ -101,6 +102,14 @@ getObjectFiles :: ObjectFile -> [FilePath]
 getObjectFiles (CategoryObjectFile _ _ os) = os
 getObjectFiles (OtherObjectFile o)         = [o]
 
+data CategorySpec c =
+  CategorySpec {
+    csContext :: [c],
+    csRefines :: [ValueRefine c],
+    csDefines :: [ValueDefine c]
+  }
+  deriving (Show)
+
 data ModuleConfig =
   ModuleConfig {
     mcRoot :: FilePath,
@@ -110,13 +119,14 @@ data ModuleConfig =
     mcPublicDeps :: [FilePath],
     mcPrivateDeps :: [FilePath],
     mcExtraFiles :: [ExtraSource],
+    mcCategories :: [(CategoryName,CategorySpec SourceContext)],
     mcExtraPaths :: [FilePath],
     mcMode :: CompileMode
   }
   deriving (Show)
 
 instance Eq ModuleConfig where
-  (ModuleConfig pA dA eeA _ isA is2A esA epA mA) == (ModuleConfig pB dB eeB _ isB is2B esB epB mB) =
+  (ModuleConfig pA dA eeA _ isA is2A esA cA epA mA) == (ModuleConfig pB dB eeB _ isB is2B esB cB epB mB) =
     all id [
         pA == pB,
         eeA == eeB,
@@ -124,6 +134,9 @@ instance Eq ModuleConfig where
         isA == isB,
         is2A == is2B,
         esA == esB,
+        map fst cA == map fst cB,
+        map (map vrType . csRefines . snd) cA == map (map vrType . csRefines . snd) cB,
+        map (map vdType . csDefines . snd) cA == map (map vdType . csDefines . snd) cB,
         epA == epB,
         mA == mB
       ]
