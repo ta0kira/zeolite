@@ -11,6 +11,9 @@
 
 * **[new]** Adds the `AlwaysEmpty` empty container to `lib/util`.
 
+* **[new]** Adds the `Queue<#x>` `@value interface` and the `SimpleQueue<#x>`
+  container to `lib/container`.
+
 ### Compiler CLI
 
 * **[fix]** Fixes bug where `extra_files` listed in `.zeolite-module` would fail

@@ -1,0 +1,71 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define SimpleQueue {
+  @value Int size
+  @value optional ForwardNode<#x> head
+  @value optional ForwardNode<#x> tail
+
+  new () {
+    return #self{ 0, empty, empty }
+  }
+
+  default () {
+    return new()
+  }
+
+  duplicate () {
+    $ReadOnly[size,head]$
+    $Hidden[tail]$
+    scoped {
+      optional ForwardNode<#x> head2, optional ForwardNode<#x> tail2 <-
+        (head `OrderH:copyTo` ForwardNode<#x>.builder()).build()
+    } in return #self{ size, head2, tail2 }
+  }
+
+  append (x) {
+    return push(x)
+  }
+
+  push (x) {
+    scoped {
+      ForwardNode<#x> node <- ForwardNode<#x>.newNode(x)
+    } in if (`present` tail) {
+      \ require(tail).setNext(node)
+      tail <- node
+    } else {
+      head <- (tail <- node)
+    }
+    size <- size+1
+    return self
+  }
+
+  pop () {
+    cleanup {
+      head <- require(head).next()
+      if (! `present` head) {
+        tail <- empty
+      }
+      size <- size-1
+    } in return require(head).get()
+  }
+
+  size () {
+    return size
+  }
+}

@@ -29,6 +29,20 @@ limitations under the License.
   pop () -> (#x)
 }
 
+// Container with queue semantics.
+//
+// Params:
+// - #x: The value type to stack.
+@value interface Queue<#x> {
+  refines Container
+
+  // Pushes a new value and returns self.
+  push (#x) -> (#self)
+
+  // Pops the top value. Crashes if empty. (Check size() before calling.)
+  pop () -> (#x)
+}
+
 // Writing to key-value storage.
 //
 // Params:
