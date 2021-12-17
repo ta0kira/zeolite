@@ -36,4 +36,17 @@ private_deps: [
   "visibility"
   "visibility2"
 ]
+extra_files: [
+  category_source {
+    source: "tests/Extension_Extension.cpp"
+    categories: [Extension]
+  }
+]
+extension_specs: [
+  category {
+    name: Extension
+    refines: [Formatted]
+    defines: [Default]
+  }
+]
 mode: incremental {}

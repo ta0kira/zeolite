@@ -16,6 +16,22 @@
 * **[fix]** Fixes bug where `extra_files` listed in `.zeolite-module` would fail
   to compile if the module contained no public categories.
 
+* **[new]** Allows C++ extensions to specify internal inheritance in
+  `.zeolite-module`. This is necessary if the implementation needs to pass
+  `PARAM_SELF` or `VAR_SELF` as a parent type that is not publicly visible.
+
+  ```text
+  // Assumes that Foo is also mentioned in extra_files:.
+  extension_specs: [
+    category {
+      // For Foo<#x>. Do not include the params here.
+      name: Foo
+      refines: [Bar<#x>]
+      defines: [Baz<#x>]
+    }
+  ]
+  ```
+
 ## 0.22.0.0  -- 2021-12-11
 
 ### Libraries

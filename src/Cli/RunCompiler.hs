@@ -131,7 +131,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
   compileSingle d = do
     compilerHash <- getCompilerHash backend
     d' <- errorFromIO $ canonicalizePath (p </> d)
-    (ep,is',is2') <- maybeUseConfig d'
+    (ep,is',is2',cm) <- maybeUseConfig d'
     as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is'
     as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is2'
     isBase <- isBaseModule resolver d'
@@ -142,15 +142,15 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
                   loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
-    createModuleTemplates resolver path d ep deps1 deps2 <?? "In module \"" ++ d' ++ "\""
+    createModuleTemplates resolver path d ep cm deps1 deps2 <?? "In module \"" ++ d' ++ "\""
   maybeUseConfig d2 = do
     let rm = loadRecompile d2
     isError <- isCompilerErrorM rm
     if isError
-       then return ([],is,is2)
+       then return ([],is,is2,Map.empty)
        else do
-         (ModuleConfig p2 _ ep _ is3 is4  _ _ _ _) <- rm
-         return (map (p2 </>) ep,nub $ is ++ is3,nub $ is2 ++ is4)
+         (ModuleConfig p2 _ ep _ is3 is4  _ cs _ _) <- rm
+         return (map (p2 </>) ep,nub $ is ++ is3,nub $ is2 ++ is4,Map.fromList cs)
 
 runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do

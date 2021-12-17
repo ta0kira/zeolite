@@ -297,8 +297,9 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
     maybeCreateMain _ _ _ = return []
 
 createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath -> [FilePath] ->
-  [CompileMetadata] -> [CompileMetadata] -> TrackedErrorsIO ()
-createModuleTemplates resolver p d ds deps1 deps2 = do
+  Map.Map CategoryName (CategorySpec SourceContext) ->[CompileMetadata] ->
+  [CompileMetadata] -> TrackedErrorsIO ()
+createModuleTemplates resolver p d ds cm deps1 deps2 = do
   (ps,xs,_) <- findSourceFiles p (d:ds)
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
     fmap (createLanguageModule [] Map.empty . fst) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
@@ -314,7 +315,8 @@ createModuleTemplates resolver p d ds deps1 deps2 = do
   mapCompilerM_ writeTemplate ts where
     generate testing tm n = do
       (_,t) <- getConcreteCategory tm ([],n)
-      generateStreamlinedTemplate testing tm t
+      let (CategorySpec _ rs2 ds2) = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
+      generateStreamlinedTemplate testing tm t rs2 ds2
     writeTemplate (CxxOutput _ n _ _ _ _ content) = do
       let n' = p </> d </> n
       exists <- errorFromIO $ doesFileExist n'

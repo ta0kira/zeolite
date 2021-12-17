@@ -23,6 +23,18 @@ include_paths: [
   "extra1"
   "extra2"
 ]
+extension_specs: [
+  category {
+    name: Category1
+    refines: [Base1 Base2]
+    defines: [Base3 Base4]
+  }
+  category {
+    name: Category2
+    refines: [Base1 Base2]
+    defines: [Base3 Base4]
+  }
+]
 path: "special"
 extra_files: [
   category_source {

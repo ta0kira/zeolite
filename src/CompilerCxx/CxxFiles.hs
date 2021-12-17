@@ -109,9 +109,9 @@ generateVerboseExtension testing t =
   fmap (:[]) $ compileCategoryDeclaration testing Set.empty t
 
 generateStreamlinedTemplate :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> CategoryMap c -> AnyCategory c -> m [CxxOutput]
-generateStreamlinedTemplate testing tm t =
-  generateCategoryDefinition testing (StreamlinedTemplate t tm)
+  Bool -> CategoryMap c -> AnyCategory c -> [ValueRefine c] -> [ValueDefine c] -> m [CxxOutput]
+generateStreamlinedTemplate testing tm t rs ds =
+  generateCategoryDefinition testing (StreamlinedTemplate (getCategoryName t) tm rs ds)
 
 compileCategoryDeclaration :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
@@ -177,8 +177,10 @@ data CategoryDefinition c =
     seDefines :: [ValueDefine c]
   } |
   StreamlinedTemplate {
-    stCategory :: AnyCategory c,
-    stCategories :: CategoryMap c
+    stName :: CategoryName,
+    stCategories :: CategoryMap c,
+    scRefines :: [ValueRefine c],
+    scDefines :: [ValueDefine c]
   }
 
 generateCategoryDefinition :: (Ord c, Show c, CollectErrorsM m) =>
@@ -222,8 +224,8 @@ generateCategoryDefinition testing = common where
           dcFunctions = []
         }
       streamlinedHeader t = do
-        let filename = headerStreamlined (n)
-        let maybeValue = if hasPrimitiveValue (n)
+        let filename = headerStreamlined n
+        let maybeValue = if hasPrimitiveValue n
                             then []
                             else [defineAbstractValue t]
         (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
@@ -239,11 +241,11 @@ generateCategoryDefinition testing = common where
                            (getCategoryNamespace t `Set.insert` ns)
                            req
                            traces
-                           (headerGuard (n) $ allowTestsOnly $ addTemplateIncludes $ addCategoryHeader t $ addIncludes req out)
+                           (headerGuard n $ allowTestsOnly $ addTemplateIncludes $ addCategoryHeader t $ addIncludes req out)
       streamlinedSource t = do
-        let filename = sourceStreamlined (n)
+        let filename = sourceStreamlined n
         let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
-        let maybeValue = if hasPrimitiveValue (n)
+        let maybeValue = if hasPrimitiveValue n
                             then []
                             else [defineValueOverrides t (getCategoryFunctions t)]
         (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
@@ -261,9 +263,11 @@ generateCategoryDefinition testing = common where
                            req'
                            traces
                            (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
-  common (StreamlinedTemplate t tm) = fmap (:[]) streamlinedTemplate where
+  common (StreamlinedTemplate n tm rs ds) = fmap (:[]) streamlinedTemplate where
     streamlinedTemplate = do
-      [cp,tp,vp] <- getProcedureScopes tm Map.empty defined
+      tm' <- mergeInternalInheritance tm defined0
+      (_,t) <- getConcreteCategory tm' ([],n)
+      [cp,tp,vp] <- getProcedureScopes tm' Map.empty (defined $ getCategoryFunctions t)
       let maybeGetter = if hasPrimitiveValue (getCategoryName t)
                            then []
                            else [declareCustomValueGetter t]
@@ -288,15 +292,25 @@ generateCategoryDefinition testing = common where
                          req'
                          traces
                          (addTemplateIncludes $ addStreamlinedHeader t $ addIncludes req' out)
-    filename = templateStreamlined (getCategoryName t)
-    defined = DefinedCategory {
+    filename = templateStreamlined n
+    defined0 = DefinedCategory {
         dcContext = [],
         dcPragmas = [],
-        dcName = getCategoryName t,
-        dcRefines = [],
-        dcDefines = [],
+        dcName = n,
+        dcRefines = rs,
+        dcDefines = ds,
         dcMembers = [],
-        dcProcedures = map defaultFail (getCategoryFunctions t),
+        dcProcedures = [],
+        dcFunctions = []
+      }
+    defined fs = DefinedCategory {
+        dcContext = [],
+        dcPragmas = [],
+        dcName = n,
+        dcRefines = rs,
+        dcDefines = ds,
+        dcMembers = [],
+        dcProcedures = map defaultFail fs,
         dcFunctions = []
       }
     defaultFail f = ExecutableProcedure {
@@ -310,9 +324,9 @@ generateCategoryDefinition testing = common where
       }
     createArg = InputValue [] . VariableName . ("arg" ++) . show
     failProcedure f = Procedure [] $ [
-        asLineComment $ "TODO: Implement " ++ functionDebugName (getCategoryName t) f ++ "."
+        asLineComment $ "TODO: Implement " ++ functionDebugName n f ++ "."
       ] ++ map asLineComment (formatFunctionTypes f) ++ [
-        RawFailCall (functionDebugName (getCategoryName t) f ++ " is not implemented (see " ++ filename ++ ")")
+        RawFailCall (functionDebugName n f ++ " is not implemented (see " ++ filename ++ ")")
       ]
     asLineComment = NoValueExpression [] . LineComment
   common (NativeConcrete t d@(DefinedCategory _ _ _ _ _ ms _ _) ta ns em) = fmap (:[]) singleSource where

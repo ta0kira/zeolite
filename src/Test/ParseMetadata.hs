@@ -30,8 +30,8 @@ import Module.ParseMetadata
 import System.FilePath
 import Test.Common
 import Types.Procedure
-import Types.TypeCategory (FunctionName(..),Namespace(..))
-import Types.TypeInstance (CategoryName(..))
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 hugeCompileMetadata :: CompileMetadata  -- testfiles/module-cache.txt
@@ -159,7 +159,30 @@ hugeModuleConfig = ModuleConfig {
         osSource = "extra2.cpp"
       }
     ],
-    mcCategories = [],
+    mcCategories = [
+      (CategoryName "Category1",CategorySpec {
+        csContext = [],
+        csRefines = [
+          ValueRefine [] (TypeInstance (CategoryName "Base1") (Positional [])),
+          ValueRefine [] (TypeInstance (CategoryName "Base2") (Positional []))
+        ],
+        csDefines = [
+          ValueDefine [] (DefinesInstance (CategoryName "Base3") (Positional [])),
+          ValueDefine [] (DefinesInstance (CategoryName "Base4") (Positional []))
+        ]
+      }),
+      (CategoryName "Category2",CategorySpec {
+        csContext = [],
+        csRefines = [
+          ValueRefine [] (TypeInstance (CategoryName "Base1") (Positional [])),
+          ValueRefine [] (TypeInstance (CategoryName "Base2") (Positional []))
+        ],
+        csDefines = [
+          ValueDefine [] (DefinesInstance (CategoryName "Base3") (Positional [])),
+          ValueDefine [] (DefinesInstance (CategoryName "Base4") (Positional []))
+        ]
+      })
+    ],
     mcExtraPaths = [
       "extra1",
       "extra2"

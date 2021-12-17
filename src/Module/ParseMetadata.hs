@@ -16,6 +16,8 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE FlexibleInstances #-}
+
 module Module.ParseMetadata (
   ConfigFormat(..),
   autoReadConfig,
@@ -45,7 +47,7 @@ import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Text.Regex.TDFA
 import Types.Procedure (Expression,MacroName)
-import Types.TypeCategory (FunctionName(..),Namespace(..))
+import Types.TypeCategory
 import Types.TypeInstance (CategoryName(..))
 
 
@@ -288,20 +290,21 @@ instance ConfigFormat CategoryIdentifier where
 
 instance ConfigFormat ModuleConfig where
   readConfig = runPermutation $ ModuleConfig
-    <$> parseOptional "root:"           "" parseQuoted
-    <*> parseRequired "path:"              parseQuoted
-    <*> parseOptional "extra_paths:"    [] (parseList parseQuoted)
-    <*> parseOptional "expression_map:" [] (parseList parseExprMacro)
-    <*> parseOptional "public_deps:"    [] (parseList parseQuoted)
-    <*> parseOptional "private_deps:"   [] (parseList parseQuoted)
-    <*> parseOptional "extra_files:"    [] (parseList readConfig)
-    <*> toPermutation (return [])
-    <*> parseOptional "include_paths:"  [] (parseList parseQuoted)
-    <*> parseRequired "mode:"              readConfig
-  writeConfig (ModuleConfig p d ee em is is2 es _ ep m) = do
+    <$> parseOptional "root:"            "" parseQuoted
+    <*> parseRequired "path:"               parseQuoted
+    <*> parseOptional "extra_paths:"     [] (parseList parseQuoted)
+    <*> parseOptional "expression_map:"  [] (parseList parseExprMacro)
+    <*> parseOptional "public_deps:"     [] (parseList parseQuoted)
+    <*> parseOptional "private_deps:"    [] (parseList parseQuoted)
+    <*> parseOptional "extra_files:"     [] (parseList readConfig)
+    <*> parseOptional "extension_specs:" [] (parseList readConfig)
+    <*> parseOptional "include_paths:"   [] (parseList parseQuoted)
+    <*> parseRequired "mode:"               readConfig
+  writeConfig (ModuleConfig p d ee em is is2 es cs ep m) = do
     es' <- fmap concat $ mapCompilerM writeConfig es
     m' <- writeConfig m
     when (not $ null em) $ compilerErrorM "Only empty expression maps are allowed when writing"
+    cs' <- fmap concat $ mapCompilerM writeConfig cs
     return $ [
         "root: " ++ show p,
         "path: " ++ show d,
@@ -320,6 +323,9 @@ instance ConfigFormat ModuleConfig where
         "]",
         "extra_files: ["
       ] ++ indents es' ++ [
+        "]",
+        "extension_specs: ["
+      ] ++ indents cs' ++ [
         "]",
         "include_paths: ["
       ] ++ indents (map show ep) ++ [
@@ -355,6 +361,38 @@ instance ConfigFormat ExtraSource where
         "}"
       ]
   writeConfig (OtherSource f) = return [show f]
+
+instance ConfigFormat (CategoryName,CategorySpec SourceContext) where
+  readConfig = do
+    c <- getSourceContext
+    sepAfter (string_ "category")
+    structOpen
+    s <- runPermutation $ (\n rs ds -> (n,CategorySpec [c] rs ds))
+      <$> parseRequired "name:"       sourceParser
+      <*> parseOptional "refines:" [] (parseList parseRefine)
+      <*> parseOptional "defines:" [] (parseList parseDefine)
+    structClose
+    return s where
+      parseRefine = do
+        c <- getSourceContext
+        t <- sourceParser
+        return $ ValueRefine [c] t
+      parseDefine = do
+        c <- getSourceContext
+        t <- sourceParser
+        return $ ValueDefine [c] t
+  writeConfig (n,CategorySpec _ rs ds) = do
+    return $ [
+        "category {",
+        indent ("name: " ++ show n),
+        indent "refines: ["
+      ] ++ (indents . indents . map (show . vrType)) rs ++ [
+        indent "]",
+        indent "defines: ["
+      ] ++ (indents . indents . map (show . vdType)) ds ++ [
+        indent "]",
+        "}"
+      ]
 
 instance ConfigFormat CompileMode where
   readConfig = labeled "compile mode" $ binary <|> incremental where

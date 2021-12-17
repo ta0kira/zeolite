@@ -6,7 +6,7 @@
 <language
     name="Zeolite Module"
     section="Configuration"
-    version="1.5"
+    version="1.6"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite Module"
@@ -18,6 +18,7 @@
   <highlighting>
     <list name="structures">
       <item> binary </item>
+      <item> category </item>
       <item> category_source </item>
       <item> expression_macro </item>
       <item> incremental </item>
@@ -35,6 +36,8 @@
       <context name="Sections" attribute="Normal Text" lineEndContext="#stay" >
         <StringDetect attribute="Keyword" context="Categories Start" String="categories:" />
         <StringDetect attribute="Keyword" context="Categories Start" String="requires:" />
+        <StringDetect attribute="Keyword" context="Types Start" String="refines:" />
+        <StringDetect attribute="Keyword" context="Types Start" String="defines:" />
         <StringDetect attribute="Keyword" context="Category" String="category:" />
         <StringDetect attribute="Keyword" context="Expression" String="expression:" />
         <StringDetect attribute="Keyword" context="#stay" String="expression_map:" />
@@ -50,6 +53,7 @@
         <StringDetect attribute="Keyword" context="#stay" String="private_deps:" />
         <StringDetect attribute="Keyword" context="#stay" String="public_deps:" />
         <StringDetect attribute="Keyword" context="#stay" String="extra_paths:" />
+        <StringDetect attribute="Keyword" context="#stay" String="extension_specs:" />
         <StringDetect attribute="Keyword" context="#stay" String="root:" />
         <StringDetect attribute="Keyword" context="#stay" String="source:" />
       </context>
@@ -69,6 +73,20 @@
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
         <RegExpr attribute="Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <DetectChar attribute="Normal Text" context="#pop#pop" char="]" />
+        <RegExpr attribute="Error" context="#stay" String="[^ \]]+" />
+      </context>
+
+      <context name="Types Start" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Normal Text" context="Types" char="[" />
+      </context>
+
+      <context name="Types" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <IncludeRules context="Any Type##Zeolite" />
         <DetectChar attribute="Normal Text" context="#pop#pop" char="]" />
         <RegExpr attribute="Error" context="#stay" String="[^ \]]+" />
       </context>
@@ -106,6 +124,7 @@
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
         <RegExpr attribute="Macro Name" context="#pop" String="\b[A-Z_][A-Z_0-9]*\b" />
+        <RegExpr attribute="Category Name" context="#pop" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <RegExpr attribute="Error" context="#pop" String="[^ \]]+" />
       </context>
 
