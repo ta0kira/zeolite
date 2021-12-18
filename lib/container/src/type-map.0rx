@@ -64,7 +64,7 @@ define TypeMap {
 }
 
 define TypeKey {
-  $ReadOnly[counterMutex,index]$
+  $ReadOnlyExcept[counter]$
 
   @category Mutex counterMutex <- SpinlockMutex.new()
   @category Int   counter      <- 0
@@ -111,7 +111,7 @@ concrete GenericValue<|#x> {
 }
 
 define GenericValue {
-  $ReadOnly[value]$
+  $ReadOnlyExcept[]$
 
   @value #x value
 

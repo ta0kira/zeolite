@@ -41,7 +41,7 @@ define Randomize {
 }
 
 define GenerateConstant {
-  $ReadOnly[constant]$
+  $ReadOnlyExcept[]$
 
   @value Float constant
 
@@ -55,7 +55,7 @@ define GenerateConstant {
 }
 
 define RandomCategorical {
-  $ReadOnly[categorical,random]$
+  $ReadOnlyExcept[]$
 
   @value CategoricalReader<#c> categorical
   @value Generator<Float> random

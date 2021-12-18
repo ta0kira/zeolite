@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define SimpleKeyValue {
-  $ReadOnly[key,value]$
+  $ReadOnlyExcept[]$
 
   refines KeyValue<#k,#v>
 

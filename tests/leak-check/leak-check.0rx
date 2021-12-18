@@ -79,7 +79,7 @@ concrete LastReference {
 }
 
 define LastReference {
-  $ReadOnly[copy,barrier]$
+  $ReadOnlyExcept[]$
 
   refines Routine
 

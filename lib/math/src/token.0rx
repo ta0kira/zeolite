@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Token {
-  $ReadOnly[mutex,toToken]$
+  $ReadOnlyExcept[counter]$
 
   @category Mutex mutex <- SpinlockMutex.new()
   @category HashedMap<String,Token> toToken <- HashedMap<String,Token>.new()

@@ -24,13 +24,7 @@ define TestData {
 
 define TestDataParser {
   // Mark @category members as read-only, to avoid accidental assignment.
-  $ReadOnly[sentenceOrToken,
-            acronymOrAardvark,
-            fileStart,
-            fileEnd,
-            nameTag,
-            descriptionTag,
-            aWordTag]$
+  $ReadOnlyExcept[]$
 
   // Mark @category members as hidden, since they should not be used directly.
   $Hidden[whitespace,

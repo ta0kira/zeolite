@@ -248,7 +248,7 @@ define AutoBinaryTree {
 }
 
 define ForwardTreeOrder {
-  $ReadOnly[node,prev]$
+  $ReadOnlyExcept[]$
 
   @value BinaryTreeNode<#k,#v> node
   @value optional ForwardTreeOrder<#k,#v> prev
@@ -297,7 +297,7 @@ define ForwardTreeOrder {
 }
 
 define ReverseTreeOrder {
-  $ReadOnly[node,prev]$
+  $ReadOnlyExcept[]$
 
   @value BinaryTreeNode<#k,#v> node
   @value optional ReverseTreeOrder<#k,#v> prev

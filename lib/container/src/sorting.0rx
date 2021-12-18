@@ -84,7 +84,7 @@ concrete HeapSort<#x> {
 }
 
 define HeapSort {
-  $ReadOnly[seq,compare]$
+  $ReadOnlyExcept[]$
 
   @value [ReadAt<#x>&WriteAt<#x>] seq
   @value LessThan2<#x> compare
