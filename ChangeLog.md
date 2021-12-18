@@ -7,6 +7,9 @@
 * **[fix]** Fixes checking of parameter variances in the context of internal
   inheritance.
 
+* **[new]** Adds the `$ReadOnlyExcept[...]$` `define` pragma to protect all
+  members except those specified.
+
 ### Libraries
 
 * **[new]** Adds the `AlwaysEmpty` empty container to `lib/util`.

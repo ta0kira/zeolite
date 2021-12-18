@@ -87,9 +87,10 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   let readOnly2 = if null immutable
                      then readOnly
                      else Map.fromListWith (++) $ Map.toList readOnly ++ zip valueMembers (repeat immutable)
-  cm2 <- mapMembers readOnly2 hidden cm
-  tm2 <- mapMembers readOnly2 hidden $ cm ++ tm'
-  vm2 <- mapMembers readOnly2 hidden $ cm ++ tm' ++ vm'
+  let readOnly3 = Map.union inferredReadOnly readOnly2
+  cm2 <- mapMembers readOnly3 hidden cm
+  tm2 <- mapMembers readOnly3 hidden $ cm ++ tm'
+  vm2 <- mapMembers readOnly3 hidden $ cm ++ tm' ++ vm'
   mapCompilerM_ checkPragma pragmas
   let cv = Map.union cm0 cm2
   let tv = Map.union tm0 tm2
@@ -105,6 +106,11 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
       mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++
                                             " does not exist (marked ReadOnly at " ++
                                             formatFullContext c2 ++ ")") missing
+    checkPragma (MembersReadOnlyExcept c2 vs) = do
+      let missing = Set.toList $ Set.fromList vs `Set.difference` allMembers
+      mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++
+                                            " does not exist (marked ReadOnlyExcept at " ++
+                                            formatFullContext c2 ++ ")") missing
     checkPragma (MembersHidden c2 vs) = do
       let missing = Set.toList $ Set.fromList vs `Set.difference` allMembers
       mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++
@@ -114,6 +120,12 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
     allMembers = Set.fromList $ map dmName ms
     valueMembers = map dmName $ filter ((== ValueScope) . dmScope) ms
     immutableContext t = head $ (map ciContext $ filter isCategoryImmutable (getCategoryPragmas t)) ++ [[]]
+    readOnlyExcept = case filter isMembersReadOnlyExcept pragmas of
+                          [] -> Nothing
+                          ps2 -> Just (concat $ map mroeContext ps2,Set.fromList $ concat $ map mroeMembers ps2)
+    inferredReadOnly = case readOnlyExcept of
+                            Nothing -> Map.empty
+                            Just (c2,exempt) -> Map.fromList $ flip zip (repeat c2) $ filter (not . (`Set.member` exempt)) $ map dmName ms
     readOnly = Map.fromListWith (++) $ concat $ map (\m -> zip (mroMembers m) (repeat $ mroContext m)) $ filter isMembersReadOnly pragmas
     hidden   = Map.fromListWith (++) $ concat $ map (\m -> zip (mhMembers m)  (repeat $ mhContext m))  $ filter isMembersHidden   pragmas
     firstM f (x,y) = do

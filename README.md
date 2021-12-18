@@ -1977,11 +1977,17 @@ These must be at the top of a category `define` immediately following `{`.
   Only *one* member can be specified in this pragma so that the implementation
   does not need to use a dynamically-sized cleanup queue to handle branching.
 
-- **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. See
-  [Local Variable Rules](#local-variable-rules).
+- **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. (As of compiler version
+  `0.16.0.0`.) See [Local Variable Rules](#local-variable-rules). Only applies
+  to `@category` and `@value` members.
 
-- **`$Hidden[`**_`var1,var2,...`_**`]$`**. See
-  [Local Variable Rules](#local-variable-rules).
+- **`$Hidden[`**_`var1,var2,...`_**`]$`**. (As of compiler version  `0.16.0.0`.)
+  See [Local Variable Rules](#local-variable-rules). Only applies  to
+  `@category` and `@value` members.
+
+- **`$ReadOnlyExcept[`**_`var1,var2,...`_**`]$`**. (As of compiler version
+  `0.22.1.0`.) Marks all `@category` and `@value` members as read-only *except*
+  those listed.
 
 ### `unittest` Pragmas
 

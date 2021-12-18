@@ -28,6 +28,7 @@ module Types.DefinedCategory (
   isFlatCleanup,
   isMembersHidden,
   isMembersReadOnly,
+  isMembersReadOnlyExcept,
   mapMembers,
   mergeInternalInheritance,
   pairProceduresToFunctions,
@@ -81,6 +82,10 @@ data PragmaDefined c =
     mroContext :: [c],
     mroMembers :: [VariableName]
   } |
+  MembersReadOnlyExcept {
+    mroeContext :: [c],
+    mroeMembers :: [VariableName]
+  } |
   MembersHidden {
     mhContext :: [c],
     mhMembers :: [VariableName]
@@ -94,6 +99,10 @@ data PragmaDefined c =
 isMembersReadOnly :: PragmaDefined c -> Bool
 isMembersReadOnly (MembersReadOnly _ _) = True
 isMembersReadOnly _                     = False
+
+isMembersReadOnlyExcept :: PragmaDefined c -> Bool
+isMembersReadOnlyExcept (MembersReadOnlyExcept _ _) = True
+isMembersReadOnlyExcept _                           = False
 
 isMembersHidden :: PragmaDefined c -> Bool
 isMembersHidden (MembersHidden _ _) = True
