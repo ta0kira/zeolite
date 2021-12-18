@@ -92,6 +92,7 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   tm2 <- mapMembers readOnly3 hidden $ cm ++ tm'
   vm2 <- mapMembers readOnly3 hidden $ cm ++ tm' ++ vm'
   mapCompilerM_ checkPragma pragmas
+  warnDuplicateReadOnly
   let cv = Map.union cm0 cm2
   let tv = Map.union tm0 tm2
   let vv = Map.union vm0 vm2
@@ -101,6 +102,17 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp',ProcedureScope ctxV vp']
   where
     message = "In compilation of definition for " ++ show n ++ formatFullContextBrace c
+    warnDuplicateReadOnly = do
+      let ro  = filter isMembersReadOnly       pragmas
+      let roe = filter isMembersReadOnlyExcept pragmas
+      case (roe,roe++ro) of
+           ([],_)    -> return ()
+           ([_],[_]) -> return ()
+           (_,ra) -> "ReadOnlyExcept should not be used with other read-only pragmas" ??>
+             mapCompilerM_ warnROPragma ra
+    warnROPragma (MembersReadOnly       c2 _) = compilerWarningM $ "ReadOnly at " ++ formatFullContext c2
+    warnROPragma (MembersReadOnlyExcept c2 _) = compilerWarningM $ "ReadOnlyExcept at " ++ formatFullContext c2
+    warnROPragma _ = return ()
     checkPragma (MembersReadOnly c2 vs) = do
       let missing = Set.toList $ Set.fromList vs `Set.difference` allMembers
       mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++

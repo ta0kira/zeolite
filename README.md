@@ -1989,6 +1989,14 @@ These must be at the top of a category `define` immediately following `{`.
   `0.22.1.0`.) Marks all `@category` and `@value` members as read-only *except*
   those listed.
 
+  - If multiple `ReadOnlyExcept` are used, they are unioned rather than
+    intersected. For example, `$ReadOnlyExcept[foo]$` and
+    `$ReadOnlyExcept[bar]$` together make `$ReadOnlyExcept[foo,bar]$` and *not*
+    `$ReadOnlyExcept[]$`.
+
+  - If a variable is listed in both `ReadOnly` and `ReadOnlyExcept`, the
+    variable is marked as read-only.
+
 ### `unittest` Pragmas
 
 These must be at the top of a `unittest` immediately following `{`.

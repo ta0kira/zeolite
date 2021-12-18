@@ -492,6 +492,28 @@ define Type {
 }
 
 
+testcase "ReadOnlyExcept unions rather than interscts" {
+  compiles
+  require compiler "ReadOnlyExcept"
+}
+
+concrete Type {}
+
+define Type {
+  $ReadOnlyExcept[foo]$
+  $ReadOnlyExcept[bar]$
+
+  @value Int foo
+  @value Int bar
+
+  @value call () -> ()
+  call () {
+    bar <- 456
+    foo <- 456
+  }
+}
+
+
 testcase "Bad name for ReadOnlyExcept @category member" {
   error
   require "foo.+does not exist"
