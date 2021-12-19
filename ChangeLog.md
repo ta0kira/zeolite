@@ -7,6 +7,9 @@
 * **[fix]** Fixes checking of parameter variances in the context of internal
   inheritance.
 
+* **[fix]** Fixes regression in inheritance of interfaces where the specified
+  params contain unions or intersections, e.g., `refines Foo<[Bar&Baz]>`.
+
 * **[new]** Adds the `$ReadOnlyExcept[...]$` `define` pragma to protect all
   members except those specified.
 

@@ -781,3 +781,25 @@ unittest intersectToIntersect {
 unittest unionToIntersect {
   \ Testing.checkFalse(present(reduce<[A|B],[A&B]>(AB.create())))
 }
+
+
+testcase "parent param contains meta type" {
+  success
+}
+
+unittest test {
+  \ Testing.checkTrue(present(reduce<Type,Build<AsBool>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type,Build<ReadAt<Char>>>(Type.new())))
+  \ Testing.checkFalse(present(reduce<Type,Build<String>>(Type.new())))
+}
+
+concrete Type {
+  refines Build<[AsBool&ReadAt<Char>]>
+
+  @type new () -> (Type)
+}
+
+define Type {
+  new () { return Type{ } }
+  build () { return "message" }
+}

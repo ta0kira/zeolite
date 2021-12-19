@@ -907,10 +907,10 @@ expandLocalType t = reduceMergeTree getAny getAll getSingle t where
   getAny ts = unionGetter     ++ combine ts
   getAll ts = intersectGetter ++ combine ts
   getSingle (JustTypeInstance (TypeInstance t2 ps)) =
-    typeGetter t2 ++ "(T_get(" ++ intercalate ", " (map expandLocalType $ pValues ps) ++ "))"
+    typeGetter t2 ++ "(Params<" ++ show (length $ pValues ps) ++ ">::Type(" ++ intercalate ", " (map expandLocalType $ pValues ps) ++ "))"
   getSingle (JustParamName _ p)  = paramName p
   getSingle (JustInferredType p) = paramName p
-  combine ps = "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps) ++ "))"
+  combine ps = "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps ++ "))"
 
 defineCategoryName :: SymbolScope -> CategoryName -> CompiledData [String]
 defineCategoryName TypeScope     _ = onlyCode $ "std::string CategoryName() const final { return parent.CategoryName(); }"
