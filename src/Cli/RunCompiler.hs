@@ -150,7 +150,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
        then return ([],is,is2,Map.empty)
        else do
          (ModuleConfig p2 _ ep _ is3 is4  _ cs _ _) <- rm
-         return (map (p2 </>) ep,nub $ is ++ is3,nub $ is2 ++ is4,Map.fromList cs)
+         return (map ((d2 </> p2) </>) ep,nub $ is ++ is3,nub $ is2 ++ is4,Map.fromList cs)
 
 runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
