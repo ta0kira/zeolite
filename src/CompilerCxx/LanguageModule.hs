@@ -80,7 +80,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
     map (generateNativeInterface False nsPrivate) (onlyNativeInterfaces ps1) ++
     map (generateNativeInterface True  nsPrivate) (onlyNativeInterfaces ts1)
   xxPrivate <- fmap concat $ mapCompilerM (compilePrivate tmPrivate tmTesting) xa
-  xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmTesting) $ nub ss
+  xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmPrivate tmTesting) $ nub ss
   let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined
   noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
   return allFiles where
@@ -91,10 +91,12 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
     testingCats = Set.fromList $ map getCategoryName ts1
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
     localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ ts1
-    streamlined tm n = do
+    streamlined tm0 tm2 n = do
       checkLocal localCats ([] :: [String]) n
+      let testing = n `Set.member` testingCats
+      let tm = if testing then tm2 else tm0
       (_,t) <- getConcreteCategory tm ([],n)
-      let ctx = FileContext (n `Set.member` testingCats) tm nsPrivate Map.empty
+      let ctx = FileContext testing tm nsPrivate Map.empty
       let spec = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
       generateStreamlinedExtension ctx t spec
     compilePrivate tmPrivate tmTesting (PrivateSource ns3 testing cs2 ds) = do
