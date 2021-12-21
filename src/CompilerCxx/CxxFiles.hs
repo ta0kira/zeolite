@@ -553,21 +553,23 @@ generateCategoryDefinition testing = common where
       onlyCode "}"
     ] where
       className = categoryName (getCategoryName t)
-  defineTypeOverrides t fs = return $ mconcat [
-      onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return parent.CategoryName(); }",
-      onlyCode $ "void " ++ className ++ "::BuildTypeName(std::ostream& output) const {",
-      defineTypeName params,
-      onlyCode "}",
-      onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const {",
-      createTypeArgsForParent t,
-      onlyCode $ "}",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamsArgs& params_args) const {",
-      createFunctionDispatch t TypeScope fs,
-      onlyCode $ "}",
-      onlyCode $ "bool " ++ className ++ "::CanConvertFrom(const S<const TypeInstance>& from) const {",
-      createCanConvertFrom t,
-      onlyCode "}"
-    ] where
+  defineTypeOverrides t fs = do
+    typeArgs <- createTypeArgsForParent t
+    return $ mconcat [
+        onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return parent.CategoryName(); }",
+        onlyCode $ "void " ++ className ++ "::BuildTypeName(std::ostream& output) const {",
+        defineTypeName params,
+        onlyCode "}",
+        onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const {",
+        typeArgs,
+        onlyCode $ "}",
+        onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamsArgs& params_args) const {",
+        createFunctionDispatch t TypeScope fs,
+        onlyCode $ "}",
+        onlyCode $ "bool " ++ className ++ "::CanConvertFrom(const S<const TypeInstance>& from) const {",
+        createCanConvertFrom t,
+        onlyCode "}"
+      ] where
       className = typeName (getCategoryName t)
       params = map vpParam $ getCategoryParams t
   defineValueOverrides t fs = return $ mconcat [
@@ -880,23 +882,27 @@ createCanConvertFrom t
       checkCov i p = "  if (!TypeInstance::CanConvert(args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;"
       checkCon i p = "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", args[" ++ show i ++ "])) return false;"
 
-createTypeArgsForParent :: AnyCategory c -> CompiledData [String]
-createTypeArgsForParent t = onlyCodes $ [
-    "  switch (category) {"
-  ] ++ categoryCases ++ [
-    "    default:",
-    "      return false;",
-    "  }"
-  ] where
-    categoryCases = concat $ map singleCase (myType:refines)
+createTypeArgsForParent :: CollectErrorsM m => AnyCategory c -> m (CompiledData [String])
+createTypeArgsForParent t = do
+  categoryCases <- fmap concat $ mapCompilerM singleCase (myType:refines)
+  return $ onlyCodes $ [
+      "  switch (category) {"
+    ] ++ categoryCases ++ [
+      "    default:",
+      "      return false;",
+      "  }"
+    ] where
     params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
-    myType = (getCategoryName t,map (singleType . JustParamName False . fst) params)
+    self = singleFromCategory t
+    myType = (getCategoryName t,map (singleType . JustParamName True . fst) params)
     refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
-    singleCase (n2,ps) = [
-        "    case " ++ categoryIdName n2 ++ ":",
-        "      args = std::vector<S<const TypeInstance>>{" ++ intercalate ", " (map expandLocalType ps) ++ "};",
-        "      return true;"
-      ]
+    singleCase (n2,ps) = do
+      ps' <- mapCompilerM (reverseSelfInstance self) ps
+      return [
+          "    case " ++ categoryIdName n2 ++ ":",
+          "      args = std::vector<S<const TypeInstance>>{" ++ intercalate ", " (map expandLocalType ps') ++ "};",
+          "      return true;"
+        ]
 
 -- Similar to Procedure.expandGeneralInstance but doesn't account for scope.
 expandLocalType :: GeneralInstance -> String

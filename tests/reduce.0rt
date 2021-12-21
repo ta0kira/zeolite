@@ -803,3 +803,32 @@ define Type {
   new () { return Type{ } }
   build () { return "message" }
 }
+
+
+testcase "parent param contains #self" {
+  success
+}
+
+unittest test {
+  \ Testing.checkTrue(present(reduce<Type,Order<Type>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type,Order<Order<Type>>>(Type.new())))
+  \ Testing.checkFalse(present(reduce<Type,Build<Type>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type,Build<Order<Type>>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type,Order<Formatted>>(Type.new())))
+}
+
+concrete Type {
+  refines Order<#self>
+  refines Build<Order<Type>>
+  refines Formatted
+
+  @type new () -> (Type)
+}
+
+define Type {
+  new () { return Type{ } }
+  build () { return self }
+  get () { return self }
+  next () { return self }
+  formatted () { return "Type" }
+}

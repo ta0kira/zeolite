@@ -84,6 +84,7 @@ module Types.TypeCategory (
   prependCategoryPragmaContext,
   replaceSelfFunction,
   setCategoryNamespace,
+  singleFromCategory,
   topoSortCategories,
   uncheckedSubFunction,
   validateCategoryFunction,
@@ -248,10 +249,13 @@ getCategoryFunctions (ValueInterface _ _ _ _ _ _ fs)    = fs
 getCategoryFunctions (InstanceInterface _ _ _ _ _ fs)   = fs
 getCategoryFunctions (ValueConcrete _ _ _ _ _ _ _ _ fs) = fs
 
-instanceFromCategory :: AnyCategory c -> GeneralInstance
-instanceFromCategory t = singleType $ JustTypeInstance $ TypeInstance n (Positional ps) where
+singleFromCategory :: AnyCategory c -> TypeInstance
+singleFromCategory t = TypeInstance n (Positional ps) where
   n = getCategoryName t
   ps = map (singleType . JustParamName True . vpParam) $ getCategoryParams t
+
+instanceFromCategory :: AnyCategory c -> GeneralInstance
+instanceFromCategory = singleType . JustTypeInstance . singleFromCategory
 
 getCategoryDeps :: AnyCategory c -> Set.Set CategoryName
 getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ defines ++ filters ++ functions where
