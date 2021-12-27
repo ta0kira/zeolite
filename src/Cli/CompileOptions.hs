@@ -54,7 +54,8 @@ data CompileOptions =
     coExtraPaths :: [FilePath],
     coSourcePrefix :: FilePath,
     coMode :: CompileMode,
-    coForce :: ForceMode
+    coForce :: ForceMode,
+    coParallel :: Int
   }
   deriving (Show)
 
@@ -69,7 +70,8 @@ emptyCompileOptions =
     coExtraPaths = [],
     coSourcePrefix = "",
     coMode = CompileUnspecified,
-    coForce = DoNotForce
+    coForce = DoNotForce,
+    coParallel = 1
   }
 
 data ExtraSource =

@@ -84,6 +84,7 @@ optionHelpText = [
     "",
     "Options:",
     "  -f: Force an operation that zeolite would otherwise reject.",
+    "  -j [# parallel]: Parallel execution of compilation subprocesses.",
     "  -i [module]: A single source module to include as a public dependency.",
     "  -I [module]: A single source module to include as a private dependency.",
     "  -o [binary]: The name of the binary file to create with -m.",
@@ -142,33 +143,33 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 
   parseSingle _ [] = undefined
 
-  parseSingle (CompileOptions _ is is2 ds es ep p m f) ((_,"-h"):os) =
-    return (os,CompileOptions HelpNeeded is is2 ds es ep p m f)
+  parseSingle (CompileOptions _ is is2 ds es ep p m f pn) ((_,"-h"):os) =
+    return (os,CompileOptions HelpNeeded is is2 ds es ep p m f pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m _) ((_,"-f"):os) =
-    return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m ForceAll)
+  parseSingle (CompileOptions h is is2 ds es ep p m _ pn) ((_,"-f"):os) =
+    return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m ForceAll pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-c"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-c"):os)
     | m /= CompileUnspecified = argError n "-c" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileIncremental []) f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileIncremental []) f pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-r"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-r"):os)
     | m /= CompileUnspecified = argError n "-r" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileRecompile f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileRecompile f pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-R"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-R"):os)
     | m /= CompileUnspecified = argError n "-r" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileRecompileRecursive f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileRecompileRecursive f pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-t"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-t"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests [] Nothing) f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests [] Nothing) f pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"--templates"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"--templates"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CreateTemplates f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CreateTemplates f pn)
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-m"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
     | otherwise = update os where
       update ((n2,c):os2) =  do
@@ -176,13 +177,13 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         checkCategoryName n2 t  "-m"
         checkFunctionName n2 fn "-m"
         let m2 = CompileBinary (CategoryName t) (FunctionName fn) LinkDynamic "" []
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f) where
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f pn) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
           check _          = argError n2 c $ "Invalid entry point."
       update _ = argError n "-m" "Requires a category name."
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"--fast"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"--fast"):os)
     | m /= CompileUnspecified = argError n "--fast" "Compiler mode already set."
     | otherwise = update os where
       update ((n2,c):(n3,f2):os2) =  do
@@ -191,59 +192,68 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         checkFunctionName n2 fn "--fast"
         when (not $ isPrivateSource f2) $ argError n3 f2 $ "Must specify a .0rx source file."
         let m2 = CompileFast (CategoryName t) (FunctionName fn) f2
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f) where
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f pn) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
           check _          = argError n2 c $ "Invalid entry point."
       update _ = argError n "--fast" "Requires a category name and a .0rx file."
 
-  parseSingle (CompileOptions h is is2 ds es ep p (ExecuteTests tp cl) f) ((n,"--log-traces"):os) = update os where
+  parseSingle (CompileOptions h is is2 ds es ep p (ExecuteTests tp cl) f pn) ((n,"--log-traces"):os) = update os where
     update ((_,cl2):os2)
       | cl /= Nothing = argError n "--log-traces" "Trace-log filename already set."
-      | otherwise = return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests tp (Just cl2)) f)
+      | otherwise = return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests tp (Just cl2)) f pn)
     update _ = argError n "--log-traces" "Requires an output filename."
   parseSingle _ ((n,"--log-traces"):_) = argError n "--log-traces" "Set mode to test (-t) first."
 
-  parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn lm o lf) f) ((n,"-o"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn lm o lf) f pn) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
     | otherwise = update os where
       update ((n2,o2):os2) = do
         checkPathName n2 o2 "-o"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn lm o2 lf) f)
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn lm o2 lf) f pn)
       update _ = argError n "-o" "Requires an output name."
   parseSingle _ ((n,"-o"):_) = argError n "-o" "Set mode to binary (-m) first."
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-i"):os) = update os where
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-i"):os) = update os where
     update ((n2,d):os2)
       | isPublicSource  d = argError n2 d "Cannot directly include .0rp source files."
       | isPrivateSource d = argError n2 d "Cannot directly include .0rx source files."
       | isTestSource    d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n2 d "-i"
-          return (os2,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep p m f)
+          return (os2,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep p m f pn)
     update _ = argError n "-i" "Requires a source path."
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-I"):os) = update os where
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-I"):os) = update os where
     update ((n2,d):os2)
       | isPublicSource  d = argError n2 d "Cannot directly include .0rp source files."
       | isPrivateSource d = argError n2 d "Cannot directly include .0rx source files."
       | isTestSource    d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n2 d "-i"
-          return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep p m f)
+          return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep p m f pn)
     update _ = argError n "-I" "Requires a source path."
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-p"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,"-p"):os)
     | not $ null p = argError n "-p" "Path prefix already set."
     | otherwise = update os where
       update ((n2,p2):os2) = do
         checkPathName n2 p2 "-p"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p2 m f)
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p2 m f pn)
       update _ = argError n "-p" "Requires a path prefix."
+
+  parseSingle (CompileOptions h is is2 ds es ep p m f _) ((n,"-j"):os) = update os where
+    update ((n2,k):os2) = do
+      case reads k of
+           [(pn,[])] -> if pn > 0
+                           then return (os2,CompileOptions h is is2 ds es ep p m f pn)
+                           else argError n2 k "Must be > 0."
+           _ -> argError n2 k "Not a valid integer."
+    update _ = argError n "-j" "Requires an integer > 0."
 
   parseSingle _ ((n,o@('-':_)):_) = argError n o "Unknown option."
 
-  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,d):os)
+  parseSingle (CompileOptions h is is2 ds es ep p m f pn) ((n,d):os)
       | isPublicSource  d = argError n d "Cannot directly include .0rp source files."
       | isPrivateSource d = argError n d "Cannot directly include .0rx source files."
       | isTestSource    d = do
@@ -251,13 +261,13 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
           argError n d "Test mode (-t) must be enabled before listing any .0rt test files."
         checkPathName n d ""
         let (ExecuteTests tp cl) = m
-        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests (tp ++ [d]) cl) f)
+        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests (tp ++ [d]) cl) f pn)
       | otherwise = do
         checkPathName n d ""
-        return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep p m f)
+        return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep p m f pn)
 
 validateCompileOptions :: CollectErrorsM m => CompileOptions -> m CompileOptions
-validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
+validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _ _)
   | h /= HelpNotNeeded = return co
 
   | isCompileUnspecified m =

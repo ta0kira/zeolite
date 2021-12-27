@@ -63,7 +63,7 @@ data PendingProcess =
   PendingProcess {
     pcContext :: String,
     pcProcess :: ProcessID,
-    pcNext :: Either (IO PendingProcess) (FilePath,CxxCommand)
+    pcNext :: Either (IO PendingProcess) FilePath
   }
 
 instance CompilerBackend Backend where
@@ -73,20 +73,20 @@ instance CompilerBackend Backend where
       blockProcess pid <?? context
       case next of
            Left process -> errorFromIO process >>= waitAll
-           Right (path,_) -> return path
+           Right path -> return path
   asyncCxxCommand = run where
-    run (UnixBackend cb ff _ _ ab) ca@(CompileToObject s p ms ps e) = do
+    run (UnixBackend cb ff _ _ ab) (CompileToObject s p ms ps e) = do
       objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
       arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
       let next = if e
-                    then Right (objName,ca)
+                    then Right objName
                     else Left $ do
                       pid <- executeProcess ab ["-q",arName,objName]
                       return $ PendingProcess {
                           pcContext = "Archiving of " ++ objName,
                           pcProcess = pid,
-                          pcNext = Right (arName,ca)
+                          pcNext = Right arName
                         }
       pid <- errorFromIO $ executeProcess cb (ff ++ otherOptions ++ ["-c", s, "-o", objName])
       return $ PendingProcess {
@@ -94,7 +94,7 @@ instance CompilerBackend Backend where
           pcProcess = pid,
           pcNext = next
         }
-    run (UnixBackend cb _ ff _ _) ca@(CompileToShared ss o lf) = do
+    run (UnixBackend cb _ ff _ _) (CompileToShared ss o lf) = do
       let arFiles      = filter (isSuffixOf ".a")       ss
       let otherFiles   = filter (not . isSuffixOf ".a") ss
       let flags = nub lf
@@ -103,9 +103,9 @@ instance CompilerBackend Backend where
       return $ PendingProcess {
           pcContext = "In linking of " ++ o,
           pcProcess = pid,
-          pcNext = Right (o,ca)
+          pcNext = Right o
         }
-    run (UnixBackend cb _ _ ff _) ca@(CompileToBinary m ss ms o ps lf) = do
+    run (UnixBackend cb _ _ ff _) (CompileToBinary m ss ms o ps lf) = do
       let arFiles      = filter (isSuffixOf ".a")       ss
       let otherFiles   = filter (not . isSuffixOf ".a") ss
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
@@ -115,7 +115,7 @@ instance CompilerBackend Backend where
       return $ PendingProcess {
           pcContext = "In linking of " ++ o,
           pcProcess = pid,
-          pcNext = Right (o,ca)
+          pcNext = Right o
         }
     macro (n,Just v)  = "-D" ++ n ++ "=" ++ v
     macro (n,Nothing) = "-D" ++ n

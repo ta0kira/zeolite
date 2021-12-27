@@ -40,7 +40,7 @@ class CompilerBackend b where
   type AsyncWait b :: *
   syncCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m FilePath
   asyncCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m (AsyncWait b)
-  waitCxxCommand :: (MonadIO m, CollectErrorsM m) => b -> AsyncWait b -> m (Either (AsyncWait b) (FilePath,CxxCommand))
+  waitCxxCommand :: (MonadIO m, CollectErrorsM m) => b -> AsyncWait b -> m (Either (AsyncWait b) FilePath)
   runTestCommand  :: (MonadIO m, CollectErrorsM m) => b -> TestCommand -> m TestCommandResult
   getCompilerHash :: (MonadIO m, CollectErrorsM m) => b -> m VersionHash
 
@@ -89,17 +89,25 @@ data TestCommandResult =
   deriving (Show)
 
 parallelProcess :: (CompilerBackend b, MonadIO m, CollectErrorsM m) =>
-  b -> Int -> [m (AsyncWait b)] -> m [(FilePath,CxxCommand)]
+  b -> Int -> [(m (AsyncWait b),a)] -> m [(FilePath,a)]
 parallelProcess b n xs = do
-  now <- collectAllM $ take n xs  -- This starts execution!
+  now <- mapCompilerM start $ take n xs
   let later = drop n xs
   recursive now later where
+    start (process,extra) = do
+      process' <- process
+      return (process',extra)
+    wait (process,extra) = do
+      process' <- waitCxxCommand b process
+      case process' of
+           Left process2 -> return $ Left (process2,extra)
+           Right path -> return $ Right (path,extra)
     recursive [] _ = return []
     recursive now later = do
-      tried <- mapCompilerM (waitCxxCommand b) now
-      let (wait,done) = partitionEithers tried
+      tried <- mapCompilerM wait now
+      let (running,done) = partitionEithers tried
       let k = length done
       when (k == 0) $ liftIO $ threadDelay 1000  -- Sleep 1ms to control rate.
-      new <- collectAllM $ take k later  -- This starts execution!
-      following <- recursive (wait ++ new) (drop k later)
+      new <- mapCompilerM start $ take k later
+      following <- recursive (running ++ new) (drop k later)
       return $ done ++ following

@@ -44,7 +44,7 @@ import Parser.TextParser
 
 
 runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> TrackedErrorsIO ()
-runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl) f) = do
+runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl) f _) = do
   base <- resolveBaseModule resolver
   ts <- fmap snd $ foldM preloadTests (Map.empty,[]) ds
   checkTestFilters ts
@@ -85,7 +85,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl)
       | otherwise =
         errorFromIO $ hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
 
-runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
+runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f pn) = do
   dir <- errorFromIO $ mkdtemp "/tmp/zfast_"
   absolute <- errorFromIO $ canonicalizePath p
   f2' <- errorFromIO $ canonicalizePath (p </> f2)
@@ -116,18 +116,19 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msCategories = [],
     msExtraPaths = [],
     msMode = (CompileBinary c fn LinkStatic (absolute </> show c) []),
-    msForce = f
+    msForce = f,
+    msParallel = pn
   }
   compileModule resolver backend spec <?? "In compilation of \"" ++ f2' ++ "\""
   errorFromIO $ removeDirectoryRecursive dir
 
-runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompileRecursive f) =
-  runRecompileCommon resolver backend f True p ds
+runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompileRecursive f pn) =
+  runRecompileCommon resolver backend f pn True p ds
 
-runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) =
-  runRecompileCommon resolver backend f False p ds
+runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f pn) =
+  runRecompileCommon resolver backend f pn False p ds
 
-runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
+runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f _) = mapM_ compileSingle ds where
   compileSingle d = do
     compilerHash <- getCompilerHash backend
     d' <- errorFromIO $ canonicalizePath (p </> d)
@@ -152,7 +153,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
          (ModuleConfig p2 _ ep _ is3 is4  _ cs _ _) <- rm
          return (map ((d2 </> p2) </>) ep,nub $ is ++ is3,nub $ is2 ++ is4,Map.fromList cs)
 
-runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
+runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f _) = mapM_ compileSingle ds where
   compileSingle d = do
     as  <- fmap fixPaths $ mapCompilerM (autoDep (p </> d)) is
     as2 <- fmap fixPaths $ mapCompilerM (autoDep (p </> d)) is2
@@ -216,8 +217,8 @@ parseTracesFile (f,s) = runTextParser (between nullParse endOfDoc tracesFile) f 
     when (expected /= title) $ compilerErrorM $ "Expected column named \"" ++ expected ++ "\" but found \"" ++ title ++ "\""
 
 runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
-  ForceMode -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()
-runRecompileCommon resolver backend f rec p ds = do
+  ForceMode -> Int -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()
+runRecompileCommon resolver backend f pn rec p ds = do
   explicit <- fmap Set.fromList $ mapCompilerM (errorFromIO . canonicalizePath . (p </>)) ds
   foldM (recursive resolver explicit) Set.empty (map ((,) p) ds) >> return () where
     recursive r explicit da (p2,d0) = do
@@ -258,6 +259,7 @@ runRecompileCommon resolver backend f rec p ds = do
              msCategories = cs,
              msExtraPaths = ep,
              msMode = m,
-             msForce = f
+             msForce = f,
+             msParallel = pn
            }
            compileModule resolver backend spec <?? "In compilation of module \"" ++ d ++ "\""

@@ -24,6 +24,7 @@ module Cli.Compiler (
   runModuleTests,
 ) where
 
+import Control.Arrow (first)
 import Control.Monad (foldM,when)
 import Data.Either (partitionEithers)
 import Data.List (isSuffixOf,nub,sort)
@@ -69,7 +70,8 @@ data ModuleSpec =
     msCategories :: [(CategoryName,CategorySpec SourceContext)],
     msExtraPaths :: [FilePath],
     msMode :: CompileMode,
-    msForce :: ForceMode
+    msForce :: ForceMode,
+    msParallel :: Int
   }
   deriving (Show)
 
@@ -83,7 +85,7 @@ data LoadedTests =
   deriving (Show)
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> TrackedErrorsIO ()
-compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m f) = do
+compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m f pn) = do
   as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
@@ -132,7 +134,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs
-  os1 <- mapCompilerM (writeOutputFile paths2) $ hxx ++ other
+  os1 <- mapCompilerM (writeOutputFile paths2)(hxx ++ other) >>= compileAll
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- mapCompilerM checkOwnedFile files
@@ -215,9 +217,12 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
            createCachePath (p </> d)
            let ms = []
            let command = CompileToObject f2' (getCachedPath (p </> d) (show ns) "") ms (p0:p1:paths) False
-           o2 <- syncCxxCommand backend command
-           return $ ([o2],ca)
-         else return ([],ca)
+           return $ Left (asyncCxxCommand backend command,ca)
+         else return $ Right ca
+    compileAll files = do
+      let (compiled,saved) = partitionEithers files
+      compiled' <- parallelProcess backend pn compiled
+      return $ map ((,) []) saved ++ map (first (:[])) compiled'
     compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs2 ds2) = do
       f2' <- compileExtraFile False (ns0,ns1) paths f2
       case f2' of

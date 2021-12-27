@@ -33,11 +33,17 @@ import Config.ParseConfig ()
 
 
 main :: IO ()
-main = tryTrackedErrorsIO "" "Zeolite setup failed:" (lift getArgs >>= handle) where
-  handle ("--reuse":_) = do
+main = tryTrackedErrorsIO "" "Zeolite setup failed:" (lift getArgs >>= handle 1) where
+  handle _ ("-j":k:os) = do
+    case reads k of
+          [(pn,[])] -> if pn > 0
+                          then handle pn os
+                          else compilerErrorM "Parallel processes (-j) must be > 0."
+          _ -> compilerErrorM "Parallel processes (-j) must be > 0."
+  handle pn ("--reuse":_) = do
     config <- loadConfig
-    runWith config
-  handle args = do
+    runWith pn config
+  handle pn args = do
     let (cxxSpec:arSpec:_) = (map Just $ args) ++ repeat Nothing
     f <- lift $ localConfigPath
     isFile <- lift $ doesFileExist f
@@ -45,9 +51,9 @@ main = tryTrackedErrorsIO "" "Zeolite setup failed:" (lift getArgs >>= handle) w
       lift $ hPutStrLn stderr $ "*** WARNING: Local config " ++ f ++ " will be overwritten. ***"
     config <- lift $ createConfig cxxSpec arSpec
     saveConfig config
-    runWith config
-  runWith config = do
-    initLibraries config
+    runWith pn config
+  runWith pn config = do
+    initLibraries pn config
     lift $ hPutStrLn stderr "Setup is now complete!"
 
 clangBinary :: String
@@ -152,8 +158,8 @@ getInput = do
     exitFailure
   hGetLine stdin
 
-initLibraries :: (Resolver,Backend) -> TrackedErrorsIO ()
-initLibraries (resolver,backend) = do
+initLibraries :: Int -> (Resolver,Backend) -> TrackedErrorsIO ()
+initLibraries pn (resolver,backend) = do
   path <- lift $ rootPath >>= canonicalizePath
   let options = CompileOptions {
       coHelp = HelpNotNeeded,
@@ -164,7 +170,8 @@ initLibraries (resolver,backend) = do
       coExtraPaths = [],
       coSourcePrefix = path,
       coMode = CompileRecompileRecursive,
-      coForce = ForceAll
+      coForce = ForceAll,
+      coParallel = pn
     }
   runCompiler resolver backend options
   mapM_ optionalWarning optionalLibraries where
