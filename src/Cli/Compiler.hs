@@ -134,12 +134,12 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs
-  os1 <- mapCompilerM (writeOutputFile paths2)(hxx ++ other) >>= compileAll
+  os1 <- mapCompilerM (writeOutputFile paths2)(hxx ++ other) >>= compileGenerated
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- mapCompilerM checkOwnedFile files
   let ca = Map.fromList $ map (\c -> (getCategoryName c,getCategoryNamespace c)) $ map wvData cs2
-  os2 <- fmap concat $ mapCompilerM (compileExtraSource (ns0,ns1) ca paths2) es
+  os2 <- mapCompilerM (compileExtraSource (ns0,ns1) ca paths2) es >>= compileExtra
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
@@ -219,17 +219,18 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
            let command = CompileToObject f2' (getCachedPath (p </> d) (show ns) "") ms (p0:p1:paths) False
            return $ Left (asyncCxxCommand backend command,ca)
          else return $ Right ca
-    compileAll files = do
+    compileGenerated files = do
       let (compiled,saved) = partitionEithers files
       compiled' <- parallelProcess backend pn compiled
       return $ map ((,) []) saved ++ map (first (:[])) compiled'
     compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs2 ds2) = do
       f2' <- compileExtraFile False (ns0,ns1) paths f2
       case f2' of
-           Nothing -> return []
-           Just o  -> return $ map (\c -> Left $ ([o],fakeCxx c)) cs2
+           Left process -> return $ Left  (process,Just allFakeCxx)
+           Right fs     -> return $ Right (fs,     Just allFakeCxx)
       where
         allDeps = Set.fromList (cs2 ++ ds2)
+        allFakeCxx = map fakeCxx cs2
         fakeCxx c = CxxOutput {
             coCategory = Just c,
             coFilename = "",
@@ -244,8 +245,15 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
     compileExtraSource (ns0,ns1) _ paths (OtherSource f2) = do
       f2' <- compileExtraFile True (ns0,ns1) paths f2
       case f2' of
-           Just o  -> return [Right $ OtherObjectFile o]
-           Nothing -> return []
+           Left process -> return $ Left  (process,Nothing)
+           Right fs     -> return $ Right (fs,     Nothing)
+    compileExtra files = do
+      let (compiled,inert) = partitionEithers files
+      compiled' <- parallelProcess backend pn compiled
+      let files' = inert ++ map (first (:[])) compiled'
+      return $ concat $ map expand files' where
+        expand (os,Just cxx) = map (Left . (,) os) cxx
+        expand (os,Nothing)  = map (Right . OtherObjectFile) os
     checkOwnedFile f2 = do
       exists <- errorFromIO $ doesFileExist f2
       when (not exists) $ compilerErrorM $ "Owned file " ++ f2 ++ " does not exist."
@@ -257,9 +265,9 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
           let ms = [(publicNamespaceMacro,Just $ show ns0),(privateNamespaceMacro,Just $ show ns1)]
           objPath <- createCachedDir (p </> d) "extra"
           let command = CompileToObject f2' objPath ms paths e
-          fmap Just $ syncCxxCommand backend command
-      | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
-      | otherwise = return Nothing
+          return $ Left $ asyncCxxCommand backend command
+      | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return $ Right [f2]
+      | otherwise = return $ Right []
     createBinary compilerHash paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
       f0 <- if null o
                 then errorFromIO $ canonicalizePath $ p </> d </> show n

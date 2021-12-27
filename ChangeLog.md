@@ -25,6 +25,9 @@
 * **[fix]** Fixes bug where `extra_files` listed in `.zeolite-module` would fail
   to compile if the module contained no public categories.
 
+* **[new]** Adds the `-j `*`[# parallel]`* flag to `zeolite` to execute
+  compilation of C++ files in parallel.
+
 * **[new]** Allows C++ extensions to specify internal inheritance in
   `.zeolite-module`. This is necessary if the implementation needs to pass
   `PARAM_SELF` or `VAR_SELF` as a parent type that is not publicly visible.
