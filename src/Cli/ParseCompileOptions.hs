@@ -267,7 +267,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep p m f pn)
 
 validateCompileOptions :: CollectErrorsM m => CompileOptions -> m CompileOptions
-validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _ _)
+validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _ pn)
   | h /= HelpNotNeeded = return co
 
   | isCompileUnspecified m =
@@ -286,4 +286,7 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _ _)
   | (length ds > 1) && (not $ isCompileRecompile m) && (not $ isExecuteTests m) =
     compilerErrorM "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
 
-  | otherwise = return co
+  | otherwise = do
+    when (pn > 0 && not (isCompileRecompile m)) $
+      compilerWarningM "Parallel processing (-j) has no effect outside of recompile mode (-r/-R)."
+    return co

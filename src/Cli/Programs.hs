@@ -90,6 +90,7 @@ data TestCommandResult =
 
 parallelProcess :: (CompilerBackend b, MonadIO m, CollectErrorsM m) =>
   b -> Int -> [(m (AsyncWait b),a)] -> m [(FilePath,a)]
+parallelProcess b n xs | n < 1 = parallelProcess b 1 xs
 parallelProcess b n xs = do
   now <- mapCompilerM start $ take n xs
   let later = drop n xs
@@ -107,7 +108,7 @@ parallelProcess b n xs = do
       tried <- mapCompilerM wait now
       let (running,done) = partitionEithers tried
       let k = length done
-      when (k == 0) $ liftIO $ threadDelay 1000  -- Sleep 1ms to control rate.
+      when (k == 0) $ liftIO $ threadDelay 10000  -- Sleep 10ms to control rate.
       new <- mapCompilerM start $ take k later
       following <- recursive (running ++ new) (drop k later)
       return $ done ++ following

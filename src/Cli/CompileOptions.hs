@@ -71,7 +71,7 @@ emptyCompileOptions =
     coSourcePrefix = "",
     coMode = CompileUnspecified,
     coForce = DoNotForce,
-    coParallel = 1
+    coParallel = 0
   }
 
 data ExtraSource =

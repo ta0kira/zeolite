@@ -79,7 +79,7 @@ instance CompilerBackend Backend where
       objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
       arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
-      let next = if e
+      let next = if not e
                     then Right objName
                     else Left $ do
                       pid <- executeProcess ab ["-q",arName,objName]
