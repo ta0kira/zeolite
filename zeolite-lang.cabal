@@ -33,6 +33,9 @@ description:
     .
     # Or just choose the 1st match for each.
     zeolite-setup 1 1
+    .
+    # Use -j n before other options to execute n steps at a time in parallel.
+    zeolite-setup -j 4
     @
     .
   * (Optional) As a sanity check, compile and run
