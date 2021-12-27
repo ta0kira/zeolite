@@ -243,14 +243,15 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
             coOutput = []
           }
     compileExtraSource (ns0,ns1) _ paths (OtherSource f2) = do
-      f2' <- compileExtraFile True (ns0,ns1) paths f2
+      f2' <- compileExtraFile False (ns0,ns1) paths f2
       case f2' of
            Left process -> return $ Left  (process,Nothing)
            Right fs     -> return $ Right (fs,     Nothing)
     compileExtra files = do
       let (compiled,inert) = partitionEithers files
       compiled' <- parallelProcess backend pn compiled
-      let files' = inert ++ map (first (:[])) compiled'
+      -- NOTE: Leave inert last in case it contains .a files.
+      let files' = map (first (:[])) compiled' ++ inert
       return $ concat $ map expand files' where
         expand (os,Just cxx) = map (Left . (,) os) cxx
         expand (os,Nothing)  = map (Right . OtherObjectFile) os

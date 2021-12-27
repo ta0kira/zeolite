@@ -52,6 +52,7 @@ main = do
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
       | otherwise = tryZeoliteIO $ do
+          asCompilerWarnings co
           let co' = getCompilerSuccess co
           (resolver,backend) <- loadConfig
           when (HelpNotNeeded /= (coHelp co')) $ errorFromIO $ showHelp >> exitFailure
