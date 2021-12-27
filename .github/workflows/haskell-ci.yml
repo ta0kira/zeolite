@@ -187,9 +187,10 @@ jobs:
           # Run zeolite-zetup
           ZEOLITE_CXX='/usr/bin/clang++'
           ZEOLITE_AR='/usr/bin/ar'
+          export PARALLEL=4  # Also used by cli-tests.sh.
           # Use g++ for one of the environments (g++ shows up as the second option)
           if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_CXX='/usr/bin/g++'; fi
-          $ZEOLITE_SETUP $ZEOLITE_CXX $ZEOLITE_AR
+          $ZEOLITE_SETUP -j $PARALLEL $ZEOLITE_CXX $ZEOLITE_AR
           ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
           TEST_MODULES='lib/testing tests lib/container lib/file lib/math lib/util lib/thread'
           # Only run integration tests for a few GHC versions, since they should all be the same if setup succeeds

@@ -287,6 +287,6 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _ pn)
     compilerErrorM "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
 
   | otherwise = do
-    when (pn > 0 && not (isCompileRecompile m)) $
-      compilerWarningM "Parallel processing (-j) has no effect outside of recompile mode (-r/-R)."
+    when (pn > 0 && not (isCompileRecompile m) && not (isCompileFast m)) $
+      compilerWarningM "Parallel processing (-j) has no effect outside of recompile mode (-r/-R) and fast mode (--fast)."
     return co

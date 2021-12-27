@@ -29,6 +29,12 @@ fi
 
 ZEOLITE=("$@")
 
+if [[ "$PARALLEL" ]]; then
+  PARALLEL="-j $PARALLEL"
+else
+  PARALLEL='-j 1'
+fi
+
 show_message() {
   echo -e "[$PROGRAM]" "$@" 1>&2
 }
@@ -54,7 +60,7 @@ create_file() {
 
 
 test_bad_path() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/bad-path -f || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/bad-path -f || true)
   if ! echo "$output" | egrep -q 'bad-path/\.zeolite-module .+ /dev/null'; then
     show_message 'Expected path error from tests/bad-path:'
     echo "$output" 1>&2
@@ -64,7 +70,7 @@ test_bad_path() {
 
 
 test_check_defs() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs -f || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/check-defs -f || true)
   if ! echo "$output" | egrep -q 'Type .+ is defined 2 times'; then
     show_message 'Expected Type definition error from tests/check-defs:'
     echo "$output" 1>&2
@@ -210,7 +216,7 @@ END
 test_leak_check() {
   local binary="$ZEOLITE_PATH/tests/leak-check/LeakTest"
   rm -f "$binary"
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/leak-check -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/leak-check -f
   # race-condition check
   # NOTE: If this fails, the valgrind check will be skipped.
   local output=$(execute "$binary" 'race' || true)
@@ -237,7 +243,7 @@ test_leak_check() {
 
 
 test_simulate_refs() {
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/simulate-refs -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/simulate-refs -f
 }
 
 
@@ -352,13 +358,13 @@ test_module_only3() {
 
 
 test_module_only4() {
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/module-only4 -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/module-only4 -f
   do_zeolite -p "$ZEOLITE_PATH" -t tests/module-only4
 }
 
 
 test_warn_public() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/warn-public -f)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -R tests/warn-public -f)
   if ! echo "$output" | egrep -q '"internal" .+ public'; then
     show_message 'Expected "internal" dependency warning from tests/warn-public:'
     echo "$output" 1>&2
@@ -373,7 +379,7 @@ test_warn_public() {
 
 
 test_self_offset() {
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/self-offset -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/self-offset -f
   do_zeolite -p "$ZEOLITE_PATH" -t tests/self-offset
 }
 
@@ -381,7 +387,7 @@ test_self_offset() {
 test_templates() {
   execute rm -f $ZEOLITE_PATH/tests/templates/Extension_*.cpp
   do_zeolite -p "$ZEOLITE_PATH" --templates tests/templates
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/templates
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/templates
   do_zeolite -p "$ZEOLITE_PATH" -t tests/templates
 }
 
@@ -403,7 +409,7 @@ test_show_deps() {
 
 
 test_fast_static() {
-  do_zeolite -p "$ZEOLITE_PATH/tests/fast-static" -I lib/util --fast Program program.0rx
+  do_zeolite -p "$ZEOLITE_PATH/tests/fast-static" $PARALLEL -I lib/util --fast Program program.0rx
   local output=$(execute "$ZEOLITE_PATH/tests/fast-static/Program")
   if ! echo "$output" | fgrep -xq 'Static linking works!'; then
     show_message 'Expected "Static linking works!" in program output:'
@@ -451,7 +457,7 @@ test_example_hello() {
   local binary="$ZEOLITE_PATH/example/hello/HelloDemo"
   local name='Cli Tests'
   rm -f "$binary"
-  do_zeolite -p "$ZEOLITE_PATH/example/hello" -I lib/util --fast HelloDemo hello-demo.0rx
+  do_zeolite -p "$ZEOLITE_PATH/example/hello" $PARALLEL -I lib/util --fast HelloDemo hello-demo.0rx
   local output=$(echo "$name" | execute_noredir "$binary" 2>&1)
   if ! echo "$output" | egrep -q "\"$name\""; then
     show_message "Expected \"$name\" in HelloDemo output:"
@@ -462,7 +468,7 @@ test_example_hello() {
 
 
 test_example_parser() {
-  do_zeolite -p "$ZEOLITE_PATH" -r example/parser -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r example/parser -f
   do_zeolite -p "$ZEOLITE_PATH" -t example/parser
 }
 
@@ -472,7 +478,7 @@ test_example_primes() {
   local expected='2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,'
   rm -f "$binary"
   local temp=$(execute mktemp)
-  do_zeolite -p "$ZEOLITE_PATH" -r example/primes -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r example/primes -f
   {
     echo;
     sleep 0.1;
@@ -493,7 +499,7 @@ test_example_random() {
   local binary="$ZEOLITE_PATH/example/random/RandomDemo"
   rm -f "$binary"
   local temp=$(execute mktemp)
-  do_zeolite -p "$ZEOLITE_PATH" -r example/random -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r example/random -f
   execute_noredir "$binary" 5 > "$temp"
   local output=$(cat "$temp")
   rm -f "$temp"
@@ -506,7 +512,7 @@ test_example_random() {
 
 
 test_traces() {
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/traces -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/traces -f
   local source_files=("$ZEOLITE_PATH/tests/traces/traces.0rx")
   local expected=$(fgrep -n '// TRACED' "${source_files[@]}" | egrep -o '^[0-9]+' | sort -u)
   local actual=$(do_zeolite -p "$ZEOLITE_PATH" --show-traces "tests/traces" | grep 0rx | sed -r 's/^line ([0-9]+).*/\1/' | sort -u)

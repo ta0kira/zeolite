@@ -84,13 +84,13 @@ instance CompilerBackend Backend where
                     else Left $ do
                       pid <- executeProcess ab ["-q",arName,objName]
                       return $ PendingProcess {
-                          pcContext = "Archiving of " ++ objName,
+                          pcContext = "In archiving of " ++ objName,
                           pcProcess = pid,
                           pcNext = Right arName
                         }
       pid <- errorFromIO $ executeProcess cb (ff ++ otherOptions ++ ["-c", s, "-o", objName])
       return $ PendingProcess {
-          pcContext = "Compilation of " ++ s,
+          pcContext = "In compilation of " ++ s,
           pcProcess = pid,
           pcNext = next
         }
