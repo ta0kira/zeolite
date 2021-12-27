@@ -215,7 +215,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
            createCachePath (p </> d)
            let ms = []
            let command = CompileToObject f2' (getCachedPath (p </> d) (show ns) "") ms (p0:p1:paths) False
-           o2 <- runCxxCommand backend command
+           o2 <- syncCxxCommand backend command
            return $ ([o2],ca)
          else return ([],ca)
     compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs2 ds2) = do
@@ -252,7 +252,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
           let ms = [(publicNamespaceMacro,Just $ show ns0),(privateNamespaceMacro,Just $ show ns1)]
           objPath <- createCachedDir (p </> d) "extra"
           let command = CompileToObject f2' objPath ms paths e
-          fmap Just $ runCxxCommand backend command
+          fmap Just $ syncCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
     createBinary compilerHash paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
@@ -268,7 +268,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
       let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
       command <- getCommand lm mainAbs f0 deps2 paths'
       errorFromIO $ hPutStrLn stderr $ "Creating binary " ++ f0
-      f1 <- runCxxCommand backend command
+      f1 <- syncCxxCommand backend command
       return [f1] where
         getCommand LinkStatic mainAbs f0 deps2 paths2 = do
           let lf' = lf ++ getLinkFlagsForDeps deps2
@@ -291,7 +291,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
       -- categories will show up more than once in getObjectFiles.
       let objects = (nub $ concat $ map getObjectFiles os) ++ getLibrariesForDeps deps
       let command = CompileToShared objects name flags
-      fmap (:[]) $ runCxxCommand backend command
+      fmap (:[]) $ syncCxxCommand backend command
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _ _) =
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []

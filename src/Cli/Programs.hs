@@ -17,6 +17,7 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Cli.Programs (
   CompilerBackend(..),
@@ -24,15 +25,22 @@ module Cli.Programs (
   TestCommand(..),
   TestCommandResult(..),
   VersionHash(..),
+  parallelProcess,
 ) where
 
+import Control.Concurrent
+import Control.Monad (when)
 import Control.Monad.IO.Class
+import Data.Either (partitionEithers)
 
 import Base.CompilerError
 
 
 class CompilerBackend b where
-  runCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m FilePath
+  type AsyncWait b :: *
+  syncCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m FilePath
+  asyncCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m (AsyncWait b)
+  waitCxxCommand :: (MonadIO m, CollectErrorsM m) => b -> AsyncWait b -> m (Either (AsyncWait b) (FilePath,CxxCommand))
   runTestCommand  :: (MonadIO m, CollectErrorsM m) => b -> TestCommand -> m TestCommandResult
   getCompilerHash :: (MonadIO m, CollectErrorsM m) => b -> m VersionHash
 
@@ -79,3 +87,19 @@ data TestCommandResult =
     tcrError :: [String]
   }
   deriving (Show)
+
+parallelProcess :: (CompilerBackend b, MonadIO m, CollectErrorsM m) =>
+  b -> Int -> [m (AsyncWait b)] -> m [(FilePath,CxxCommand)]
+parallelProcess b n xs = do
+  now <- collectAllM $ take n xs  -- This starts execution!
+  let later = drop n xs
+  recursive now later where
+    recursive [] _ = return []
+    recursive now later = do
+      tried <- mapCompilerM (waitCxxCommand b) now
+      let (wait,done) = partitionEithers tried
+      let k = length done
+      when (k == 0) $ liftIO $ threadDelay 1000  -- Sleep 1ms to control rate.
+      new <- collectAllM $ take k later  -- This starts execution!
+      following <- recursive (wait ++ new) (drop k later)
+      return $ done ++ following

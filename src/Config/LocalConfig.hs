@@ -16,9 +16,12 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE TypeFamilies #-}
+
 module Config.LocalConfig (
   Backend(..),
   LocalConfig(..),
+  PendingProcess,
   Resolver(..),
   rootPath,
   compilerVersion,
@@ -36,8 +39,9 @@ import System.Directory
 import System.Exit
 import System.FilePath
 import System.IO
-import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProcessStatus)
+import System.Posix.Process
 import System.Posix.Temp (mkstemps)
+import System.Posix.Types (ProcessID)
 
 import Base.CompilerError
 import Cli.Programs
@@ -55,37 +59,73 @@ rootPath = getDataFileName ""
 compilerVersion :: String
 compilerVersion = showVersion version
 
+data PendingProcess =
+  PendingProcess {
+    pcContext :: String,
+    pcProcess :: ProcessID,
+    pcNext :: Either (IO PendingProcess) (FilePath,CxxCommand)
+  }
+
 instance CompilerBackend Backend where
-  runCxxCommand = run where
-    run (UnixBackend cb ff _ _ ab) (CompileToObject s p ms ps e) = do
+  type AsyncWait Backend = PendingProcess
+  syncCxxCommand b compile = asyncCxxCommand b compile >>= waitAll where
+    waitAll (PendingProcess context pid next) = do
+      blockProcess pid <?? context
+      case next of
+           Left process -> errorFromIO process >>= waitAll
+           Right (path,_) -> return path
+  asyncCxxCommand = run where
+    run (UnixBackend cb ff _ _ ab) ca@(CompileToObject s p ms ps e) = do
       objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
+      arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
-      executeProcess cb (ff ++ otherOptions ++ ["-c", s, "-o", objName]) <?? "In compilation of " ++ s
-      if e
-         then do
-           -- Extra files are put into .a since they will be unconditionally
-           -- included. This prevents unwanted symbol dependencies.
-           arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
-           executeProcess ab ["-q",arName,objName] <?? "In packaging of " ++ objName
-           return arName
-         else return objName
-    run (UnixBackend cb _ ff _ _) (CompileToShared ss o lf) = do
+      let next = if e
+                    then Right (objName,ca)
+                    else Left $ do
+                      pid <- executeProcess ab ["-q",arName,objName]
+                      return $ PendingProcess {
+                          pcContext = "Archiving of " ++ objName,
+                          pcProcess = pid,
+                          pcNext = Right (arName,ca)
+                        }
+      pid <- errorFromIO $ executeProcess cb (ff ++ otherOptions ++ ["-c", s, "-o", objName])
+      return $ PendingProcess {
+          pcContext = "Compilation of " ++ s,
+          pcProcess = pid,
+          pcNext = next
+        }
+    run (UnixBackend cb _ ff _ _) ca@(CompileToShared ss o lf) = do
       let arFiles      = filter (isSuffixOf ".a")       ss
       let otherFiles   = filter (not . isSuffixOf ".a") ss
       let flags = nub lf
       let args = ff ++ otherFiles ++ arFiles ++ ["-o", o] ++ flags
-      executeProcess cb args <?? "In linking of " ++ o
-      return o
-    run (UnixBackend cb _ _ ff _) (CompileToBinary m ss ms o ps lf) = do
+      pid <- errorFromIO $ executeProcess cb args
+      return $ PendingProcess {
+          pcContext = "In linking of " ++ o,
+          pcProcess = pid,
+          pcNext = Right (o,ca)
+        }
+    run (UnixBackend cb _ _ ff _) ca@(CompileToBinary m ss ms o ps lf) = do
       let arFiles      = filter (isSuffixOf ".a")       ss
       let otherFiles   = filter (not . isSuffixOf ".a") ss
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
       let flags = nub lf
       let args = ff ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o] ++ flags
-      executeProcess cb args <?? "In linking of " ++ o
-      return o
+      pid <- errorFromIO $ executeProcess cb args
+      return $ PendingProcess {
+          pcContext = "In linking of " ++ o,
+          pcProcess = pid,
+          pcNext = Right (o,ca)
+        }
     macro (n,Just v)  = "-D" ++ n ++ "=" ++ v
     macro (n,Nothing) = "-D" ++ n
+  waitCxxCommand _ p@(PendingProcess context pid next) = do
+    status <- waitProcess pid <?? context
+    if status
+       then case next of
+                 Left process -> fmap Left $ errorFromIO process
+                 Right result -> return $ Right result  -- Not the same Either.
+       else return $ Left p
   runTestCommand _ (TestCommand b p as) = errorFromIO $ do
     (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
     (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"
@@ -111,16 +151,29 @@ instance CompilerBackend Backend where
     serialized <- autoWriteConfig b
     return $ VersionHash $ flip showHex "" $ abs $ hash $ minorVersion ++ serialized
 
-executeProcess :: (MonadIO m, ErrorContextM m) => String -> [String] -> m ()
+executeProcess :: String -> [String] -> IO ProcessID
 executeProcess c os = do
-  errorFromIO $ hPutStrLn stderr $ "Executing: " ++ intercalate " " (c:os)
-  pid    <- errorFromIO $ forkProcess $ executeFile c True os Nothing
+  hPutStrLn stderr $ "Executing: " ++ intercalate " " (c:os)
+  forkProcess $ executeFile c True os Nothing
+
+waitProcess :: (MonadIO m, ErrorContextM m) => ProcessID -> m Bool
+waitProcess pid = do
+  status <- errorFromIO $ getProcessStatus False True pid
+  case status of
+       Nothing -> return False
+       Just (Exited ExitSuccess) -> return True
+       _ -> do
+         errorFromIO $ hPutStrLn stderr $ "Command execution failed"
+         compilerErrorM $ "Command execution failed"
+
+blockProcess :: (MonadIO m, ErrorContextM m) => ProcessID -> m ()
+blockProcess pid = do
   status <- errorFromIO $ getProcessStatus True True pid
   case status of
        Just (Exited ExitSuccess) -> return ()
        _ -> do
-         errorFromIO $ hPutStrLn stderr $ "Execution of " ++ c ++ " failed"
-         compilerErrorM $ "Execution of " ++ c ++ " failed"
+         errorFromIO $ hPutStrLn stderr $ "Command execution failed"
+         compilerErrorM $ "Command execution failed"
 
 instance PathIOHandler Resolver where
   resolveModule r p m = do

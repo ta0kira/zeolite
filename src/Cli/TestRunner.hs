@@ -217,7 +217,7 @@ runSingleTest b cl cm paths deps (f,s) = do
       let libraries = getLibrariesForDeps deps
       macro <- timeoutMacro timeout
       let command = CompileToBinary main (concat (map fst sources) ++ libraries) macro binary paths' flags
-      file <- runCxxCommand b command
+      file <- syncCxxCommand b command
       return (dir,file)
     timeoutMacro (Just 0) = return []  -- No timeout.
     timeoutMacro Nothing  = return [(testTimeoutMacro,Just "30")]  -- Default timeout.
