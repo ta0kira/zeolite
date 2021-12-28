@@ -28,16 +28,16 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 ReturnTuple DispatchBool(PrimBool value, const ValueFunction& label,
-                         const ParamsArgs& params_args);
+                         const ParamsArgs& params_args) __attribute__((weak));
 
 ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
-                         const ParamsArgs& params_args);
+                         const ParamsArgs& params_args) __attribute__((weak));
 
 ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
-                        const ParamsArgs& params_args);
+                        const ParamsArgs& params_args) __attribute__((weak));
 
 ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
-                          const ParamsArgs& params_args);
+                          const ParamsArgs& params_args) __attribute__((weak));
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

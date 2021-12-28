@@ -29,7 +29,6 @@ module CompilerCxx.Code (
   functionLabelType,
   hasPrimitiveValue,
   indentCompiled,
-  integratedCategoryDeps,
   isStoredUnboxed,
   newFunctionLabel,
   noTestsOnlySourceGuard,
@@ -131,9 +130,6 @@ hasPrimitiveValue BuiltinInt   = True
 hasPrimitiveValue BuiltinFloat = True
 hasPrimitiveValue BuiltinChar  = True
 hasPrimitiveValue _            = False
-
-integratedCategoryDeps :: Set.Set CategoryName
-integratedCategoryDeps = Set.fromList [BuiltinBool,BuiltinInt,BuiltinFloat,BuiltinChar]
 
 isStoredUnboxed :: ValueType -> Bool
 isStoredUnboxed t
