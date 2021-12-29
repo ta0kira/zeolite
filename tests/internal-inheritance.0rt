@@ -263,3 +263,26 @@ concrete Type<|#x> {}
 define Type {
   defines Base<#x>
 }
+
+
+testcase "indirect internal inheritance flattened correctly" {
+  compiles
+}
+
+@value interface Base1<#x> {}
+
+@value interface Base2<#x> {
+  refines Base1<#x>
+}
+
+concrete Type<#x> {
+  @type new () -> (Base1<Type<#x>>)
+}
+
+define Type {
+  refines Base2<Type<#x>>
+
+  new () {
+    return Type<#x>{ }
+  }
+}
