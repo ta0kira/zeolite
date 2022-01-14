@@ -124,7 +124,7 @@ test_freshness() {
   rm -f "$ZEOLITE_PATH/tests/freshness"/{,sub1/,sub2/}{public3.0rp,source3.0rx,test3.0rt}
 
   # Compile and test normally.
-  do_zeolite -p "$ZEOLITE_PATH" -R tests/freshness/reverse -f
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -R tests/freshness/reverse -f
   do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness/reverse
 
   # Modify the module's files.
@@ -191,7 +191,7 @@ hpp
 END
 [[ $? -eq 0 ]] || return 1
 
-  do_zeolite -p "$ZEOLITE_PATH" -r tests/freshness
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/freshness
 
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -t tests/freshness/reverse || true)
   require_patterns "$output" <<END
