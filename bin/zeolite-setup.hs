@@ -162,16 +162,16 @@ initLibraries :: Int -> (Resolver,Backend) -> TrackedErrorsIO ()
 initLibraries pn (resolver,backend) = do
   path <- lift $ rootPath >>= canonicalizePath
   let options = CompileOptions {
-      coHelp = HelpNotNeeded,
-      coPublicDeps = [],
-      coPrivateDeps = [],
-      coPaths = libraries,
-      coExtraFiles = [],
-      coExtraPaths = [],
-      coSourcePrefix = path,
-      coMode = CompileRecompileRecursive,
-      coForce = ForceAll,
-      coParallel = pn
+      _coHelp = HelpNotNeeded,
+      _coPublicDeps = [],
+      _coPrivateDeps = [],
+      _coPaths = libraries,
+      _coExtraFiles = [],
+      _coExtraPaths = [],
+      _coSourcePrefix = path,
+      _coMode = CompileRecompileRecursive,
+      _coForce = ForceAll,
+      _coParallel = pn
     }
   runCompiler resolver backend options
   mapM_ optionalWarning optionalLibraries where

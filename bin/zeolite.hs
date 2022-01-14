@@ -55,7 +55,7 @@ main = do
           asCompilerWarnings co
           let co' = getCompilerSuccess co
           (resolver,backend) <- loadConfig
-          when (HelpNotNeeded /= (coHelp co')) $ errorFromIO $ showHelp >> exitFailure
+          when (HelpNotNeeded /= (_coHelp co')) $ errorFromIO $ showHelp >> exitFailure
           tryCloseStdin
           runCompiler resolver backend co'
 
