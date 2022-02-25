@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -101,10 +101,12 @@ define ErrorOr {
   }
 
   convertError () {
-    if (!present(maybeError)) {
-      fail("no error present to convert")
+    scoped {
+      optional ErrorOr<all> error <- reduce<#self,ErrorOr<all>>(self)
+    } in if (present(error)) {
+      return require(error)
     } else {
-      return ErrorOr<all>{ empty, maybeError }
+      fail("no error present to convert")
     }
   }
 }
