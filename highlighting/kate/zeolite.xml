@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.20"
+    version="3.21"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -25,6 +25,7 @@
       <item> defines </item>
       <item> elif </item>
       <item> else </item>
+      <item> exit </item>
       <item> fail </item>
       <item> if </item>
       <item> immutable </item>

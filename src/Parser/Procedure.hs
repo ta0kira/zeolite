@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -131,6 +131,7 @@ instance ParseFromSource (Statement SourceContext) where
                  parseBreak <|>
                  parseContinue <|>
                  parseFailCall <|>
+                 parseExitCall <|>
                  parseVoid <|>
                  parseAssign <|>
                  parsePragma <|>
@@ -161,6 +162,11 @@ instance ParseFromSource (Statement SourceContext) where
       kwFail
       e <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
       return $ FailCall [c] e
+    parseExitCall = do
+      c <- getSourceContext
+      kwExit
+      e <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
+      return $ ExitCall [c] e
     parseIgnore = do
       c <- getSourceContext
       statementStart

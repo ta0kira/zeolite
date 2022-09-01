@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -269,11 +269,24 @@ compileStatement (FailCall c e) = do
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t0 formattedRequiredValue) <??
     "In fail call at " ++ formatFullContext c
-  csSetJumpType c JumpFailCall
+  csSetJumpType c JumpImmediateExit
   maybeSetTrace c
   csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
+compileStatement (ExitCall c e) = do
+  csAddRequired (Set.fromList [BuiltinInt])
+  e' <- compileExpression e
+  when (length (pValues $ fst e') /= 1) $
+    compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
+  let (Positional [t0],e0) = e'
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ (checkValueAssignment r fa t0 intRequiredValue) <??
+    "In exit call at " ++ formatFullContext c
+  csSetJumpType c JumpImmediateExit
+  maybeSetTrace c
+  csWrite ["BUILTIN_EXIT(" ++ useAsUnboxed PrimInt e0 ++ ")"]
 compileStatement (RawFailCall s) = do
-  csSetJumpType [] JumpFailCall
+  csSetJumpType [] JumpImmediateExit
   csWrite ["RAW_FAIL(" ++ show s ++ ")"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e

@@ -1,7 +1,7 @@
 cabal-version:       2.2
 
 name:                zeolite-lang
-version:             0.22.1.1
+version:             0.23.0.0
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
 description:
@@ -59,7 +59,7 @@ license:             Apache-2.0
 license-file:        LICENSE
 author:              Kevin P. Barry
 maintainer:          Kevin P. Barry <ta0kira@gmail.com>
-copyright:           (c) Kevin P. Barry 2019-2021
+copyright:           (c) Kevin P. Barry 2019-2022
 category:            Compiler
 build-type:          Simple
 

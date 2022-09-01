@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef CATEGORY_SOURCE_HPP_
 #define CATEGORY_SOURCE_HPP_
 
+#include <cstdlib>
 #include <iostream>  // For occasional debugging output in generated code.
 #include <map>
 #include <sstream>
@@ -32,14 +33,19 @@ limitations under the License.
 
 
 #define BUILTIN_FAIL(e) { \
-  FAIL() << TypeValue::Call((e), Function_Formatted_formatted, \
-                            PassParamsArgs()).At(0).AsString(); \
-  __builtin_unreachable(); \
+    FAIL() << TypeValue::Call((e), Function_Formatted_formatted, \
+                              PassParamsArgs()).At(0).AsString(); \
+    __builtin_unreachable(); \
+  }
+
+#define BUILTIN_EXIT(e) { \
+    std::exit(e); \
+    __builtin_unreachable(); \
   }
 
 #define RAW_FAIL(e) { \
-  FAIL() << e; \
-  __builtin_unreachable(); \
+    FAIL() << e; \
+    __builtin_unreachable(); \
   }
 
 #define VAR_SELF TypeValue::Var_self(this)

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020,2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ concrete Test {
 
 define Test {
   failedReturn () {
+    // Calling within a function also validates that return checks are skipped.
     fail("Failed")
   }
 }
@@ -56,6 +57,58 @@ define Value {
   create () {
     return Value{}
   }
+}
+
+
+testcase "exit builtin zero" {
+  success
+}
+
+unittest test {
+  Int value <- Test:exitReturn()
+}
+
+concrete Test {
+  @category exitReturn () -> (Int)
+}
+
+define Test {
+  exitReturn () {
+    // Calling within a function also validates that return checks are skipped.
+    exit(0)
+  }
+}
+
+
+testcase "exit builtin non-zero" {
+  crash
+  // Should not output a stack trace.
+  exclude "exitReturn"
+}
+
+unittest test {
+  Int value <- Test:exitReturn()
+}
+
+concrete Test {
+  @category exitReturn () -> (Int)
+}
+
+define Test {
+  exitReturn () {
+    exit(1)
+  }
+}
+
+
+testcase "wrong type for exit" {
+  error
+  require "exit"
+  require "Int"
+}
+
+unittest test {
+  exit("message")
 }
 
 

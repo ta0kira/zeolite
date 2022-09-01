@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.23.0.0  -- ????-??-??
+
+### Language
+
+* **[breaking]** Adds the `exit` builtin to terminate the program with an exit
+  code, with the usual semantics, i.e., 0 means success. This is breaking
+  because `exit` is now a reserved name.
+
 ## 0.22.1.0  -- 2022-04-18
 
 ### Language

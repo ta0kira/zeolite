@@ -50,6 +50,7 @@ of this document.
     - [Multiple Returns](#multiple-returns)
     - [Optional and Weak Values](#optional-and-weak-values)
     - [Deferred Variable Initialization](#deferred-variable-initialization)
+    - [Immediate Program Termination](#immediate-program-termination)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
   - [Immutable Types](#immutable-types)
@@ -80,6 +81,7 @@ of this document.
   - [Expression Macros](#expression-macros)
 - [Known Language Limitations](#known-language-limitations)
   - [Reference Counting](#reference-counting)
+
 ## Project Status
 
 Zeolite is still evolving in all areas (syntax, build system, etc.), and it
@@ -506,17 +508,6 @@ simplify parsing.)
   call a `@type` function from the procedure for a `@value` function in the
   same category.
 
-The `fail` builtin can be used to immediately terminate the program. It *is not*
-considered a function since it cannot return; therefore, you do not need to
-precede it with `\`.
-
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>define</b> <b><span style='color:#0057ae;'>MyProgram</span></b> {
-  run () {
-    <b>fail</b>(<span style='color:#bf0303;'>&quot;MyProgram does nothing&quot;</span>)
-  }
-}</pre>
-
 Functions *cannot* be overloaded like in Java and C++. Every function must have
 a unique name. Functions inherited from different places can be explicitly
 merged, however. This can be useful if you want interfaces to have overlapping
@@ -940,6 +931,47 @@ initialized in *both* the `if` and `else` clauses.
   before it gets used again.
 - If you never *read* the variable in a particular control branch then you do
   not need to initialize it; initialization is only checked where necessary.
+
+#### Immediate Program Termination
+
+There are two ways to terminate the program immediately.
+
+1. The `fail` builtin can be used to immediately terminate the program _with a
+   stack trace_. This *is not* considered a function call since it cannot
+   return; therefore, _do not_ precede it with `\`.
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <b>define</b> <b><span style='color:#0057ae;'>MyProgram</span></b> {
+     run () {
+       <b>fail</b>(<span style='color:#bf0303;'>&quot;MyProgram does nothing&quot;</span>)
+     }
+   }</pre>
+
+   The value passed to `fail` must implement the
+   [`Formatted` builtin](#builtins) `@value interface`.
+
+   The output to `stderr` will look something like this:
+
+   ```text
+   ./MyProgram: Failed condition: MyProgram does nothing
+     From MyProgram.run at line 7 column 5 of myprogram.0rx
+     From main
+   Terminated
+   ```
+
+1. The `exit` builtin can be used to immediately terminate the program _with a
+   traditional `Int` exit code_. (0 conventionally means program success.) This
+   *is not* considered a function call since it cannot return; therefore, _do
+   not_ precede it with `\`.
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <b>define</b> <b><span style='color:#0057ae;'>MyProgram</span></b> {
+     run () {
+       <b>exit</b>(<span style='color:#b08000;'>0</span>)
+     }
+   }</pre>
+
+   The value passed to `exit` must be an `Int`.
 
 ### Using Parameters
 
@@ -1585,7 +1617,8 @@ absolutely no examination of the "real" type of `value` at runtime.
 [`elif`](#conditionals)
 [`else`](#conditionals)
 [`empty`](#optional-and-weak-values)
-[`fail`](#calling-functions)
+[`exit`](#immediate-program-termination)
+[`fail`](#immediate-program-termination)
 [`false`](#builtin-types)
 [`if`](#conditionals)
 [`immutable`](#immutable-types)

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -176,6 +176,7 @@ data Statement c =
   LoopBreak [c] |
   LoopContinue [c] |
   FailCall [c] (Expression c) |
+  ExitCall [c] (Expression c) |
   RawFailCall String |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (Positional (Assignable c)) (Expression c) |
@@ -198,6 +199,7 @@ getStatementContext (ExplicitReturn c _)    = c
 getStatementContext (LoopBreak c)           = c
 getStatementContext (LoopContinue c)        = c
 getStatementContext (FailCall c _)          = c
+getStatementContext (ExitCall c _)          = c
 getStatementContext (RawFailCall _)         = []
 getStatementContext (IgnoreValues c _)      = c
 getStatementContext (Assignment c _ _)      = c

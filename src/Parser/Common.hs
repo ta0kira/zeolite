@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ module Parser.Common (
   kwElif,
   kwElse,
   kwEmpty,
+  kwExit,
   kwFail,
   kwFalse,
   kwIf,
@@ -217,6 +218,9 @@ kwElse = keyword "else"
 kwEmpty :: TextParser ()
 kwEmpty = keyword "empty"
 
+kwExit :: TextParser ()
+kwExit = keyword "exit"
+
 kwFail :: TextParser ()
 kwFail = keyword "fail"
 
@@ -329,6 +333,7 @@ isKeyword = foldr (<|>) empty $ map try [
     kwElif,
     kwElse,
     kwEmpty,
+    kwExit,
     kwFail,
     kwFalse,
     kwIf,

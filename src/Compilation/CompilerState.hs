@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -201,7 +201,7 @@ data JumpType =
   JumpContinue |
   JumpBreak |
   JumpReturn |
-  JumpFailCall |
+  JumpImmediateExit |
   JumpMax  -- Max value for use as initial state in folds.
   deriving (Eq,Ord,Show)
 

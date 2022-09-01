@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -144,6 +144,10 @@ tests = [
     checkShortParseSuccess "if (((var.func())?T.call())) { }",
     checkShortParseSuccess "fail(\"reason\")",
     checkShortParseFail "\\ fail(\"reason\")",
+    checkShortParseFail "\\ fail()",
+    checkShortParseSuccess "exit(1)",
+    checkShortParseFail "\\ exit(1)",
+    checkShortParseFail "\\ exit()",
     checkShortParseSuccess "failed <- 10",
 
     checkShortParseSuccess "\\var?T<#x>.func().func2().func3()",
