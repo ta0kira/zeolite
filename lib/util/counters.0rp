@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ concrete Counter {
   @type revZeroIndexed (Int) -> (optional Order<Int>)
   // Create an unbounded Int sequence.
   @type unlimited () -> (optional Order<Int>)
+  // Create a counter using a builder.
+  @type builder () -> (CounterBuilder<Int>)
 }
 
 // Creates an Order<#x> that repeats a single value, for use with traverse.
@@ -50,4 +52,51 @@ concrete Ranges {
   @category minMax<#x>
     #x defines LessThan<#x>
   (#x,#x) -> (#x,#x)
+}
+
+// Builds a sequence of values.
+//
+// Many of the functions here overlap; therefore, you should never need all of
+// them for a single counter.
+//
+// Example combinations:
+//
+// - start+count: Set the first value and the number of items, using the default
+//   increment between items.
+// - count+reverse: Use the default start and default increment, but reverse the
+//   order that the items are returned in.
+// - start+increment+limit: Count by the specified increment starting with the
+//   specified starting point until the specified limit.
+@value interface CounterBuilder<#x> {
+  // Finalize the counter.
+  done () -> (optional Order<#x>)
+
+  // Set the first value in the counter.
+  start (#x) -> (#self)
+
+  // Set the number of items returned.
+  //
+  // Notes:
+  // - This overrides limit.
+  count (Int) -> (#self)
+
+  // Set a strict threshold that will not be met or exceeded.
+  //
+  // Notes:
+  // - If increment < 0 then all items will be > limit.
+  // - If increment > 0 then all items will be < limit.
+  // - This overrides count.
+  limit (#x) -> (#self)
+
+  // Set the difference between consecutive items.
+  increment (#x) -> (#self)
+
+  // Reverse the order that the items are returned in.
+  //
+  // Notes:
+  // - This has no effect if the count is unlimited, since the last item does
+  //   not exist.
+  // - This has the same effect regardless of when it gets called.
+  // - Calling this twice reverts the counter to forward again.
+  reverse () -> (#self)
 }

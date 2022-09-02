@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,14 +38,14 @@ unittest zeroIndexedEmpty {
 }
 
 unittest revZeroIndexed {
-  Int index <- 10
+  Int index <- 9
 
   traverse (Counter.revZeroIndexed(10) -> Int i) {
-    index <- index-1
     \ Testing.checkEquals(i,index)
+    index <- index-1
   }
 
-  \ Testing.checkEquals(index,0)
+  \ Testing.checkEquals(index,-1)
 }
 
 unittest revZeroIndexedEmpty {
@@ -65,6 +65,40 @@ unittest unlimitedCount {
   }
 
   \ Testing.checkEquals(index,10)
+}
+
+unittest builderReversePositive {
+  // Forward sequence: 3 8 13
+  Int index <- 13
+
+  traverse (Counter.builder()
+                .start(3)
+                .increment(5)
+                .limit(17)
+                .reverse()
+                .done() -> Int i) {
+    \ Testing.checkEquals(i,index)
+    index <- index-5
+  }
+
+  \ Testing.checkEquals(index,-2)
+}
+
+unittest builderReverseNegative {
+  // Forward sequence: 17 12 7
+  Int index <- 7
+
+  traverse (Counter.builder()
+                .start(17)
+                .increment(-5)
+                .limit(3)
+                .reverse()
+                .done() -> Int i) {
+    \ Testing.checkEquals(i,index)
+    index <- index+5
+  }
+
+  \ Testing.checkEquals(index,22)
 }
 
 unittest times {

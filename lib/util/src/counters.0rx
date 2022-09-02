@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,99 +18,120 @@ limitations under the License.
 
 define Counter {
   zeroIndexed (max) {
-    return ForwardCounter.new(max)
+    return builder().count(max).done()
   }
 
   revZeroIndexed (max) {
-    return ReverseCounter.new(max)
+    return builder().count(max).reverse().done()
   }
 
   unlimited () {
-    return UnlimitedCounter.new()
+    return builder().done()
+  }
+
+  builder () {
+    return IntCounterBuilder.new()
   }
 }
 
-concrete ForwardCounter {
-  @type new (Int) -> (optional Order<Int>)
+concrete IntCounterBuilder {
+  @type new () -> (CounterBuilder<Int>)
 }
 
-define ForwardCounter {
-  $ReadOnly[limit]$
+define IntCounterBuilder {
+  refines CounterBuilder<Int>
 
-  refines Order<Int>
-
-  @value Int current
-  @value Int limit
-
-  new (max) {
-    if (max > 0) {
-      return #self{ 0, max }
-    } else {
-      return empty
-    }
-  }
-
-  next () {
-    if (current < limit-1) {
-      current <- current+1
-      return self
-    } else {
-      return empty
-    }
-  }
-
-  get () {
-    return current
-  }
-}
-
-concrete ReverseCounter {
-  @type new (Int) -> (optional Order<Int>)
-}
-
-define ReverseCounter {
-  refines Order<Int>
-
-  @value Int current
-
-  new (max) {
-    if (max > 0) {
-      return #self{ max-1 }
-    } else {
-      return empty
-    }
-  }
-
-  next () {
-    if (current > 0) {
-      current <- current-1
-      return self
-    } else {
-      return empty
-    }
-  }
-
-  get () {
-    return current
-  }
-}
-
-concrete UnlimitedCounter {
-  @type new () -> (optional Order<Int>)
-}
-
-define UnlimitedCounter {
-  refines Order<Int>
-
-  @value Int current
+  @value Int start
+  @value Int increment
+  @value optional Int limit
+  @value optional Int count
+  @value Bool reverse
 
   new () {
-    return #self{ 0 }
+    return #self{ 0, 1, empty, empty, false }
+  }
+
+  done () {
+    optional Int actualCount <- defer
+    if (`present` limit) {
+      if (increment != 0) {
+        Bool missedStart <- (`require` limit - start) % increment != 0
+        // NOTE: This still works if limit < start and increment < 0.
+        actualCount <- (`require` limit - start) / increment + missedStart.asInt()
+      } else {
+        actualCount <- empty
+      }
+    } else {
+      actualCount <- count
+    }
+    Int actualStart <- start
+    Int actualIncrement <- increment
+    if (reverse && `present` actualCount) {
+      actualStart <- start + increment*(require(actualCount)-1)
+      actualIncrement <- -increment
+    }
+    return IntCounter.new(actualStart,actualIncrement,actualCount)
+  }
+
+  start (x) {
+    start <- x
+    return self
+  }
+
+  count (n) {
+    limit <- empty
+    count <- n
+    return self
+  }
+
+  limit (x) {
+    count <- empty
+    limit <- x
+    return self
+  }
+
+  increment (x) {
+    increment <- x
+    return self
+  }
+
+  reverse () {
+    reverse <- !reverse
+    return self
+  }
+}
+
+concrete IntCounter {
+  @type new (Int,Int,optional Int) -> (optional Order<Int>)
+}
+
+define IntCounter {
+  $ReadOnly[increment]$
+
+  refines Order<Int>
+
+  @value Int current
+  @value Int increment
+  @value optional Int remaining
+
+  new (start,increment,count) {
+    if (`present` count && `require` count <= 0) {
+      return empty
+    } else {
+      return #self{ start, increment, count }
+    }
   }
 
   next () {
-    current <- current+1
-    return self
+    if (`present` remaining && `require` remaining - 1 <= 0) {
+      return empty
+    } else {
+      if (`present` remaining) {
+        remaining <- `require` remaining - 1
+      }
+      current <- current+increment
+      return self
+    }
   }
 
   get () {
@@ -119,32 +140,33 @@ define UnlimitedCounter {
 }
 
 define Repeat {
-  $ReadOnlyExcept[current]$
+  $ReadOnlyExcept[counter]$
 
   refines Order<#x>
 
   @value #x value
-  @value Int current
-  @value optional Int limit
+  @value Order<any> counter
 
   times (value,max) {
-    if (max <= 0) {
+    optional Order<any> counter <- Counter.builder().count(max).done()
+    if (! `present` counter) {
       return empty
     } else {
-      return Repeat<#y>{ value, 0, max }
+      return Repeat<#y>{ value, `require` counter }
     }
   }
 
   unlimited (value) {
-    return Repeat<#y>{ value, 0, empty }
+    return Repeat<#y>{ value, `require` Counter.builder().done() }
   }
 
   next () {
-    if (!present(limit) || current+1 < require(limit)) {
-      current <- current+1
-      return self
-    } else {
+    optional Order<any> next <- counter.next()
+    if (! `present` next) {
       return empty
+    } else {
+      counter <- `require` next
+      return self
     }
   }
 

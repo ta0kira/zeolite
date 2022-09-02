@@ -38,7 +38,6 @@ define Test {
 }
 
 
-
 testcase "wrong type for fail" {
   error
   require "fail"

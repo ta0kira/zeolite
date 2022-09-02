@@ -8,6 +8,11 @@
   code, with the usual semantics, i.e., 0 means success. This is breaking
   because `exit` is now a reserved name.
 
+### Libraries
+
+* **[new]** Adds the `Counter.builder()` function to `lib/util` to build `Int`
+  counters with more flexibile limits and increments.
+
 ## 0.22.1.0  -- 2022-04-18
 
 ### Language
