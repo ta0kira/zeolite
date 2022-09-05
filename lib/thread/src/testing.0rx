@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,16 @@ define NoOpRoutine {
   }
 
   run () {}
+}
+
+define CrashRoutine {
+  create () {
+    return CrashRoutine{ }
+  }
+
+  run () {
+    fail("CrashRoutine")
+  }
 }
 
 define InfiniteRoutine {

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,6 +31,28 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
+namespace {
+
+class InheritTrace : public TraceContext {
+ public:
+  inline explicit InheritTrace(const TraceList& trace)
+    : trace_(trace), capture_to_(this) {}
+
+ private:
+  void SetLocal(const char*) final {}
+
+  void AppendTrace(TraceList& trace) const final{
+    trace.insert(trace.end(), trace_.begin(), trace_.end());
+  }
+
+  const TraceContext* GetNext() const final { return nullptr; }
+
+  const TraceList& trace_;
+  const ScopedCapture capture_to_;
+};
+
+}  // namespace
+
 BoxedValue CreateValue_ProcessThread(S<const Type_ProcessThread> parent, const ParamsArgs& params_args);
 
 struct ExtCategory_ProcessThread : public Category_ProcessThread {
@@ -53,7 +75,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     TRACE_FUNCTION("ProcessThread.detach")
     S<std::thread> temp = thread;
     thread = nullptr;
-    if (!isJoinable(temp.get())) {
+    if (!IsJoinable(temp.get())) {
       FAIL() << "thread has not been started";
     } else {
       temp->detach();
@@ -63,14 +85,14 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
 
   ReturnTuple Call_isRunning(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("ProcessThread.isRunning")
-    return ReturnTuple(Box_Bool(isJoinable(thread.get())));
+    return ReturnTuple(Box_Bool(IsJoinable(thread.get())));
   }
 
   ReturnTuple Call_join(const ParamsArgs& params_args) final {
     TRACE_FUNCTION("ProcessThread.join")
     S<std::thread> temp = thread;
     thread = nullptr;
-    if (!isJoinable(temp.get())) {
+    if (!IsJoinable(temp.get())) {
       FAIL() << "thread has not been started";
     } else {
       temp->join();
@@ -79,8 +101,9 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
   }
 
   ReturnTuple Call_start(const ParamsArgs& params_args) final {
+    const TraceList copied_trace = TraceContext::GetTrace();
     TRACE_FUNCTION("ProcessThread.start")
-    if (isJoinable(thread.get())) {
+    if (IsJoinable(thread.get())) {
       FAIL() << "thread is already running";
     } else {
       // NOTE: Capture VAR_SELF so that the thread retains a reference while
@@ -88,7 +111,13 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
       // the thread.
       const BoxedValue self = VAR_SELF;
       thread.reset(new std::thread(
-        capture_thread::ThreadCrosser::WrapCall([this,self] {
+        capture_thread::ThreadCrosser::WrapCall([this,self,copied_trace] {
+#ifndef DISABLE_TRACING
+          InheritTrace inherit_trace(copied_trace);
+#endif
+          // NOTE: Don't include this in copied_trace because the latter defines
+          // SetLocal as a no-op.
+          TRACE_FUNCTION("ProcessThread.start")
           TRACE_CREATION
           TypeValue::Call(routine, Function_Routine_run, PassParamsArgs());
         })));
@@ -96,14 +125,14 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     return ReturnTuple(VAR_SELF);
   }
 
-  inline static bool isJoinable(std::thread* thread) {
+  inline static bool IsJoinable(std::thread* thread) {
     return thread && thread->joinable();
   }
 
   ~ExtValue_ProcessThread() {
     S<std::thread> temp = thread;
     thread = nullptr;
-    if (isJoinable(temp.get())) {
+    if (IsJoinable(temp.get())) {
       temp->detach();
     }
   }

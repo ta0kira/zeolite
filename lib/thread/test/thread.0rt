@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -241,5 +241,35 @@ unittest notStarted {
   weak Thread thread <- ProcessThread.from(NoOpRoutine.create())
   if (present(strong(thread))) {
     fail("thread is still present")
+  }
+}
+
+
+testcase "creation tracing in Thread" {
+  crash
+  // Thread creation.
+  require "CrashThread\.new"
+  // Inherited trace from start call.
+  require "CrashThread\.execute"
+}
+
+unittest testName {
+  \ CrashThread.new().execute()
+}
+
+concrete CrashThread {
+  @type new () -> (CrashThread)
+  @value execute () -> ()
+}
+
+define CrashThread {
+  @value ProcessThread thread
+
+  new () {
+    return CrashThread{ ProcessThread.from(CrashRoutine.create()) }
+  }
+
+  execute () {
+    \ thread.start().join()
   }
 }
