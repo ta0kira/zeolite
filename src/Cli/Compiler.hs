@@ -314,6 +314,7 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath -> [FilePa
   Map.Map CategoryName (CategorySpec SourceContext) ->[CompileMetadata] ->
   [CompileMetadata] -> TrackedErrorsIO ()
 createModuleTemplates resolver p d ds cm deps1 deps2 = do
+  time <- errorFromIO getCurrentTime
   (ps,xs,_) <- findSourceFiles p (d:ds)
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
     fmap (createLanguageModule [] Map.empty . fst) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
@@ -326,12 +327,12 @@ createModuleTemplates resolver p d ds cm deps1 deps2 = do
   let ca' = foldr Set.delete ca $ map dcName ds3
   let testingCats = Set.fromList $ map getCategoryName ts1
   ts <- fmap concat $ mapCompilerM (\n -> generate (n `Set.member` testingCats) tm n) $ Set.toList ca'
-  mapCompilerM_ writeTemplate ts where
+  mapCompilerM_ (writeTemplate time) ts where
     generate testing tm n = do
       (_,t) <- getConcreteCategory tm ([],n)
       let spec = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
       generateStreamlinedTemplate testing tm t spec
-    writeTemplate (CxxOutput _ n _ _ _ _ content) = do
+    writeTemplate time (CxxOutput _ n _ _ _ _ content) = do
       let n' = p </> d </> n
       exists <- errorFromIO $ doesFileExist n'
       if exists
@@ -342,7 +343,7 @@ createModuleTemplates resolver p d ds cm deps1 deps2 = do
            -- This is to avoid a race condition when the module is compiled
            -- immediately after generating templates, since the former
            -- explicitly sets the metadata timestamp.
-           errorFromIO $ getCurrentTime >>= setModificationTime n'
+           errorFromIO $ setModificationTime n' time
 
 runModuleTests :: (PathIOHandler r, CompilerBackend b) =>
   r -> b -> FilePath -> FilePath -> [FilePath] -> LoadedTests ->
