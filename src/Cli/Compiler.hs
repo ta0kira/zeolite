@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import Control.Arrow (first)
 import Control.Monad (foldM,when)
 import Data.Either (partitionEithers)
 import Data.List (isSuffixOf,nub,sort)
-import Data.Time.LocalTime (getZonedTime)
+import Data.Time.Clock (getCurrentTime)
 import System.Directory
 import System.FilePath
 import System.IO
@@ -86,6 +86,7 @@ data LoadedTests =
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> TrackedErrorsIO ()
 compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m f pn) = do
+  time <- errorFromIO getCurrentTime
   as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
@@ -103,7 +104,6 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
                else do
                  bpDeps <- loadPublicDeps compilerHash f ca2 [base]
                  return $ bpDeps ++ deps1
-  time <- errorFromIO getZonedTime
   root <- errorFromIO $ canonicalizePath p
   path <- errorFromIO $ canonicalizePath (p </> d)
   extra <- errorFromIO $ sequence $ map (canonicalizePath . (p</>)) ee
@@ -134,7 +134,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs
-  os1 <- mapCompilerM (writeOutputFile paths2)(hxx ++ other) >>= compileGenerated
+  os1 <- mapCompilerM (writeOutputFile paths2 time) (hxx ++ other) >>= compileGenerated
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- mapCompilerM checkOwnedFile files
@@ -171,7 +171,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
       cmLinkFlags = getLinkFlags m,
       cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
     }
-  bs <- createBinary compilerHash paths' (cm2:(deps1' ++ deps2)) m mf
+  bs <- createBinary compilerHash paths' (cm2:(deps1' ++ deps2)) time m mf
   let cm2' = CompileMetadata {
       cmVersionHash = cmVersionHash cm2,
       cmRoot = cmRoot cm2,
@@ -195,7 +195,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
       cmLinkFlags = cmLinkFlags cm2,
       cmObjectFiles = cmObjectFiles cm2
     }
-  writeMetadata (p </> d) cm2'
+  writeMetadata (p </> d) cm2' time
   let traces = Set.unions $ map coPossibleTraces $ hxx ++ other
   writePossibleTraces (p </> d) traces where
     ep' = fixPaths $ map (p </>) ep
@@ -206,9 +206,9 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
              " already defined at " ++ formatFullContextBrace (csContext cc2)
            Nothing -> return ()
       return $ Map.insert n cc cm
-    writeOutputFile paths ca@(CxxOutput _ f2 ns _ _ _ content) = do
+    writeOutputFile paths time ca@(CxxOutput _ f2 ns _ _ _ content) = do
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
-      writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
+      _ <- writeCachedFile (p </> d) (show ns) f2 (Just time) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
          then do
            let f2' = getCachedPath (p </> d) (show ns) f2
@@ -269,14 +269,14 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
           return $ Left $ asyncCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return $ Right [f2]
       | otherwise = return $ Right []
-    createBinary compilerHash paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
+    createBinary compilerHash paths deps time (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
       f0 <- if null o
                 then errorFromIO $ canonicalizePath $ p </> d </> show n
                 else errorFromIO $ canonicalizePath $ p </> d </> o
       let main = takeFileName f0 ++ ".cpp"
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ main
       let mainAbs = getCachedPath (p </> d) "main" main
-      writeCachedFile (p </> d) "main" main $ concat $ map (++ "\n") content
+      _ <- writeCachedFile (p </> d) "main" main (Just time) $ concat $ map (++ "\n") content
       base <- resolveBaseModule resolver
       deps2  <- loadPrivateDeps compilerHash f (mapMetadata deps) deps
       let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
@@ -293,11 +293,11 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
         getCommand LinkDynamic mainAbs f0 deps2 paths2 = do
           let objects = getLibrariesForDeps deps2
           return $ CompileToBinary mainAbs objects [] f0 paths2 []
-    createBinary _ _ _ (CompileBinary n _ _ _ _) [] =
+    createBinary _ _ _ _ (CompileBinary n _ _ _ _) [] =
       compilerErrorM $ "Main category " ++ show n ++ " not found."
-    createBinary _ _ _ (CompileBinary n _ _ _ _) _ =
+    createBinary _ _ _ _ (CompileBinary n _ _ _ _) _ =
       compilerErrorM $ "Multiple matches for main category " ++ show n ++ "."
-    createBinary _ _ _ _ _ = return []
+    createBinary _ _ _ _ _ _  = return []
     createLibrary _ _ [] [] = return []
     createLibrary name lf deps os = do
       let flags = lf ++ getLinkFlagsForDeps deps
@@ -359,7 +359,7 @@ runModuleTests resolver backend cl base tp (LoadedTests m em deps1 deps2) = do
 loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> TrackedErrorsIO (PrivateSource SourceContext)
 loadPrivateSource resolver h p f = do
   [f'] <- zipWithContents resolver p [f]
-  time <- errorFromIO getZonedTime
+  time <- errorFromIO getCurrentTime
   path <- errorFromIO $ canonicalizePath (p </> f)
   let ns = StaticNamespace $ privateNamespace $ show time ++ show h ++ path
   (pragmas,cs,ds) <- parseInternalSource f'

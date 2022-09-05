@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub)
 import Data.Maybe (isJust)
+import Data.Time.Clock (UTCTime)
 import System.Directory
 import System.FilePath
 import System.IO
@@ -140,12 +141,12 @@ isPathConfigured p d = do
   m <- errorFromIO $ toTrackedErrors $ loadRecompile (p </> d)
   return $ not $ isCompilerError m
 
-writeMetadata :: FilePath -> CompileMetadata -> TrackedErrorsIO ()
-writeMetadata p m = do
+writeMetadata :: FilePath -> CompileMetadata -> UTCTime -> TrackedErrorsIO ()
+writeMetadata p m t = do
   p' <- errorFromIO $ canonicalizePath p
   errorFromIO $ hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
   m' <- autoWriteConfig m <?? "In data for " ++ p
-  writeCachedFile p' "" metadataFilename m'
+  writeCachedFile p' "" metadataFilename (Just t) m'
 
 writeRecompile :: FilePath -> ModuleConfig -> TrackedErrorsIO ()
 writeRecompile p m = do
@@ -158,7 +159,7 @@ writeRecompile p m = do
 writePossibleTraces :: FilePath -> Set.Set String -> TrackedErrorsIO ()
 writePossibleTraces p ts = do
   p' <- errorFromIO $ canonicalizePath p
-  writeCachedFile p' "" tracesFilename $ concat $ map (++"\n") $ Set.toList ts
+  writeCachedFile p' "" tracesFilename Nothing $ concat $ map (++"\n") $ Set.toList ts
 
 readPossibleTraces :: FilePath -> TrackedErrorsIO (Set.Set String)
 readPossibleTraces p = do
@@ -190,11 +191,15 @@ createCachedDir p d = do
   errorFromIO $ createDirectoryIfMissing False d2
   return d2
 
-writeCachedFile :: FilePath -> String -> FilePath -> String -> TrackedErrorsIO ()
-writeCachedFile p ns f c = do
+writeCachedFile :: FilePath -> String -> FilePath -> Maybe UTCTime -> String -> TrackedErrorsIO ()
+writeCachedFile p ns f t c = do
   createCachePath p
   errorFromIO $ createDirectoryIfMissing False $ p </> cachedDataPath </> ns
-  errorFromIO $ writeFile (getCachedPath p ns f) c
+  let filename = getCachedPath p ns f
+  errorFromIO $ writeFile filename c
+  case t of
+       Just t2 -> errorFromIO $ setModificationTime filename t2
+       Nothing -> return ()
 
 getCachedPath :: FilePath -> String -> FilePath -> FilePath
 getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
