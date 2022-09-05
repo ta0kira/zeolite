@@ -339,6 +339,10 @@ createModuleTemplates resolver p d ds cm deps1 deps2 = do
          else do
            errorFromIO $ hPutStrLn stderr $ "Writing file " ++ n
            errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
+           -- This is to avoid a race condition when the module is compiled
+           -- immediately after generating templates, since the former
+           -- explicitly sets the metadata timestamp.
+           errorFromIO $ getCurrentTime >>= setModificationTime n'
 
 runModuleTests :: (PathIOHandler r, CompilerBackend b) =>
   r -> b -> FilePath -> FilePath -> [FilePath] -> LoadedTests ->
