@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -191,6 +191,22 @@ const std::vector<std::string>& ProgramArgv::GetArgs() const {
   return argv_;
 }
 
+namespace {
+
+std::unique_ptr<std::fstream> TryOpenOutputLog(const std::string& filename) {
+  if (filename.empty()) return nullptr;
+  std::unique_ptr<std::fstream> file(new std::fstream(
+    filename, std::ios::in | std::ios::out | std::ios::ate | std::ios::app));
+  if (*file) return file;
+  // Maybe the file isn't seekable.
+  file.reset(new std::fstream(filename, std::ios::out));
+  if (*file) return file;
+  FAIL() << "Failed to open call log " << filename << " for writing";
+  __builtin_unreachable();
+}
+
+}  // namespace
+
 unsigned int UniqueId() {
   const auto time = std::chrono::steady_clock::now().time_since_epoch();
   return (1000000009 * std::chrono::duration_cast<std::chrono::microseconds>(time).count());
@@ -206,19 +222,8 @@ void LogCalls::DisableCallLogging() {
 LogCallsToFile::LogCallsToFile(std::string filename)
   : unique_id_(UniqueId()),
     filename_(std::move(filename)),
-    log_file_(filename_.empty()?
-                nullptr :
-                new std::fstream(filename_, std::ios::in |
-                                            std::ios::out |
-                                            std::ios::ate |
-                                            std::ios::app)),
-    cross_and_capture_to_(this) {
-  if (log_file_) {
-    if (!*log_file_) {
-      FAIL() << "Failed to open call log " << filename_ << " for writing";
-    }
-  }
-}
+    log_file_(TryOpenOutputLog(filename_)),
+    cross_and_capture_to_(this) {}
 
 void LogCallsToFile::LogCall(const char* name, const char* at) {
   if (log_file_ && enable_coverage) {
