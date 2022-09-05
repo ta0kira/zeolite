@@ -33,7 +33,6 @@ module Module.ProcessMetadata (
   getObjectFileResolver,
   getRealPathsForDeps,
   getRecompilePath,
-  getSourceFilesForDeps,
   isPathConfigured,
   isPathUpToDate,
   isPrivateSource,
@@ -230,9 +229,9 @@ getExprMap p m = do
 getRealPathsForDeps :: [CompileMetadata] -> [FilePath]
 getRealPathsForDeps = map cmPath
 
-getSourceFilesForDeps :: [CompileMetadata] -> [FilePath]
-getSourceFilesForDeps = concat . map extract where
-  extract m = map (cmRoot m </>) (filter isPublicSource $ cmPublicFiles m ++ cmPrivateFiles m)
+getSourceFilesForDeps :: [CompileMetadata] -> [(FilePath,[FilePath])]
+getSourceFilesForDeps = map extract where
+  extract m = (cmRoot m,filter isPublicSource $ cmPublicFiles m ++ cmPrivateFiles m)
 
 getNamespacesForDeps :: [CompileMetadata] -> [Namespace]
 getNamespacesForDeps = filter (not . isNoNamespace) . map cmPublicNamespace
@@ -465,7 +464,7 @@ loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
   cs0 <- fmap concat $ mapCompilerM (processDeps False [FromDependency])            deps1
   cs1 <- fmap concat $ mapCompilerM (processDeps False [FromDependency,ModuleOnly]) deps2'
-  (cs2,xa) <- loadAllPublic (ns0,ns1) fs
+  (cs2,xa) <- loadAllPublic (ns0,ns1) [(".",fs)]
   cs3 <- case m of
               Just m2 -> processDeps True [FromDependency] m2
               _       -> return []
@@ -480,7 +479,7 @@ loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
                    else cs
       return $ map (updateCodeVisibility (Set.union (Set.fromList ss))) cs'
     loadAllPublic (ns2,ns3) fs2 = do
-      fs2' <- zipWithContents r p fs2
+      fs2' <- fmap concat $ mapCompilerM (uncurry $ zipWithContents r) fs2
       loaded <- mapCompilerM loadPublic fs2'
       return (concat $ map fst loaded,Set.fromList $ concat $ map snd loaded)
       where
