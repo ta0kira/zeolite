@@ -31,6 +31,10 @@ extra_files: [
     categories: [MutexLock]
   }
   category_source {
+    source: "lib/util/src/Extension_Realtime.cpp"
+    categories: [Realtime]
+  }
+  category_source {
     source: "lib/util/src/Extension_SimpleMutex.cpp"
     categories: [SimpleMutex]
   }

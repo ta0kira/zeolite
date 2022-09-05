@@ -10,6 +10,10 @@
 
 ### Libraries
 
+* **[new]** Moves `Realtime` from `lib/thread` to `lib/util` since it doesn't
+  inherently require threads. (This isn't breaking because `lib/util` was
+  already a *public* dependency of `lib/thread`.)
+
 * **[new]** Adds the `Counter.builder()` function to `lib/util` to build `Int`
   counters with more flexibile limits and increments.
 

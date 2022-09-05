@@ -9,7 +9,6 @@ expression_map: [
 private_deps: [
   "lib/container"
   "lib/math"
-  "lib/thread"
   "lib/util"
 ]
 mode: binary {
