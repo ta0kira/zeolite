@@ -464,7 +464,7 @@ loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
   cs0 <- fmap concat $ mapCompilerM (processDeps False [FromDependency])            deps1
   cs1 <- fmap concat $ mapCompilerM (processDeps False [FromDependency,ModuleOnly]) deps2'
-  (cs2,xa) <- loadAllPublic (ns0,ns1) [(".",fs)]
+  (cs2,xa) <- loadAllPublic (ns0,ns1) [(p,fs)]
   cs3 <- case m of
               Just m2 -> processDeps True [FromDependency] m2
               _       -> return []
