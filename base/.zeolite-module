@@ -25,6 +25,10 @@ extra_files: [
     source: "base/src/Extension_String.cpp"
     categories: [String]
   }
+  category_source {
+    source: "base/src/Extension_Pointer.cpp"
+    categories: [Pointer]
+  }
   "base/boxed.hpp"
   "base/category-header.hpp"
   "base/category-source.hpp"

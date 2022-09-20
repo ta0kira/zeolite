@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ using PrimString = std::string;
 using PrimChar = char;
 using PrimCharBuffer = std::string;
 using PrimFloat = double;
+using PrimPointer = void*;
 
 template<int S>
 inline PrimString PrimString_FromLiteral(const char(&literal)[S]) {

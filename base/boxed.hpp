@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ struct UnionValue {
     CHAR,
     INT,
     FLOAT,
+    POINTER,
     BOXED,
   };
 
@@ -54,11 +55,12 @@ struct UnionValue {
 
   union {
     unsigned char* as_bytes_;
-    Pointer*  as_pointer_;
-    PrimBool  as_bool_;
-    PrimChar  as_char_;
-    PrimInt   as_int_;
-    PrimFloat as_float_;
+    Pointer*    as_boxed_;
+    PrimBool    as_bool_;
+    PrimChar    as_char_;
+    PrimInt     as_int_;
+    PrimFloat   as_float_;
+    PrimPointer as_pointer_;
   } __attribute__((packed)) value_;
 } __attribute__((packed));
 
@@ -66,13 +68,13 @@ struct UnionValue {
 class BoxedValue {
  public:
   constexpr BoxedValue()
-    : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_pointer_ = nullptr } } {}
+    : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_boxed_ = nullptr } } {}
 
   inline BoxedValue(const BoxedValue& other)
     : union_(other.union_) {
     switch (union_.type_) {
       case UnionValue::Type::BOXED:
-        ++union_.value_.as_pointer_->strong_;
+        ++union_.value_.as_boxed_->strong_;
         break;
       default:
         break;
@@ -87,7 +89,7 @@ class BoxedValue {
       union_ = other.union_;
       switch (union_.type_) {
         case UnionValue::Type::BOXED:
-          ++union_.value_.as_pointer_->strong_;
+          ++union_.value_.as_boxed_->strong_;
           break;
         default:
           break;
@@ -99,7 +101,7 @@ class BoxedValue {
   inline BoxedValue(BoxedValue&& other)
     : union_(other.union_) {
     other.union_.type_  = UnionValue::Type::EMPTY;
-    other.union_.value_.as_pointer_ = nullptr;
+    other.union_.value_.as_boxed_ = nullptr;
   }
 
   inline BoxedValue& operator = (BoxedValue&& other) {
@@ -109,7 +111,7 @@ class BoxedValue {
       }
       union_ = other.union_;
       other.union_.type_  = UnionValue::Type::EMPTY;
-      other.union_.value_.as_pointer_ = nullptr;
+      other.union_.value_.as_boxed_ = nullptr;
     }
     return *this;
   }
@@ -125,6 +127,9 @@ class BoxedValue {
 
   inline BoxedValue(PrimFloat value)
     : union_{ .type_ = UnionValue::Type::FLOAT, .value_ = { .as_float_ = value } } {}
+
+  inline BoxedValue(PrimPointer value)
+    : union_{ .type_ = UnionValue::Type::POINTER, .value_ = { .as_pointer_ = value } } {}
 
   template<class T, class... As>
   static inline BoxedValue New(const As&... args) {
@@ -188,6 +193,18 @@ class BoxedValue {
     }
   }
 
+  template<class T>
+  inline PrimPointer AsPointer() const {
+    switch (union_.type_) {
+      case UnionValue::Type::POINTER:
+        return union_.value_.as_boxed_;
+      default:
+        FAIL() << union_.CategoryName() << " is not a Pointer value";
+        __builtin_unreachable();
+        break;
+    }
+  }
+
   inline static bool Present(const BoxedValue& target) {
     return target.union_.type_ != UnionValue::Type::EMPTY;
   }
@@ -216,9 +233,6 @@ class BoxedValue {
   friend class ::TypeValue;
   friend class WeakValue;
 
-  // Intentionally break old calls that used new.
-  inline explicit constexpr BoxedValue(void*) : BoxedValue() {}
-
   inline explicit constexpr BoxedValue(std::nullptr_t) : BoxedValue() {}
 
   explicit BoxedValue(const WeakValue& other);
@@ -229,8 +243,8 @@ class BoxedValue {
     value.union_.type_ = UnionValue::Type::BOXED;
     value.union_.value_.as_bytes_ =
       reinterpret_cast<unsigned char*>(const_cast<T*>(pointer))-sizeof(UnionValue::Pointer);
-    if (value.union_.value_.as_pointer_->object_ != pointer ||
-        ++value.union_.value_.as_pointer_->strong_ == 1) {
+    if (value.union_.value_.as_boxed_->object_ != pointer ||
+        ++value.union_.value_.as_boxed_->strong_ == 1) {
       FAIL() << "Bad VAR_SELF pointer " << pointer << " in " << pointer->CategoryName();
     }
     return value;

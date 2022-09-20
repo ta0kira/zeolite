@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.21"
+    version="3.22"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -110,6 +110,7 @@
       <item> Hashed </item>
       <item> Int </item>
       <item> LessThan </item>
+      <item> Pointer </item>
       <item> Order </item>
       <item> ReadAt </item>
       <item> String </item>

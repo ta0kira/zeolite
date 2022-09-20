@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -183,6 +183,11 @@ concrete CharBuffer {
   //   Specifically, resizing down and then back up again could either preserve
   //   or overwrite any of the data.
   @value resize (Int) -> (CharBuffer)
+}
+
+// A raw pointer type for use in C++ extensions.
+concrete Pointer<#x> {
+  immutable
 }
 
 // Convertible to Bool.

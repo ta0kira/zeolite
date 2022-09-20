@@ -8,6 +8,9 @@
   code, with the usual semantics, i.e., 0 means success. This is breaking
   because `exit` is now a reserved name.
 
+* **[breaking]** Adds the `Pointer<#x>` builtin `concrete` category, for use in
+  C++ extensions. (This is breaking because `Pointer` is now reserved.)
+
 ### Libraries
 
 * **[new]** Moves `Realtime` from `lib/thread` to `lib/util` since it doesn't

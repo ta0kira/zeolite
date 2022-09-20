@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ data CategoryName =
   BuiltinInt |
   BuiltinFloat |
   BuiltinString |
+  BuiltinPointer |
   BuiltinFormatted |
   BuiltinOrder |
   CategoryNone
@@ -152,6 +153,7 @@ instance Show CategoryName where
   show BuiltinInt          = "Int"
   show BuiltinFloat        = "Float"
   show BuiltinString       = "String"
+  show BuiltinPointer      = "Pointer"
   show BuiltinFormatted    = "Formatted"
   show BuiltinOrder        = "Order"
   show CategoryNone        = "(none)"

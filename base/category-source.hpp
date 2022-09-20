@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,11 +52,28 @@ limitations under the License.
 
 #define PARAM_SELF Param_self()
 
-BoxedValue Box_Bool(PrimBool value);
+inline BoxedValue Box_Bool(PrimBool value) {
+  return BoxedValue(value);
+}
+
+inline BoxedValue Box_Char(PrimChar value) {
+  return BoxedValue(value);
+}
+
+inline BoxedValue Box_Float(PrimFloat value) {
+  return BoxedValue(value);
+}
+
+inline BoxedValue Box_Int(PrimInt value) {
+  return BoxedValue(value);
+}
+
+template<class T1, class T2>
+inline BoxedValue Box_Pointer(T2* value) {
+  return BoxedValue(static_cast<T1*>(value));
+}
+
 BoxedValue Box_String(const PrimString& value);
-BoxedValue Box_Char(PrimChar value);
-BoxedValue Box_Int(PrimInt value);
-BoxedValue Box_Float(PrimFloat value);
 
 S<const TypeInstance> Merge_Intersect(const L<S<const TypeInstance>>& params);
 S<const TypeInstance> Merge_Union(const L<S<const TypeInstance>>& params);

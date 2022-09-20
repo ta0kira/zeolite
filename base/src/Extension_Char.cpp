@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -113,7 +113,3 @@ void RemoveType_Char(const Params<0>::Type& params) {}
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
-
-BoxedValue Box_Char(PrimChar value) {
-  return BoxedValue(value);
-}

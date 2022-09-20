@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
 ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
                           const ParamsArgs& params_args) __attribute__((weak));
 
+ReturnTuple DispatchPointer(PrimPointer value, const ValueFunction& label,
+                            const ParamsArgs& params_args) __attribute__((weak));
+
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
@@ -51,26 +54,26 @@ namespace {
 
 void Validate(const std::string& name, const UnionValue& the_union) {
   if (the_union.type_ == UnionValue::Type::BOXED) {
-    const auto strong = the_union.value_.as_pointer_->strong_.load();
-    const auto weak   = the_union.value_.as_pointer_->weak_.load();
-    const TypeValue* const object = the_union.value_.as_pointer_->object_;
+    const auto strong = the_union.value_.as_boxed_->strong_.load();
+    const auto weak   = the_union.value_.as_boxed_->weak_.load();
+    const TypeValue* const object = the_union.value_.as_boxed_->object_;
     const std::string type = object ? the_union.CategoryName() : "deleted value";
 
     if (strong == 0 && object) {
       FAIL() << "Leaked " << type << " " << name << " at "
-             << ((void*) the_union.value_.as_pointer_) << " (S: "
+             << ((void*) the_union.value_.as_boxed_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
 
     if (strong != 0 && !object) {
       FAIL() << "Prematurely deleted value " << name << " at "
-             << ((void*) the_union.value_.as_pointer_) << " (S: "
+             << ((void*) the_union.value_.as_boxed_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
 
     if (strong < 0 || weak < 0 || (weak == 0 && strong > 0)) {
       FAIL() << "Invalid counts for " << type << " " << name << " at "
-             << ((void*) the_union.value_.as_pointer_) << " (S: "
+             << ((void*) the_union.value_.as_boxed_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
   }
@@ -80,16 +83,17 @@ void Validate(const std::string& name, const UnionValue& the_union) {
 
 std::string UnionValue::CategoryName() const {
   switch (type_) {
-    case UnionValue::Type::EMPTY: return "empty";
-    case UnionValue::Type::BOOL:  return "Bool";
-    case UnionValue::Type::CHAR:  return "Char";
-    case UnionValue::Type::INT:   return "Int";
-    case UnionValue::Type::FLOAT: return "Float";
+    case UnionValue::Type::EMPTY:   return "empty";
+    case UnionValue::Type::BOOL:    return "Bool";
+    case UnionValue::Type::CHAR:    return "Char";
+    case UnionValue::Type::INT:     return "Int";
+    case UnionValue::Type::FLOAT:   return "Float";
+    case UnionValue::Type::POINTER: return "Pointer";
     case UnionValue::Type::BOXED:
-      if (!value_.as_pointer_ || !value_.as_pointer_->object_) {
+      if (!value_.as_boxed_ || !value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";
       }
-      return value_.as_pointer_->object_->CategoryName();
+      return value_.as_boxed_->object_->CategoryName();
   }
 }
 
@@ -97,14 +101,14 @@ BoxedValue::BoxedValue(const WeakValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      while (union_.value_.as_pointer_->lock_.test_and_set(std::memory_order_acquire));
-      if (++union_.value_.as_pointer_->strong_ == 1) {
-        --union_.value_.as_pointer_->strong_;
-        union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+      while (union_.value_.as_boxed_->lock_.test_and_set(std::memory_order_acquire));
+      if (++union_.value_.as_boxed_->strong_ == 1) {
+        --union_.value_.as_boxed_->strong_;
+        union_.value_.as_boxed_->lock_.clear(std::memory_order_release);
         union_.type_ = UnionValue::Type::EMPTY;
-        union_.value_.as_pointer_ = nullptr;
+        union_.value_.as_boxed_ = nullptr;
       } else {
-        union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+        union_.value_.as_boxed_->lock_.clear(std::memory_order_release);
       }
       break;
     default:
@@ -119,10 +123,10 @@ void BoxedValue::Validate(const std::string& name) const {
 const PrimString& BoxedValue::AsString() const {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
+      if (!union_.value_.as_boxed_ || !union_.value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";
       }
-      return union_.value_.as_pointer_->object_->AsString();
+      return union_.value_.as_boxed_->object_->AsString();
     default:
       FAIL() << union_.CategoryName() << " is not a String value";
       __builtin_unreachable();
@@ -133,10 +137,10 @@ const PrimString& BoxedValue::AsString() const {
 PrimCharBuffer& BoxedValue::AsCharBuffer() const {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
+      if (!union_.value_.as_boxed_ || !union_.value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";
       }
-      return union_.value_.as_pointer_->object_->AsCharBuffer();
+      return union_.value_.as_boxed_->object_->AsCharBuffer();
     default:
       FAIL() << union_.CategoryName() << " is not a CharBuffer value";
       __builtin_unreachable();
@@ -159,24 +163,26 @@ ReturnTuple BoxedValue::Dispatch(
       return DispatchInt(union_.value_.as_int_, label, params_args);
     case UnionValue::Type::FLOAT:
       return DispatchFloat(union_.value_.as_float_, label, params_args);
+    case UnionValue::Type::POINTER:
+      return DispatchPointer(union_.value_.as_pointer_, label, params_args);
     case UnionValue::Type::BOXED:
-      if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
+      if (!union_.value_.as_boxed_ || !union_.value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";
       }
-      return union_.value_.as_pointer_->object_->Dispatch(label, params_args);
+      return union_.value_.as_boxed_->object_->Dispatch(label, params_args);
   }
 }
 
 void BoxedValue::Cleanup() {
   while (union_.type_ == UnionValue::Type::BOXED) {
-    while (union_.value_.as_pointer_->lock_.test_and_set(std::memory_order_acquire));
-    if (--union_.value_.as_pointer_->strong_ == 0) {
-      TypeValue* const object = union_.value_.as_pointer_->object_;
-      union_.value_.as_pointer_->object_ = nullptr;
-      union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+    while (union_.value_.as_boxed_->lock_.test_and_set(std::memory_order_acquire));
+    if (--union_.value_.as_boxed_->strong_ == 0) {
+      TypeValue* const object = union_.value_.as_boxed_->object_;
+      union_.value_.as_boxed_->object_ = nullptr;
+      union_.value_.as_boxed_->lock_.clear(std::memory_order_release);
       BoxedValue next = object->FlatCleanup();
       object->~TypeValue();
-      if (--union_.value_.as_pointer_->weak_ == 0) {
+      if (--union_.value_.as_boxed_->weak_ == 0) {
         // NOTE: as_bytes_ contains object => ~TypeValue() must happen first.
         free(union_.value_.as_bytes_);
       }
@@ -184,23 +190,23 @@ void BoxedValue::Cleanup() {
       // This is only to skip cleanup of next.
       next.union_.type_ = UnionValue::Type::EMPTY;
     } else {
-      union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+      union_.value_.as_boxed_->lock_.clear(std::memory_order_release);
       break;
     }
   }
   union_.type_ = UnionValue::Type::EMPTY;
-  union_.value_.as_pointer_ = nullptr;
+  union_.value_.as_boxed_ = nullptr;
 }
 
 
 WeakValue::WeakValue()
-  : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_pointer_ = nullptr } } {}
+  : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_boxed_ = nullptr } } {}
 
 WeakValue::WeakValue(const WeakValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      ++union_.value_.as_pointer_->weak_;
+      ++union_.value_.as_boxed_->weak_;
       break;
     default:
       break;
@@ -213,7 +219,7 @@ WeakValue& WeakValue::operator = (const WeakValue& other) {
     union_ = other.union_;
     switch (union_.type_) {
       case UnionValue::Type::BOXED:
-        ++union_.value_.as_pointer_->weak_;
+        ++union_.value_.as_boxed_->weak_;
         break;
       default:
         break;
@@ -225,7 +231,7 @@ WeakValue& WeakValue::operator = (const WeakValue& other) {
 WeakValue::WeakValue(WeakValue&& other)
   : union_(other.union_) {
   other.union_.type_  = UnionValue::Type::EMPTY;
-  other.union_.value_.as_pointer_ = nullptr;
+  other.union_.value_.as_boxed_ = nullptr;
 }
 
 WeakValue& WeakValue::operator = (WeakValue&& other) {
@@ -233,7 +239,7 @@ WeakValue& WeakValue::operator = (WeakValue&& other) {
     Cleanup();
     union_ = other.union_;
     other.union_.type_  = UnionValue::Type::EMPTY;
-    other.union_.value_.as_pointer_ = nullptr;
+    other.union_.value_.as_boxed_ = nullptr;
   }
   return *this;
 }
@@ -242,7 +248,7 @@ WeakValue::WeakValue(const BoxedValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      ++union_.value_.as_pointer_->weak_;
+      ++union_.value_.as_boxed_->weak_;
       break;
     default:
       break;
@@ -254,7 +260,7 @@ WeakValue& WeakValue::operator = (const BoxedValue& other) {
   union_ = other.union_;
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      ++union_.value_.as_pointer_->weak_;
+      ++union_.value_.as_boxed_->weak_;
       break;
     default:
       break;
@@ -273,7 +279,7 @@ void WeakValue::Validate(const std::string& name) const {
 void WeakValue::Cleanup() {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      if (--union_.value_.as_pointer_->weak_ == 0) {
+      if (--union_.value_.as_boxed_->weak_ == 0) {
         free(union_.value_.as_bytes_);
       }
       break;
@@ -281,7 +287,7 @@ void WeakValue::Cleanup() {
       break;
   }
   union_.type_  = UnionValue::Type::EMPTY;
-  union_.value_.as_pointer_ = nullptr;
+  union_.value_.as_boxed_ = nullptr;
 }
 
 }  // namespace zeolite_internal
