@@ -28,15 +28,16 @@ module Types.Builtin (
   floatRequiredValue,
   formattedRequiredValue,
   intRequiredValue,
+  isPointerRequiredValue,
   isOpaqueMulti,
   orderOptionalValue,
-  pointerRequiredValue,
   stringRequiredValue,
 ) where
 
 import qualified Data.Map as Map
 
 import Base.GeneralType
+import Base.MergeTree (reduceMergeTree)
 import Base.Positional
 import Types.TypeCategory
 import Types.TypeInstance
@@ -55,12 +56,17 @@ intRequiredValue :: ValueType
 intRequiredValue = requiredSingleton BuiltinInt
 floatRequiredValue :: ValueType
 floatRequiredValue = requiredSingleton BuiltinFloat
-pointerRequiredValue :: ValueType
-pointerRequiredValue = requiredSingleton BuiltinPointer
 formattedRequiredValue :: ValueType
 formattedRequiredValue = requiredSingleton BuiltinFormatted
 orderOptionalValue :: GeneralInstance -> ValueType
 orderOptionalValue t = ValueType OptionalValue $ singleType $ JustTypeInstance $ TypeInstance BuiltinOrder (Positional [t])
+
+isPointerRequiredValue :: ValueType -> Bool
+isPointerRequiredValue (ValueType RequiredValue t) = check $ extractSingle t where
+  check (Just (JustTypeInstance (TypeInstance BuiltinPointer (Positional [_])))) = True
+  check _ = False
+  extractSingle = reduceMergeTree (const Nothing) (const Nothing) Just
+isPointerRequiredValue _ = False
 
 emptyType :: ValueType
 emptyType = ValueType OptionalValue minBound

@@ -1,0 +1,98 @@
+/* -----------------------------------------------------------------------------
+Copyright 2022 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "Pointer passing" {
+  success
+}
+
+concrete CallHelper {
+  @type call (String) -> (String)
+  @type call2 (String) -> (String)
+}
+
+define CallHelper {
+  call (data) {
+    Request request <- Request.create(data)
+    Response response <- Response.create("")
+    \ callWithPointers(request.asRequest(),response.asResponse())
+    return response.formatted()
+  }
+
+  call2 (data) {
+    Request request <- Request.create(data)
+    Response response <- Response.create("")
+    \ Service.send2(request.asMessage(),response.asResponse())
+    return response.formatted()
+  }
+
+  @type callWithPointers (Pointer<Request>,Pointer<Response>) -> ()
+  callWithPointers (request,response) {
+    // This is just meant to test code generated for passing Pointer
+    \ Service.send(request,response)
+  }
+}
+
+unittest test {
+  \ CallHelper.call("DATA") `Testing.checkEquals` "DATA has been processed"
+}
+
+
+testcase "Pointer storage" {
+  success
+}
+
+concrete Helper {
+  @type new () -> (Helper)
+  @value call () -> ()
+}
+
+define Helper {
+  @category Request request <- Request.create("request")
+  @category Pointer<Request> requestPointer <- request.asRequest()
+  @value Response response
+  @value Pointer<Response> responsePointer
+
+  new () {
+    Response response <- Response.create("response")
+    return #self{ response, response.asResponse() }
+  }
+
+  call () {
+    \ Request.getData(requestPointer) `Testing.checkEquals` "request"
+    \ Response.getData(responsePointer) `Testing.checkEquals` "response"
+
+    Pointer<Request> localRequest <- requestPointer
+    Pointer<Response> localResponse <- responsePointer
+    \ Request.getData(localRequest) `Testing.checkEquals` "request"
+    \ Response.getData(localResponse) `Testing.checkEquals` "response"
+
+    localRequest <- request.asRequest()
+    localResponse <- response.asResponse()
+    \ Request.getData(localRequest) `Testing.checkEquals` "request"
+    \ Response.getData(localResponse) `Testing.checkEquals` "response"
+
+    requestPointer <- localRequest
+    responsePointer <- localResponse
+    \ Request.getData(requestPointer) `Testing.checkEquals` "request"
+    \ Response.getData(responsePointer) `Testing.checkEquals` "response"
+  }
+}
+
+unittest test {
+  \ Helper.new().call()
+}

@@ -43,7 +43,9 @@ using PrimString = std::string;
 using PrimChar = char;
 using PrimCharBuffer = std::string;
 using PrimFloat = double;
-using PrimPointer = void*;
+
+class OpaqueObject { ~OpaqueObject() = default; };
+using PrimPointer = OpaqueObject*;
 
 template<int S>
 inline PrimString PrimString_FromLiteral(const char(&literal)[S]) {

@@ -70,7 +70,7 @@ inline BoxedValue Box_Int(PrimInt value) {
 
 template<class T1, class T2>
 inline BoxedValue Box_Pointer(T2* value) {
-  return BoxedValue(static_cast<T1*>(value));
+  return BoxedValue(reinterpret_cast<PrimPointer>(static_cast<T1*>(value)));
 }
 
 BoxedValue Box_String(const PrimString& value);

@@ -194,10 +194,10 @@ class BoxedValue {
   }
 
   template<class T>
-  inline PrimPointer AsPointer() const {
+  inline T* AsPointer() const {
     switch (union_.type_) {
       case UnionValue::Type::POINTER:
-        return union_.value_.as_boxed_;
+        return reinterpret_cast<T*>(union_.value_.as_boxed_);
       default:
         FAIL() << union_.CategoryName() << " is not a Pointer value";
         __builtin_unreachable();

@@ -138,7 +138,7 @@ isStoredUnboxed t
   | t == intRequiredValue     = True
   | t == floatRequiredValue   = True
   | t == charRequiredValue    = True
-  | t == pointerRequiredValue = True
+  | isPointerRequiredValue t = True
   | otherwise                 = False
 
 expressionFromLiteral :: PrimitiveType -> String -> (ExpressionType,ExpressionValue)
@@ -152,8 +152,7 @@ expressionFromLiteral PrimFloat e =
   (Positional [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ e ++ ")")
 expressionFromLiteral PrimBool e =
   (Positional [boolRequiredValue],UnboxedPrimitive PrimBool e)
-expressionFromLiteral PrimPointer e =
-  (Positional [boolRequiredValue],UnboxedPrimitive PrimPointer e)
+expressionFromLiteral PrimPointer _ = undefined
 
 getFromLazy :: ExpressionValue -> ExpressionValue
 getFromLazy (OpaqueMulti e)        = OpaqueMulti $ e ++ ".Get()"
@@ -231,19 +230,19 @@ useAsUnboxed PrimString  (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsString()"
 useAsUnboxed PrimChar    (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsChar()"
 useAsUnboxed PrimInt     (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsInt()"
 useAsUnboxed PrimFloat   (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsFloat()"
-useAsUnboxed PrimPointer (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsPointer<void>()"
+useAsUnboxed PrimPointer (OpaqueMulti e)     = "(" ++ e ++ ").At(0).AsPointer<OpaqueObject>()"
 useAsUnboxed PrimBool    (WrappedSingle e)   = "(" ++ e ++ ").AsBool()"
 useAsUnboxed PrimString  (WrappedSingle e)   = "(" ++ e ++ ").AsString()"
 useAsUnboxed PrimChar    (WrappedSingle e)   = "(" ++ e ++ ").AsChar()"
 useAsUnboxed PrimInt     (WrappedSingle e)   = "(" ++ e ++ ").AsInt()"
 useAsUnboxed PrimFloat   (WrappedSingle e)   = "(" ++ e ++ ").AsFloat()"
-useAsUnboxed PrimPointer (WrappedSingle e)   = "(" ++ e ++ ").AsPointer<void>()"
+useAsUnboxed PrimPointer (WrappedSingle e)   = "(" ++ e ++ ").AsPointer<OpaqueObject>()"
 useAsUnboxed PrimBool    (UnwrappedSingle e) = "(" ++ e ++ ").AsBool()"
 useAsUnboxed PrimString  (UnwrappedSingle e) = "(" ++ e ++ ").AsString()"
 useAsUnboxed PrimChar    (UnwrappedSingle e) = "(" ++ e ++ ").AsChar()"
 useAsUnboxed PrimInt     (UnwrappedSingle e) = "(" ++ e ++ ").AsInt()"
 useAsUnboxed PrimFloat   (UnwrappedSingle e) = "(" ++ e ++ ").AsFloat()"
-useAsUnboxed PrimPointer (UnwrappedSingle e) = "(" ++ e ++ ").AsPointer<void>()"
+useAsUnboxed PrimPointer (UnwrappedSingle e) = "(" ++ e ++ ").AsPointer<OpaqueObject>()"
 useAsUnboxed _ (BoxedPrimitive _ e)         = e
 useAsUnboxed _ (UnboxedPrimitive _ e)       = e
 useAsUnboxed t (LazySingle e)               = useAsUnboxed t $ getFromLazy e
@@ -274,45 +273,45 @@ valueAsUnwrapped v                                = v
 
 variableStoredType :: ValueType -> String
 variableStoredType t
-  | t == boolRequiredValue    = "PrimBool"
-  | t == intRequiredValue     = "PrimInt"
-  | t == floatRequiredValue   = "PrimFloat"
-  | t == charRequiredValue    = "PrimChar"
-  | t == pointerRequiredValue = "PrimPointer"
-  | isWeakValue t             = "WeakValue"
-  | otherwise                 = "BoxedValue"
+  | t == boolRequiredValue   = "PrimBool"
+  | t == intRequiredValue    = "PrimInt"
+  | t == floatRequiredValue  = "PrimFloat"
+  | t == charRequiredValue   = "PrimChar"
+  | isPointerRequiredValue t = "PrimPointer"
+  | isWeakValue t            = "WeakValue"
+  | otherwise                = "BoxedValue"
 
 variableLazyType :: ValueType -> String
 variableLazyType t = "LazyInit<" ++ variableStoredType t ++ ">"
 
 variableProxyType :: ValueType -> String
 variableProxyType t
-  | t == boolRequiredValue    = "PrimBool"
-  | t == intRequiredValue     = "PrimInt"
-  | t == floatRequiredValue   = "PrimFloat"
-  | t == charRequiredValue    = "PrimChar"
-  | t == pointerRequiredValue = "PrimPointer"
-  | isWeakValue t             = "WeakValue&"
-  | otherwise                 = "BoxedValue&"
+  | t == boolRequiredValue   = "PrimBool"
+  | t == intRequiredValue    = "PrimInt"
+  | t == floatRequiredValue  = "PrimFloat"
+  | t == charRequiredValue   = "PrimChar"
+  | isPointerRequiredValue t = "PrimPointer"
+  | isWeakValue t            = "WeakValue&"
+  | otherwise                = "BoxedValue&"
 
 readStoredVariable :: Bool -> ValueType -> String -> ExpressionValue
 readStoredVariable True t s = LazySingle $ readStoredVariable False t s
 readStoredVariable False t s
-  | t == boolRequiredValue    = UnboxedPrimitive PrimBool    s
-  | t == intRequiredValue     = UnboxedPrimitive PrimInt     s
-  | t == floatRequiredValue   = UnboxedPrimitive PrimFloat   s
-  | t == charRequiredValue    = UnboxedPrimitive PrimChar    s
-  | t == pointerRequiredValue = UnboxedPrimitive PrimPointer s
-  | otherwise                 = UnwrappedSingle s
+  | t == boolRequiredValue   = UnboxedPrimitive PrimBool    s
+  | t == intRequiredValue    = UnboxedPrimitive PrimInt     s
+  | t == floatRequiredValue  = UnboxedPrimitive PrimFloat   s
+  | t == charRequiredValue   = UnboxedPrimitive PrimChar    s
+  | isPointerRequiredValue t = UnboxedPrimitive PrimPointer s
+  | otherwise                = UnwrappedSingle s
 
 writeStoredVariable :: ValueType -> ExpressionValue -> String
 writeStoredVariable t e
-  | t == boolRequiredValue    = useAsUnboxed PrimBool    e
-  | t == intRequiredValue     = useAsUnboxed PrimInt     e
-  | t == floatRequiredValue   = useAsUnboxed PrimFloat   e
-  | t == charRequiredValue    = useAsUnboxed PrimChar    e
-  | t == pointerRequiredValue = useAsUnboxed PrimPointer e
-  | otherwise                 = useAsUnwrapped e
+  | t == boolRequiredValue   = useAsUnboxed PrimBool    e
+  | t == intRequiredValue    = useAsUnboxed PrimInt     e
+  | t == floatRequiredValue  = useAsUnboxed PrimFloat   e
+  | t == charRequiredValue   = useAsUnboxed PrimChar    e
+  | isPointerRequiredValue t = useAsUnboxed PrimPointer e
+  | otherwise                = useAsUnwrapped e
 
 functionLabelType :: ScopedFunction c -> String
 functionLabelType = getType . sfScope where
