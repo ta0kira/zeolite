@@ -186,6 +186,14 @@ concrete CharBuffer {
 }
 
 // A raw pointer type for use in C++ extensions.
+//
+// Literals: None.
+//
+// Notes:
+// - #x is mostly irrelevant. It is only intended for differentiating between
+//   values with incompatible types.
+// - This is category is only meant for passing C++ data between extensions when
+//   it would otherwise require marshaling, which is why it has no functions.
 concrete Pointer<#x> {
   immutable
 }

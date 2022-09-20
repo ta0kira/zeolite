@@ -1663,6 +1663,9 @@ Builtin `concrete` types:
   digits on both sides of the `.`.
 - **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
   `\o0123`), or binary (e.g., `\b0100`).
+- **`Pointer<#x>`**: An opaque pointer type for use in C++ extensions. Only C++
+  extensions can create and access `Pointer` contents, but Zeolite code can
+  still store and pass them around.
 - **`String`**: Use double quotes to sequence `Char` literals, e.g.,
   `"hello\012"`. You can build a string efficiently using `String.builder()`,
   e.g., `String foo <- String.builder().append("bar").append("baz").build()`.

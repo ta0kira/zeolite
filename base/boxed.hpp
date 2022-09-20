@@ -233,6 +233,9 @@ class BoxedValue {
   friend class ::TypeValue;
   friend class WeakValue;
 
+  // Intentionally break old calls that used new.
+  inline explicit constexpr BoxedValue(void*) : BoxedValue() {}
+
   inline explicit constexpr BoxedValue(std::nullptr_t) : BoxedValue() {}
 
   explicit BoxedValue(const WeakValue& other);

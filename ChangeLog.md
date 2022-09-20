@@ -11,6 +11,26 @@
 * **[breaking]** Adds the `Pointer<#x>` builtin `concrete` category, for use in
   C++ extensions. (This is breaking because `Pointer` is now reserved.)
 
+### Compiler CLI
+
+* **[new]** Adds general pointer storage to `BoxedValue` to allow C++ extensions
+  to pass data to each other without marshaling.
+
+  ```c++
+  // Create a value that can be returned/passed in Zeolite function calls.
+  BoxedValue boxed = Box_Pointer<Foo>(&value);
+
+  // Access the pointer stored in the value.
+  Foo* unboxed = boxed.AsPointer<Foo>();
+  ```
+
+  This is only type-safe if the Zeolite code uses a different `#x` in
+  `Pointer<#x>` for each different type used with `Box_Pointer`/`AsPointer`.
+  For example, the code above uses `Foo`, so `Pointer<Foo>` should be used
+  everywhere such values are passed around in the Zeolite code. (`#x` is
+  arbitrary, but it's more clear if the name used in Zeolite corresponds to the
+  name of the C++ type.)
+
 ### Libraries
 
 * **[new]** Moves `Realtime` from `lib/thread` to `lib/util` since it doesn't
