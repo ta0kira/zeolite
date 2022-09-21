@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ------------------------------------------------------------------------------
-# Copyright 2020-2021 Kevin P. Barry
+# Copyright 2020-2022 Kevin P. Barry
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -378,6 +378,12 @@ test_warn_public() {
 }
 
 
+test_pointer() {
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/pointer -f
+  do_zeolite -p "$ZEOLITE_PATH" -t tests/pointer
+}
+
+
 test_self_offset() {
   do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/self-offset -f
   do_zeolite -p "$ZEOLITE_PATH" -t tests/self-offset
@@ -573,6 +579,7 @@ ALL_TESTS=(
   test_module_only2
   test_module_only3
   test_module_only4
+  test_pointer
   test_self_offset
   test_show_deps
   test_simulate_refs
