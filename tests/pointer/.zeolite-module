@@ -16,6 +16,6 @@ extra_files: [
     source: "tests/pointer/Extension_Service.cpp"
     categories: [Service]
   }
-  "tests/pointer/call.h"
+  "tests/pointer/call.hpp"
 ]
 mode: incremental {}

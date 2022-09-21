@@ -23,7 +23,7 @@ limitations under the License.
 #include "Category_Request.hpp"
 #include "Category_String.hpp"
 
-#include "call.h"
+#include "call.hpp"
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
 namespace ZEOLITE_PRIVATE_NAMESPACE {
