@@ -29,7 +29,7 @@ fi
 
 ZEOLITE=("$@")
 
-if [[ "$PARALLEL" ]]; then
+if [[ "${PARALLEL-}" ]]; then
   PARALLEL="-j $PARALLEL"
 else
   PARALLEL='-j 1'
