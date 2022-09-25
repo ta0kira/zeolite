@@ -30,17 +30,11 @@ define Counter {
   }
 
   builder () {
-    return IntCounterBuilder.new()
+    return CounterBuilder.new()
   }
 }
 
-concrete IntCounterBuilder {
-  @type new () -> (CounterBuilder<Int>)
-}
-
-define IntCounterBuilder {
-  refines CounterBuilder<Int>
-
+define CounterBuilder {
   @value Int start
   @value Int increment
   @value optional Int limit

@@ -25,7 +25,7 @@ concrete Counter {
   // Create an unbounded Int sequence.
   @type unlimited () -> (optional Order<Int>)
   // Create a counter using a builder.
-  @type builder () -> (CounterBuilder<Int>)
+  @type builder () -> (CounterBuilder)
 }
 
 // Creates an Order<#x> that repeats a single value, for use with traverse.
@@ -67,18 +67,20 @@ concrete Ranges {
 //   order that the items are returned in.
 // - start+increment+limit: Count by the specified increment starting with the
 //   specified starting point until the specified limit.
-@value interface CounterBuilder<#x> {
+concrete CounterBuilder {
+  @type new () -> (#self)
+
   // Finalize the counter.
-  done () -> (optional Order<#x>)
+  @value done () -> (optional Order<Int>)
 
   // Set the first value in the counter.
-  start (#x) -> (#self)
+  @value start (Int) -> (#self)
 
   // Set the number of items returned.
   //
   // Notes:
   // - This overrides limit.
-  count (Int) -> (#self)
+  @value count (Int) -> (#self)
 
   // Set a strict threshold that will not be met or exceeded.
   //
@@ -86,10 +88,10 @@ concrete Ranges {
   // - If increment < 0 then all items will be > limit.
   // - If increment > 0 then all items will be < limit.
   // - This overrides count.
-  limit (#x) -> (#self)
+  @value limit (Int) -> (#self)
 
   // Set the difference between consecutive items.
-  increment (#x) -> (#self)
+  @value increment (Int) -> (#self)
 
   // Reverse the order that the items are returned in.
   //
@@ -98,5 +100,5 @@ concrete Ranges {
   //   not exist.
   // - This has the same effect regardless of when it gets called.
   // - Calling this twice reverts the counter to forward again.
-  reverse () -> (#self)
+  @value reverse () -> (#self)
 }
