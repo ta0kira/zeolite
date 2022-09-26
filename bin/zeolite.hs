@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import System.Environment
 import System.Exit
 import GHC.IO.Handle
 import System.IO
+import Text.Printf (printf)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -122,8 +123,17 @@ tryFastModes os0 = maybePath os0 where
       h <- getCompilerHash backend
       expected <- fmap Set.unions $ mapCompilerM (getTraces h) ps
       actual <- loadTraces
-      mapM_ (errorFromIO . hPutStrLn stdout) $ Set.toList $ expected `Set.difference` actual
+      let difference = expected `Set.difference` actual
+      mapM_ (errorFromIO . hPutStrLn stdout) $ Set.toList $ difference
+      errorFromIO $ hPutStrLn stdout $ formatCoverage difference expected
     exitSuccess where
+      formatCoverage difference expected =
+        "Coverage: " ++ show actualSize ++ " of " ++ show expectedSize ++
+        " lines (" ++ printf "%.2f" coverage ++ "%)" where
+          diffSize = length $ Set.toList $ difference
+          expectedSize = length $ Set.toList $ expected
+          actualSize = expectedSize - diffSize
+          coverage = 100.0 * (fromIntegral actualSize :: Double) / (fromIntegral expectedSize :: Double)
       loadTraces = do
         l' <- errorFromIO $ canonicalizePath (root </> l)
         errorFromIO $ hPutStrLn stderr $ "Loading trace data from \"" ++ l' ++ "\"."

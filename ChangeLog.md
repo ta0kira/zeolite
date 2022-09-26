@@ -31,6 +31,8 @@
   arbitrary, but it's more clear if the name used in Zeolite corresponds to the
   name of the C++ type.)
 
+* **[new]** Adds % code coverage in output of `zeolite --missed-lines`.
+
 ### Libraries
 
 * **[new]** Moves `Realtime` from `lib/thread` to `lib/util` since it doesn't
