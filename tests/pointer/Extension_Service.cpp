@@ -42,7 +42,7 @@ struct ExtType_Service : public Type_Service {
     Response* const response = params_args.GetArg(1).AsPointer<Response>();
     if (!request) FAIL() << "Invalid Pointer<Request>";
     if (!response) FAIL() << "Invalid Pointer<Response>";
-    response->response_data = request->request_data + " has been processed";
+    response->response_data = request->request_data + " has been processed as Request";
     return ReturnTuple();
   }
 
@@ -52,7 +52,7 @@ struct ExtType_Service : public Type_Service {
     Response* const response = params_args.GetArg(1).AsPointer<Response>();
     if (!request) FAIL() << "Invalid Pointer<Message>";
     if (!response) FAIL() << "Invalid Pointer<Response>";
-    response->response_data = request->message_data + " has been processed";
+    response->response_data = request->message_data + " has been processed as Message";
     return ReturnTuple();
   }
 };

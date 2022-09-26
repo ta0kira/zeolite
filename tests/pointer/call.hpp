@@ -35,7 +35,7 @@ struct OtherBase {
 // The virtual base class is meant to change the offset.
 struct Request : public OtherBase, virtual public Message {
   explicit inline Request(std::string data)
-    : Message{ "Request" },
+    : Message{ "REQUEST" },
       request_data(std::move(data)) {}
 
   std::string request_data;
@@ -44,7 +44,7 @@ struct Request : public OtherBase, virtual public Message {
 // The virtual base class is meant to change the offset.
 struct Response : public OtherBase, virtual public Message {
   explicit inline Response(std::string data)
-    : Message{ "Response" },
+    : Message{ "RESPONSE" },
       response_data(std::move(data)) {}
 
   std::string response_data;

@@ -49,7 +49,8 @@ define CallHelper {
 }
 
 unittest test {
-  \ CallHelper.call("DATA") `Testing.checkEquals` "DATA has been processed"
+  \ CallHelper.call("DATA") `Testing.checkEquals` "DATA has been processed as Request"
+  \ CallHelper.call2("DATA") `Testing.checkEquals` "REQUEST has been processed as Message"
 }
 
 
