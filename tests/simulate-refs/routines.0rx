@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,9 +41,7 @@ define Routines {
       IfElseDecrRefIsZero.new(
       /*if*/   FreeObject.new() `Run.then`
                UnlockRef.new() `Run.then`
-               IfElseDecrWeakIsZero.new(
-               /*if*/   FreeRef.new(),
-               /*else*/ empty),
+               dropWeak,
       /*else*/ UnlockRef.new())
 
   @category ReferenceMachine sharedThenDropBroken <-
@@ -57,9 +55,7 @@ define Routines {
   @category ReferenceMachine dropSharedBroken <-
       IfElseDecrRefIsZero.new(
       /*if*/   FreeObject.new() `Run.then`
-               IfElseDecrWeakIsZero.new(
-               /*if*/   FreeRef.new(),
-               /*else*/ empty),
+               dropWeak,
       /*else*/ empty)
 
   @value String name
@@ -93,7 +89,7 @@ define Routines {
   transition () {
     if (!present(machine)) {
       return empty
-    } elif (present((machine <- require(machine).runWith(name,state)))) {
+    } elif (`present` (machine <- name `require(machine).runWith` state)) {
       return self
     } else {
       return empty

@@ -161,9 +161,9 @@ define RunThen {
 
   runWith (name,state) {
     scoped {
-      optional ReferenceMachine next <- first.runWith(name,state)
-    } in if (present(next)) {
-      return RunThen{ require(next), second }
+      optional ReferenceMachine next <- name `first.runWith` state
+    } in if (`present` next) {
+      return RunThen{ `require` next, second }
     } else {
       return second
     }

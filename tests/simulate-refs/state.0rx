@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ define StateExecutor {
     scoped {
       Int index <- 0
     } in traverse (original.defaultOrder() -> StateMachine state) {
-      \ states.set(index,state)
-      \ weights.setWeight(index,1)
+      \ index `states.set` state
+      \ index `weights.setWeight` 1
     } update {
       index <- index+1
     }
@@ -35,11 +35,11 @@ define StateExecutor {
       Int index <- weights.locate((random.generate()*weights.getTotal().asFloat()).asInt())
       scoped {
         optional StateMachine newState <- require(states.get(index)).transition()
-      } in if (present(newState)) {
-        \ states.set(index,require(newState))
+      } in if (`present` newState) {
+        \ index `states.set` `require` newState
       } else {
-        \ states.remove(index)
-        \ weights.setWeight(index,0)
+        \ `states.remove` index
+        \ index `weights.setWeight` 0
       }
     }
   }
