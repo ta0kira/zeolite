@@ -197,7 +197,7 @@ class BoxedValue {
   inline T* AsPointer() const {
     switch (union_.type_) {
       case UnionValue::Type::POINTER:
-        return reinterpret_cast<T*>(union_.value_.as_boxed_);
+        return reinterpret_cast<T*>(union_.value_.as_pointer_);
       default:
         FAIL() << union_.CategoryName() << " is not a Pointer value";
         __builtin_unreachable();
