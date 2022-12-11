@@ -25,6 +25,7 @@ module Cli.ParseCompileOptions (
 import Control.Monad (when)
 import Lens.Micro
 import Text.Regex.TDFA
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Cli.CompileOptions
@@ -85,9 +86,9 @@ optionHelpText = [
     "",
     "Options:",
     "  -f: Force an operation that zeolite would otherwise reject.",
-    "  -j [# parallel]: Parallel execution of compilation subprocesses.",
     "  -i [module]: A single source module to include as a public dependency.",
     "  -I [module]: A single source module to include as a private dependency.",
+    "  -j [# parallel]: Parallel execution of compilation subprocesses.",
     "  -o [binary]: The name of the binary file to create with -m.",
     "  -p [path]: Set a path prefix for finding modules or files.",
     "  --log-traces [filename]: Log call traces to a file when running tests.",
@@ -124,8 +125,19 @@ optionHelpText = [
 defaultMainFunc :: String
 defaultMainFunc = "run"
 
+optionsWithArgs :: Set.Set Char
+optionsWithArgs = Set.fromList "iIjmop"
+
+splitOptionClusters :: [String] -> [String]
+splitOptionClusters (o@('-':c:rest):os)
+  | c == '-' || null rest          = o : splitOptionClusters os
+  | c `Set.member` optionsWithArgs = ('-':c:[]) : rest : splitOptionClusters os
+  | otherwise                      = ('-':c:[]) : splitOptionClusters (('-':rest):os)
+splitOptionClusters (o:os) = o : splitOptionClusters os
+splitOptionClusters [] = []
+
 parseCompileOptions :: CollectErrorsM m => [String] -> m CompileOptions
-parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
+parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) . splitOptionClusters where
   parseAll co [] = return co
   parseAll co os = do
     (os',co') <- parseSingle co os

@@ -40,6 +40,7 @@ main = tryTrackedErrorsIO "" "Zeolite setup failed:" (lift getArgs >>= handle 1)
                           then handle pn os
                           else compilerErrorM "Parallel processes (-j) must be > 0."
           _ -> compilerErrorM "Parallel processes (-j) must be > 0."
+  handle pn (('-':'j':n@(_:_)):os) = handle pn ("-j":n:os)
   handle pn ("--reuse":_) = do
     config <- loadConfig
     runWith pn config

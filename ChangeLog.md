@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.23.1.0  -- ????-??-??
+
+### Compiler CLI
+
+* **[new]** Allows single-`-` CLI options to be clustered, e.g., `-rfj8`, which
+  is expanded to `-r`, `-f`, and `-j` `8`.
+
 ## 0.23.0.0  -- 2022-10-08
 
 ### Language
