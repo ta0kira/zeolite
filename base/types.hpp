@@ -44,6 +44,30 @@ using PrimChar = char;
 using PrimCharBuffer = std::string;
 using PrimFloat = double;
 
+inline void SwapValues(PrimBool& left, PrimBool& right) {
+  PrimBool temp = right;
+  right = left;
+  left = temp;
+}
+
+inline void SwapValues(PrimInt& left, PrimInt& right) {
+  PrimInt temp = right;
+  right = left;
+  left = temp;
+}
+
+inline void SwapValues(PrimChar& left, PrimChar& right) {
+  PrimChar temp = right;
+  right = left;
+  left = temp;
+}
+
+inline void SwapValues(PrimFloat& left, PrimFloat& right) {
+  PrimFloat temp = right;
+  right = left;
+  left = temp;
+}
+
 class OpaqueObject { ~OpaqueObject() = default; };
 using PrimPointer = OpaqueObject*;
 
@@ -96,6 +120,12 @@ class LazyInit {
     return *this;
   }
 
+  LazyInit& operator = (T&& value) {
+    InitValue();
+    value_ = value;
+    return *this;
+  }
+
  private:
   LazyInit(const LazyInit&) = delete;
   LazyInit(LazyInit&&) = delete;
@@ -118,6 +148,27 @@ class LazyInit {
   T value_;
   const std::function<T()> create_;
 };
+
+template<class T>
+inline void SwapValues(LazyInit<T>& left, LazyInit<T>& right) {
+  T temp = right.Get();
+  right = left.Get();
+  left = std::move(temp);
+}
+
+template<class T>
+inline void SwapValues(T& left, LazyInit<T>& right) {
+  T temp = right.Get();
+  right = std::move(left);
+  left = std::move(temp);
+}
+
+template<class T>
+inline void SwapValues(LazyInit<T>& left, T& right) {
+  T temp = std::move(right);
+  right = left.Get();
+  left = std::move(temp);
+}
 
 
 class TypeCategory;

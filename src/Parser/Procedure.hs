@@ -133,6 +133,7 @@ instance ParseFromSource (Statement SourceContext) where
                  parseFailCall <|>
                  parseExitCall <|>
                  parseVoid <|>
+                 parseSwap <|>
                  parseAssign <|>
                  parsePragma <|>
                  parseIgnore where
@@ -141,6 +142,14 @@ instance ParseFromSource (Statement SourceContext) where
       as <- sepBy sourceParser (sepAfter $ string_ ",")
       assignOperator
       assignExpr c as <|> assignDefer c as
+    parseSwap = labeled "swap" $ do
+      c <- getSourceContext
+      l <- try $ do
+        var <- sourceParser
+        swapOperator
+        return var
+      r <- sourceParser
+      return $ VariableSwap [c] l r
     assignExpr c as = do
       e <- sourceParser
       statementEnd

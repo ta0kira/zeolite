@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021-2022 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,6 +58,34 @@ unittest test {
   Int value <- 1
   value <- defer
   \ value
+}
+
+
+testcase "defer does not unset members" {
+  success
+}
+
+concrete Test {
+  @type new () -> (#self)
+  @value deferMembers () -> ()
+  @value getValueMember () -> (String)
+  @value getCategoryMember () -> (String)
+}
+
+define Test {
+  @category String categoryMember <- "abc"
+  @value    String valueMember
+
+  new () { return #self{ "def" } }
+  deferMembers () { categoryMember, valueMember <- defer }
+  getValueMember () { return valueMember }
+  getCategoryMember () { return categoryMember }
+}
+
+unittest test {
+  Test test <- Test.new()
+  \ Testing.checkEquals(test.getCategoryMember(), "abc")
+  \ Testing.checkEquals(test.getValueMember(), "def")
 }
 
 

@@ -476,6 +476,15 @@ if there is already a variable named `x` available, you *cannot* create a new
 All variables are **shared** and their values *are not* scoped like they are in
 C++. You should not count on knowing the lifetime of any given value.
 
+As of compiler version `0.23.1.0`, you can also **swap** the values of two
+variables that have the same type, as long as both are writable. This is more
+efficient than "manually" swapping using a temp variable.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<i><span style='color:#0057ae;'>Int</span></i> foo <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>123</span>
+<i><span style='color:#0057ae;'>Int</span></i> bar <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>456</span>
+foo <b><span style='color:#006e28;'>&lt;-&gt;</span></b> bar</pre>
+
 #### Calling Functions
 
 Return values from **function calls** must *always* be explicitly handled by

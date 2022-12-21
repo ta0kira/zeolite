@@ -30,6 +30,14 @@ class ParamsArgs;
 class ValueFunction;
 
 namespace zeolite_internal {
+class WeakValue;
+class BoxedValue;
+}  // namespace zeolite_internal
+
+void SwapValues(zeolite_internal::WeakValue&, zeolite_internal::WeakValue&);
+void SwapValues(zeolite_internal::BoxedValue&, zeolite_internal::BoxedValue&);
+
+namespace zeolite_internal {
 
 struct UnionValue {
   enum class Type : char {
@@ -63,7 +71,6 @@ struct UnionValue {
     PrimPointer as_pointer_;
   } __attribute__((packed)) value_;
 } __attribute__((packed));
-
 
 class BoxedValue {
  public:
@@ -232,6 +239,7 @@ class BoxedValue {
  private:
   friend class ::TypeValue;
   friend class WeakValue;
+  friend void ::SwapValues(BoxedValue&, BoxedValue&);
 
   // Intentionally break old calls that used new.
   inline explicit constexpr BoxedValue(void*) : BoxedValue() {}
@@ -279,6 +287,7 @@ class WeakValue {
 
  private:
   friend class BoxedValue;
+  friend void ::SwapValues(WeakValue&, WeakValue&);
 
   void Cleanup();
 
@@ -286,6 +295,19 @@ class WeakValue {
 } __attribute__((packed));
 
 }  // namespace zeolite_internal
+
+
+inline void SwapValues(BoxedValue& left, BoxedValue& right) {
+  zeolite_internal::UnionValue temp = right.union_;
+  right.union_ = left.union_;
+  left.union_ = temp;
+}
+
+inline void SwapValues(WeakValue& left, WeakValue& right) {
+  zeolite_internal::UnionValue temp = right.union_;
+  right.union_ = left.union_;
+  left.union_ = temp;
+}
 
 using zeolite_internal::BoxedValue;
 using zeolite_internal::WeakValue;

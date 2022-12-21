@@ -1,0 +1,367 @@
+/* -----------------------------------------------------------------------------
+Copyright 2022 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "successful swaps" {
+  success
+}
+
+concrete Test {
+  @type new () -> (#self)
+  @value testUnboxedCategoryValue () -> ()
+  @value testBoxedCategoryValue () -> ()
+  @value testWeakCategoryValue () -> ()
+  @value testCategorySame () -> ()
+  @value testUnboxedValueSame () -> ()
+  @value testBoxedValueSame () -> ()
+  @value testUnboxedNamedReturn () -> ()
+  @value testBoxedNamedReturn () -> ()
+}
+
+define Test {
+  @category Int    unboxedCategory     <- 123
+  @category String boxedCategory       <- "abc"
+  @category weak   String weakCategory <- boxedCategory
+
+  @value Int    unboxedValue
+  @value String boxedValue
+  @value weak   String weakValue
+
+  new () {
+    String value <- "def"
+    return #self{ 456, value, value }
+  }
+
+  testUnboxedCategoryValue () {
+    unboxedCategory <-> unboxedValue
+    \ Testing.checkEquals(unboxedCategory, 456)
+    \ Testing.checkEquals(unboxedValue, 123)
+    unboxedValue <-> unboxedCategory
+    \ Testing.checkEquals(unboxedCategory, 123)
+    \ Testing.checkEquals(unboxedValue, 456)
+  }
+
+  testBoxedCategoryValue () {
+    boxedCategory <-> boxedValue
+    \ Testing.checkEquals(boxedCategory, "def")
+    \ Testing.checkEquals(boxedValue, "abc")
+    boxedValue <-> boxedCategory
+    \ Testing.checkEquals(boxedCategory, "abc")
+    \ Testing.checkEquals(boxedValue, "def")
+  }
+
+  testWeakCategoryValue () {
+    weakCategory <-> weakValue
+    \ Testing.checkOptional(`strong` weakCategory, "def")
+    \ Testing.checkOptional(`strong` weakValue, "abc")
+    weakValue <-> weakCategory
+    \ Testing.checkOptional(`strong` weakCategory, "abc")
+    \ Testing.checkOptional(`strong` weakValue, "def")
+  }
+
+  testCategorySame () {
+    boxedCategory <-> boxedCategory
+    \ Testing.checkEquals(boxedCategory, "abc")
+  }
+
+  testUnboxedValueSame () {
+    unboxedValue <-> unboxedValue
+    \ Testing.checkEquals(unboxedValue, 456)
+  }
+
+  testBoxedValueSame () {
+    boxedValue <-> boxedValue
+    \ Testing.checkEquals(boxedValue, "def")
+  }
+
+  testUnboxedNamedReturn () {
+    \ Testing.checkEquals(callWithNamedUnboxed(), 456)
+  }
+
+  testBoxedNamedReturn () {
+    \ Testing.checkEquals(callWithNamedBoxed(), "def")
+  }
+
+  @value callWithNamedUnboxed () -> (Int)
+  callWithNamedUnboxed () (value1) {
+    value1     <- 123
+    Int value2 <- 456
+    value1 <-> value2
+    \ Testing.checkEquals(value1, 456)
+    \ Testing.checkEquals(value2, 123)
+  }
+
+  @value callWithNamedBoxed () -> (String)
+  callWithNamedBoxed () (value1) {
+    value1        <- "abc"
+    String value2 <- "def"
+    value1 <-> value2
+    \ Testing.checkEquals(value1, "def")
+    \ Testing.checkEquals(value2, "abc")
+  }
+}
+
+unittest testUnboxedCategoryValue {
+  \ Test.new().testUnboxedCategoryValue()
+}
+
+unittest testBoxedCategoryValue {
+  \ Test.new().testBoxedCategoryValue()
+}
+
+unittest testWeakCategoryValue {
+  \ Test.new().testWeakCategoryValue()
+}
+
+unittest testCategorySame {
+  \ Test.new().testCategorySame()
+}
+
+unittest testUnboxedValueSame {
+  \ Test.new().testUnboxedValueSame()
+}
+
+unittest testBoxedValueSame {
+  \ Test.new().testBoxedValueSame()
+}
+
+unittest testUnboxedNamedReturn {
+  \ Test.new().testUnboxedNamedReturn()
+}
+
+unittest testBoxedNamedReturn {
+  \ Test.new().testBoxedNamedReturn()
+}
+
+unittest testUnboxedLocal {
+  Int value1 <- 123
+  Int value2 <- 456
+  value1 <-> value2
+  \ Testing.checkEquals(value1, 456)
+  \ Testing.checkEquals(value2, 123)
+}
+
+unittest testBoxedLocal {
+  String value1 <- "abc"
+  String value2 <- "def"
+  value1 <-> value2
+  \ Testing.checkEquals(value1, "def")
+  \ Testing.checkEquals(value2, "abc")
+}
+
+unittest testOptionalLocal {
+  optional String value1 <- "abc"
+  optional String value2 <- "def"
+  value1 <-> value2
+  \ Testing.checkOptional(value1, "def")
+  \ Testing.checkOptional(value2, "abc")
+}
+
+unittest testWeakLocal {
+  optional String source1 <- "abc"
+  optional String source2 <- "def"
+  optional String value1 <- source1
+  optional String value2 <- source2
+  $Hidden[source1,source2]$
+  value1 <-> value2
+  \ Testing.checkOptional(`strong` value1, "def")
+  \ Testing.checkOptional(`strong` value2, "abc")
+}
+
+unittest testUnboxedTopLevelScoped {
+  Int value1 <- 123
+  scoped {
+    Int value2 <- 456
+  } cleanup {
+    \ Testing.checkEquals(value1, 456)
+  } in value1 <-> value2
+  \ Testing.checkEquals(value1, 456)
+}
+
+unittest testBoxedTopLevelScoped {
+  String value1 <- "abc"
+  weak String reference <- value1
+  scoped {
+    String value2 <- "def"
+  } cleanup {
+    \ Testing.checkEquals(value1, "def")
+    \ Testing.checkEquals(value2, "abc")
+    \ Testing.checkOptional(`strong` reference, "abc")
+  } in value1 <-> value2
+  \ Testing.checkEquals(value1, "def")
+  // value2 is out of scope now.
+  \ Testing.checkEmpty(`strong` reference)
+}
+
+
+testcase "swap works with parameters" {
+  success
+}
+
+concrete Test<#x> {
+  #x requires Formatted
+  #x defines Equals<#x>
+
+  @type new (#x) -> (#self)
+  @value testSwap (#x) -> ()
+}
+
+define Test {
+  @value #x value
+
+  new (value) { return #self{ value } }
+
+  testSwap (value2) {
+    // value2 is read-only because it's an argument.
+    #x temp <- value2
+    value <-> temp
+  \ Testing.checkEquals(value, value2)
+  }
+}
+
+unittest testUnboxed {
+  \ Test<Int>.new(123).testSwap(456)
+}
+
+unittest testBxed {
+  \ Test<String>.new("abc").testSwap("def")
+}
+
+
+testcase "swap not allowed with incompatible types" {
+  error
+  require "Int"
+  require "String"
+}
+
+unittest test {
+  Int    value1 <- 123
+  String value2 <- "abc"
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with invalid left assignment" {
+  error
+  require "modifier"
+}
+
+unittest test {
+  Int          value1 <- 123
+  optional Int value2 <- empty
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with invalid right assignment" {
+  error
+  require "modifier"
+}
+
+unittest test {
+  optional Int value1 <- empty
+  Int          value2 <- 456
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with read-only left" {
+  error
+  require "value1"
+  require "read-only"
+  exclude "value2"
+}
+
+unittest test {
+  Int value1 <- 1
+  Int value2 <- 2
+  $ReadOnly[value1]$
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with read-only right" {
+  error
+  require "value2"
+  require "read-only"
+  exclude "value1"
+}
+
+unittest test {
+  Int value1 <- 1
+  Int value2 <- 2
+  $ReadOnly[value2]$
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with hidden left" {
+  error
+  require "value1"
+  require "hidden"
+  exclude "value2"
+}
+
+unittest test {
+  Int value1 <- 1
+  Int value2 <- 2
+  $Hidden[value1]$
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with hidden right" {
+  error
+  require "value2"
+  require "hidden"
+  exclude "value1"
+}
+
+unittest test {
+  Int value1 <- 1
+  Int value2 <- 2
+  $Hidden[value2]$
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with deferred left" {
+  error
+  require "value1"
+  require "initialized"
+  exclude "value2"
+}
+
+unittest test {
+  Int value1 <- defer
+  Int value2 <- 2
+  value1 <-> value2
+}
+
+
+testcase "swap not allowed with deferred right" {
+  error
+  require "value2"
+  require "initialized"
+  exclude "value1"
+}
+
+unittest test {
+  Int value1 <- 1
+  Int value2 <- defer
+  value1 <-> value2
+}

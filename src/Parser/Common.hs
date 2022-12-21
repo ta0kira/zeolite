@@ -110,6 +110,7 @@ module Parser.Common (
   statementStart,
   stringChar,
   string_,
+  swapOperator,
   typeSymbolGet,
   valueSymbolGet,
 ) where
@@ -163,6 +164,9 @@ useNewOperators = newCategory <|> newType where
 
 assignOperator :: TextParser ()
 assignOperator = operator "<-" >> return ()
+
+swapOperator :: TextParser ()
+swapOperator = operator "<->" >> return ()
 
 infixFuncStart :: TextParser ()
 infixFuncStart = sepAfter (string_ "`")

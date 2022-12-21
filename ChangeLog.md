@@ -2,6 +2,18 @@
 
 ## 0.23.1.0  -- ????-??-??
 
+### Language
+
+* **[new]** Adds the `<->` variable-swap syntax, e.g., `foo <-> bar`. This can
+  be used to swap the values of writable variables, i.e., _not_ marked as
+  read-only via a pragma and not a function argument.
+
+  ```text
+  Int foo <- 123
+  Int bar <- 456
+  foo <-> bar
+  ```
+
 ### Compiler CLI
 
 * **[new]** Allows single-`-` CLI options to be clustered, e.g., `-rfj8`, which

@@ -307,6 +307,19 @@ compileStatement (DeferredVariables c as) = message ??> mapM_ createVariable as
       csSetDeferred (UsedVariable c2 n)
     createVariable (ExistingVariable (DiscardInput c2)) =
       compilerErrorM $ "Cannot defer discarded value" ++ formatFullContextBrace c2
+compileStatement (VariableSwap c vl vr) = message ??> handle vl vr where
+  message = "In variable swap at " ++ formatFullContext c
+  handle (OutputValue cl nl) (OutputValue cr nr) = do
+    r <- csResolver
+    fa <- csAllFilters
+    (VariableValue _ sl tl _) <- getWritableVariable cl nl
+    (VariableValue _ sr tr _) <- getWritableVariable cr nr
+    lift $ checkValueAssignment r fa tl tr
+    lift $ checkValueAssignment r fa tr tl
+    csCheckVariableInit [UsedVariable cl nl, UsedVariable cr nr]
+    scopedL <- autoScope sl
+    scopedR <- autoScope sr
+    csWrite ["SwapValues(" ++ scopedL ++ variableName nl ++ ", " ++ scopedR ++ variableName nr ++ ");"]
 compileStatement (Assignment c as e) = message ??> do
   (ts,e') <- compileExpression e
   r <- csResolver
