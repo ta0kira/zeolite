@@ -33,13 +33,13 @@ concrete Test {
 }
 
 define Test {
-  @category Int    unboxedCategory     <- 123
-  @category String boxedCategory       <- "abc"
-  @category weak   String weakCategory <- boxedCategory
+  @category Int         unboxedCategory <- 123
+  @category String      boxedCategory   <- "abc"
+  @category weak String weakCategory    <- boxedCategory
 
-  @value Int    unboxedValue
-  @value String boxedValue
-  @value weak   String weakValue
+  @value Int         unboxedValue
+  @value String      boxedValue
+  @value weak String weakValue
 
   new () {
     String value <- "def"
@@ -174,8 +174,8 @@ unittest testOptionalLocal {
 unittest testWeakLocal {
   optional String source1 <- "abc"
   optional String source2 <- "def"
-  optional String value1 <- source1
-  optional String value2 <- source2
+  weak String value1 <- source1
+  weak String value2 <- source2
   $Hidden[source1,source2]$
   value1 <-> value2
   \ Testing.checkOptional(`strong` value1, "def")
