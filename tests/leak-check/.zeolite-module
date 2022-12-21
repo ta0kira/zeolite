@@ -12,6 +12,6 @@ private_deps: [
   "lib/util"
 ]
 mode: binary {
-  category: LeakTest
+  category: LeakCheck
   function: run
 }

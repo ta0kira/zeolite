@@ -1,8 +1,26 @@
-concrete LeakTest {
+/* -----------------------------------------------------------------------------
+Copyright 2021-2022 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+concrete LeakCheck {
   @type run () -> ()
 }
 
-define LeakTest {
+define LeakCheck {
   @value Vector<Int> memory
 
   run () {
@@ -46,8 +64,8 @@ define LeakTest {
         .write("\n")
         .flush()
 
-    optional LeakTest original <- LeakTest{ Vector:createSize<Int>(size) }
-    weak LeakTest checkedValue <- original
+    optional LeakCheck original <- LeakCheck{ Vector:createSize<Int>(size) }
+    weak LeakCheck checkedValue <- original
     $ReadOnly[checkedValue]$
 
     scoped {
@@ -71,7 +89,7 @@ define LeakTest {
 }
 
 @type interface ThreadFactory {
-  create (optional LeakTest,BarrierWait) -> (Routine)
+  create (optional LeakCheck,BarrierWait) -> (Routine)
 }
 
 concrete LastReference {
@@ -83,7 +101,7 @@ define LastReference {
 
   refines Routine
 
-  @value weak LeakTest copy
+  @value weak LeakCheck copy
   @value BarrierWait barrier
 
   create (copy,barrier) {
@@ -105,7 +123,7 @@ define Chaos {
 
   refines Routine
 
-  @value weak LeakTest copy
+  @value weak LeakCheck copy
   @value BarrierWait barrier
 
   create (copy,barrier) {
@@ -113,15 +131,18 @@ define Chaos {
   }
 
   run ()  {
-    weak LeakTest copy1 <- empty
-    weak LeakTest copy2 <- empty
-    weak LeakTest copy3 <- empty
-    weak LeakTest copy4 <- empty
-    weak LeakTest copy5 <- empty
+    weak LeakCheck copy1 <- empty
+    weak LeakCheck copy2 <- empty
+    weak LeakCheck copy3 <- empty
+    weak LeakCheck copy4 <- empty
+    weak LeakCheck copy5 <- empty
     \ barrier.wait()
     copy1 <- copy
     copy2 <- copy1
     copy3 <- copy1
+    copy3 <-> copy1
+    copy1 <-> copy1
+    copy2 <-> copy1
     copy <- empty
     copy4 <- strong(copy2)
     copy1 <- strong(copy3)

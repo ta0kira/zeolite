@@ -214,7 +214,7 @@ END
 
 
 test_leak_check() {
-  local binary="$ZEOLITE_PATH/tests/leak-check/LeakTest"
+  local binary="$ZEOLITE_PATH/tests/leak-check/LeakCheck"
   rm -f "$binary"
   do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/leak-check -f
   # race-condition check

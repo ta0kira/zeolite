@@ -17,7 +17,7 @@ To check for leaks (requires [`valgrind`](https://valgrind.org/)):
 
 ```shell
 # The "leak" argument is important.
-valgrind --leak-check=yes $ZEOLITE_PATH/tests/leak-check/LeakTest leak
+valgrind --leak-check=yes $ZEOLITE_PATH/tests/leak-check/LeakCheck leak
 ```
 
 You should get output that looks something like this:
@@ -26,7 +26,7 @@ You should get output that looks something like this:
 ==8487== Memcheck, a memory error detector
 ==8487== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
 ==8487== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
-==8487== Command: tests/leak-check/LeakTest leak
+==8487== Command: tests/leak-check/LeakCheck leak
 ==8487==
 ==8487==
 ==8487== HEAP SUMMARY:
@@ -58,7 +58,7 @@ To check for race conditions:
 
 ```shell
 # The "race" argument is important.
-$ZEOLITE_PATH/tests/leak-check/LeakTest race
+$ZEOLITE_PATH/tests/leak-check/LeakCheck race
 ```
 
 *Do not use `valgrind` to run in `race` mode!* The latency introduced by
@@ -70,10 +70,10 @@ message means a crash, and thus a test failure.
 
 ---
 
-A more comprehensive test involves leaving `LeakTest` running for an hour or so.
+A more comprehensive test involves leaving `LeakCheck` running indefinitely.
 
 ```shell
-$ZEOLITE_PATH/tests/leak-check/LeakTest forever
+$ZEOLITE_PATH/tests/leak-check/LeakCheck forever
 ```
 
 This will cause `LeakCheck` to run for a very long time, while attempting to
