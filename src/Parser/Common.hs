@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -437,7 +437,7 @@ inferredParam = string_ "?"
 operator :: String -> TextParser String
 operator o = labeled o $ do
   string_ o
-  notFollowedBy operatorSymbol
+  try anyComment <|> notFollowedBy operatorSymbol
   optionalSpace
   return o
 

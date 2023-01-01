@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -202,6 +202,15 @@ tests = [
     checkShortParseSuccess "\\ ~x & ~y",
     checkShortParseSuccess "\\ ~x | ~y",
     checkShortParseSuccess "\\ ~x ^ ~y",
+
+    checkShortParseSuccess "\\ a+b",
+    checkShortParseFail "\\ a++b",
+    checkShortParseFail "\\ a+/b",
+    checkShortParseFail "\\ a/=b",
+    checkShortParseSuccess "\\ a+/*c*//*c*/d",
+    checkShortParseSuccess "\\ a+//c\nd",
+    checkShortParseSuccess "\\ a/*c*//*c*/+d",
+    checkShortParseSuccess "\\ a//c\n+d",
 
     checkShortParseSuccess "x <- y + z",
     checkShortParseSuccess "x <- !y == !z",

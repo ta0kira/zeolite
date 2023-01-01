@@ -4,6 +4,9 @@
 
 ### Language
 
+* **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
+  the `/*b+*/` in `a+/*b+*/c`.
+
 * **[new]** Adds the `<->` variable-swap syntax, e.g., `foo <-> bar`. This can
   be used to swap the values of writable variables, i.e., _not_ marked as
   read-only via a pragma and not a function argument.
