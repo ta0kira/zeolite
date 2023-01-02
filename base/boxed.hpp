@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021-2022 Kevin P. Barry
+Copyright 2021-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -143,9 +143,7 @@ class BoxedValue {
   template<class T, class... As>
   static inline BoxedValue New(const As&... args) {
     using Pointer = UnionValue::Pointer;
-    BoxedValue new_value;
-    new_value.union_.type_ = UnionValue::Type::BOXED;
-    new_value.union_.value_.as_bytes_ = (unsigned char*) malloc(sizeof(Pointer) + sizeof(T));
+    BoxedValue new_value((unsigned char*) malloc(sizeof(Pointer) + sizeof(T)));
     new (new_value.union_.value_.as_bytes_)
       Pointer{ ATOMIC_FLAG_INIT, {1}, {1},
                {new (new_value.union_.value_.as_bytes_ + sizeof(Pointer)) T(args...)} };
@@ -242,6 +240,9 @@ class BoxedValue {
   friend class ::TypeValue;
   friend class WeakValue;
   friend void ::SwapValues(BoxedValue&, BoxedValue&);
+
+  inline explicit BoxedValue(unsigned char* value)
+    : union_{ .type_ = UnionValue::Type::BOXED, .value_ = { .as_bytes_ = value } } {}
 
   // Intentionally break old calls that used new.
   inline explicit constexpr BoxedValue(void*) : BoxedValue() {}
