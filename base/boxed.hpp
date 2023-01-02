@@ -54,6 +54,8 @@ struct UnionValue {
     std::atomic_flag lock_;
     std::atomic_int strong_;
     std::atomic_int weak_;
+    // NOTE: This can't be optimized out because it might differ from the
+    // pointer to the underlying object, e.g., if TypeValue is a virtual base.
     TypeValue* object_;
   };
 
