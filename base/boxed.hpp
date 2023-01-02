@@ -143,7 +143,7 @@ class BoxedValue {
   template<class T, class... As>
   static inline BoxedValue New(const As&... args) {
     using Pointer = UnionValue::Pointer;
-    BoxedValue new_value((unsigned char*) malloc(sizeof(Pointer) + sizeof(T)));
+    BoxedValue new_value(reinterpret_cast<unsigned char*>(malloc(sizeof(Pointer) + sizeof(T))));
     new (new_value.union_.value_.as_bytes_)
       Pointer{ ATOMIC_FLAG_INIT, {1}, {1},
                {new (new_value.union_.value_.as_bytes_ + sizeof(Pointer)) T(args...)} };
@@ -253,10 +253,7 @@ class BoxedValue {
 
   template<class T>
   static inline BoxedValue FromPointer(const T* pointer) {
-    BoxedValue value;
-    value.union_.type_ = UnionValue::Type::BOXED;
-    value.union_.value_.as_bytes_ =
-      reinterpret_cast<unsigned char*>(const_cast<T*>(pointer))-sizeof(UnionValue::Pointer);
+    BoxedValue value(reinterpret_cast<unsigned char*>(const_cast<T*>(pointer))-sizeof(UnionValue::Pointer));
     if (value.union_.value_.as_boxed_->object_ != pointer ||
         ++value.union_.value_.as_boxed_->strong_ == 1) {
       FAIL() << "Bad VAR_SELF pointer " << pointer << " in " << pointer->CategoryName();
