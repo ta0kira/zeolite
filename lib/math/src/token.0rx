@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Token {
-  $ReadOnlyExcept[counter]$
+  $ReadOnlyExcept[]$
 
   @category Mutex mutex <- SpinlockMutex.new()
   @category HashedMap<String,Token> toToken <- HashedMap<String,Token>.new()
-  @category Int counter <- 0
 
   @value String string
   @value Int    value
@@ -33,9 +32,9 @@ define Token {
     } cleanup {
       \ mutex.unlock()
     } in if (present(existing)) {
-      return require(existing)
+      token <- require(existing)
     } else {
-      \ toToken.set(string,(token <- Token{ string, (counter <- counter+1) }))
+      \ toToken.set(string,(token <- Token{ string, toToken.size()+1 }))
     }
   }
 
