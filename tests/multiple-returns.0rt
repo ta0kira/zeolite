@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,6 +108,38 @@ define Test {
 concrete Test {
   @type get () -> (Int,Int)
   @type call (Int,Int) -> ()
+}
+
+
+testcase "multi return as args with params" {
+  success
+}
+
+unittest testExplicit {
+    \ Test.call<Int>(Test.get())
+}
+
+unittest testInferred {
+    \ Test.call(Test.get())
+}
+
+define Test {
+  get () {
+    return 1, 2
+  }
+
+  call (x,y) {
+    if (!(x `#x.lessThan` y)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type get () -> (Int,Int)
+  @type call<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> ()
 }
 
 
