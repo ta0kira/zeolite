@@ -24,6 +24,12 @@ extra_files: [
     categories: [EnumeratedBarrier EnumeratedWait]
   }
 ]
+extension_specs: [
+  category {
+    name: EnumeratedBarrier
+    refines: [ReadAt<BarrierWait>]
+  }
+]
 mode: incremental {
   link_flags: ["-lpthread"]
 }
