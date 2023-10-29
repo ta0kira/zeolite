@@ -246,3 +246,41 @@ concrete Value {
 define Value {
   call (_,_) { return 1 }
 }
+
+
+testcase "arg labels disallowed when forwarding multiple args" {
+  error
+  require compiler "value1"
+  exclude compiler "value2"
+}
+
+unittest test {
+  \ Value.call2(value1: Value.call1())
+}
+
+concrete Value {
+  @type call1 () -> (Int,Int)
+  @type call2 (Int value1,Int value2) -> ()
+}
+
+define Value {
+  call1 () { return 1, 2 }
+  call2 (_,_) { }
+}
+
+
+testcase "reusing label is allowed" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Value.call(positive: 1,positive: 2),3)
+}
+
+concrete Value {
+  @type call (Int positive,Int positive) -> (Int)
+}
+
+define Value {
+  call (value1,value2) { return value1+value2 }
+}

@@ -1030,7 +1030,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   lift $ mapCompilerM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
-  lift $ processPairs_ checkArgLabel (fmap snd $ sfArgs f) (Positional $ zip ([0..] :: [Int]) $ map fst $ pValues es)
+  lift $ if (length ts /= length (pValues es))
+            then mapCompilerM_ (labelNotAllowedError . fst) $ pValues es
+            else processPairs_ checkArgLabel (fmap snd $ sfArgs f) (Positional $ zip ([0..] :: [Int]) $ map fst $ pValues es)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
   csAddRequired $ Set.unions $ map categoriesFromTypes $ pValues ps2
   csAddRequired (Set.fromList [sfType f])
@@ -1041,6 +1043,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   call <- assemble e scoped scope (sfScope f) paramsArgs
   return $ (ftReturns f'',OpaqueMulti call)
   where
+    labelNotAllowedError (Just l) = compilerErrorM $ "Arg label " ++ show l ++ " not allowed when forwarding multiple returns"
+    labelNotAllowedError _ = return ()
     replaceSelfParam self (AssignedInstance c2 t) = do
       t' <- replaceSelfInstance self t
       return $ AssignedInstance c2 t'
