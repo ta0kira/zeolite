@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,49 +19,49 @@ limitations under the License.
 $ModuleOnly$
 
 concrete LockRef {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
-concrete IfElseDecrRefIsZero {
-  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+concrete DecrRefIsZero {
+  @type new () -> (StatePredicate<String,ReferenceState>)
 }
 
 concrete UnlockRef {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
 concrete FreeObject {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
-concrete IfElseDecrWeakIsZero {
-  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+concrete DecrWeakIsZero {
+  @type new () -> (StatePredicate<String,ReferenceState>)
 }
 
 concrete FreeRef {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
-concrete IfElseIncrRefIsOne {
-  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+concrete IncrRefIsOne {
+  @type new () -> (StatePredicate<String,ReferenceState>)
 }
 
 concrete DecrRef {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
 concrete DecrWeak {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
-concrete IfElsePlusLockModLockZero {
-  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+concrete PlusLockModLockZero {
+  @type new () -> (StatePredicate<String,ReferenceState>)
 }
 
 concrete MinusLockPlusOne {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }
 
 concrete MinusLock {
-  @type new () -> (ReferenceMachine)
+  @type new () -> (StateTransition<String,ReferenceState>)
 }

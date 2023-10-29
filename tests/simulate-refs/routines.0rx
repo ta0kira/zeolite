@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021-2022 Kevin P. Barry
+Copyright 2021-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,82 +17,69 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Routines {
-  $ReadOnlyExcept[machine]$
-
-  refines StateMachine
-
-  @category ReferenceMachine dropWeak <-
-      IfElseDecrWeakIsZero.new(
-      /*if*/   FreeRef.new(),
+  @category optional StateTransition<String,ReferenceState> dropWeak <-
+      Run:ifElse(
+      /*if*/   DecrWeakIsZero.new(),
+      /*then*/ FreeRef.new(),
       /*else*/ empty)
 
-  @category ReferenceMachine sharedThenDrop <-
-      LockRef.new() `Run.then`
-      IfElseIncrRefIsOne.new(
-      /*if*/   DecrRef.new() `Run.then`
-               UnlockRef.new() `Run.then`
+  @category optional StateTransition<String,ReferenceState> sharedThenDrop <-
+      LockRef.new() `Run:then`
+      Run:ifElse(
+      /*if*/   IncrRefIsOne.new(),
+      /*then*/ DecrRef.new() `Run:then`
+               UnlockRef.new() `Run:then`
                dropWeak,
-      /*else*/ UnlockRef.new() `Run.then`
-               dropWeak `Run.then`
+      /*else*/ UnlockRef.new() `Run:then`
+               dropWeak `Run:then`
                dropShared)
 
-  @category ReferenceMachine dropShared <-
-      LockRef.new() `Run.then`
-      IfElseDecrRefIsZero.new(
-      /*if*/   FreeObject.new() `Run.then`
-               UnlockRef.new() `Run.then`
+  @category optional StateTransition<String,ReferenceState> dropShared <-
+      LockRef.new() `Run:then`
+      Run:ifElse(
+      /*if*/   DecrRefIsZero.new(),
+      /*then*/ FreeObject.new() `Run:then`
+               UnlockRef.new() `Run:then`
                dropWeak,
       /*else*/ UnlockRef.new())
 
-  @category ReferenceMachine sharedThenDropBroken <-
-      IfElsePlusLockModLockZero.new(
-      /*if*/   MinusLock.new() `Run.then`
+  @category optional StateTransition<String,ReferenceState> sharedThenDropBroken <-
+      Run:ifElse(
+      /*if*/   PlusLockModLockZero.new(),
+      /*then*/ MinusLock.new() `Run:then`
                dropWeak,
-      /*else*/ MinusLockPlusOne.new() `Run.then`
-               dropWeak `Run.then`
+      /*else*/ MinusLockPlusOne.new() `Run:then`
+               dropWeak `Run:then`
                dropSharedBroken)
 
-  @category ReferenceMachine dropSharedBroken <-
-      IfElseDecrRefIsZero.new(
-      /*if*/   FreeObject.new() `Run.then`
+  @category optional StateTransition<String,ReferenceState> dropSharedBroken <-
+      Run:ifElse(
+      /*if*/   DecrRefIsZero.new(),
+      /*then*/ FreeObject.new() `Run:then`
                dropWeak,
       /*else*/ empty)
-
-  @value String name
-  @value ReferenceState state
-  @value optional ReferenceMachine machine
 
   newShared (name,state) {
     if (state.addStrong() == 1) {
       \ state.addWeak()
     }
-    return #self{ name, state, dropShared }
+    return LabeledStateMachine:new(name,state,dropShared)
   }
 
   newWeak (name,state) {
     \ state.addWeak()
-    return #self{ name, state, sharedThenDrop }
+    return LabeledStateMachine:new(name,state,sharedThenDrop)
   }
 
   newSharedBroken (name,state) {
     if (state.addStrong() == 1) {
       \ state.addWeak()
     }
-    return #self{ name, state, dropSharedBroken }
+    return LabeledStateMachine:new(name,state,dropSharedBroken)
   }
 
   newWeakBroken (name,state) {
     \ state.addWeak()
-    return #self{ name, state, sharedThenDropBroken }
-  }
-
-  transition () {
-    if (!present(machine)) {
-      return empty
-    } elif (`present` (machine <- name `require(machine).runWith` state)) {
-      return self
-    } else {
-      return empty
-    }
+    return LabeledStateMachine:new(name,state,sharedThenDropBroken)
   }
 }

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021-2022 Kevin P. Barry
+Copyright 2021-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,93 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define Run {
+  then (first,second) {
+    return RunThen:new(first,second)
+  }
+
+  ifElse (predicate,doIf,doElse) {
+    return RunIfElse:new(predicate,doIf,doElse)
+  }
+}
+
+concrete RunThen<#l,#s|> {
+  @category new<#l,#s> (optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) -> (optional StateTransition<#l,#s>)
+}
+
+define RunThen {
+  refines StateTransition<#l,#s>
+
+  @value StateTransition<#l,#s> first
+  @value StateTransition<#l,#s> second
+
+  new (first,second) {
+    if (! `present` first) {
+      return second
+    } elif (! `present` second) {
+      return first
+    } else {
+      return RunThen<#l,#s>{ `require` first, `require` second }
+    }
+  }
+
+  runWith (label,state) {
+    scoped {
+      optional StateTransition<#l,#s> next <- label `first.runWith` state
+    } in if (`present` next) {
+      return #self{ `require` next, second }
+    } else {
+      return second
+    }
+  }
+}
+
+concrete RunIfElse<#l,#s|> {
+  @category new<#l,#s> (StatePredicate<#l,#s>,optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) -> (StateTransition<#l,#s>)
+}
+
+define RunIfElse {
+  refines StateTransition<#l,#s>
+
+  @value StatePredicate<#l,#s> predicate
+  @value optional StateTransition<#l,#s> doIf
+  @value optional StateTransition<#l,#s> doElse
+
+  new (predicate,doIf,doElse) { return RunIfElse<#l,#s>{ predicate, doIf, doElse } }
+
+  runWith (label,state) {
+    if (label `predicate.test` state) {
+      return doIf
+    } else {
+      return doElse
+    }
+  }
+}
+
+define LabeledStateMachine {
+  $ReadOnlyExcept[machine]$
+
+  refines StateMachine
+
+  @value #l label
+  @value #s state
+  @value optional StateTransition<#l,#s> machine
+
+  new (label,state,transition) {
+    return LabeledStateMachine<#l,#s>{ label, state, transition }
+  }
+
+  transition () {
+    if (!present(machine)) {
+      return empty
+    } elif (`present` (machine <- label `require(machine).runWith` state)) {
+      return self
+    } else {
+      return empty
+    }
+  }
+}
 
 define StateExecutor {
   multiplexStates (original,random) {

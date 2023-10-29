@@ -138,34 +138,3 @@ define ReferenceState {
         .build()
   }
 }
-
-define Run {
-  then (first,second) {
-    return RunThen.new(first,second)
-  }
-}
-
-concrete RunThen {
-  @type new (ReferenceMachine,ReferenceMachine) -> (ReferenceMachine)
-}
-
-define RunThen {
-  refines ReferenceMachine
-
-  @value ReferenceMachine first
-  @value ReferenceMachine second
-
-  new (first,second) {
-    return RunThen{ first, second }
-  }
-
-  runWith (name,state) {
-    scoped {
-      optional ReferenceMachine next <- name `first.runWith` state
-    } in if (`present` next) {
-      return RunThen{ `require` next, second }
-    } else {
-      return second
-    }
-  }
-}

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,36 @@ $ModuleOnly$
 
 @value interface StateMachine {
   transition () -> (optional StateMachine)
+}
+
+@value interface StateTransition<#l,#s|> {
+  immutable
+
+  runWith (#l,#s) -> (optional StateTransition<#l,#s>)
+}
+
+@value interface StatePredicate<#l,#s|> {
+  immutable
+
+  test (#l,#s) -> (Bool)
+}
+
+concrete Run {
+  @category then<#l,#s>
+  (optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) ->
+  (optional StateTransition<#l,#s>)
+
+  @category ifElse<#l,#s>
+  (StatePredicate<#l,#s>,optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) ->
+  (StateTransition<#l,#s>)
+}
+
+concrete LabeledStateMachine<#l,#s> {
+  #l immutable
+
+  @category new<#l,#s>
+    #l immutable
+  (#l,#s,optional StateTransition<#l,#s>) -> (StateMachine)
 }
 
 concrete StateExecutor {

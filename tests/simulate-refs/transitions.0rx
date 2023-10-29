@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define LockRef {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -31,26 +31,19 @@ define LockRef {
   }
 }
 
-define IfElseDecrRefIsZero {
-  refines ReferenceMachine
+define DecrRefIsZero {
+  refines StatePredicate<String,ReferenceState>
 
-  @value optional ReferenceMachine doIf
-  @value optional ReferenceMachine doElse
+  new () { return #self{ } }
 
-  new (doIf,doElse) { return #self{ doIf, doElse } }
-
-  runWith (name,state) {
+  test (name,state) {
     \ state.addOperation<#self>(name)
-    if (state.remStrong() == 0) {
-      return doIf
-    } else {
-      return doElse
-    }
+    return state.remStrong() == 0
   }
 }
 
 define UnlockRef {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -62,7 +55,7 @@ define UnlockRef {
 }
 
 define FreeObject {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -73,26 +66,19 @@ define FreeObject {
   }
 }
 
-define IfElseDecrWeakIsZero {
-  refines ReferenceMachine
+define DecrWeakIsZero {
+  refines StatePredicate<String,ReferenceState>
 
-  @value optional ReferenceMachine doIf
-  @value optional ReferenceMachine doElse
+  new () { return #self{ } }
 
-  new (doIf,doElse) { return #self{ doIf, doElse } }
-
-  runWith (name,state) {
+  test (name,state) {
     \ state.addOperation<#self>(name)
-    if (state.remWeak() == 0) {
-      return doIf
-    } else {
-      return doElse
-    }
+    return state.remWeak() == 0
   }
 }
 
 define FreeRef {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -103,26 +89,19 @@ define FreeRef {
   }
 }
 
-define IfElseIncrRefIsOne {
-  refines ReferenceMachine
+define IncrRefIsOne {
+  refines StatePredicate<String,ReferenceState>
 
-  @value optional ReferenceMachine doIf
-  @value optional ReferenceMachine doElse
+  new () { return #self{ } }
 
-  new (doIf,doElse) { return #self{ doIf, doElse } }
-
-  runWith (name,state) {
+  test (name,state) {
     \ state.addOperation<#self>(name)
-    if (state.addStrong() == 1) {
-      return doIf
-    } else {
-      return doElse
-    }
+    return state.addStrong() == 1
   }
 }
 
 define DecrRef {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -134,7 +113,7 @@ define DecrRef {
 }
 
 define DecrWeak {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -145,26 +124,19 @@ define DecrWeak {
   }
 }
 
-define IfElsePlusLockModLockZero {
-  refines ReferenceMachine
+define PlusLockModLockZero {
+  refines StatePredicate<String,ReferenceState>
 
-  @value optional ReferenceMachine doIf
-  @value optional ReferenceMachine doElse
+  new () { return #self{ } }
 
-  new (doIf,doElse) { return #self{ doIf, doElse } }
-
-  runWith (name,state) {
+  test (name,state) {
     \ state.addOperation<#self>(name)
-    if (state.plusStrong($ExprLookup[LOCK_VAL]$) % $ExprLookup[LOCK_VAL]$ == 0) {
-      return doIf
-    } else {
-      return doElse
-    }
+    return state.plusStrong($ExprLookup[LOCK_VAL]$) % $ExprLookup[LOCK_VAL]$ == 0
   }
 }
 
 define MinusLockPlusOne {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
@@ -176,7 +148,7 @@ define MinusLockPlusOne {
 }
 
 define MinusLock {
-  refines ReferenceMachine
+  refines StateTransition<String,ReferenceState>
 
   new () { return #self{ } }
 
