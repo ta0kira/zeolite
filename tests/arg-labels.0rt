@@ -1,0 +1,248 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "call with arg labels" {
+  success
+}
+
+unittest categoryCall {
+  \ Testing.checkEquals(Value:call(value: 1),1)
+}
+
+unittest typeValueVall {
+  \ Testing.checkEquals(Value.new(value: 1).add(value: 10),11)
+}
+
+concrete Value {
+  @category call (Int value) -> (Int)
+  @type new (Int value) -> (#self)
+  @value add (Int value) -> (Int)
+}
+
+define Value {
+  @value Int storedValue
+
+  call (value) { return value }
+  new (value) { return Value{ value } }
+  add (value) { return storedValue+value }
+}
+
+
+testcase "call with missing required label" {
+  error
+  require compiler "value"
+}
+
+unittest test {
+  \ Value:call(1)
+}
+
+concrete Value {
+  @category call (Int value) -> (Int)
+}
+
+define Value {
+  call (value) { return value }
+}
+
+
+testcase "call with unexpected label" {
+  error
+  require compiler "value"
+}
+
+unittest test {
+  \ Value:call(value: 1)
+}
+
+concrete Value {
+  @category call (Int) -> (Int)
+}
+
+define Value {
+  call (value) { return value }
+}
+
+
+testcase "call with mismatched label" {
+  error
+  require compiler "value"
+  require compiler "number"
+}
+
+unittest test {
+  \ Value:call(number: 1)
+}
+
+concrete Value {
+  @category call (Int value) -> (Int)
+}
+
+define Value {
+  call (value) { return value }
+}
+
+
+testcase "merge with matched label" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Value.call(value: 1),1)
+}
+
+@type interface Base {
+  call (Int value) -> (Int)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int value) -> (Int)
+}
+
+define Value {
+  call (value) { return value }
+}
+
+
+testcase "failed merge with mismatched label" {
+  error
+  require compiler "value"
+  require compiler "number"
+}
+
+@type interface Base {
+  call (Int value) -> (Int)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int number) -> (Int)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "failed merge with added label" {
+  error
+  require compiler "number"
+}
+
+@type interface Base {
+  call (Int) -> (Int)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int number) -> (Int)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "failed merge with removed label" {
+  error
+  require compiler "number"
+}
+
+@type interface Base {
+  call (Int number) -> (Int)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int) -> (Int)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "warning when arg name differs from arg label" {
+  compiles
+  require compiler "value"
+  require compiler "number"
+}
+
+concrete Value {
+  @type call (Int value) -> (Int)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "no warning when arg with label is ignored" {
+  compiles
+  exclude compiler "value"
+}
+
+concrete Value {
+  @type call (Int value) -> (Int)
+}
+
+define Value {
+  call (_) { return 1 }
+}
+
+
+testcase "prefix not allowed with required labels" {
+  error
+  require compiler "value"
+}
+
+unittest test {
+  \ `Value.call` 123
+}
+
+concrete Value {
+  @type call (Int value) -> (Int)
+}
+
+define Value {
+  call (_) { return 1 }
+}
+
+
+testcase "infix not allowed with required labels" {
+  error
+  require compiler "value1"
+  require compiler "value2"
+}
+
+unittest test {
+  \ 987 `Value.call` 123
+}
+
+concrete Value {
+  @type call (Int value1,Int value2) -> (Int)
+}
+
+define Value {
+  call (_,_) { return 1 }
+}

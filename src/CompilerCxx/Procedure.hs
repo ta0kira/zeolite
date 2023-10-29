@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ compileExecutableProcedure immutable cxxType ctx
       | otherwise            = ["ReturnTuple returns(" ++ show (length $ pValues rs1) ++ ");"]
     nameParams = flip map (zip ([0..] :: [Int]) $ pValues ps1) $
       (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = params_args.GetParam(" ++ show i ++ ");")
-    nameArgs = map nameSingleArg (zip ([0..] :: [Int]) $ zip (pValues as1) (pValues $ avNames as2))
+    nameArgs = map nameSingleArg (zip ([0..] :: [Int]) $ zip (map fst $ pValues as1) (pValues $ avNames as2))
     nameSingleArg (i,(t2,n2))
       | isDiscardedInput n2 = "// Arg " ++ show i ++ " (" ++ show (pvType t2) ++ ") is discarded"
       | otherwise = "const " ++ variableProxyType (pvType t2) ++ " " ++ variableName (ivName n2) ++
@@ -499,8 +499,8 @@ compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilati
                                                (Positional [t])
   let currVar = hiddenVariableName $ VariableName "traverse"
   let currType = orderOptionalValue $ fixTypeParams t2
-  let currExpr    = BuiltinCall [] $ FunctionCall [] BuiltinRequire (Positional []) (Positional [RawExpression (Positional [currType]) (UnwrappedSingle currVar)])
-  let currPresent = BuiltinCall [] $ FunctionCall [] BuiltinPresent (Positional []) (Positional [RawExpression (Positional [currType]) (UnwrappedSingle currVar)])
+  let currExpr    = BuiltinCall [] $ FunctionCall [] BuiltinRequire (Positional []) (Positional [(Nothing,RawExpression (Positional [currType]) (UnwrappedSingle currVar))])
+  let currPresent = BuiltinCall [] $ FunctionCall [] BuiltinPresent (Positional []) (Positional [(Nothing,RawExpression (Positional [currType]) (UnwrappedSingle currVar))])
   let callNext = Expression c1 currExpr [ValueCall c1 $ FunctionCall c1 (FunctionName "next") (Positional []) (Positional [])]
   let callGet  = Expression c2 currExpr [ValueCall c2 $ FunctionCall c2 (FunctionName "get")  (Positional []) (Positional [])]
   (Positional [typeGet],exprNext) <- compileExpression callNext
@@ -618,13 +618,13 @@ compileExpression = compile where
   compile (Expression _ s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e) =
-    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [e]))) [])
+    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [(Nothing,e)]))) [])
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e) =
-    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [e]))) [])
+    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [(Nothing,e)]))) [])
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [e]))])
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [(Nothing,e)]))])
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e) =
-    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [e]))) [])
+    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [(Nothing,e)]))) [])
   compile (UnaryExpression _ (NamedOperator c "-") (Literal (IntegerLiteral _ _ l))) =
     compile (Literal (IntegerLiteral c False (-l)))
   compile (UnaryExpression _ (NamedOperator c "-") (Literal (DecimalLiteral _ l e))) =
@@ -658,13 +658,13 @@ compileExpression = compile where
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                        formatFullContextBrace c
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e2) =
-    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [e1,e2]))) [])
+    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
-    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [e1,e2]))) [])
+    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e2) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [e1,e2]))])
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e2) =
-    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [e1,e2]))) [])
+    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression _ e1 (NamedOperator c o) e2) = do
     e1' <- compileExpression e1
     e2' <- if o `Set.member` logical
@@ -832,7 +832,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = d
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
-  es' <- sequence $ map compileExpression $ pValues es
+  es' <- sequence $ map (compileExpression . snd) $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
@@ -845,7 +845,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
     compilerErrorM $ "Expected 2 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
-  es' <- sequence $ map compileExpression $ pValues es
+  es' <- sequence $ map (compileExpression . snd) $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
@@ -870,7 +870,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = d
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
-  es' <- sequence $ map compileExpression $ pValues es
+  es' <- sequence $ map (compileExpression . snd) $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
@@ -883,7 +883,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinStrong ps es)) = do
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
-  es' <- sequence $ map compileExpression $ pValues es
+  es' <- sequence $ map (compileExpression . snd) $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
@@ -1017,7 +1017,7 @@ compileFunctionCall :: (Ord c, Show c, CollectErrorsM m,
 compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   r <- csResolver
   fa <- csAllFilters
-  es' <- sequence $ map compileExpression $ pValues es
+  es' <- sequence $ map (compileExpression . snd) $ pValues es
   (ts,es'') <- lift $ getValues es'
   f' <- lift $ parsedToFunctionType f
   let psActual = case ps of
@@ -1030,6 +1030,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   lift $ mapCompilerM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
+  lift $ processPairs_ checkArgLabel (fmap snd $ sfArgs f) (Positional $ zip ([0..] :: [Int]) $ map fst $ pValues es)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
   csAddRequired $ Set.unions $ map categoriesFromTypes $ pValues ps2
   csAddRequired (Set.fromList [sfType f])
@@ -1051,7 +1052,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
     backgroundMessage _ = return ()
     getParamsArgs ps2 paramEs argEs = do
       psNames <- lift $ collectParamNames ps2
-      asNames <- lift $ collectArgNames $ pValues es
+      asNames <- lift $ collectArgNames $ map snd $ pValues es
       canForward <- case (psNames,asNames) of
                          (Just pn,Just an) -> csCanForward pn an
                          _                 -> return False
@@ -1085,6 +1086,16 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
       compilerErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
       checkValueAssignment r fa t1 t0 <?? "In argument " ++ show i ++ " to " ++ show (sfName f)
+    checkArgLabel (Just (CallArgLabel _ n1)) (_,Just (CallArgLabel _ n2))
+      | n1 == n2 = return ()
+    checkArgLabel l1 (i,l2) = "In argument " ++ show i ++ " to " ++ show (sfName f) ??> labelError l1 l2
+    labelError (Just l1) (Just l2) =
+      compilerErrorM $ "Expected arg label " ++ show l1 ++ " but got " ++ show l2
+    labelError (Just l1) _ =
+      compilerErrorM $ "Expected arg label " ++ show l1 ++ " but label is missing"
+    labelError _ (Just l2) =
+      compilerErrorM $ "Expected no arg label but got " ++ show l2
+    labelError _ _ = return ()
     collectParamNames = fmap sequence . mapCompilerM collectParamName
     collectParamName = fmap getParamName . tryCompilerM . matchOnlyLeaf
     getParamName (Just (JustParamName _ n)) = Just n
@@ -1100,8 +1111,8 @@ guessParamsFromArgs :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
   Positional ValueType -> m (Positional GeneralInstance)
 guessParamsFromArgs r fa f ps ts = do
   fm <- getFunctionFilterMap f
-  args <- processPairs (\t1 t2 -> return $ TypePattern Covariant t1 t2) ts (fmap pvType $ sfArgs f)
-  filts <- fmap concat $ processPairs (guessesFromFilters fm) ts (fmap pvType $ sfArgs f)
+  args <- processPairs (\t1 t2 -> return $ TypePattern Covariant t1 t2) ts (fmap (pvType . fst) $ sfArgs f)
+  filts <- fmap concat $ processPairs (guessesFromFilters fm) ts (fmap (pvType . fst) $ sfArgs f)
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
   gs <- inferParamTypes r fa pa (args ++ filts)
   gs' <- mergeInferredTypes r fa fm pa gs

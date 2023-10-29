@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -189,7 +189,7 @@ pairProceduresToFunctions fa ps = do
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
-      processPairs_ alwaysPair (fmap pvType $ sfArgs f) (fmap inputValueName $ avNames $ epArgs p) <!!
+      processPairs_ alwaysPair (fmap (pvType . fst) $ sfArgs f) (fmap inputValueName $ avNames $ epArgs p) <!!
         ("Procedure for " ++ show (sfName f) ++
          formatFullContextBrace (avContext $ epArgs p) ++
          " has the wrong number of arguments" ++

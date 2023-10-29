@@ -39,6 +39,7 @@ of this document.
 - [Writing Programs](#writing-programs)
   - [Basic Ideas](#basic-ideas)
   - [Declaring Functions](#declaring-functions)
+  - [Function Argument Labels](#function-argument-labels)
   - [Defining Functions](#defining-functions)
     - [Using Variables](#using-variables)
     - [Calling Functions](#calling-functions)
@@ -409,6 +410,34 @@ function is arbitrary, but there are pros and cons of each:
 
   [`@type interface`s](#using-interfaces) are another advantage of `@type`
   functions.
+
+### Function Argument Labels
+
+As of compiler version `0.23.1.0`, function declarations in Zeolite can
+_optionally_ have labels for any individual argument. Note that this is a
+_label_ and _not_ an argument name.
+
+- The syntax for labeling an argument in the function declaration is to specify
+  it after the type.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
+    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i> start) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+  }</pre>
+
+- The syntax for labeling an argument in the function call is to precede the
+  argument with `label:`.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <span style='color:#0057ae;'>Value</span> foo <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>.</span>new(<span style='color:#006e28;'>start:</span> <span style='color:#b08000;'>123</span>)</pre>
+
+  **IMPORTANT:** If the function declaration specifies a label, the label must
+  be _always_ be used when calling that function. Additionally, arguments must
+  still be passed in the same order; labels _don't_ allow you to reorder
+  arguments.
+
+  When defining a function, the name you give to an argument _should_ match the
+  label, but that isn't a requirement.
 
 ### Defining Functions
 

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import Base.Positional
 import Parser.Common
 import Parser.Pragma
 import Parser.TextParser
-import Parser.TypeCategory ()
+import Parser.TypeCategory (parseCallArgLabelName)
 import Parser.TypeInstance ()
 import Types.Procedure
 import Types.TypeCategory
@@ -452,7 +452,7 @@ instance ParseFromSource (Expression SourceContext) where
                             (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
         infixFuncEnd
         e <- notInfix
-        return $ Expression [c] (BuiltinCall [c] $ FunctionCall [c] n (Positional ps) (Positional [e])) []
+        return $ Expression [c] (BuiltinCall [c] $ FunctionCall [c] n (Positional ps) (Positional [(Nothing,e)])) []
       unary = do
         c <- getSourceContext
         o <- unaryOperator <|> functionOperator
@@ -523,8 +523,17 @@ parseFunctionCall c n = do
                       (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
   es <- between (sepAfter $ string_ "(")
                 (sepAfter $ string_ ")")
-                (sepBy sourceParser (sepAfter $ string_ ","))
-  return $ FunctionCall [c] n (Positional ps) (Positional es)
+                (sepBy parseArg (sepAfter $ string_ ","))
+  return $ FunctionCall [c] n (Positional ps) (Positional es) where
+    parseArg = do
+      l <- try argLabel <|> return Nothing
+      e <- sourceParser
+      return (l,e)
+    argLabel = do
+      c2 <- getSourceContext
+      l <- parseCallArgLabelName
+      sepAfter argLabelOperator
+      return $ Just $ CallArgLabel [c2] l
 
 builtinFunction :: TextParser FunctionName
 builtinFunction = foldr (<|>) empty $ map try [

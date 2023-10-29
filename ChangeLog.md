@@ -7,6 +7,18 @@
 * **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
   the `/*b+*/` in `a+/*b+*/c`.
 
+* **[new]** Adds the option to provide _enforced_ labels for function args.
+
+  ```text
+  concrete Foo {
+    // Callers _must_ use `value:` in calls, e.g., `Foo.bar(value: 123)`.
+    @type bar (Int value) -> ()
+  }
+  ```
+
+  This is so that function calls can be made more clear, both by avoiding
+  comments like `Int /*value*/` and by naming arguments when they're passed.
+
 * **[new]** Adds the `<->` variable-swap syntax, e.g., `foo <-> bar`. This can
   be used to swap the values of writable variables, i.e., _not_ marked as
   read-only via a pragma and not a function argument.

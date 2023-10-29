@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.23"
+    version="3.24"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -156,6 +156,7 @@
         <DetectChar attribute="Normal Text" context="Braces" char="{" />
         <RegExpr attribute="Assign" context="#stay" String="&lt;-&gt;" />
         <RegExpr attribute="Assign" context="#stay" String="&lt;-|-&gt;" />
+        <RegExpr attribute="Arg Label" context="#stay" String="[a-z][a-zA-Z0-9]*:" />
         <IncludeRules context="Any Expression" />
         <DetectChar attribute="Error" context="#stay" char="~" />
         <DetectChar attribute="Voided" context="#stay" char="\\" />
@@ -467,6 +468,7 @@
       <itemData name="Char" defStyleNum="dsChar" spellChecking="true" />
       <itemData name="Escaped Char" defStyleNum="dsChar" spellChecking="false" />
       <itemData name="Assign" defStyleNum="dsOthers" bold="true" spellChecking="false" />
+      <itemData name="Arg Label" defStyleNum="dsOthers" bold="false" spellChecking="false" />
       <itemData name="Testcase Keyword" defStyleNum="dsAlert" spellChecking="false" />
       <itemData name="Test Keyword" defStyleNum="dsOperator" bold="false" color="#04e040" selColor="#04e040" spellChecking="false" />
       <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" spellChecking="false" />

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -444,17 +444,26 @@ updateReturnVariables ma rs1 rs2 = updated where
 
 updateArgVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->
-  Positional (PassedValue c) -> ArgValues c ->
+  Positional (PassedValue c, Maybe (CallArgLabel c)) -> ArgValues c ->
   m (Map.Map VariableName (VariableValue c))
 updateArgVariables ma as1 as2 = do
   as <- processPairs alwaysPair as1 (avNames as2)
   let as' = filter (not . isDiscardedInput . snd) as
   foldM update ma as' where
-    update va (PassedValue _ t,a) = do
+    checkName (Just (CallArgLabel c2 n2)) (InputValue c1 (VariableName n1))
+      | n1 == n2 = return ()
+      | otherwise = compilerWarningM $ "Variable " ++ n1 ++
+                                         formatFullContextBrace c1 ++
+                                         " has a different name than arg label " ++ n2 ++
+                                         formatFullContextBrace c2
+    checkName _ _ = return ()
+    update va ((PassedValue _ t,n),a) = do
       let c = ivContext a
       case ivName a `Map.lookup` va of
-            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t (VariableReadOnly c)) va
+            Nothing -> return ()
             (Just v) -> compilerErrorM $ "Variable " ++ show (ivName a) ++
                                          formatFullContextBrace c ++
                                          " is already defined" ++
                                          formatFullContextBrace (vvContext v)
+      checkName n a
+      return $ Map.insert (ivName a) (VariableValue c LocalScope t (VariableReadOnly c)) va

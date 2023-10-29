@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019,2021 Kevin P. Barry
+Copyright 2019,2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 
 module Parser.TypeCategory (
+  parseCallArgLabelName,
   parseFilters,
   parseScope,
   parseScopedFunction,
@@ -161,6 +162,19 @@ instance ParseFromSource FunctionName where
     e <- sepAfter $ many alphaNumChar
     return $ FunctionName (b:e)
 
+parseCallArgLabelName :: TextParser String
+parseCallArgLabelName = do
+  noKeywords
+  b <- lowerChar
+  e <- many alphaNumChar
+  return (b:e)
+
+instance ParseFromSource (CallArgLabel SourceContext) where
+  sourceParser = labeled "arg label" $ do
+    c <- getSourceContext
+    l <- sepAfter parseCallArgLabelName
+    return $ CallArgLabel [c] l
+
 parseScopedFunction ::
   TextParser SymbolScope -> TextParser CategoryName -> TextParser (ScopedFunction SourceContext)
 parseScopedFunction sp tp = labeled "function" $ do
@@ -168,9 +182,9 @@ parseScopedFunction sp tp = labeled "function" $ do
   (s,t,n) <- try parseName
   ps <- fmap Positional $ noParams <|> someParams
   fa <- parseFilters
-  as <- fmap Positional $ typeList "argument type"
+  as <- fmap Positional $ typeList "arg label" singleArg
   sepAfter_ (string "->")
-  rs <- fmap Positional $ typeList "return type"
+  rs <- fmap Positional $ typeList "return type" singleReturn
   return $ ScopedFunction [c] n t s as rs ps fa []
   where
     parseName = do
@@ -187,10 +201,16 @@ parseScopedFunction sp tp = labeled "function" $ do
       c <- getSourceContext
       n <- sourceParser
       return $ ValueParam [c] n Invariant
-    typeList l = between (sepAfter $ string_ "(")
-                         (sepAfter $ string_ ")")
-                         (sepBy (labeled l $ singleType) (sepAfter $ string ","))
-    singleType = do
+    typeList l parseVal = between (sepAfter $ string_ "(")
+                                  (sepAfter $ string_ ")")
+                                  (sepBy (labeled l $ parseVal) (sepAfter $ string ","))
+    singleArg = do
+      c <- getSourceContext
+      t <- sourceParser
+      optionalSpace
+      n <- fmap Just sourceParser <|> return Nothing
+      return $ (PassedValue [c] t,n)
+    singleReturn = do
       c <- getSourceContext
       t <- sourceParser
       return $ PassedValue [c] t

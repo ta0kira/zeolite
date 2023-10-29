@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ limitations under the License.
 
 module Types.TypeCategory (
   AnyCategory(..),
+  CallArgLabel(..),
   CategoryMap,
   CategoryResolver(..),
   FunctionName(..),
@@ -272,7 +273,7 @@ getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ de
   fromFilter ImmutableFilter = []
   fromType (ValueType _ t2) = fromInstance t2
   fromFunction f = args ++ returns ++ filters2 where
-    args = concat $ map (fromType . pvType) $ pValues $ sfArgs f
+    args = concat $ map (fromType . pvType . fst) $ pValues $ sfArgs f
     returns = concat $ map (fromType . pvType) $ pValues $ sfReturns f
     filters2 = concat $ map (fromFilter . pfFilter) $ sfFilters f
 
@@ -931,6 +932,14 @@ mergeFunctions r tm pm fm rs ds fs = do
                 case sfScope f1 of
                      CategoryScope -> checkFunctionConvert r Map.empty Map.empty f2' f1'
                      _             -> checkFunctionConvert r fm pm f2' f1'
+                processPairs_ checkArgNames (sfArgs f1) (sfArgs f2)
+          checkArgNames (_,n1) (_,n2)
+            | fmap calName n1 == fmap calName n2 = return ()
+          checkArgNames t1 t2 =
+            compilerErrorM $ "Expected arg label from " ++ showArgName t2 ++
+                            " to match " ++ showArgName t1
+          showArgName (t',Nothing) = show t'
+          showArgName (t',Just n') = show (pvType t') ++ " " ++ show n'
 
 data FunctionName =
   FunctionName {
@@ -951,13 +960,23 @@ instance Show FunctionName where
   show BuiltinStrong = "strong"
   show BuiltinTypename = "typename"
 
+data CallArgLabel c =
+  CallArgLabel {
+    calContext :: [c],
+    calName ::String
+  }
+  deriving (Eq,Ord)
+
+instance Show c => Show (CallArgLabel c) where
+  show (CallArgLabel c n) = n ++ formatFullContextBrace c
+
 data ScopedFunction c =
   ScopedFunction {
     sfContext :: [c],
     sfName :: FunctionName,
     sfType :: CategoryName,
     sfScope :: SymbolScope,
-    sfArgs :: Positional (PassedValue c),
+    sfArgs :: Positional (PassedValue c, Maybe (CallArgLabel c)),
     sfReturns :: Positional (PassedValue c),
     sfParams :: Positional (ValueParam c),
     sfFilters :: [ParamFilter c],
@@ -976,9 +995,11 @@ showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =
   indent ++ s ++ "/*" ++ show t ++ "*/ " ++ show n ++
   showParams (pValues ps) ++ " " ++ formatContext cs ++ "\n" ++
   concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
-  indent ++ "(" ++ intercalate "," (map (show . pvType) $ pValues as) ++ ") -> " ++
+  indent ++ "(" ++ intercalate "," (map showArg $ pValues as) ++ ") -> " ++
   "(" ++ intercalate "," (map (show . pvType) $ pValues rs) ++ ")" ++ showMerges (flatten ms)
   where
+    showArg (a,Nothing) = show (pvType a)
+    showArg (a,Just n2) = show (pvType a) ++ " " ++ show (calName n2)
     showParams [] = ""
     showParams ps2 = "<" ++ intercalate "," (map (show . vpParam) ps2) ++ ">"
     formatContext cs2 = "/*" ++ formatFullContext cs2 ++ "*/"
@@ -1002,7 +1023,7 @@ instance Show c => Show (PassedValue c) where
 parsedToFunctionType :: (Show c, CollectErrorsM m) =>
   ScopedFunction c -> m FunctionType
 parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
-  let as' = Positional $ map pvType $ pValues as
+  let as' = Positional $ map (pvType . fst) $ pValues as
   let rs' = Positional $ map pvType $ pValues rs
   let ps' = Positional $ map vpParam $ pValues ps
   mapCompilerM_ checkFilter fa
@@ -1031,12 +1052,15 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   "In function:\n---\n" ++ show ff ++ "\n---\n" ??> do
     let unresolved = Map.fromList $ map (\n2 -> (n2,singleType $ JustParamName False n2)) $ map vpParam $ pValues ps
     let pa' = pa `Map.union` unresolved
-    as' <- fmap Positional $ mapCompilerM (subPassed pa') $ pValues as
+    as' <- fmap Positional $ mapCompilerM (subPassedNamed pa') $ pValues as
     rs' <- fmap Positional $ mapCompilerM (subPassed pa') $ pValues rs
     fa' <- mapCompilerM (subFilter pa') fa
     ms' <- mapCompilerM (uncheckedSubFunction pa) ms
     return $ (ScopedFunction c n t s as' rs' ps fa' ms')
     where
+      subPassedNamed pa2 (a,n2) = do
+        a2 <- subPassed pa2 a
+        return (a2,n2)
       subPassed pa2 (PassedValue c2 t2) = do
         t' <- uncheckedSubValueType (getValueForParam pa2) t2
         return $ PassedValue c2 t'
@@ -1048,12 +1072,15 @@ replaceSelfFunction :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
 replaceSelfFunction self ff@(ScopedFunction c n t s as rs ps fa ms) =
   "In function:\n---\n" ++ show ff ++ "\n---\n" ??> do
-    as' <- fmap Positional $ mapCompilerM subPassed $ pValues as
+    as' <- fmap Positional $ mapCompilerM subPassedNamed $ pValues as
     rs' <- fmap Positional $ mapCompilerM subPassed $ pValues rs
     fa' <- mapCompilerM subFilter fa
     ms' <- mapCompilerM (replaceSelfFunction self) ms
     return $ (ScopedFunction c n t s as' rs' ps fa' ms')
     where
+      subPassedNamed (a,n2) = do
+        a2 <- subPassed a
+        return (a2,n2)
       subPassed (PassedValue c2 t2) = do
         t' <- replaceSelfValueType self t2
         return $ PassedValue c2 t'

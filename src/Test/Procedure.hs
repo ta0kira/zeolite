@@ -85,6 +85,9 @@ tests = [
     checkShortParseFail "\\ 1.call()",
     checkShortParseFail "\\ empty.call()",
 
+    checkShortParseSuccess "\\ foo(arg1: 123)",
+    checkShortParseFail "\\ foo(arg1 : 123)",
+
     checkShortParseSuccess "x <- var.func()",
     checkShortParseFail "x <- var.func() var.func()",
     checkShortParseFail "x <- y <- var.func()",
@@ -344,7 +347,7 @@ tests = [
                                     (FunctionSpec _
                                       (ValueFunction _
                                         (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (Positional [])
-                                          (Positional [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
+                                          (Positional [(Nothing,Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])]))) []))
                                         (FunctionName "foo") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2)) -> True
                               _ -> False),
@@ -396,7 +399,7 @@ tests = [
                                     (FunctionSpec _
                                       (ValueFunction _
                                         (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (Positional [])
-                                          (Positional [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
+                                          (Positional [(Nothing,Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])]))) []))
                                         (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2)) -> True
                               _ -> False),

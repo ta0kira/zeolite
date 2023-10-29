@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -427,12 +427,12 @@ tests = [
                   [(MacroName "MY_MACRO",
                     Expression _ (BuiltinCall _
                       (FunctionCall _ BuiltinRequire (Positional [])
-                        (Positional [Literal (EmptyLiteral _)]))) []),
+                        (Positional [(Nothing,Literal (EmptyLiteral _))]))) []),
                    (MacroName "MY_OTHER_MACRO",
                     Expression _
                       (TypeCall _ _
                         (FunctionCall _ (FunctionName "execute") (Positional [])
-                        (Positional [Expression _ (UnambiguousLiteral (StringLiteral _ "this is a string\n")) []]))) [])
+                        (Positional [(Nothing,Expression _ (UnambiguousLiteral (StringLiteral _ "this is a string\n")) [])]))) [])
                     ] -> True
                   _ -> False),
 

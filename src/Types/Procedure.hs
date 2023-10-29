@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -305,7 +305,7 @@ getExpressionContext (InfixExpression c _ _ _) = c
 getExpressionContext (RawExpression _ _)       = []
 
 data FunctionCall c =
-  FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Expression c))
+  FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Maybe (CallArgLabel c), Expression c))
   deriving (Show)
 
 data ExpressionStart c =
