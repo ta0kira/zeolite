@@ -21,8 +21,8 @@ define Run {
     return RunThen:new(first,second)
   }
 
-  ifElse (predicate,doIf,doElse) {
-    return RunIfElse:new(predicate,doIf,doElse)
+  ifElse (test,doIf,doElse) {
+    return RunIfElse:new(test,doIf,doElse)
   }
 }
 
@@ -64,14 +64,14 @@ concrete RunIfElse<#l,#s|> {
 define RunIfElse {
   refines StateTransition<#l,#s>
 
-  @value StatePredicate<#l,#s> predicate
+  @value StatePredicate<#l,#s> test
   @value optional StateTransition<#l,#s> doIf
   @value optional StateTransition<#l,#s> doElse
 
-  new (predicate,doIf,doElse) { return RunIfElse<#l,#s>{ predicate, doIf, doElse } }
+  new (test,doIf,doElse) { return RunIfElse<#l,#s>{ test, doIf, doElse } }
 
   runWith (label,state) {
-    if (label `predicate.test` state) {
+    if (label `test.test` state) {
       return doIf
     } else {
       return doElse

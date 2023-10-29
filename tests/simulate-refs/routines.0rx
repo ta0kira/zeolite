@@ -19,45 +19,45 @@ limitations under the License.
 define Routines {
   @category optional StateTransition<String,ReferenceState> dropWeak <-
       Run:ifElse(
-      /*if*/   DecrWeakIsZero.new(),
-      /*then*/ FreeRef.new(),
-      /*else*/ empty)
+      test:   DecrWeakIsZero.new(),
+      doIf:   FreeRef.new(),
+      doElse: empty)
 
   @category optional StateTransition<String,ReferenceState> sharedThenDrop <-
       LockRef.new() `Run:then`
       Run:ifElse(
-      /*if*/   IncrRefIsOne.new(),
-      /*then*/ DecrRef.new() `Run:then`
-               UnlockRef.new() `Run:then`
-               dropWeak,
-      /*else*/ UnlockRef.new() `Run:then`
-               dropWeak `Run:then`
-               dropShared)
+      test:   IncrRefIsOne.new(),
+      doIf:   DecrRef.new() `Run:then`
+              UnlockRef.new() `Run:then`
+              dropWeak,
+      doElse: UnlockRef.new() `Run:then`
+              dropWeak `Run:then`
+              dropShared)
 
   @category optional StateTransition<String,ReferenceState> dropShared <-
       LockRef.new() `Run:then`
       Run:ifElse(
-      /*if*/   DecrRefIsZero.new(),
-      /*then*/ FreeObject.new() `Run:then`
-               UnlockRef.new() `Run:then`
-               dropWeak,
-      /*else*/ UnlockRef.new())
+      test:   DecrRefIsZero.new(),
+      doIf:   FreeObject.new() `Run:then`
+              UnlockRef.new() `Run:then`
+              dropWeak,
+      doElse: UnlockRef.new())
 
   @category optional StateTransition<String,ReferenceState> sharedThenDropBroken <-
       Run:ifElse(
-      /*if*/   PlusLockModLockZero.new(),
-      /*then*/ MinusLock.new() `Run:then`
-               dropWeak,
-      /*else*/ MinusLockPlusOne.new() `Run:then`
-               dropWeak `Run:then`
-               dropSharedBroken)
+      test:   PlusLockModLockZero.new(),
+      doIf:   MinusLock.new() `Run:then`
+              dropWeak,
+      doElse: MinusLockPlusOne.new() `Run:then`
+              dropWeak `Run:then`
+              dropSharedBroken)
 
   @category optional StateTransition<String,ReferenceState> dropSharedBroken <-
       Run:ifElse(
-      /*if*/   DecrRefIsZero.new(),
-      /*then*/ FreeObject.new() `Run:then`
-               dropWeak,
-      /*else*/ empty)
+      test:   DecrRefIsZero.new(),
+      doIf:   FreeObject.new() `Run:then`
+              dropWeak,
+      doElse: empty)
 
   newShared (name,state) {
     if (state.addStrong() == 1) {

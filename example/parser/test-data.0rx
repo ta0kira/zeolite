@@ -38,16 +38,16 @@ define TestDataParser {
 
   refines Parser<TestData>
 
-  @category Parser<any> whitespace <- SequenceOfParser.create(" \n\t",1,0) `Parse.or` Parse.error("Expected whitespace")
+  @category Parser<any> whitespace <- SequenceOfParser.create(" \n\t",min:1,max:0) `Parse.or` Parse.error("Expected whitespace")
 
   @category String sentenceChars <- "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                                     "abcdefghijklmnopqrstuvwxyz" +
                                     "., !?-"
-  @category Parser<String> sentence <- SequenceOfParser.create(sentenceChars,0,0)
+  @category Parser<String> sentence <- SequenceOfParser.create(sentenceChars,min:0,max:0)
   @category Parser<any>    quote    <- CharParser.create('"')
 
   @category Parser<String> quotedSentence  <- quote `Parse.right` sentence `Parse.left` quote
-  @category Parser<String> token           <- SequenceOfParser.create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
+  @category Parser<String> token           <- SequenceOfParser.create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",min:1,max:0)
   @category Parser<String> sentenceOrToken <- quotedSentence `Parse.or` token `Parse.left` whitespace
 
   @category Parser<Bool> acronym           <- StringParser.create("acronym")  `Parse.right` Parse.const(true)
