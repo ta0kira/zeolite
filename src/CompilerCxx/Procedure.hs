@@ -1031,7 +1031,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
   lift $ if (length ts /= length (pValues es))
-            then mapCompilerM_ (labelNotAllowedError . fst) $ pValues es
+            then do
+              mapCompilerM_ (labelNotAllowedError . fst) $ pValues es
+              mapCompilerM_ (labelNotSetError . snd) $ pValues $ sfArgs f
             else processPairs_ checkArgLabel (fmap snd $ sfArgs f) (Positional $ zip ([0..] :: [Int]) $ map fst $ pValues es)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
   csAddRequired $ Set.unions $ map categoriesFromTypes $ pValues ps2
@@ -1045,6 +1047,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   where
     labelNotAllowedError (Just l) = compilerErrorM $ "Arg label " ++ show l ++ " not allowed when forwarding multiple returns"
     labelNotAllowedError _ = return ()
+    labelNotSetError (Just l) = compilerErrorM $ "Arg label " ++ show l ++ " cannot be set when forwarding multiple returns"
+    labelNotSetError _ = return ()
     replaceSelfParam self (AssignedInstance c2 t) = do
       t' <- replaceSelfInstance self t
       return $ AssignedInstance c2 t'

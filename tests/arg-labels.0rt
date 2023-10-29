@@ -269,6 +269,27 @@ define Value {
 }
 
 
+testcase "arg labels still checked when passing multiple returns" {
+  error
+  require compiler "value1"
+  require compiler "value2"
+}
+
+unittest test {
+  \ Value.call2(Value.call1())
+}
+
+concrete Value {
+  @type call1 () -> (Int,Int)
+  @type call2 (Int value1,Int value2) -> ()
+}
+
+define Value {
+  call1 () { return 1, 2 }
+  call2 (_,_) { }
+}
+
+
 testcase "reusing label is allowed" {
   success
 }
