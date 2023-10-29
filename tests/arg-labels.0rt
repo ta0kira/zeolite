@@ -24,7 +24,7 @@ unittest categoryCall {
   \ Testing.checkEquals(Value:call(value: 1),1)
 }
 
-unittest typeValueVall {
+unittest typeValueCall {
   \ Testing.checkEquals(Value.new(value: 1).add(value: 10),11)
 }
 
