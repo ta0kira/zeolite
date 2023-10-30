@@ -3,7 +3,7 @@ define PrimeThread {
   @value PrimeTracker   tracker
 
   create (flag,tracker) {
-    return PrimeThread{ flag, tracker }
+    return delegate -> #self
   }
 
   run () {

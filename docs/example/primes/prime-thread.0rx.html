@@ -14,7 +14,7 @@
   <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>PrimeTracker</span>   tracker
 
   create (flag,tracker) {
-    <b>return</b> <span style='color:#0057ae;'>PrimeThread</span>{ flag, tracker }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 
   run () {

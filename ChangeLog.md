@@ -4,7 +4,7 @@
 
 ### Language
 
-* **[breaking]** Adds function delegation with `delegate ->` syntax.
+* **[breaking]** Adds function delegation with `delegate` keyword.
 
   ```text
   concrete Foo {
@@ -16,7 +16,7 @@
     @value Int value
 
     new1 (value) {
-      // Same as Value{ value }.
+      // Same as Foo{ value }.
       return delegate -> Foo
     }
 
@@ -46,8 +46,13 @@
   \ Foo.bar(value: 1)
   ```
 
-  This is so that function calls can be made more clear, both by avoiding
-  comments like `Int /*value*/` and by labeling arguments when they're passed.
+  Unlike with languages like C++, where the argument name in the function
+  _declaration_ is irrelevant, this is primarily meant to clarify calls to
+  functions with arguments whose purposes are ambiguous.
+
+  Note that this _doesn't_ make arguments optional, nor does it allow reordering
+  of arguments. Additionally, there's no requirement that the labels match the
+  argument names, nor that the labels are even unique.
 
 * **[new]** Adds the `<->` variable-swap syntax, e.g., `foo <-> bar`. This can
   be used to swap the values of writable variables, i.e., _not_ marked as

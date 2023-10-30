@@ -25,7 +25,7 @@ define StringParser {
   }
 
   create (match) {
-    return StringParser{ match }
+    return delegate -> #self
   }
 }
 
@@ -84,7 +84,7 @@ define SequenceOfParser {
   }
 
   create (matches,min,max) {
-    return SequenceOfParser{ matches, min, max }
+    return delegate -> #self
   }
 }
 
@@ -106,7 +106,7 @@ define CharParser {
   }
 
   create (match) {
-    return CharParser{ match }
+    return delegate -> #self
   }
 }
 
@@ -126,7 +126,7 @@ define ConstParser {
   }
 
   create (value) {
-    return #self{ value }
+    return delegate -> #self
   }
 }
 
@@ -170,7 +170,7 @@ define TryParser {
   }
 
   create (parser) {
-    return #self{ parser }
+    return delegate -> #self
   }
 }
 
@@ -197,7 +197,7 @@ define OrParser {
   }
 
   create (parser1,parser2) {
-    return #self{ parser1, parser2 }
+    return delegate -> #self
   }
 }
 
@@ -230,7 +230,7 @@ define LeftParser {
   }
 
   create (parser1,parser2) {
-    return #self{ parser1, parser2 }
+    return delegate -> #self
   }
 }
 
@@ -257,32 +257,32 @@ define RightParser {
   }
 
   create (parser1,parser2) {
-    return #self{ parser1, parser2 }
+    return delegate -> #self
   }
 }
 
 define Parse {
   error (message) {
-    return ErrorParser.create(message)
+    return delegate -> `ErrorParser.create`
   }
 
   const (value) {
-    return ConstParser<#x>.create(value)
+    return delegate -> `ConstParser<#x>.create`
   }
 
   try (parser) {
-    return TryParser<#x>.create(parser)
+    return delegate -> `TryParser<#x>.create`
   }
 
   or (parser1,parser2) {
-    return OrParser<#x>.create(parser1,parser2)
+    return delegate -> `OrParser<#x>.create`
   }
 
   left (parser1,parser2) {
-    return LeftParser<#x>.create(parser1,parser2)
+    return delegate -> `LeftParser<#x>.create`
   }
 
   right (parser1,parser2) {
-    return RightParser<#x>.create(parser1,parser2)
+    return delegate -> `RightParser<#x>.create`
   }
 }

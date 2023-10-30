@@ -25,7 +25,7 @@ define SimpleKeyValue {
   @value #v value
 
   new (key,value) {
-    return SimpleKeyValue<#k,#v>{ key, value }
+    return delegate -> SimpleKeyValue<#k,#v>
   }
 
   getKey () {

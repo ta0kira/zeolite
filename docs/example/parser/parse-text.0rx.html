@@ -18,9 +18,9 @@
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
-    <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span> + match + <span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> at &quot;</span> + contextOld<span style='color:#644a9b;'>.</span>getPosition()
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
-    <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(match<span style='color:#644a9b;'>.</span>size()) -&gt; <i><span style='color:#0057ae;'>Int</span></i> index) {
+    <i><span style='color:#0057ae;'>String</span></i> message <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;Failed to match </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span> + match + <span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> at &quot;</span> + contextOld<span style='color:#644a9b;'>.</span>getPosition()
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> contextOld
+    <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(match<span style='color:#644a9b;'>.</span>size()) <b><span style='color:#006e28;'>-&gt;</span></b> <i><span style='color:#0057ae;'>Int</span></i> index) {
       <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>index</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
       <b>if</b> (context<span style='color:#644a9b;'>.</span>atEof() || context<span style='color:#644a9b;'>.</span>current() != match<span style='color:#644a9b;'>.</span>readAt(index)) {
         <b>if</b> (index &gt; <span style='color:#b08000;'>0</span>) {
@@ -30,13 +30,13 @@
           <b>return</b> context<span style='color:#644a9b;'>.</span>setValue(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(message))
         }
       }
-      context &lt;- context<span style='color:#644a9b;'>.</span>advance()
+      context <b><span style='color:#006e28;'>&lt;-</span></b> context<span style='color:#644a9b;'>.</span>advance()
     }
     <b>return</b> context<span style='color:#644a9b;'>.</span>setValue(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value(match))
   }
 
   create (match) {
-    <b>return</b> <span style='color:#0057ae;'>StringParser</span>{ match }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
@@ -51,38 +51,38 @@
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
-    <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match [&quot;</span> + matches + <span style='color:#bf0303;'>&quot;]{&quot;</span> +
+    <i><span style='color:#0057ae;'>String</span></i> message <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;Failed to match [&quot;</span> + matches + <span style='color:#bf0303;'>&quot;]{&quot;</span> +
                       min<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;,&quot;</span> + max<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;} at &quot;</span> +
                       contextOld<span style='color:#644a9b;'>.</span>getPosition()
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
-    <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>Append</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#006e28;'>&amp;</span><i><span style='color:#0057ae;'>Build</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><b><span style='color:#006e28;'>]</span></b> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> contextOld
+    <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>Append</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#006e28;'>&amp;</span><i><span style='color:#0057ae;'>Build</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><b><span style='color:#006e28;'>]</span></b> builder <b><span style='color:#006e28;'>&lt;-</span></b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
 
-    <b>optional</b> <i><span style='color:#0057ae;'>Order</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> counter &lt;- <b>defer</b>
+    <b>optional</b> <i><span style='color:#0057ae;'>Order</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> counter <b><span style='color:#006e28;'>&lt;-</span></b> <b>defer</b>
     <b>if</b> (max == <span style='color:#b08000;'>0</span>) {
-      counter &lt;- <span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>unlimited()
+      counter <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>unlimited()
     } <b>else</b> {
-      counter &lt;- <span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(max)
+      counter <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(max)
     }
 
-    <i><span style='color:#0057ae;'>Int</span></i> count &lt;- <span style='color:#b08000;'>0</span>
-    <b>traverse</b> (counter -&gt; count) {
+    <i><span style='color:#0057ae;'>Int</span></i> count <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
+    <b>traverse</b> (counter <b><span style='color:#006e28;'>-&gt;</span></b> count) {
       <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>count,counter</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
       <b>if</b> (context<span style='color:#644a9b;'>.</span>atEof()) {
         <b>break</b>
       }
-      <i><span style='color:#0057ae;'>Bool</span></i> found &lt;- <b>false</b>
-      <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(matches<span style='color:#644a9b;'>.</span>size()) -&gt; <i><span style='color:#0057ae;'>Int</span></i> index) {
+      <i><span style='color:#0057ae;'>Bool</span></i> found <b><span style='color:#006e28;'>&lt;-</span></b> <b>false</b>
+      <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(matches<span style='color:#644a9b;'>.</span>size()) <b><span style='color:#006e28;'>-&gt;</span></b> <i><span style='color:#0057ae;'>Int</span></i> index) {
         <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>context,index</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
         <b>if</b> (context<span style='color:#644a9b;'>.</span>current() == matches<span style='color:#644a9b;'>.</span>readAt(index)) {
           <span style='color:#006e28;'>\</span> builder<span style='color:#644a9b;'>.</span>append(matches<span style='color:#644a9b;'>.</span>readAt(index))
-          found &lt;- <b>true</b>
+          found <b><span style='color:#006e28;'>&lt;-</span></b> <b>true</b>
           <b>break</b>
         }
       }
       <b>if</b> (!found) {
         <b>break</b>
       }
-      context &lt;- context<span style='color:#644a9b;'>.</span>advance()
+      context <b><span style='color:#006e28;'>&lt;-</span></b> context<span style='color:#644a9b;'>.</span>advance()
     }
     <b>if</b> (count &gt;= min) {
       <b>return</b> context<span style='color:#644a9b;'>.</span>setValue(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value(builder<span style='color:#644a9b;'>.</span>build()))
@@ -95,7 +95,7 @@
   }
 
   create (matches,min,max) {
-    <b>return</b> <span style='color:#0057ae;'>SequenceOfParser</span>{ matches, min, max }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
@@ -109,7 +109,7 @@
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>atEof() || contextOld<span style='color:#644a9b;'>.</span>current() != match) {
-      <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match '&quot;</span> + match<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;' at &quot;</span> + contextOld<span style='color:#644a9b;'>.</span>getPosition()
+      <i><span style='color:#0057ae;'>String</span></i> message <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;Failed to match '&quot;</span> + match<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;' at &quot;</span> + contextOld<span style='color:#644a9b;'>.</span>getPosition()
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>setValue(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(message))
     } <b>else</b> {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>advance()<span style='color:#644a9b;'>.</span>setValue(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value(match))
@@ -117,14 +117,14 @@
   }
 
   create (match) {
-    <b>return</b> <span style='color:#0057ae;'>CharParser</span>{ match }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>ConstParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   <i><span style='color:#0057ae;'>#x</span></i> <b>immutable</b>
 
-  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>ConstParser</span></b> {
@@ -137,12 +137,12 @@
   }
 
   create (value) {
-    <b>return</b> <b>#self</b>{ value }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>ErrorParser</span></b> {
-  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Formatted</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Formatted</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>ErrorParser</span></b> {
@@ -160,7 +160,7 @@
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>TryParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>TryParser</span></b> {
@@ -172,7 +172,7 @@
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser)
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser)
     <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>setValue(context<span style='color:#644a9b;'>.</span>getValue()<span style='color:#644a9b;'>.</span>convertError())
     } <b>else</b> {
@@ -181,12 +181,12 @@
   }
 
   create (parser) {
-    <b>return</b> <b>#self</b>{ parser }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>OrParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>OrParser</span></b> {
@@ -199,7 +199,7 @@
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser1)
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser1)
     <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError() &amp;&amp; !context<span style='color:#644a9b;'>.</span>hasBrokenInput()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser2)<span style='color:#644a9b;'>.</span>toState()
     } <b>else</b> {
@@ -208,13 +208,13 @@
   }
 
   create (parser1,parser2) {
-    <b>return</b> <b>#self</b>{ parser1, parser2 }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>LeftParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
 
-  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>LeftParser</span></b> {
@@ -227,11 +227,11 @@
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser1)
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> contextOld<span style='color:#644a9b;'>.</span>run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser1)
     <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> context<span style='color:#644a9b;'>.</span>toState()
     } <b>else</b> {
-      <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context2 &lt;- context<span style='color:#644a9b;'>.</span>run(parser2)
+      <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context2 <b><span style='color:#006e28;'>&lt;-</span></b> context<span style='color:#644a9b;'>.</span>run(parser2)
       <b>if</b> (context2<span style='color:#644a9b;'>.</span>hasAnyError()) {
         <b>return</b> context2<span style='color:#644a9b;'>.</span>convertError()
       } <b>else</b> {
@@ -241,12 +241,12 @@
   }
 
   create (parser1,parser2) {
-    <b>return</b> <b>#self</b>{ parser1, parser2 }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>RightParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>RightParser</span></b> {
@@ -259,7 +259,7 @@
     <b>if</b> (contextOld<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> contextOld<span style='color:#644a9b;'>.</span>convertError()
     }
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld<span style='color:#644a9b;'>.</span>run(parser1)
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> contextOld<span style='color:#644a9b;'>.</span>run(parser1)
     <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> context<span style='color:#644a9b;'>.</span>convertError()
     } <b>else</b> {
@@ -268,33 +268,33 @@
   }
 
   create (parser1,parser2) {
-    <b>return</b> <b>#self</b>{ parser1, parser2 }
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b>#self</b>
   }
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Parse</span></b> {
   error (message) {
-    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span><span style='color:#644a9b;'>.</span>create(message)
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>ErrorParser</span><span style='color:#644a9b;'>.</span>create<b><span style='color:#c02040;'>`</span></b>
   }
 
   const (value) {
-    <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(value)
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create<b><span style='color:#c02040;'>`</span></b>
   }
 
   try (parser) {
-    <b>return</b> <span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser)
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create<b><span style='color:#c02040;'>`</span></b>
   }
 
   or (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser1,parser2)
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create<b><span style='color:#c02040;'>`</span></b>
   }
 
   left (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>LeftParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser1,parser2)
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>LeftParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create<b><span style='color:#c02040;'>`</span></b>
   }
 
   right (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>RightParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser1,parser2)
+    <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>RightParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create<b><span style='color:#c02040;'>`</span></b>
   }
 }
 </pre>

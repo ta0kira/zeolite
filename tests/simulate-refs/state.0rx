@@ -18,11 +18,11 @@ limitations under the License.
 
 define Run {
   then (first,second) {
-    return RunThen:new(first,second)
+    return delegate -> `RunThen:new`
   }
 
   ifElse (test,doIf,doElse) {
-    return RunIfElse:new(test,doIf,doElse)
+    return delegate -> `RunIfElse:new`
   }
 }
 
@@ -58,7 +58,9 @@ define RunThen {
 }
 
 concrete RunIfElse<#l,#s|> {
-  @category new<#l,#s> (StatePredicate<#l,#s>,optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) -> (StateTransition<#l,#s>)
+  @category new<#l,#s>
+  (StatePredicate<#l,#s> test:,optional StateTransition<#l,#s> doIf:,optional StateTransition<#l,#s> doElse:) ->
+  (StateTransition<#l,#s>)
 }
 
 define RunIfElse {
@@ -68,7 +70,9 @@ define RunIfElse {
   @value optional StateTransition<#l,#s> doIf
   @value optional StateTransition<#l,#s> doElse
 
-  new (test,doIf,doElse) { return RunIfElse<#l,#s>{ test, doIf, doElse } }
+  new (test,doIf,doElse) {
+    return delegate -> RunIfElse<#l,#s>
+  }
 
   runWith (label,state) {
     if (label `test.test` state) {
@@ -89,7 +93,7 @@ define LabeledStateMachine {
   @value optional StateTransition<#l,#s> machine
 
   new (label,state,transition) {
-    return LabeledStateMachine<#l,#s>{ label, state, transition }
+    return delegate -> LabeledStateMachine<#l,#s>
   }
 
   transition () {

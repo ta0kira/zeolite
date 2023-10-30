@@ -20,7 +20,7 @@
   <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> error
 
   consumeAll (parser,data) {
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser<span style='color:#644a9b;'>.</span>run(new(data))
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> parser<span style='color:#644a9b;'>.</span>run(new(data))
     <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> context<span style='color:#644a9b;'>.</span>getValue()
     } <b>elif</b> (!context<span style='color:#644a9b;'>.</span>atEof()) {
@@ -35,7 +35,7 @@
   }
 
   runAndGet (parser) {
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser<span style='color:#644a9b;'>.</span>run(<b>self</b>)
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> parser<span style='color:#644a9b;'>.</span>run(<b>self</b>)
     <b>return</b> context, context<span style='color:#644a9b;'>.</span>getValue()
   }
 
@@ -103,12 +103,12 @@
     }
   }
 
-  <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>)
   new (data) {
     <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>.</span>default()), <b>empty</b> }
   }
 
-  <span style='color:#644a9b;'>@value</span> getError () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
+  <span style='color:#644a9b;'>@value</span> getError () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Formatted</span></i>)
   getError () {
     <b>if</b> (<b>present</b>(error)) {
       <b>return</b> <b>require</b>(error)
@@ -117,7 +117,7 @@
     }
   }
 
-  <span style='color:#644a9b;'>@value</span> sanityCheck () -&gt; ()
+  <span style='color:#644a9b;'>@value</span> sanityCheck () <b><span style='color:#006e28;'>-&gt;</span></b> ()
   sanityCheck () {
     <b>if</b> (hasBrokenInput()) {
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>error()

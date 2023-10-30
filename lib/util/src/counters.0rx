@@ -112,7 +112,7 @@ define IntCounter {
     if (`present` count && `require` count <= 0) {
       return empty
     } else {
-      return #self{ start, increment, count }
+      return delegate -> #self
     }
   }
 

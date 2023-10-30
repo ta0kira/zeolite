@@ -987,8 +987,9 @@ There are two ways to terminate the program immediately.
 #### Call Delegation
 
 As of compiler version `0.24.0.0`, you can delegate function calls using the
-**`delegate ->`** syntax. This has the effect of forwarding _all_ of the
-arguments passed to the enclosing function call to the handler specified.
+**`delegate`** keyword. This has the effect of forwarding _all_ of the
+arguments passed to the enclosing function call to the handler specified. (The
+call is actually rewritten using a substitution during compilation.)
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 new (value1,value2) {
@@ -1010,10 +1011,17 @@ forwarded call.
 <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>name:</span>,<i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
 new (value1,value2) {
   <span style='color:#898887;'>// Same as foo(name:value1,value2).</span>
-  <b>return</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b>foo<b><span style='color:#c02040;'>`</span></b>
+  <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b>foo<b><span style='color:#c02040;'>`</span></b>
 }</pre>
 
+**IMPORTANT:** Delegation will fail to compile if:
 
+1. One or more function arguments is ignored with `_`, e.g., `call(_) { ... }`.
+2. One or more function arguments is hidden with `$Hidden[]$`, e.g.,
+   `$Hidden[someArg]$`.
+
+This is primarily as a sanity check, since all of the above imply that a given
+argument should not be used.
 
 ### Function Argument Labels
 

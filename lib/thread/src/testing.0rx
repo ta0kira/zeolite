@@ -20,7 +20,7 @@ $TestsOnly$
 
 define NoOpRoutine {
   create () {
-    return NoOpRoutine{ }
+    return delegate -> #self
   }
 
   run () {}
@@ -28,7 +28,7 @@ define NoOpRoutine {
 
 define CrashRoutine {
   create () {
-    return CrashRoutine{ }
+    return delegate -> #self
   }
 
   run () {
@@ -38,7 +38,7 @@ define CrashRoutine {
 
 define InfiniteRoutine {
   create () {
-    return InfiniteRoutine{ }
+    return delegate -> #self
   }
 
   run () { $NoTrace$

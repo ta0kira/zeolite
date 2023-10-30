@@ -227,7 +227,7 @@ define AsLessThan2 {
   refines LessThan2<#x>
 
   new () {
-    return #self{ }
+    return delegate -> #self
   }
 
   lessThan2 (x,y) {

@@ -46,7 +46,7 @@ define GenerateConstant {
   @value Float constant
 
   new (constant) {
-    return GenerateConstant{ constant }
+    return delegate -> #self
   }
 
   generate () {
@@ -61,7 +61,7 @@ define RandomCategorical {
   @value Generator<Float> random
 
   sampleWith (categorical,random) {
-    return RandomCategorical<#c>{ categorical, random }
+    return delegate -> RandomCategorical<#c>
   }
 
   generate () {
