@@ -450,12 +450,11 @@ updateArgVariables ma as1 as2 = do
   as <- processPairs alwaysPair as1 (avNames as2)
   let as' = filter (not . isDiscardedInput . snd) as
   foldM update ma as' where
-    checkName (Just (CallArgLabel c2 n2)) (InputValue c1 (VariableName n1))
-      | n1 == n2 = return ()
-      | otherwise = compilerWarningM $ "Variable " ++ n1 ++
-                                         formatFullContextBrace c1 ++
-                                         " has a different name than arg label " ++ n2 ++
-                                         formatFullContextBrace c2
+    checkName (Just l) (InputValue c (VariableName n))
+      | l `matchesCallArgLabel` n = return ()
+      | otherwise = compilerWarningM $ "Variable " ++ n ++
+                                         formatFullContextBrace c ++
+                                         " has a different name than arg label " ++ show l
     checkName _ _ = return ()
     update va ((PassedValue _ t,n),a) = do
       let c = ivContext a

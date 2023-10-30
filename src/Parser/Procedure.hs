@@ -39,7 +39,7 @@ import Base.Positional
 import Parser.Common
 import Parser.Pragma
 import Parser.TextParser
-import Parser.TypeCategory (parseCallArgLabelName)
+import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Types.Procedure
 import Types.TypeCategory
@@ -526,14 +526,9 @@ parseFunctionCall c n = do
                 (sepBy parseArg (sepAfter $ string_ ","))
   return $ FunctionCall [c] n (Positional ps) (Positional es) where
     parseArg = do
-      l <- try argLabel <|> return Nothing
+      l <- try (fmap Just sourceParser) <|> return Nothing
       e <- sourceParser
       return (l,e)
-    argLabel = do
-      c2 <- getSourceContext
-      l <- parseCallArgLabelName
-      sepAfter argLabelOperator
-      return $ Just $ CallArgLabel [c2] l
 
 builtinFunction :: TextParser FunctionName
 builtinFunction = foldr (<|>) empty $ map try [

@@ -994,16 +994,16 @@ _label_ and _not_ an argument name.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
   <b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
-    <span style='color:#898887;'>// The first argument requires start as a label.</span>
-    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i> start) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+    <span style='color:#898887;'>// The first argument requires start: as a label.</span>
+    <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i> <span style='color:#006e28;'>start:</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
   }</pre>
 
 
 - The syntax for labeling an argument in the function call is to precede the
-  argument with `label:`.
+  argument with the label.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <span style='color:#898887;'>// The first argument is labeled with start.</span>
+  <span style='color:#898887;'>// The first argument is labeled with start:.</span>
   <span style='color:#0057ae;'>Value</span> foo <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>.</span>new(<span style='color:#006e28;'>start:</span> <span style='color:#b08000;'>123</span>)</pre>
 
 
@@ -1014,8 +1014,8 @@ _label_ and _not_ an argument name.
 
   When defining a function, the name you give to an argument _should_ match the
   label, but that isn't a requirement. Also note that labels _can_ be reused,
-  e.g., `@type sum (Int value,Int value) -> (Int)`. This allows the label to be
-  informational rather than just an identifier.
+  e.g., `@value swapRows (Int row:,Int row:) -> ()`. This allows the label to be
+  descriptive rather than just an identifier.
 
 ### Using Parameters
 

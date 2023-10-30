@@ -74,6 +74,7 @@ module Types.TypeCategory (
   isStaticNamespace,
   isValueConcrete,
   isValueInterface,
+  matchesCallArgLabel,
   mergeDefines,
   mergeFunctions,
   mergeInferredTypes,
@@ -969,6 +970,9 @@ data CallArgLabel c =
 
 instance Show c => Show (CallArgLabel c) where
   show (CallArgLabel c n) = n ++ formatFullContextBrace c
+
+matchesCallArgLabel :: CallArgLabel c -> String -> Bool
+matchesCallArgLabel (CallArgLabel _ n1) n2 = init n1 == n2
 
 data ScopedFunction c =
   ScopedFunction {

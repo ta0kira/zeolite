@@ -18,6 +18,7 @@ limitations under the License.
 
 testcase "call with arg labels" {
   success
+  exclude compiler "value:"
 }
 
 unittest categoryCall {
@@ -29,9 +30,9 @@ unittest typeValueCall {
 }
 
 concrete Value {
-  @category call (Int value) -> (Int)
-  @type new (Int value) -> (#self)
-  @value add (Int value) -> (Int)
+  @category call (Int value:) -> (Int)
+  @type new (Int value:) -> (#self)
+  @value add (Int value:) -> (Int)
 }
 
 define Value {
@@ -45,7 +46,7 @@ define Value {
 
 testcase "call with missing required label" {
   error
-  require compiler "value"
+  require compiler "value:"
 }
 
 unittest test {
@@ -53,7 +54,7 @@ unittest test {
 }
 
 concrete Value {
-  @category call (Int value) -> (Int)
+  @category call (Int value:) -> (Int)
 }
 
 define Value {
@@ -63,7 +64,7 @@ define Value {
 
 testcase "call with unexpected label" {
   error
-  require compiler "value"
+  require compiler "value:"
 }
 
 unittest test {
@@ -81,8 +82,8 @@ define Value {
 
 testcase "call with mismatched label" {
   error
-  require compiler "value"
-  require compiler "number"
+  require compiler "value:"
+  require compiler "number:"
 }
 
 unittest test {
@@ -90,7 +91,7 @@ unittest test {
 }
 
 concrete Value {
-  @category call (Int value) -> (Int)
+  @category call (Int value:) -> (Int)
 }
 
 define Value {
@@ -107,13 +108,13 @@ unittest test {
 }
 
 @type interface Base {
-  call (Int value) -> (Int)
+  call (Int value:) -> (Int)
 }
 
 concrete Value {
   defines Base
 
-  @type call (Int value) -> (Int)
+  @type call (Int value:) -> (Int)
 }
 
 define Value {
@@ -123,18 +124,18 @@ define Value {
 
 testcase "failed merge with mismatched label" {
   error
-  require compiler "value"
-  require compiler "number"
+  require compiler "value:"
+  require compiler "number:"
 }
 
 @type interface Base {
-  call (Int value) -> (Int)
+  call (Int value:) -> (Int)
 }
 
 concrete Value {
   defines Base
 
-  @type call (Int number) -> (Int)
+  @type call (Int number:) -> (Int)
 }
 
 define Value {
@@ -144,7 +145,7 @@ define Value {
 
 testcase "failed merge with added label" {
   error
-  require compiler "number"
+  require compiler "number:"
 }
 
 @type interface Base {
@@ -154,7 +155,7 @@ testcase "failed merge with added label" {
 concrete Value {
   defines Base
 
-  @type call (Int number) -> (Int)
+  @type call (Int number:) -> (Int)
 }
 
 define Value {
@@ -164,11 +165,11 @@ define Value {
 
 testcase "failed merge with removed label" {
   error
-  require compiler "number"
+  require compiler "number:"
 }
 
 @type interface Base {
-  call (Int number) -> (Int)
+  call (Int number:) -> (Int)
 }
 
 concrete Value {
@@ -184,12 +185,12 @@ define Value {
 
 testcase "warning when arg name differs from arg label" {
   compiles
-  require compiler "value"
+  require compiler "value:"
   require compiler "number"
 }
 
 concrete Value {
-  @type call (Int value) -> (Int)
+  @type call (Int value:) -> (Int)
 }
 
 define Value {
@@ -199,11 +200,11 @@ define Value {
 
 testcase "no warning when arg with label is ignored" {
   compiles
-  exclude compiler "value"
+  exclude compiler "value:"
 }
 
 concrete Value {
-  @type call (Int value) -> (Int)
+  @type call (Int value:) -> (Int)
 }
 
 define Value {
@@ -213,7 +214,7 @@ define Value {
 
 testcase "prefix not allowed with required labels" {
   error
-  require compiler "value"
+  require compiler "value:"
 }
 
 unittest test {
@@ -221,7 +222,7 @@ unittest test {
 }
 
 concrete Value {
-  @type call (Int value) -> (Int)
+  @type call (Int value:) -> (Int)
 }
 
 define Value {
@@ -231,8 +232,8 @@ define Value {
 
 testcase "infix not allowed with required labels" {
   error
-  require compiler "value1"
-  require compiler "value2"
+  require compiler "value1:"
+  require compiler "value2:"
 }
 
 unittest test {
@@ -240,7 +241,7 @@ unittest test {
 }
 
 concrete Value {
-  @type call (Int value1,Int value2) -> (Int)
+  @type call (Int value1:,Int value2:) -> (Int)
 }
 
 define Value {
@@ -250,8 +251,8 @@ define Value {
 
 testcase "arg labels disallowed when forwarding multiple args" {
   error
-  require compiler "value1"
-  exclude compiler "value2"
+  require compiler "value1:"
+  exclude compiler "value2:"
 }
 
 unittest test {
@@ -260,7 +261,7 @@ unittest test {
 
 concrete Value {
   @type call1 () -> (Int,Int)
-  @type call2 (Int value1,Int value2) -> ()
+  @type call2 (Int value1:,Int value2:) -> ()
 }
 
 define Value {
@@ -271,8 +272,8 @@ define Value {
 
 testcase "arg labels still checked when passing multiple returns" {
   error
-  require compiler "value1"
-  require compiler "value2"
+  require compiler "value1:"
+  require compiler "value2:"
 }
 
 unittest test {
@@ -281,7 +282,7 @@ unittest test {
 
 concrete Value {
   @type call1 () -> (Int,Int)
-  @type call2 (Int value1,Int value2) -> ()
+  @type call2 (Int value1:,Int value2:) -> ()
 }
 
 define Value {
@@ -299,7 +300,7 @@ unittest test {
 }
 
 concrete Value {
-  @type call (Int positive,Int positive) -> (Int)
+  @type call (Int positive:,Int positive:) -> (Int)
 }
 
 define Value {

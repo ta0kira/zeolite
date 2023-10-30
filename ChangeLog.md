@@ -11,13 +11,18 @@
 
   ```text
   concrete Foo {
-    // Callers _must_ use `value:` in calls, e.g., `Foo.bar(value: 123)`.
-    @type bar (Int value) -> ()
+    // First arg has the label value:.
+    @type bar (Int value:) -> ()
   }
+
+  // ...
+
+  // Callers _must_ use the label value:.
+  \ Foo.bar(value: 1)
   ```
 
   This is so that function calls can be made more clear, both by avoiding
-  comments like `Int /*value*/` and by naming arguments when they're passed.
+  comments like `Int /*value*/` and by labeling arguments when they're passed.
 
 * **[new]** Adds the `<->` variable-swap syntax, e.g., `foo <-> bar`. This can
   be used to swap the values of writable variables, i.e., _not_ marked as

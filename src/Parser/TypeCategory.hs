@@ -19,7 +19,6 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 
 module Parser.TypeCategory (
-  parseCallArgLabelName,
   parseFilters,
   parseScope,
   parseScopedFunction,
@@ -162,18 +161,13 @@ instance ParseFromSource FunctionName where
     e <- sepAfter $ many alphaNumChar
     return $ FunctionName (b:e)
 
-parseCallArgLabelName :: TextParser String
-parseCallArgLabelName = do
-  noKeywords
-  b <- lowerChar
-  e <- many alphaNumChar
-  return (b:e)
-
 instance ParseFromSource (CallArgLabel SourceContext) where
   sourceParser = labeled "arg label" $ do
     c <- getSourceContext
-    l <- sepAfter parseCallArgLabelName
-    return $ CallArgLabel [c] l
+    b <- lowerChar
+    e <- many alphaNumChar
+    sepAfter $ char_ ':'
+    return $ CallArgLabel [c] (b:e ++ ":")
 
 parseScopedFunction ::
   TextParser SymbolScope -> TextParser CategoryName -> TextParser (ScopedFunction SourceContext)

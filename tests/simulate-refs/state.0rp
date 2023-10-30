@@ -40,9 +40,9 @@ concrete Run {
   (optional StateTransition<#l,#s>)
 
   @category ifElse<#l,#s>
-  (StatePredicate<#l,#s> test,
-   optional StateTransition<#l,#s> doIf,
-   optional StateTransition<#l,#s> doElse) ->
+  (StatePredicate<#l,#s> test:,
+   optional StateTransition<#l,#s> doIf:,
+   optional StateTransition<#l,#s> doElse:) ->
   (StateTransition<#l,#s>)
 }
 

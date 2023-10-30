@@ -5,7 +5,7 @@ concrete StringParser {
 
 // Parses a string containing a limited set of characters.
 concrete SequenceOfParser {
-  @type create (String, Int min, Int max) -> (Parser<String>)
+  @type create (String, Int min:, Int max:) -> (Parser<String>)
 }
 
 // Parses a fixed character.
