@@ -989,6 +989,9 @@ As of compiler version `0.23.1.0`, function declarations in Zeolite can
 _optionally_ have labels for any individual argument. Note that this is a
 _label_ and _not_ an argument name.
 
+All labels start with a lowercase letter and contain only letters and digits,
+and end with `:`.
+
 - The syntax for labeling an argument in the function declaration is to specify
   it after the type.
 
