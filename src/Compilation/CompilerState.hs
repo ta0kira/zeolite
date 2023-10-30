@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ module Compilation.CompilerState (
   csCheckVariableInit,
   csClearOutput,
   csCurrentScope,
+  csDelegateArgs,
   csExprLookup,
   csGetCategoryFunction,
   csGetCleanup,
@@ -101,6 +102,7 @@ import Data.Semigroup
 
 import Base.CompilerError
 import Base.GeneralType
+import Base.Positional
 import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
@@ -153,6 +155,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccAddTrace :: a -> String -> m a
   ccGetTraces :: a -> m [String]
   ccCanForward :: a -> [ParamName] -> [VariableName] -> m Bool
+  ccDelegateArgs :: a -> m (Positional (Maybe (CallArgLabel c), VariableName))
 
 data MemberValue c =
   MemberValue {
@@ -364,6 +367,9 @@ csAddTrace t = fmap (\x -> ccAddTrace x t) get >>= lift >>= put
 
 csCanForward :: CompilerContext c m s a => [ParamName] -> [VariableName] -> CompilerState a m Bool
 csCanForward ps as = fmap (\x -> ccCanForward x ps as) get >>= lift
+
+csDelegateArgs :: CompilerContext c m s a => CompilerState a m (Positional (Maybe (CallArgLabel c), VariableName))
+csDelegateArgs = fmap ccDelegateArgs get >>= lift
 
 data CompiledData s =
   CompiledData {

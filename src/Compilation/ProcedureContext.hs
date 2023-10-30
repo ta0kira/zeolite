@@ -90,7 +90,7 @@ data ProcedureContext c =
     _pcReservedMacros :: [(MacroName,[c])],
     _pcNoTrace :: Bool,
     _pcTraces :: [String],
-    _pcParentCall :: Maybe (Positional ParamName,Positional VariableName)
+    _pcParentCall :: Maybe (Positional ParamName,Positional (Maybe (CallArgLabel c), InputValue c))
   }
 
 $(makeLenses ''ProcedureContext)
@@ -413,15 +413,23 @@ instance (Show c, CollectErrorsM m) =>
   ccAddTrace ctx t = return $ ctx & pcTraces <>~ [t]
   ccGetTraces = return . (^. pcTraces)
   ccCanForward ctx ps as = handle (ctx ^. pcParentCall) where
+    nameOrError (InputValue _ n) = return n
+    nameOrError _                = emptyErrorM
     handle Nothing = return False
     handle (Just (ps0,as0)) = collectFirstM [checkMatch ps0 as0,return False]
     checkMatch ps0 as0 = do
+      as0' <- fmap Positional $ mapCompilerM (nameOrError . snd) $ pValues as0
       processPairs_ equalOrError ps0 (Positional ps)
-      processPairs_ equalOrError as0 (Positional as)
+      processPairs_ equalOrError as0' (Positional as)
       return True
     equalOrError x y
       | x == y    = return ()
       | otherwise = emptyErrorM
+  ccDelegateArgs ctx = handle (ctx ^. pcParentCall) where
+    nameOrError (l,InputValue _ n) = return (l,n)
+    nameOrError (_,DiscardInput c) = compilerErrorM $ "Delegation is not allowed with ignored args" ++ formatFullContextBrace c
+    handle Nothing = compilerErrorM "Delegation is only allowed within function calls"
+    handle (Just (_,as0)) = fmap Positional $ mapCompilerM nameOrError $ pValues as0
 
 updateReturnVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->

@@ -255,7 +255,9 @@ data Expression c =
   Literal (ValueLiteral c) |
   UnaryExpression [c] (Operator c) (Expression c) |
   InfixExpression [c] (Expression c) (Operator c) (Expression c) |
-  RawExpression ExpressionType ExpressionValue
+  RawExpression ExpressionType ExpressionValue |
+  DelegatedFunctionCall [c] (FunctionSpec c) |
+  DelegatedInitializeValue [c] (Maybe TypeInstance)
   deriving (Show)
 
 type ExpressionType = Positional ValueType
@@ -298,11 +300,13 @@ getOperatorName (NamedOperator _ n)                         = FunctionName n
 getOperatorName (FunctionOperator _ (FunctionSpec _ _ n _)) = n
 
 getExpressionContext :: Expression c -> [c]
-getExpressionContext (Expression c _ _)        = c
-getExpressionContext (Literal l)               = getValueLiteralContext l
-getExpressionContext (UnaryExpression c _ _)   = c
-getExpressionContext (InfixExpression c _ _ _) = c
-getExpressionContext (RawExpression _ _)       = []
+getExpressionContext (Expression c _ _)             = c
+getExpressionContext (Literal l)                    = getValueLiteralContext l
+getExpressionContext (UnaryExpression c _ _)        = c
+getExpressionContext (InfixExpression c _ _ _)      = c
+getExpressionContext (RawExpression _ _)            = []
+getExpressionContext (DelegatedFunctionCall c _)    = c
+getExpressionContext (DelegatedInitializeValue c _) = c
 
 data FunctionCall c =
   FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Maybe (CallArgLabel c), Expression c))

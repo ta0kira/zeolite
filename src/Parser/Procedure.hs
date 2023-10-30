@@ -420,7 +420,7 @@ instance ParseFromSource (Expression SourceContext) where
     asInfix [e] [] <|> return e
     where
       -- NOTE: InitializeValue is parsed as ExpressionStart.
-      notInfix = literal <|> try unaryBuiltin <|> unary <|> expression
+      notInfix = literal <|> try unaryBuiltin <|> unary <|> delegatedCall <|> expression
       asInfix es os = do
         c <- getSourceContext
         o <- infixOperator <|> functionOperator
@@ -458,6 +458,20 @@ instance ParseFromSource (Expression SourceContext) where
         o <- unaryOperator <|> functionOperator
         e <- notInfix
         return $ UnaryExpression [c] o e
+      delegatedCall = do
+        kwDelegate
+        sepAfter_ $ string "->"
+        try delegateCall <|> delegateInit
+      delegateInit = do
+        c <- getSourceContext
+        t <- (paramSelf >> return Nothing) <|> fmap Just sourceParser
+        return $ DelegatedInitializeValue [c] t
+      delegateCall = do
+        c <- getSourceContext
+        infixFuncStart
+        f <- sourceParser
+        infixFuncEnd
+        return $ DelegatedFunctionCall [c] f
       expression = labeled "expression" $ do
         c <- getSourceContext
         s <- sourceParser

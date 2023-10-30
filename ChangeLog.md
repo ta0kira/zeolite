@@ -1,8 +1,33 @@
 # Revision history for zeolite-lang
 
-## 0.23.1.0  -- ????-??-??
+## 0.24.0.0  -- ????-??-??
 
 ### Language
+
+* **[breaking]** Adds function delegation with `delegate ->` syntax.
+
+  ```text
+  concrete Foo {
+    @type new1 (Int) -> (Foo)
+    @type new2 (Int) -> (Foo)
+  }
+
+  define Foo {
+    @value Int value
+
+    new1 (value) {
+      // Same as Value{ value }.
+      return delegate -> Foo
+    }
+
+    new2 (value) {
+      // Same as new1(value).
+      return delegate -> `new1`
+    }
+  }
+  ```
+
+  This is a breaking change because `delegate` is now reserved.
 
 * **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
   the `/*b+*/` in `a+/*b+*/c`.

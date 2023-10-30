@@ -614,17 +614,27 @@ compileExpression :: (Ord c, Show c, CollectErrorsM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,ExpressionValue)
 compileExpression = compile where
+  callFunctionSpec c as (FunctionSpec _ (CategoryFunction c2 cn) fn ps) =
+    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps as)) [])
+  callFunctionSpec c as (FunctionSpec _ (TypeFunction c2 tn) fn ps) =
+    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps as)) [])
+  callFunctionSpec c as (FunctionSpec _ (ValueFunction c2 e0) fn ps) =
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps as)])
+  callFunctionSpec c as (FunctionSpec c2 UnqualifiedFunction fn ps) =
+    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps as)) [])
   compile (Literal l) = compileValueLiteral l
   compile (Expression _ s os) = do
     foldl transform (compileExpressionStart s) os
-  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e) =
-    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [(Nothing,e)]))) [])
-  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e) =
-    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [(Nothing,e)]))) [])
-  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [(Nothing,e)]))])
-  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e) =
-    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [(Nothing,e)]))) [])
+  compile (DelegatedFunctionCall c f) = "In function delegation at " ++ formatFullContext c ??> do
+    args <- csDelegateArgs
+    let vars = fmap (\(l,v) -> (l,Expression c (NamedVariable (OutputValue c v)) [])) args
+    callFunctionSpec c vars f
+  compile (DelegatedInitializeValue c t) = "In initialization delegation at " ++ formatFullContext c ??> do
+    args <- csDelegateArgs
+    let vars = fmap (\(_,v) -> Expression c (NamedVariable (OutputValue c v)) []) args
+    compile (Expression c  (InitializeValue c t vars) [])
+  compile (UnaryExpression c (FunctionOperator _ fa@(FunctionSpec _ _ _ _)) e) =
+    callFunctionSpec c (Positional [(Nothing,e)]) fa
   compile (UnaryExpression _ (NamedOperator c "-") (Literal (IntegerLiteral _ _ l))) =
     compile (Literal (IntegerLiteral c False (-l)))
   compile (UnaryExpression _ (NamedOperator c "-") (Literal (DecimalLiteral _ l e))) =

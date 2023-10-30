@@ -151,13 +151,8 @@ getProcedureContext (ScopeContext tm t ps ms pa fa va em)
     }
   where
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
-    psList = map vpParam $ pValues ps1
-    asList = sequence $ map maybeArgName $ pValues $ avNames as2
-    maybeArgName (InputValue _ n) = Just n
-    maybeArgName _                = Nothing
-    parentCall = case asList of
-                      Just as3 -> Just (Positional psList,Positional as3)
-                      Nothing  -> Nothing
+    args = Positional $ zip (map snd $ pValues as1) (pValues $ avNames as2)
+    parentCall = Just (fmap vpParam ps1,args)
 
 getMainContext :: CollectErrorsM m => CategoryMap c -> ExprMap c -> m (ProcedureContext c)
 getMainContext tm em = return $ ProcedureContext {

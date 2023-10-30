@@ -43,6 +43,7 @@ module Parser.Common (
   kwDefer,
   kwDefine,
   kwDefines,
+  kwDelegate,
   kwElif,
   kwElse,
   kwEmpty,
@@ -213,6 +214,9 @@ kwDefine = keyword "define"
 kwDefines :: TextParser ()
 kwDefines = keyword "defines"
 
+kwDelegate :: TextParser ()
+kwDelegate = keyword "delegate"
+
 kwElif :: TextParser ()
 kwElif = keyword "elif"
 
@@ -334,6 +338,7 @@ isKeyword = foldr (<|>) empty $ map try [
     kwDefer,
     kwDefine,
     kwDefines,
+    kwDelegate,
     kwElif,
     kwElse,
     kwEmpty,

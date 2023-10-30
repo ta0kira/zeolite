@@ -51,6 +51,7 @@ of this document.
     - [Optional and Weak Values](#optional-and-weak-values)
     - [Deferred Variable Initialization](#deferred-variable-initialization)
     - [Immediate Program Termination](#immediate-program-termination)
+    - [Call Delegation](#call-delegation)
   - [Function Argument Labels](#function-argument-labels)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
@@ -477,7 +478,7 @@ if there is already a variable named `x` available, you *cannot* create a new
 All variables are **shared** and their values *are not* scoped like they are in
 C++. You should not count on knowing the lifetime of any given value.
 
-As of compiler version `0.23.1.0`, you can also **swap** the values of two
+As of compiler version `0.24.0.0`, you can also **swap** the values of two
 variables that have the same type, as long as both are writable. This is more
 efficient than "manually" swapping using a temp variable.
 
@@ -983,9 +984,40 @@ There are two ways to terminate the program immediately.
 
    The value passed to `exit` must be an `Int`.
 
+#### Call Delegation
+
+As of compiler version `0.24.0.0`, you can delegate function calls using the
+**`delegate ->`** syntax. This has the effect of forwarding _all_ of the
+arguments passed to the enclosing function call to the handler specified.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+new (value1,value2) {
+  <span style='color:#898887;'>// Same as Value{ value1, value2 }.</span>
+  <span style='color:#006e28;'>\</span> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <span style='color:#0057ae;'>Value</span>
+
+  <span style='color:#898887;'>// Same as foo(value1,value2).</span>
+  <span style='color:#006e28;'>\</span> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b>foo<b><span style='color:#c02040;'>`</span></b>
+
+  <span style='color:#898887;'>// Same as something(123).bar(value1,value2).</span>
+  <span style='color:#006e28;'>\</span> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b>something(<span style='color:#b08000;'>123</span>)<span style='color:#644a9b;'>.</span>bar<b><span style='color:#c02040;'>`</span></b>
+}</pre>
+
+**IMPORTANT:** If the enclosing function specifies
+[argument labels](#function-argument-labels) then those will be used in the
+forwarded call.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>name:</span>,<i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+new (value1,value2) {
+  <span style='color:#898887;'>// Same as foo(name:value1,value2).</span>
+  <b>return</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b>foo<b><span style='color:#c02040;'>`</span></b>
+}</pre>
+
+
+
 ### Function Argument Labels
 
-As of compiler version `0.23.1.0`, function declarations in Zeolite can
+As of compiler version `0.24.0.0`, function declarations in Zeolite can
 _optionally_ have labels for any individual argument. Note that this is a
 _label_ and _not_ an argument name.
 
@@ -1661,6 +1693,7 @@ absolutely no examination of the "real" type of `value` at runtime.
 [`defer`](#deferred-variable-initialization)
 [`define`](#basic-ideas)
 [`defines`](#using-interfaces)
+[`delegate`](#call-delegation)
 [`elif`](#conditionals)
 [`else`](#conditionals)
 [`empty`](#optional-and-weak-values)

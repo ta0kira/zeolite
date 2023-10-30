@@ -1,0 +1,282 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "delegate to functions" {
+  success
+}
+
+unittest fromCategory {
+  \ Testing.checkEquals(Value:call1(13,"message"),123-13+7)
+}
+
+unittest fromType {
+  \ Testing.checkEquals(Value.call2(13,"message"),456-13+7)
+}
+
+unittest fromValue {
+  \ Testing.checkEquals(Value.new().call3(13,"message"),789-13+7)
+}
+
+concrete Value {
+  @type new () -> (#self)
+  @category call1 (Int,String) -> (Int)
+  @type call2 (Int,String) -> (Int)
+  @value call3 (Int,String) -> (Int)
+}
+
+define Value {
+  new () { return #self{ } }
+
+  call1 (number1,message1) {
+    return delegate -> `delegatedTo1`
+  }
+
+  call2 (number2,message2) {
+    \ delegate -> `delegatedTo1`
+    return delegate -> `delegatedTo2`
+  }
+
+  call3 (number3,message3) {
+    \ delegate -> `delegatedTo1`
+    \ delegate -> `delegatedTo2`
+    return delegate -> `delegatedTo3`
+  }
+
+  @category delegatedTo1 (Int,String) -> (Int)
+  delegatedTo1 (number,message) {
+    return 123-number+message.size()
+  }
+
+  @type delegatedTo2 (Int,String) -> (Int)
+  delegatedTo2 (number,message) {
+    return 456-number+message.size()
+  }
+
+  @value delegatedTo3 (Int,String) -> (Int)
+  delegatedTo3 (number,message) {
+    return 789-number+message.size()
+  }
+}
+
+
+testcase "delegate to correct initializer" {
+  success
+}
+
+unittest fromCategory {
+  Value value <- Value:new1(13,"message")
+  \ Testing.checkEquals(value.getInt(),13)
+  \ Testing.checkEquals(value.getString(),"message")
+}
+
+unittest fromType {
+  Value value <- Value.new2(13,"message")
+  \ Testing.checkEquals(value.getInt(),13)
+  \ Testing.checkEquals(value.getString(),"message")
+}
+
+unittest fromValue {
+  Value value <- Value.new2(9,"error")
+  value <- value.new3(13,"message")
+  \ Testing.checkEquals(value.getInt(),13)
+  \ Testing.checkEquals(value.getString(),"message")
+}
+
+concrete Value {
+  @category new1 (Int,String) -> (Value)
+  @type new2 (Int,String) -> (Value)
+  @value new3 (Int,String) -> (Value)
+  @value getInt () -> (Int)
+  @value getString () -> (String)
+}
+
+define Value {
+  @value Int number
+  @value String message
+
+  new1 (number1,message1) {
+    return delegate -> Value
+  }
+
+  new2 (number2,message2) {
+    return delegate -> Value
+  }
+
+  new3 (number3,message3) {
+    return delegate -> Value
+  }
+
+  getInt () { return number }
+  getString () { return message }
+}
+
+
+testcase "delegate to #self" {
+  success
+}
+
+unittest fromType {
+  Value value <- Value.new1(13,"message")
+  \ Testing.checkEquals(value.getInt(),13)
+  \ Testing.checkEquals(value.getString(),"message")
+}
+
+unittest fromValue {
+  Value value <- Value.new1(9,"error")
+  value <- value.new2(13,"message")
+  \ Testing.checkEquals(value.getInt(),13)
+  \ Testing.checkEquals(value.getString(),"message")
+}
+
+concrete Value {
+  @type new1 (Int,String) -> (Value)
+  @value new2 (Int,String) -> (Value)
+  @value getInt () -> (Int)
+  @value getString () -> (String)
+}
+
+define Value {
+  @value Int number
+  @value String message
+
+  new1 (number1,message1) {
+    return delegate -> #self
+  }
+
+  new2 (number2,message2) {
+    return delegate -> #self
+  }
+
+  getInt () { return number }
+  getString () { return message }
+}
+
+
+testcase "delegate fails from unittest" {
+  error
+  require compiler "delegation"
+}
+
+unittest test {
+  \ delegate -> `Value:new`
+}
+
+concrete Value {
+  @category new () -> (Value)
+}
+
+define Value {
+  new () {
+    return Value{ }
+  }
+}
+
+
+testcase "delegate fails with ignored args" {
+  error
+  require compiler "ignore"
+}
+
+concrete Value {
+  @category new (Int,String) -> (Value)
+}
+
+define Value {
+  new (value,_) {
+    return delegate -> `delegatedTo`
+  }
+
+  @category delegatedTo (Int,String) -> (Value)
+  delegatedTo (number,message) {
+    return Value{ }
+  }
+}
+
+
+testcase "delegate fails with hidden args" {
+  error
+  require compiler "message"
+  require compiler "hidden"
+}
+
+concrete Value {
+  @category new (Int,String) -> (Value)
+}
+
+define Value {
+  new (value,message) {
+    $Hidden[message]$
+    return delegate -> `delegatedTo`
+  }
+
+  @category delegatedTo (Int,String) -> (Value)
+  delegatedTo (number,message) {
+    return Value{ }
+  }
+}
+
+
+testcase "delegate fails with missing label" {
+  error
+  require compiler "message:"
+}
+
+concrete Value {
+  @category new (Int,String) -> (Value)
+}
+
+define Value {
+  new (number,message) {
+    return delegate -> `delegatedTo`
+  }
+
+  @category delegatedTo (Int,String message:) -> (Value)
+  delegatedTo (number,message) {
+    return Value{ }
+  }
+}
+
+
+testcase "delegate passes along labels" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Value:new(13,message: "message").getString(),"message")
+}
+
+concrete Value {
+  @category new (Int,String message:) -> (Value)
+  @value getString () -> (String)
+}
+
+define Value {
+  @value Int number
+  @value String message
+
+  new (number,message) {
+    return delegate -> `delegatedTo`
+  }
+
+  getString () { return message }
+
+  @category delegatedTo (Int,String message:) -> (Value)
+  delegatedTo (number,message) {
+    return delegate -> Value
+  }
+}
