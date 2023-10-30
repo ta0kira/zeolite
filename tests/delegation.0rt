@@ -187,6 +187,18 @@ define Value {
 }
 
 
+testcase "delegate fails from @category variable initializer" {
+  error
+  require compiler "delegation"
+}
+
+concrete Value {}
+
+define Value {
+  @category Value value <- delegate -> Value
+}
+
+
 testcase "delegate fails with ignored args" {
   error
   require compiler "ignore"
