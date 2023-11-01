@@ -1525,29 +1525,90 @@ types.
   be assigned a value but that can be assigned to everything. (`empty` is
   actually of type `optional all`.)
 
-  Unions can be useful if you want to artificially limit what implementations of
-  a particular `@value interface` are allowed by a function argument, e.g.,
-  a specific set of "verified" implementations.
+  Unions can be useful if you want to artificially limit what types can be used
+  in a particular context. This can be useful for disallowing use of "unknown"
+  implementations in critical or risky functions, etc.
 
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {
-    print () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
-  }
+  - When used with `requires`, a union can limit the allowed types _without_
+    losing the original type.
 
-  <b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
-    <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-    <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Newspaper</span>)
-  }
+    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+    <b>concrete</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+      <span style='color:#644a9b;'>@type</span> describe&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+        <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+        <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>String</span></i><span style='color:#006e28;'>|</span><i><span style='color:#0057ae;'>Int</span></i><b><span style='color:#006e28;'>]</span></b>  <span style='color:#898887;'>// &lt;- limits allowed types</span>
+      (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+    }
 
-  <b>concrete</b> <b><span style='color:#0057ae;'>Magazine</span></b> {
-    <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-    <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Magazine</span>)
-  }
+    <b>define</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+      describe (value) {
+        <b>return</b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
+            <span style='color:#644a9b;'>.</span>append(<b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;())  <span style='color:#898887;'>// &lt;- original type is still available</span>
+            <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;: &quot;</span>)
+            <span style='color:#644a9b;'>.</span>append(value)
+            <span style='color:#644a9b;'>.</span>build()
+      }
+    }
 
-  <span style='color:#898887;'>// ...</span>
+    <span style='color:#898887;'>// ...</span>
 
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val &lt;- <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>.</span>new()
-  <span style='color:#0057ae;'>Printable</span> val2 &lt;- val</pre>
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>describe(<span style='color:#b08000;'>123</span>)        <span style='color:#898887;'>// Fine.</span>
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>describe(<span style='color:#bf0303;'>&quot;message&quot;</span>)  <span style='color:#898887;'>// Fine.</span>
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>describe(<span style='color:#b08000;'>123.0</span>)      <span style='color:#898887;'>// Error!</span></pre>
+
+  - When used as a variable type, the original type is lost, but you can still
+    convert to a common parent type.
+
+    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+    <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>String</span></i><span style='color:#006e28;'>|</span><i><span style='color:#0057ae;'>Int</span></i><b><span style='color:#006e28;'>]</span></b> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>123</span>
+    <span style='color:#898887;'>// You can only convert to types that _all_ constituent types convert to.</span>
+    <i><span style='color:#0057ae;'>Formatted</span></i> formatted <b><span style='color:#006e28;'>&lt;-</span></b> value  <span style='color:#898887;'>// Fine.</span>
+    <i><span style='color:#0057ae;'>Int</span></i> number <b><span style='color:#006e28;'>&lt;-</span></b> value           <span style='color:#898887;'>// Error!</span></pre>
+
+Intersection and union types also come up in [type inference](#type-inference).
+
+- If there are two or more incompatible guesses for an inferred type _used only
+  for input_, the union of those types will be used.
+
+- If there are two or more incompatible guesses for an inferred type _used only
+  for output_, the intersection of those types will be used.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#898887;'>// (Just for creating an output parameter.)</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>Writer</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<b>#self</b>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+  <span style='color:#898887;'>// #x is only used for input to the function.</span>
+  <span style='color:#644a9b;'>@type</span> inferInput&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+
+  <span style='color:#898887;'>// #x is only used for output from the function.</span>
+  <span style='color:#898887;'>// (This is due to contravariance of #x in Writer.)</span>
+  <span style='color:#644a9b;'>@type</span> inferOutput&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Helper</span></b> {
+  inferInput (<b>_</b>,<b>_</b>) { <b>return</b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()<span style='color:#644a9b;'>.</span>formatted() }
+  inferOutput (<b>_</b>,<b>_</b>) { <b>return</b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()<span style='color:#644a9b;'>.</span>formatted() }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Writer</span></b> {
+  new () { <b>return</b> <b>#self</b>{ } }
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#898887;'>// Returns &quot;[Int|String]&quot;.</span>
+<span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferInput(<span style='color:#b08000;'>123</span>,<span style='color:#bf0303;'>&quot;message&quot;</span>)
+
+<span style='color:#898887;'>// Returns &quot;[Int&amp;String]&quot;.</span>
+<span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferOutput(<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new(),<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new())</pre>
+
+In this context, unions/intersections are the _most general_ valid types that
+will work for the substution. (They are respectively the
+[coproduct][category-coproduct]/[product][category-product] of the provided
+types under implicit type conversion.)
 
 #### Explicit Type Conversion
 
@@ -2276,6 +2337,8 @@ both forward and reverse references were non-`weak`.
 [action-zeolite]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml
 [cabal]: https://www.haskell.org/cabal/#install-upgrade
 [category]: https://en.wikipedia.org/wiki/Category_theory
+[category-coproduct]: https://en.wikipedia.org/wiki/Coproduct
+[category-product]: https://en.wikipedia.org/wiki/Product_(category_theory)
 [clang]: https://clang.llvm.org/cxx_status.html
 [examples]: https://github.com/ta0kira/zeolite/tree/master/example
 [gcc]: https://gcc.gnu.org/
