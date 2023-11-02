@@ -1233,7 +1233,7 @@ has `@type interface`s that declare `@type` functions that must be defined.
     <span style='color:#898887;'>// so to refine the argument and return types.</span>
   }
 
-  <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+  <b>define</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
     <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
 
     new (value) {
@@ -1605,8 +1605,8 @@ Intersection and union types also come up in [type inference](#type-inference).
 <span style='color:#898887;'>// Returns &quot;[Int&amp;String]&quot;.</span>
 <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferOutput(<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new(),<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new())</pre>
 
-In this context, unions/intersections are the _most general_ valid types that
-will work for the substution. (They are respectively the
+In this context, unions/intersections are the _most restrictive_ valid types
+that will work for the substution. (They are respectively the
 [coproduct][category-coproduct]/[product][category-product] of the provided
 types under implicit type conversion.)
 
