@@ -59,7 +59,7 @@ license:             Apache-2.0
 license-file:        LICENSE
 author:              Kevin P. Barry
 maintainer:          Kevin P. Barry <ta0kira@gmail.com>
-copyright:           (c) Kevin P. Barry 2019-2022
+copyright:           (c) Kevin P. Barry 2019-2023
 category:            Compiler
 build-type:          Simple
 
