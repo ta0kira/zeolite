@@ -92,6 +92,13 @@ define Helper {
     responsePointer <- localResponse
     \ Request.getData(requestPointer) `Testing.checkEquals` "request"
     \ Response.getData(responsePointer) `Testing.checkEquals` "response"
+
+    // Test swapping.
+    Request request2 <- Request.create("request2")
+    Pointer<Request> requestPointer2 <- request2.asRequest()
+    localRequest <-> requestPointer2
+    \ Request.getData(localRequest) `Testing.checkEquals` "request2"
+    \ Request.getData(requestPointer2) `Testing.checkEquals` "request"
   }
 }
 
