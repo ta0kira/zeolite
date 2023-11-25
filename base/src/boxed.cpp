@@ -88,13 +88,13 @@ void Validate(const std::string& name, const UnionValue& the_union) {
 
 std::string UnionValue::CategoryName() const {
   switch (type_) {
-    case UnionValue::Type::EMPTY:    return "empty";
-    case UnionValue::Type::BOOL:     return "Bool";
-    case UnionValue::Type::CHAR:     return "Char";
-    case UnionValue::Type::INT:      return "Int";
-    case UnionValue::Type::FLOAT:    return "Float";
-    case UnionValue::Type::POINTER:  return "Pointer";
-    case UnionValue::Type::IDENTIFIER: return "Pointer";
+    case UnionValue::Type::EMPTY:      return "empty";
+    case UnionValue::Type::BOOL:       return "Bool";
+    case UnionValue::Type::CHAR:       return "Char";
+    case UnionValue::Type::INT:        return "Int";
+    case UnionValue::Type::FLOAT:      return "Float";
+    case UnionValue::Type::POINTER:    return "Pointer";
+    case UnionValue::Type::IDENTIFIER: return "Identifier";
     case UnionValue::Type::BOXED:
       if (!value_.as_boxed_ || !value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";
