@@ -73,6 +73,10 @@ inline BoxedValue Box_Pointer(T2* value) {
   return BoxedValue(reinterpret_cast<PrimPointer>(static_cast<T1*>(value)));
 }
 
+inline BoxedValue Box_Identifier(PrimIdentifier value) {
+  return BoxedValue(value);
+}
+
 BoxedValue Box_String(const PrimString& value);
 
 S<const TypeInstance> Merge_Intersect(const L<S<const TypeInstance>>& params);

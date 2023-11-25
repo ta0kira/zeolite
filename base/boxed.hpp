@@ -47,6 +47,7 @@ struct UnionValue {
     INT,
     FLOAT,
     POINTER,
+    IDENTIFIER,
     BOXED,
   };
 
@@ -65,12 +66,13 @@ struct UnionValue {
 
   union {
     unsigned char* as_bytes_;
-    Pointer*    as_boxed_;
-    PrimBool    as_bool_;
-    PrimChar    as_char_;
-    PrimInt     as_int_;
-    PrimFloat   as_float_;
-    PrimPointer as_pointer_;
+    Pointer*       as_boxed_;
+    PrimBool       as_bool_;
+    PrimChar       as_char_;
+    PrimInt        as_int_;
+    PrimFloat      as_float_;
+    PrimPointer    as_pointer_;
+    PrimIdentifier as_identifier_;
   } __attribute__((packed)) value_;
 } __attribute__((packed));
 
@@ -139,6 +141,9 @@ class BoxedValue {
 
   inline BoxedValue(PrimPointer value)
     : union_{ .type_ = UnionValue::Type::POINTER, .value_ = { .as_pointer_ = value } } {}
+
+  inline BoxedValue(PrimIdentifier value)
+    : union_{ .type_ = UnionValue::Type::IDENTIFIER, .value_ = { .as_identifier_ = value } } {}
 
   template<class T, class... As>
   static inline BoxedValue New(const As&... args) {
@@ -212,6 +217,17 @@ class BoxedValue {
     }
   }
 
+  inline PrimIdentifier AsIdentifier() const {
+    switch (union_.type_) {
+      case UnionValue::Type::IDENTIFIER:
+        return union_.value_.as_identifier_;
+      default:
+        FAIL() << union_.CategoryName() << " is not an Identifier value";
+        __builtin_unreachable();
+        break;
+    }
+  }
+
   inline static bool Present(const BoxedValue& target) {
     return target.union_.type_ != UnionValue::Type::EMPTY;
   }
@@ -229,6 +245,16 @@ class BoxedValue {
 
   inline static BoxedValue Strong(const WeakValue& target) {
     return BoxedValue(target);
+  }
+
+  inline static PrimIdentifier Identify(const BoxedValue& target) {
+    switch (target.union_.type_) {
+      case UnionValue::Type::IDENTIFIER:
+        return target.union_.value_.as_identifier_;
+      default:
+        return reinterpret_cast<PrimIdentifier>(
+          0x123456789abcdefULL * ((unsigned long long) target.union_.value_.as_identifier_));
+    }
   }
 
   void Validate(const std::string& name) const;

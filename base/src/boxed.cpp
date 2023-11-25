@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021-2022 Kevin P. Barry
+Copyright 2021-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
 ReturnTuple DispatchPointer(PrimPointer value, const ValueFunction& label,
                             const ParamsArgs& params_args) __attribute__((weak));
 
+ReturnTuple DispatchIdentifier(PrimIdentifier value, const ValueFunction& label,
+                             const ParamsArgs& params_args) __attribute__((weak));
+
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
@@ -83,12 +86,13 @@ void Validate(const std::string& name, const UnionValue& the_union) {
 
 std::string UnionValue::CategoryName() const {
   switch (type_) {
-    case UnionValue::Type::EMPTY:   return "empty";
-    case UnionValue::Type::BOOL:    return "Bool";
-    case UnionValue::Type::CHAR:    return "Char";
-    case UnionValue::Type::INT:     return "Int";
-    case UnionValue::Type::FLOAT:   return "Float";
-    case UnionValue::Type::POINTER: return "Pointer";
+    case UnionValue::Type::EMPTY:    return "empty";
+    case UnionValue::Type::BOOL:     return "Bool";
+    case UnionValue::Type::CHAR:     return "Char";
+    case UnionValue::Type::INT:      return "Int";
+    case UnionValue::Type::FLOAT:    return "Float";
+    case UnionValue::Type::POINTER:  return "Pointer";
+    case UnionValue::Type::IDENTIFIER: return "Pointer";
     case UnionValue::Type::BOXED:
       if (!value_.as_boxed_ || !value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";
@@ -165,6 +169,8 @@ ReturnTuple BoxedValue::Dispatch(
       return DispatchFloat(union_.value_.as_float_, label, params_args);
     case UnionValue::Type::POINTER:
       return DispatchPointer(union_.value_.as_pointer_, label, params_args);
+    case UnionValue::Type::IDENTIFIER:
+      return DispatchIdentifier(union_.value_.as_identifier_, label, params_args);
     case UnionValue::Type::BOXED:
       if (!union_.value_.as_boxed_ || !union_.value_.as_boxed_->object_) {
         FAIL() << "Function called on null pointer";

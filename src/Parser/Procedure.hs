@@ -546,19 +546,21 @@ parseFunctionCall c n = do
 
 builtinFunction :: TextParser FunctionName
 builtinFunction = foldr (<|>) empty $ map try [
-    kwPresent >> return BuiltinPresent,
-    kwReduce >> return BuiltinReduce,
-    kwRequire >> return BuiltinRequire,
-    kwStrong >> return BuiltinStrong,
+    kwPresent  >> return BuiltinPresent,
+    kwReduce   >> return BuiltinReduce,
+    kwRequire  >> return BuiltinRequire,
+    kwStrong   >> return BuiltinStrong,
+    kwIdentify >> return BuiltinIdentify,
     kwTypename >> return BuiltinTypename
   ]
 
 builtinUnary :: TextParser FunctionName
 builtinUnary = foldr (<|>) empty $ map try [
-    kwPresent >> return BuiltinPresent,
-    kwReduce >> return BuiltinReduce,
-    kwRequire >> return BuiltinRequire,
-    kwStrong >> return BuiltinStrong
+    kwPresent  >> return BuiltinPresent,
+    kwReduce   >> return BuiltinReduce,
+    kwRequire  >> return BuiltinRequire,
+    kwStrong   >> return BuiltinStrong,
+    kwIdentify >> return BuiltinIdentify
   ]
 
 instance ParseFromSource (ExpressionStart SourceContext) where

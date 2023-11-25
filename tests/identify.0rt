@@ -1,0 +1,201 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "identifier comparisons" {
+  success
+}
+
+unittest boxed {
+  String value1 <- "value"
+  String value2 <- "value"
+  Identifier<String> id1 <- `identify` value1
+  Identifier<String> id2 <- `identify` value2
+  $Hidden[value1,value2]$
+
+  \ Testing.checkTrue((id1 < id2) ^ (id2 < id1))
+  \ Testing.checkTrue((id1 > id2) ^ (id2 > id1))
+  \ Testing.checkTrue((id1 <= id2) ^ (id2 <= id1))
+  \ Testing.checkTrue((id1 >= id2) ^ (id2 >= id1))
+
+  \ Testing.checkTrue(id1 <= id1)
+  \ Testing.checkTrue(id1 >= id1)
+  \ Testing.checkTrue(id1 == id1)
+
+  \ Testing.checkFalse(id1 == id2)
+  \ Testing.checkTrue(id1 != id2)
+}
+
+unittest unboxed {
+  Int value1 <- 1
+  Int value2 <- 2
+  Int value3 <- 1
+  Identifier<Int> id1 <- identify(value1)
+  Identifier<Int> id2 <- identify(value2)
+  Identifier<Int> id3 <- identify(value3)
+  $Hidden[value1,value2,value3]$
+
+  \ Testing.checkTrue((id1 < id2) ^ (id2 < id1))
+  \ Testing.checkTrue((id1 > id2) ^ (id2 > id1))
+  \ Testing.checkTrue((id1 <= id2) ^ (id2 <= id1))
+  \ Testing.checkTrue((id1 >= id2) ^ (id2 >= id1))
+
+  \ Testing.checkTrue(id1 <= id1)
+  \ Testing.checkTrue(id1 >= id1)
+  \ Testing.checkTrue(id1 == id1)
+
+  \ Testing.checkFalse(id1 == id2)
+  \ Testing.checkTrue(id1 != id2)
+
+  \ Testing.checkTrue(id1 == id3)
+}
+
+unittest differentTypes {
+  String value1 <- "value"
+  Int value2 <- 2
+  Identifier<String> id1 <- identify(value1)
+  Identifier<Int> id2 <- identify(value2)
+  $Hidden[value1,value2]$
+
+  \ Testing.checkTrue((id1 < id2) ^ (id2 < id1))
+  \ Testing.checkTrue((id1 > id2) ^ (id2 > id1))
+  \ Testing.checkTrue((id1 <= id2) ^ (id2 <= id1))
+  \ Testing.checkTrue((id1 >= id2) ^ (id2 >= id1))
+
+  \ Testing.checkFalse(id1 == id2)
+  \ Testing.checkTrue(id1 != id2)
+}
+
+unittest hashing {
+  String value1 <- "value"
+  String value2 <- "value"
+  Identifier<String> id1 <- `identify` value1
+  Identifier<String> id2 <- `identify` value2
+  $Hidden[value1,value2]$
+
+  \ Testing.checkEquals(id1.hashed(), id1.hashed())
+  \ Testing.checkNotEquals(id1.hashed(), id2.hashed())
+}
+
+unittest meta {
+  String value1 <- "value"
+  Int value2 <- 2
+  Identifier<String> id1 <- identify(value1)
+  Identifier<Int> id2 <- identify(value2)
+  $Hidden[value1,value2]$
+
+  \ Testing.checkTrue(id1 == `identify` id1)
+  \ Testing.checkTrue(id2 == `identify` id2)
+  \ Testing.checkFalse(`identify` id1 == `identify` id2)
+}
+
+unittest formatted {
+  String value1 <- "value"
+  String value2 <- "value"
+  Identifier<String> id1 <- `identify` value1
+  Identifier<String> id2 <- `identify` value2
+  $Hidden[value1,value2]$
+
+  \ Testing.checkEquals(id1.formatted(),id1.formatted())
+  \ Testing.checkNotEquals(id1.formatted(),id2.formatted())
+
+  \ Testing.checkEquals((`identify` empty).formatted(),"0000000000000000")
+}
+
+unittest equals {
+  String value1 <- "value"
+  String value2 <- "value"
+  Identifier<String> id1 <- `identify` value1
+  Identifier<String> id2 <- `identify` value2
+  $Hidden[value1,value2]$
+
+  \ Testing.checkTrue(id1 `Identifier<any>.equals` id1)
+  \ Testing.checkFalse(id1 `Identifier<any>.equals` id2)
+}
+
+unittest lessThan {
+  String value1 <- "value"
+  String value2 <- "value"
+  Identifier<String> id1 <- `identify` value1
+  Identifier<String> id2 <- `identify` value2
+  $Hidden[value1,value2]$
+
+  \ Testing.checkFalse(id1 `Identifier<any>.lessThan` id1)
+  \ Testing.checkTrue((id1 `Identifier<any>.lessThan` id2) ^ (id2 `Identifier<any>.lessThan` id1))
+}
+
+
+testcase "bad identifier conversion" {
+  error
+  require "Identifier<String>"
+}
+
+unittest test {
+  Identifier<Int> value <- identify("value")
+}
+
+
+testcase "identifier variable storage" {
+  success
+}
+
+unittest test {
+  \ Test.new().run()
+}
+
+concrete Test {
+  @type new () -> (Test)
+  @value run () -> ()
+}
+
+define Test {
+  @value Identifier<String> valueId
+  @value optional Identifier<String> optionalValueId
+  @value weak Identifier<String> weakValueId
+
+  @category Identifier<String> categoryId <- `identify` "value"
+  @category optional Identifier<String> optionalCategoryId <- categoryId
+  @category weak Identifier<String> weakCategoryId <- categoryId
+
+  new () {
+    Identifier<String> valueId <- `identify` "value"
+    return Test{ valueId, valueId, valueId }
+  }
+
+  run () {
+    // @value vs. local
+    scoped {
+      Identifier<String> localId <- valueId
+      optional Identifier<String> optionalLocalId <- optionalValueId
+      weak Identifier<String> weakLocalId <- weakValueId
+    } in {
+      \ Testing.checkEquals<Identifier<any>>(localId,valueId)
+      \ Testing.checkOptional<Identifier<any>>(optionalLocalId,optionalValueId)
+      \ Testing.checkOptional<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
+    }
+    // @category vs. local
+    scoped {
+      Identifier<String> localId <- categoryId
+      optional Identifier<String> optionalLocalId <- optionalCategoryId
+      weak Identifier<String> weakLocalId <- weakCategoryId
+    } in {
+      \ Testing.checkEquals<Identifier<any>>(localId,categoryId)
+      \ Testing.checkOptional<Identifier<any>>(optionalLocalId,optionalCategoryId)
+      \ Testing.checkOptional<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ module Types.Builtin (
   floatRequiredValue,
   formattedRequiredValue,
   intRequiredValue,
+  isIdentifierRequiredValue,
   isPointerRequiredValue,
   isOpaqueMulti,
   orderOptionalValue,
@@ -68,6 +69,13 @@ isPointerRequiredValue (ValueType RequiredValue t) = check $ extractSingle t whe
   extractSingle = reduceMergeTree (const Nothing) (const Nothing) Just
 isPointerRequiredValue _ = False
 
+isIdentifierRequiredValue :: ValueType -> Bool
+isIdentifierRequiredValue (ValueType RequiredValue t) = check $ extractSingle t where
+  check (Just (JustTypeInstance (TypeInstance BuiltinIdentifier (Positional [_])))) = True
+  check _ = False
+  extractSingle = reduceMergeTree (const Nothing) (const Nothing) Just
+isIdentifierRequiredValue _ = False
+
 emptyType :: ValueType
 emptyType = ValueType OptionalValue minBound
 
@@ -77,7 +85,8 @@ data PrimitiveType =
   PrimInt |
   PrimFloat |
   PrimString |
-  PrimPointer
+  PrimPointer |
+  PrimIdentifier
   deriving (Eq,Show)
 
 data ExpressionValue =

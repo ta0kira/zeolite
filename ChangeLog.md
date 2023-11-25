@@ -4,6 +4,9 @@
 
 ### Language
 
+* **[breaking]** Adds instance identification with the `identify` keyword. This
+  is breaking because `identify` is now reserved.
+
 * **[breaking]** Adds function delegation with `delegate` keyword.
 
   ```text

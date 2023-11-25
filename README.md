@@ -62,6 +62,7 @@ of this document.
     - [Meta Types](#meta-types)
     - [Explicit Type Conversion](#explicit-type-conversion)
     - [Runtime Type Reduction](#runtime-type-reduction)
+    - [Value Instance Comparison](#value-instance-comparison)
   - [Builtins](#builtins)
     - [Reserved Words](#reserved-words)
     - [Builtin Types](#builtin-types)
@@ -1041,7 +1042,6 @@ and end with `:`.
     <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>Int</span></i> <span style='color:#006e28;'>start:</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
   }</pre>
 
-
 - The syntax for labeling an argument in the function call is to precede the
   argument with the label.
 
@@ -1743,6 +1743,31 @@ absolutely no examination of the "real" type of `value` at runtime.
 <span style='color:#898887;'>// uses #x = Formatted in the reduce call.</span>
 <b>optional</b> <i><span style='color:#0057ae;'>String</span></i> value1 &lt;- value<span style='color:#644a9b;'>.</span>getAs&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;()</pre>
 
+#### Value Instance Comparison
+
+As of compiler version `0.24.0.0`, you can get a value that identifies a
+specific `@value` instance using the **`identify`** builtin.. This can be useful
+for creating identifiers that don't otherwise have a unique member.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<i><span style='color:#0057ae;'>String</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;value&quot;</span>
+<i><span style='color:#0057ae;'>Identifier</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> valueId <b><span style='color:#006e28;'>&lt;-</span></b> <b>identify</b>(value)</pre>
+
+- You can use comparison operators (e.g., `==`, `<`) between `Identifier`s of
+  _any_ two types.
+- The `Identifier` remains valid even if the original `@value` is deallocated.
+- The behavior might be unexpected for primitive types, e.g., `Int`, but an
+  `Identifier` will _always_ `==` itself.
+- `identify` can also be used for `optional` types, but _not_ for `weak` types.
+- Type conversions have no effect on the resulting `Identifier`, other than the
+  type used for compile-time checking.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <i><span style='color:#0057ae;'>String</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;value&quot;</span>
+  <span style='color:#898887;'>// The following are equivalent:</span>
+  <i><span style='color:#0057ae;'>Identifier</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> id1 <b><span style='color:#006e28;'>&lt;-</span></b> <b>identify</b>(value)
+  <i><span style='color:#0057ae;'>Identifier</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> id2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>identify</b>(value<b>?</b><i><span style='color:#0057ae;'>Formatted</span></i>)</pre>
+
 ### Builtins
 
 #### Reserved Words
@@ -1769,6 +1794,7 @@ absolutely no examination of the "real" type of `value` at runtime.
 [`exit`](#immediate-program-termination)
 [`fail`](#immediate-program-termination)
 [`false`](#builtin-types)
+[`identify`](#value-instance-comparison)
 [`if`](#conditionals)
 [`immutable`](#immutable-types)
 [`in`](#scoping-and-cleanup)
@@ -1810,6 +1836,8 @@ Builtin `concrete` types:
   literals.
 - **`Float`**: Use decimal notation, e.g., `0.0` or `1.0E1`. You *must* have
   digits on both sides of the `.`.
+- **`Identifier<#x>`**: An opaque identifier used to compare underlying
+  `@value` instances.
 - **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
   `\o0123`), or binary (e.g., `\b0100`).
 - **`Pointer<#x>`**: An opaque pointer type for use in C++ extensions. Only C++

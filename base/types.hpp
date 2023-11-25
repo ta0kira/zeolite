@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,6 +44,12 @@ using PrimChar = char;
 using PrimCharBuffer = std::string;
 using PrimFloat = double;
 
+class OpaqueObject { ~OpaqueObject() = default; };
+using PrimPointer = OpaqueObject*;
+
+class OpaqueInstance { ~OpaqueInstance() = default; };
+using PrimIdentifier = OpaqueInstance*;
+
 inline void SwapValues(PrimBool& left, PrimBool& right) {
   PrimBool temp = right;
   right = left;
@@ -68,8 +74,17 @@ inline void SwapValues(PrimFloat& left, PrimFloat& right) {
   left = temp;
 }
 
-class OpaqueObject { ~OpaqueObject() = default; };
-using PrimPointer = OpaqueObject*;
+inline void SwapValues(PrimPointer& left, PrimPointer& right) {
+  PrimPointer temp = right;
+  right = left;
+  left = temp;
+}
+
+inline void SwapValues(PrimIdentifier& left, PrimIdentifier& right) {
+  PrimIdentifier temp = right;
+  right = left;
+  left = temp;
+}
 
 template<int S>
 inline PrimString PrimString_FromLiteral(const char(&literal)[S]) {

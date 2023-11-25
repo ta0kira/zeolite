@@ -702,6 +702,8 @@ compileExpression = compile where
     bind t1' t2'
     where
       bind t1 t2
+        | o `Set.member` comparison && isIdentifierRequiredValue t1 && isIdentifierRequiredValue t2 = do
+          return (Positional [boolRequiredValue],glueInfix PrimIdentifier PrimBool e1 o e2)
         | t1 /= t2 =
           compilerErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                            show t2 ++ formatFullContextBrace c
@@ -850,6 +852,20 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = d
     compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [boolRequiredValue],
             UnboxedPrimitive PrimBool $ "BoxedValue::Present(" ++ useAsUnwrapped e ++ ")")
+compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinIdentify ps es)) = do
+  when (length (pValues ps) /= 0) $
+    compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
+  when (length (pValues es) /= 1) $
+    compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
+  es' <- sequence $ map (compileExpression . snd) $ pValues es
+  when (length (pValues $ fst $ head es') /= 1) $
+    compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
+  let (Positional [t0],e) = head es'
+  when (isWeakValue t0) $
+    compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
+  csAddRequired $ Set.fromList [BuiltinIdentifier]
+  return $ (Positional [ValueType RequiredValue (singleType $ JustTypeInstance (TypeInstance BuiltinIdentifier (Positional [(vtType t0)])))],
+            UnboxedPrimitive PrimIdentifier $ "BoxedValue::Identify(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues ps) /= 2) $
     compilerErrorM $ "Expected 2 type parameters" ++ formatFullContextBrace c

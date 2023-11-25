@@ -141,22 +141,24 @@ data CategoryName =
   BuiltinFloat |
   BuiltinString |
   BuiltinPointer |
+  BuiltinIdentifier |
   BuiltinFormatted |
   BuiltinOrder |
   CategoryNone
 
 instance Show CategoryName where
-  show (CategoryName n)    = n
-  show BuiltinBool         = "Bool"
-  show BuiltinChar         = "Char"
-  show BuiltinCharBuffer   = "CharBuffer"
-  show BuiltinInt          = "Int"
-  show BuiltinFloat        = "Float"
-  show BuiltinString       = "String"
-  show BuiltinPointer      = "Pointer"
-  show BuiltinFormatted    = "Formatted"
-  show BuiltinOrder        = "Order"
-  show CategoryNone        = "(none)"
+  show (CategoryName n)  = n
+  show BuiltinBool       = "Bool"
+  show BuiltinChar       = "Char"
+  show BuiltinCharBuffer = "CharBuffer"
+  show BuiltinInt        = "Int"
+  show BuiltinFloat      = "Float"
+  show BuiltinString     = "String"
+  show BuiltinPointer    = "Pointer"
+  show BuiltinIdentifier = "Identifier"
+  show BuiltinFormatted  = "Formatted"
+  show BuiltinOrder      = "Order"
+  show CategoryNone      = "(none)"
 
 instance Eq CategoryName where
   c1 == c2 = show c1 == show c2

@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.24"
+    version="3.25"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -31,6 +31,7 @@
       <item> if </item>
       <item> immutable </item>
       <item> in </item>
+      <item> identify </item>
       <item> _ </item>
       <item> refines </item>
       <item> requires </item>
@@ -109,6 +110,7 @@
       <item> Float </item>
       <item> Formatted </item>
       <item> Hashed </item>
+      <item> Identifier </item>
       <item> Int </item>
       <item> LessThan </item>
       <item> Pointer </item>

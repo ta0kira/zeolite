@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -196,6 +196,23 @@ concrete CharBuffer {
 //   it would otherwise require marshaling, which is why it has no functions.
 concrete Pointer<#x> {
   immutable
+}
+
+// An identifier for a value instance.
+//
+// Literals: None.
+//
+// Notes:
+// - Get an Identifier<#x> from optional #x value with instance(value).
+// - Also supports comparisons, e.g., <, ==.
+concrete Identifier<|#x> {
+  immutable
+
+  refines Formatted
+  refines Hashed
+
+  defines Equals<Identifier<any>>
+  defines LessThan<Identifier<any>>
 }
 
 // Convertible to Bool.

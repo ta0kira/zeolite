@@ -52,8 +52,9 @@ module Parser.Common (
   kwFalse,
   kwIf,
   kwIgnore,
-  kwIn,
   kwImmutable,
+  kwIn,
+  kwIdentify,
   kwInterface,
   kwOptional,
   kwPresent,
@@ -238,14 +239,17 @@ kwFalse = keyword "false"
 kwIf :: TextParser ()
 kwIf = keyword "if"
 
-kwIn :: TextParser ()
-kwIn = keyword "in"
-
 kwIgnore :: TextParser ()
 kwIgnore = keyword "_"
 
 kwImmutable :: TextParser ()
 kwImmutable = keyword "immutable"
+
+kwIn :: TextParser ()
+kwIn = keyword "in"
+
+kwIdentify :: TextParser ()
+kwIdentify = keyword "identify"
 
 kwInterface :: TextParser ()
 kwInterface = keyword "interface"
@@ -346,9 +350,10 @@ isKeyword = foldr (<|>) empty $ map try [
     kwFail,
     kwFalse,
     kwIf,
-    kwIn,
     kwIgnore,
     kwImmutable,
+    kwIn,
+    kwIdentify,
     kwInterface,
     kwOptional,
     kwPresent,

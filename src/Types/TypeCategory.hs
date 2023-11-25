@@ -950,15 +950,17 @@ data FunctionName =
   BuiltinReduce |
   BuiltinRequire |
   BuiltinStrong |
+  BuiltinIdentify |
   BuiltinTypename
   deriving (Eq,Ord)
 
 instance Show FunctionName where
   show (FunctionName n) = n
-  show BuiltinPresent = "present"
-  show BuiltinReduce = "reduce"
-  show BuiltinRequire = "require"
-  show BuiltinStrong = "strong"
+  show BuiltinPresent  = "present"
+  show BuiltinReduce   = "reduce"
+  show BuiltinRequire  = "require"
+  show BuiltinStrong   = "strong"
+  show BuiltinIdentify = "identify"
   show BuiltinTypename = "typename"
 
 data CallArgLabel c =
