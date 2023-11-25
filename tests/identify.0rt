@@ -153,6 +153,12 @@ unittest swap {
   \ Testing.checkTrue(id2 == id3)
 }
 
+unittest reduceTest {
+  Identifier<String> id <- `identify` "value"
+  \ Testing.checkOptional<Identifier<any>>(reduce<Identifier<String>,Identifier<Formatted>>(id),id)
+  \ Testing.checkOptional<Identifier<any>>(reduce<Identifier<String>,Identifier<Int>>(id),empty)
+}
+
 
 testcase "bad identifier conversion" {
   error
