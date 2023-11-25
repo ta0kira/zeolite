@@ -1756,8 +1756,6 @@ for creating identifiers that don't otherwise have a unique member.
 - You can use comparison operators (e.g., `==`, `<`) between `Identifier`s of
   _any_ two types.
 - The `Identifier` remains valid even if the original `@value` is deallocated.
-- The behavior might be unexpected for primitive types, e.g., `Int`, but an
-  `Identifier` will _always_ `==` itself.
 - `identify` can also be used for `optional` types, but _not_ for `weak` types.
 - Type conversions have no effect on the resulting `Identifier`, other than the
   type used for compile-time checking.
@@ -1767,6 +1765,12 @@ for creating identifiers that don't otherwise have a unique member.
   <span style='color:#898887;'>// The following are equivalent:</span>
   <i><span style='color:#0057ae;'>Identifier</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> id1 <b><span style='color:#006e28;'>&lt;-</span></b> <b>identify</b>(value)
   <i><span style='color:#0057ae;'>Identifier</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> id2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>identify</b>(value<b>?</b><i><span style='color:#0057ae;'>Formatted</span></i>)</pre>
+
+- `Identifier` uniqueness isn't reliable for unboxed types (e.g., `Int`) because
+  the values are stored without being contained in a Zeolite object. (Also see
+  [Builtin Types](#builtin-types).) For example,
+  `identifier(2) == identifier(2)`, whereas
+  `identifier("value") != identifier("value")`, due to storage differences.
 
 ### Builtins
 
@@ -1827,22 +1831,22 @@ might differ, see `$(zeolite --get-path)/base/builtin.0rp`.)
 
 Builtin `concrete` types:
 
-- **`Bool`**: Either `true` or `false`.
-- **`Char`**: Use single quotes, e.g., `'a'`. Use literal characters, standard
-  escapes (e.g., `'\n'`), 2-digit hex (e.g., `\x0B`), or 3-digit octal (e.g.,
-  `'\012'`). At the moment this only supports ASCII; see
+- **`Bool`** _[unboxed]_: Either `true` or `false`.
+- **`Char`** _[unboxed]_: Use single quotes, e.g., `'a'`. Use literal
+  characters, standard escapes (e.g., `'\n'`), 2-digit hex (e.g., `\x0B`), or
+  3-digit octal (e.g., `'\012'`). At the moment this only supports ASCII; see
   [Issue #22](https://github.com/ta0kira/zeolite/issues/22).
 - **`CharBuffer`**: Mutable, fixed-size buffer of `Char`. This type has no
   literals.
-- **`Float`**: Use decimal notation, e.g., `0.0` or `1.0E1`. You *must* have
-  digits on both sides of the `.`.
-- **`Identifier<#x>`**: An opaque identifier used to compare underlying
-  `@value` instances.
-- **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
-  `\o0123`), or binary (e.g., `\b0100`).
-- **`Pointer<#x>`**: An opaque pointer type for use in C++ extensions. Only C++
-  extensions can create and access `Pointer` contents, but Zeolite code can
-  still store and pass them around.
+- **`Float`** _[unboxed]_: Use decimal notation, e.g., `0.0` or `1.0E1`. You
+  *must* have digits on both sides of the `.`.
+- **`Identifier<#x>`** _[unboxed]_: An opaque identifier used to compare
+  underlying `@value` instances.
+- **`Int`** _[unboxed]_: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal
+  (e.g., `\o0123`), or binary (e.g., `\b0100`).
+- **`Pointer<#x>`** _[unboxed]_: An opaque pointer type for use in C++
+  extensions. Only C++ extensions can create and access `Pointer` contents, but
+  Zeolite code can still store and pass them around.
 - **`String`**: Use double quotes to sequence `Char` literals, e.g.,
   `"hello\012"`. You can build a string efficiently using `String.builder()`,
   e.g., `String foo <- String.builder().append("bar").append("baz").build()`.

@@ -23,6 +23,7 @@ limitations under the License.
 // Notes:
 // - You do not need () to make a function call on a literal; something like
 //   true.asInt() is totally fine.
+// - Values are unboxed when storing in variables.
 concrete Bool {
   immutable
 
@@ -51,6 +52,7 @@ concrete Bool {
 //   'a'.asInt() is totally fine.
 // - When converting to Int with asInt(), the value will always be unsigned,
 //   i.e., beween 0-255. ASCII characters will be in the 0-127 range.
+// - Values are unboxed when storing in variables.
 concrete Char {
   immutable
 
@@ -76,6 +78,7 @@ concrete Char {
 //
 // Notes:
 // - You must use () to make a function call on a literal, e.g, (1.1).asInt().
+// - Values are unboxed when storing in variables.
 concrete Float {
   immutable
 
@@ -103,11 +106,10 @@ concrete Float {
 // - Overflow will cause a compilation error.
 // - Hex, oct, and binary escapes can go up to 2^64-1 to allow use of all 64
 //   bits, but they will still be used as signed values.
-//
-// Notes:
 // - You must use () to make a function call on a literal, e.g, (100).asFloat().
 // - When converting to Char with asChar(), the value will always be treated as
 //   unsigned, i.e., beween 0-255 mod 256.
+// - Values are unboxed when storing in variables.
 concrete Int {
   immutable
 
@@ -194,6 +196,7 @@ concrete CharBuffer {
 //   values with incompatible types.
 // - This is category is only meant for passing C++ data between extensions when
 //   it would otherwise require marshaling, which is why it has no functions.
+// - Values are unboxed when storing in variables.
 concrete Pointer<#x> {
   immutable
 }
@@ -205,6 +208,11 @@ concrete Pointer<#x> {
 // Notes:
 // - Get an Identifier<#x> from optional #x value with instance(value).
 // - Also supports comparisons, e.g., <, ==.
+// - Values are unboxed when storing in variables.
+// - Identifiers will be unique for different concrete values if:
+//   - Both underlying concrete types are unboxed, which is the case with all
+//     custom concrete types.
+//   - Both values existed at the same time at some point.
 concrete Identifier<|#x> {
   immutable
 
