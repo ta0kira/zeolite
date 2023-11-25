@@ -45,6 +45,8 @@ ReturnTuple DispatchPointer(PrimPointer value, const ValueFunction& label,
 ReturnTuple DispatchIdentifier(PrimIdentifier value, const ValueFunction& label,
                              const ParamsArgs& params_args) __attribute__((weak));
 
+PrimIdentifier RandomizeIdentifier(PrimIdentifier identifier) __attribute__((weak));
+
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
@@ -122,6 +124,16 @@ BoxedValue::BoxedValue(const WeakValue& other)
 
 void BoxedValue::Validate(const std::string& name) const {
   zeolite_internal::Validate(name, union_);
+}
+
+// static
+PrimIdentifier BoxedValue::Identify(const BoxedValue& target) {
+  switch (target.union_.type_) {
+    case UnionValue::Type::IDENTIFIER:
+      return target.union_.value_.as_identifier_;
+    default:
+      return RandomizeIdentifier(target.union_.value_.as_identifier_);
+  }
 }
 
 const PrimString& BoxedValue::AsString() const {

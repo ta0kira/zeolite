@@ -247,15 +247,7 @@ class BoxedValue {
     return BoxedValue(target);
   }
 
-  inline static PrimIdentifier Identify(const BoxedValue& target) {
-    switch (target.union_.type_) {
-      case UnionValue::Type::IDENTIFIER:
-        return target.union_.value_.as_identifier_;
-      default:
-        return reinterpret_cast<PrimIdentifier>(
-          0x123456789abcdefULL * ((unsigned long long) target.union_.value_.as_identifier_));
-    }
-  }
+  static PrimIdentifier Identify(const BoxedValue& target);
 
   void Validate(const std::string& name) const;
 

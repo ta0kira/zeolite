@@ -51,8 +51,16 @@ struct ExtType_Identifier : public Type_Identifier {
   }
 };
 
+PrimIdentifier RandomizeIdentifier(PrimIdentifier identifier) {
+  // This is random enough. It only needs to be odd.
+  const static auto MULTIPLIER =
+    ((unsigned long long) &CreateCategory_Identifier())
+    + 1 - (1 & (unsigned long long) &CreateCategory_Identifier());
+  return reinterpret_cast<PrimIdentifier>(MULTIPLIER * MULTIPLIER * ((unsigned long long) identifier));
+}
+
 ReturnTuple DispatchIdentifier(PrimIdentifier value, const ValueFunction& label,
-                             const ParamsArgs& params_args) {
+                               const ParamsArgs& params_args) {
   switch (label.collection) {
     case CategoryId_Formatted: {
       std::ostringstream output;
