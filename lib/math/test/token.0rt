@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ unittest equals {
 
 unittest lessThan {
   \ Testing.checkFalse(Token.from("message") `Token.lessThan` Token.from("message"))
-  \ Testing.checkTrue((Token.from("message") `Token.lessThan` Token.from("other")) ||
+  \ Testing.checkTrue((Token.from("message") `Token.lessThan` Token.from("other")) ^
                       (Token.from("other") `Token.lessThan` Token.from("message")))
 }
 

@@ -23,7 +23,6 @@ define Token {
   @category HashedMap<String,Token> toToken <- HashedMap<String,Token>.new()
 
   @value String string
-  @value Int    value
 
   from (string) (token) {
     scoped {
@@ -31,10 +30,10 @@ define Token {
       optional Token existing <- toToken.get(string)
     } cleanup {
       \ mutex.unlock()
-    } in if (present(existing)) {
-      token <- require(existing)
+    } in if (`present` existing) {
+      token <- `require` existing
     } else {
-      \ toToken.set(string,(token <- Token{ string, toToken.size()+1 }))
+      \ string `toToken.set` (token <- Token{ string })
     }
   }
 
@@ -43,17 +42,14 @@ define Token {
   }
 
   hashed () {
-    return value.hashed()
+    return identify(self).hashed()
   }
 
   equals (x,y) {
-    return x.get() == y.get()
+    return identify(x) == identify(y)
   }
 
   lessThan (x,y) {
-    return x.get() < y.get()
+    return identify(x) < identify(y)
   }
-
-  @value get () -> (Int)
-  get () { return value }
 }
