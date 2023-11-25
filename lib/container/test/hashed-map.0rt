@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ unittest duplicate {
   \ Testing.checkEquals(copy.size(),map.size())
   traverse (Counter.zeroIndexed(max) -> Int i) {
     $Hidden[map]$
-    \ Testing.checkOptional(copy.get(i),i)
+    \ Testing.checkEquals(copy.get(i),i)
   }
 
   \ copy.set(2,5)
@@ -166,7 +166,7 @@ unittest duplicate {
 
   \ Testing.checkEquals(map.size(),max)
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkOptional(map.get(i),i)
+    \ Testing.checkEquals(map.get(i),i)
   }
 }
 
@@ -192,7 +192,7 @@ unittest weakSetExists {
 
   \ value0.set(10)
   \ Testing.checkEquals(value1.get(),1)
-  \ Testing.checkOptional(map.get(1),Value.new(1))
+  \ Testing.checkEquals(map.get(1),Value.new(1))
 }
 
 unittest weakSetMissing {
@@ -210,7 +210,7 @@ unittest weakSetMissing {
 
   \ value0.set(10)
   \ Testing.checkEquals(value1.get(),10)
-  \ Testing.checkOptional(map.get(7),Value.new(10))
+  \ Testing.checkEquals(map.get(7),Value.new(10))
 }
 
 concrete Value {

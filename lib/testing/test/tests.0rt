@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ testcase "checkEquals success" {
 
 unittest test {
   \ Testing.checkEquals(13,13)
+  \ Testing.checkEquals<Int>(empty,empty)
 }
 
 
-testcase "checkEquals fail" {
+testcase "checkEquals fail non-empty" {
   crash
   require stderr "13"
   require stderr "15"
@@ -36,22 +37,45 @@ unittest test {
 }
 
 
+testcase "checkEquals fail empty" {
+  crash
+  require stderr "13"
+  require stderr "empty"
+}
+
+unittest test {
+  \ Testing.checkEquals(13,empty)
+}
+
+
 testcase "checkNotEquals success" {
   success
 }
 
 unittest test {
   \ Testing.checkNotEquals(12,13)
+  \ Testing.checkNotEquals(empty,13)
+  \ Testing.checkNotEquals(12,empty)
 }
 
 
-testcase "checkNotEquals fail" {
+testcase "checkNotEquals fail non-empty" {
   crash
   require stderr "13.*13"
 }
 
 unittest test {
   \ Testing.checkNotEquals(13,13)
+}
+
+
+testcase "checkNotEquals fail empty" {
+  crash
+  require stderr "empty.*empty"
+}
+
+unittest test {
+  \ Testing.checkNotEquals<Int>(empty,empty)
 }
 
 
@@ -82,7 +106,7 @@ unittest test {
 
 testcase "checkEmpty fail unformatted" {
   crash
-  require stderr "unformatted"
+  require stderr "unknown"
   require stderr "empty"
 }
 
@@ -111,38 +135,6 @@ unittest test {
 }
 
 
-testcase "checkOptional success" {
-  success
-}
-
-unittest test {
-  \ Testing.checkOptional<Int>(empty,empty)
-  \ Testing.checkOptional(13,13)
-}
-
-
-testcase "checkOptional fail empty" {
-  crash
-  require stderr "13"
-  require stderr "empty"
-}
-
-unittest test {
-  \ Testing.checkOptional(13,empty)
-}
-
-
-testcase "checkOptional fail present" {
-  crash
-  require stderr "13"
-  require stderr "empty"
-}
-
-unittest test {
-  \ Testing.checkOptional(empty,13)
-}
-
-
 testcase "checkBetween success" {
   success
 }
@@ -152,7 +144,7 @@ unittest test {
 }
 
 
-testcase "checkBetween fail" {
+testcase "checkBetween fail non-empty" {
   crash
   require stderr "13"
   require stderr "14"
@@ -161,6 +153,18 @@ testcase "checkBetween fail" {
 
 unittest test {
   \ Testing.checkBetween(13,14,15)
+}
+
+
+testcase "checkBetween fail empty" {
+  crash
+  require stderr "empty"
+  require stderr "14"
+  require stderr "15"
+}
+
+unittest test {
+  \ Testing.checkBetween(empty,14,15)
 }
 
 
@@ -185,7 +189,7 @@ unittest test {
 }
 
 
-testcase "checkGreaterThan fail" {
+testcase "checkGreaterThan fail non-empty" {
   crash
   require stderr "13"
   require stderr "14"
@@ -193,6 +197,17 @@ testcase "checkGreaterThan fail" {
 
 unittest test {
   \ Testing.checkGreaterThan(13,14)
+}
+
+
+testcase "checkGreaterThan fail empty" {
+  crash
+  require stderr "empty"
+  require stderr "14"
+}
+
+unittest test {
+  \ Testing.checkGreaterThan(empty,14)
 }
 
 
@@ -205,7 +220,7 @@ unittest test {
 }
 
 
-testcase "checkLessThan fail" {
+testcase "checkLessThan fail non-empty" {
   crash
   require stderr "13"
   require stderr "11"
@@ -213,6 +228,17 @@ testcase "checkLessThan fail" {
 
 unittest test {
   \ Testing.checkLessThan(13,11)
+}
+
+
+testcase "checkLessThan fail empty" {
+  crash
+  require stderr "empty"
+  require stderr "11"
+}
+
+unittest test {
+  \ Testing.checkLessThan(empty,11)
 }
 
 
@@ -225,13 +251,23 @@ unittest test {
 }
 
 
-testcase "checkTrue fail" {
+testcase "checkTrue fail non-empty" {
   crash
   require stderr "true"
 }
 
 unittest test {
   \ Testing.checkTrue(0)
+}
+
+
+testcase "checkTrue fail empty" {
+  crash
+  require stderr "true"
+}
+
+unittest test {
+  \ Testing.checkTrue(empty)
 }
 
 
@@ -244,11 +280,21 @@ unittest test {
 }
 
 
-testcase "checkFalse fail" {
+testcase "checkFalse fail non-empty" {
   crash
   require stderr "false"
 }
 
 unittest test {
   \ Testing.checkFalse(1)
+}
+
+
+testcase "checkFalse fail empty" {
+  crash
+  require stderr "false"
+}
+
+unittest test {
+  \ Testing.checkFalse(empty)
 }

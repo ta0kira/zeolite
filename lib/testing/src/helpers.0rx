@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,37 +20,43 @@ $TestsOnly$
 
 define Testing {
   checkEquals (x,y) { $NoTrace$
-    if (!#x.equals(x,y)) {
+    Bool failed <- false
+    if (`present` x && `present` y && !#x.equals(`require` x,`require` y)) {
+      failed <- true
+    } elif (`present` x != `present` y) {
+      failed <- true
+    }
+    if (failed) {
       fail(String.builder()
-          .append(x)
+          .append(autoFormat(x))
           .append(" is not equal to ")
-          .append(y)
+          .append(autoFormat(y))
           .build())
     }
   }
 
   checkNotEquals (x,y) { $NoTrace$
-    if (#x.equals(x,y)) {
+    Bool failed <- false
+    if (`present` x && `present` y && #x.equals(`require` x,`require` y)) {
+      failed <- true
+    } elif (! `present` x &&  ! `present` y) {
+      failed <- true
+    }
+    if (failed) {
       fail(String.builder()
-          .append(x)
+          .append(autoFormat(x))
           .append(" is equal to ")
-          .append(y)
+          .append(autoFormat(y))
           .build())
     }
   }
 
   checkEmpty (x) { $NoTrace$
     if (present(x)) {
-      scoped {
-        optional Formatted formatted <- reduce<#x,Formatted>(require(x))
-      } in if (present(formatted)) {
-        fail(String.builder()
-            .append(require(formatted))
-            .append(" is not empty")
-            .build())
-      } else {
-        fail("(unformatted value) is not empty")
-      }
+      fail(String.builder()
+          .append(autoFormat(x))
+          .append(" is not empty")
+          .build())
     }
   }
 
@@ -62,25 +68,21 @@ define Testing {
     }
   }
 
-  checkOptional (x,y) { $NoTrace$
-    if (present(x) && present(y)) {
-      \ checkEquals(require(x),require(y))
-    } elif (!present(x) && present(y)) {
-      fail("empty is not equal to " + require(y).formatted())
-    } elif (present(x) && !present(y)) {
-      fail(require(x).formatted() + " is not equal to empty")
-    }
-  }
-
   checkTrue (x) { $NoTrace$
-    if (!x.asBool()) {
-      fail("expected true")
+    if (! `present` x) {
+      fail("expected true but got empty")
+    }
+    if (!require(x).asBool()) {
+      fail("expected true but got false")
     }
   }
 
   checkFalse (x) { $NoTrace$
-    if (x.asBool()) {
-      fail("expected false")
+    if (! `present` x) {
+      fail("expected false but got empty")
+    }
+    if (require(x).asBool()) {
+      fail("expected false but got true")
     }
   }
 
@@ -88,39 +90,71 @@ define Testing {
     if (!lessEquals(l,h)) {
       fail(String.builder()
           .append("Upper limit ")
-          .append(l)
+          .append(autoFormat(l))
           .append(" is not at or above lower limit ")
-          .append(h)
+          .append(autoFormat(h))
           .build())
     }
-    if (!lessEquals(l,x) || !lessEquals(x,h)) {
+    Bool failed <- false
+    if (! `present` x) {
+      failed <- true
+    } elif (!lessEquals(l,`require` x) || !lessEquals(`require` x,h)) {
+      failed <- true
+    }
+    if (failed) {
       fail(String.builder()
-          .append(x)
+          .append(autoFormat(x))
           .append(" is not between ")
-          .append(l)
+          .append(autoFormat(l))
           .append(" and ")
-          .append(h)
+          .append(autoFormat(h))
           .build())
     }
   }
 
   checkGreaterThan (x,l) { $NoTrace$
-    if (lessEquals(x,l)) {
+    Bool failed <- false
+    if (! `present` x) {
+      failed <- true
+    } elif (!lessEquals(l,`require` x)) {
+      failed <- true
+    }
+    if (failed) {
       fail(String.builder()
-          .append(x)
+          .append(autoFormat(x))
           .append(" is not greater than ")
-          .append(l)
+          .append(autoFormat(l))
           .build())
     }
   }
 
   checkLessThan (x,h) { $NoTrace$
-    if (lessEquals(h,x)) {
+    Bool failed <- false
+    if (! `present` x) {
+      failed <- true
+    } elif (!lessEquals(`require` x,h)) {
+      failed <- true
+    }
+    if (failed) {
       fail(String.builder()
-          .append(x)
+          .append(autoFormat(x))
           .append(" is not less than ")
-          .append(h)
+          .append(autoFormat(h))
           .build())
+    }
+  }
+
+  @type autoFormat<#x> (optional #x) -> (Formatted)
+  autoFormat (x) {
+    if (! `present` x) {
+      return "empty"
+    }
+    scoped {
+      optional Formatted formatted <- reduce<#x,Formatted>(x)
+    } in if (`present` formatted) {
+      return `require` formatted
+    } else {
+      return "(unknown)"
     }
   }
 

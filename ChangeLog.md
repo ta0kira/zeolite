@@ -67,6 +67,12 @@
   foo <-> bar
   ```
 
+### Libraries
+
+* **[breaking]** Updates `Testing` in `lib/testing` to handle `optional` and to
+  not require `Formatted`. This is breaking because `Testing.checkOptional` was
+  removed; use `Testing.checkEquals` instead.
+
 ### Compiler CLI
 
 * **[new]** Allows single-`-` CLI options to be clustered, e.g., `-rfj8`, which

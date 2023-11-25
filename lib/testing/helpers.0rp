@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,9 +26,8 @@ concrete Testing {
   // - #x: Actual value.
   // - #x: Expected value.
   @type checkEquals<#x>
-    #x requires Formatted
     #x defines Equals<#x>
-  (#x,#x) -> ()
+  (optional #x,optional #x) -> ()
 
   // Check the values for inequality. Crashes if they are equal.
   //
@@ -36,9 +35,8 @@ concrete Testing {
   // - #x: Actual value.
   // - #x: Expected value.
   @type checkNotEquals<#x>
-    #x requires Formatted
     #x defines Equals<#x>
-  (#x,#x) -> ()
+  (optional #x,optional #x) -> ()
 
   // Check the value for empty. Crashes if present.
   //
@@ -52,27 +50,17 @@ concrete Testing {
   // - optional any: Actual value.
   @type checkPresent (optional any) -> ()
 
-  // Check the optional values for equality. Crashes if they are not equal.
-  //
-  // Args:
-  // - optional #x: Actual value.
-  // - optional #x: Expected value.
-  @type checkOptional<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (optional #x,optional #x) -> ()
-
   // Check the value for true. Crashes if false.
   //
   // Args:
   // - AsBool: Actual value.
-  @type checkTrue (AsBool) -> ()
+  @type checkTrue (optional AsBool) -> ()
 
   // Check the value for false. Crashes if true.
   //
   // Args:
   // - AsBool: Actual value.
-  @type checkFalse (AsBool) -> ()
+  @type checkFalse (optional AsBool) -> ()
 
   // Check that the value is within a range. Crashes if it is not in the range.
   //
@@ -86,10 +74,9 @@ concrete Testing {
   //   "undefined" values (e.g., NaN, for Float) that prevent inferring equality
   //   from less-than comparisons.
   @type checkBetween<#x>
-    #x requires Formatted
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (#x,#x,#x) -> ()
+  (optional #x,#x,#x) -> ()
 
   // Check that the value is above the limit. Crashes if it is not in the range.
   //
@@ -103,10 +90,9 @@ concrete Testing {
   //   from less-than comparisons.
   // - This comparison doesn't allow the value to equal the bound.
   @type checkGreaterThan<#x>
-    #x requires Formatted
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> ()
+  (optional #x,#x) -> ()
 
   // Check that the value is below the limit. Crashes if it is not in the range.
   //
@@ -120,8 +106,7 @@ concrete Testing {
   //   from less-than comparisons.
   // - This comparison doesn't allow the value to equal the bound.
   @type checkLessThan<#x>
-    #x requires Formatted
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> ()
+  (optional #x,#x) -> ()
 }

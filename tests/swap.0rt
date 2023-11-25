@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2022 Kevin P. Barry
+Copyright 2022-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,11 +66,11 @@ define Test {
 
   testWeakCategoryValue () {
     weakCategory <-> weakValue
-    \ Testing.checkOptional(`strong` weakCategory, "def")
-    \ Testing.checkOptional(`strong` weakValue, "abc")
+    \ Testing.checkEquals(`strong` weakCategory, "def")
+    \ Testing.checkEquals(`strong` weakValue, "abc")
     weakValue <-> weakCategory
-    \ Testing.checkOptional(`strong` weakCategory, "abc")
-    \ Testing.checkOptional(`strong` weakValue, "def")
+    \ Testing.checkEquals(`strong` weakCategory, "abc")
+    \ Testing.checkEquals(`strong` weakValue, "def")
   }
 
   testCategorySame () {
@@ -167,8 +167,8 @@ unittest testOptionalLocal {
   optional String value1 <- "abc"
   optional String value2 <- "def"
   value1 <-> value2
-  \ Testing.checkOptional(value1, "def")
-  \ Testing.checkOptional(value2, "abc")
+  \ Testing.checkEquals(value1, "def")
+  \ Testing.checkEquals(value2, "abc")
 }
 
 unittest testWeakLocal {
@@ -178,8 +178,8 @@ unittest testWeakLocal {
   weak String value2 <- source2
   $Hidden[source1,source2]$
   value1 <-> value2
-  \ Testing.checkOptional(`strong` value1, "def")
-  \ Testing.checkOptional(`strong` value2, "abc")
+  \ Testing.checkEquals(`strong` value1, "def")
+  \ Testing.checkEquals(`strong` value2, "abc")
 }
 
 unittest testUnboxedTopLevelScoped {
@@ -200,7 +200,7 @@ unittest testBoxedTopLevelScoped {
   } cleanup {
     \ Testing.checkEquals(value1, "def")
     \ Testing.checkEquals(value2, "abc")
-    \ Testing.checkOptional(`strong` reference, "abc")
+    \ Testing.checkEquals(`strong` reference, "abc")
   } in value1 <-> value2
   \ Testing.checkEquals(value1, "def")
   // value2 is out of scope now.

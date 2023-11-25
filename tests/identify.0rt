@@ -155,8 +155,8 @@ unittest swap {
 
 unittest reduceTest {
   Identifier<String> id <- `identify` "value"
-  \ Testing.checkOptional<Identifier<any>>(reduce<Identifier<String>,Identifier<Formatted>>(id),id)
-  \ Testing.checkOptional<Identifier<any>>(reduce<Identifier<String>,Identifier<Int>>(id),empty)
+  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>,Identifier<Formatted>>(id),id)
+  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>,Identifier<Int>>(id),empty)
 }
 
 
@@ -205,8 +205,8 @@ define Test {
       weak Identifier<String> weakLocalId <- weakValueId
     } in {
       \ Testing.checkEquals<Identifier<any>>(localId,valueId)
-      \ Testing.checkOptional<Identifier<any>>(optionalLocalId,optionalValueId)
-      \ Testing.checkOptional<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
+      \ Testing.checkEquals<Identifier<any>>(optionalLocalId,optionalValueId)
+      \ Testing.checkEquals<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
     }
     // @category vs. local
     scoped {
@@ -215,8 +215,8 @@ define Test {
       weak Identifier<String> weakLocalId <- weakCategoryId
     } in {
       \ Testing.checkEquals<Identifier<any>>(localId,categoryId)
-      \ Testing.checkOptional<Identifier<any>>(optionalLocalId,optionalCategoryId)
-      \ Testing.checkOptional<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
+      \ Testing.checkEquals<Identifier<any>>(optionalLocalId,optionalCategoryId)
+      \ Testing.checkEquals<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
     }
   }
 }
