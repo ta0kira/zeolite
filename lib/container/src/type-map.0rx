@@ -64,44 +64,29 @@ define TypeMap {
 }
 
 define TypeKey {
-  $ReadOnlyExcept[counter]$
-
-  @category Mutex counterMutex <- SpinlockMutex.new()
-  @category Int   counter      <- 0
-  @value Int index
-
   new () {
-    scoped {
-      \ counterMutex.lock()
-    } cleanup {
-      \ counterMutex.unlock()
-    } in return TypeKey<#x>{ (counter <- counter+1) }
+    return #self{ }
   }
 
   formatted () {
     return String.builder()
         .append(typename<#self>())
         .append("{")
-        .append(index)
+        .append( `identify` self)
         .append("}")
         .build()
   }
 
   hashed () {
-    return index.hashed()
+    return identify(self).hashed()
   }
 
   lessThan (l,r) {
-    return l.get() < r.get()
+    return identify(l) < identify(r)
   }
 
   equals (l,r) {
-    return l.get() == r.get()
-  }
-
-  @value get () -> (Int)
-  get () {
-    return index
+    return identify(l) == identify(r)
   }
 }
 
