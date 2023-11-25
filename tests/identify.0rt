@@ -157,6 +157,7 @@ unittest reduceTest {
   Identifier<String> id <- `identify` "value"
   \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>,Identifier<Formatted>>(id),id)
   \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>,Identifier<Int>>(id),empty)
+  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<Formatted>,Identifier<String>>(id),empty)
 }
 
 
