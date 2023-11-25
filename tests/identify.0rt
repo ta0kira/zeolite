@@ -138,6 +138,21 @@ unittest lessThan {
   \ Testing.checkTrue((id1 `Identifier<any>.lessThan` id2) ^ (id2 `Identifier<any>.lessThan` id1))
 }
 
+unittest swap {
+  String value1 <- "value"
+  String value2 <- "value"
+  Identifier<String> id1 <- `identify` value1
+  Identifier<String> id2 <- `identify` value2
+  $Hidden[value1,value2]$
+  Identifier<String> id3 <- id1
+
+  \ Testing.checkTrue(id1 == id3)
+  \ Testing.checkFalse(id2 == id3)
+  id1 <-> id2
+  \ Testing.checkFalse(id1 == id3)
+  \ Testing.checkTrue(id2 == id3)
+}
+
 
 testcase "bad identifier conversion" {
   error
