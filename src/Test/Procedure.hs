@@ -232,7 +232,6 @@ tests = [
     checkShortParseSuccess "x <- \\x123aBc + \\x123aBc",
     checkShortParseFail "x <- \\x123aQc",
     checkShortParseFail "x <- \\x",
-    checkShortParseFail "x <- \\x1.2",
     checkShortParseSuccess "x <- \" return \\\"\\\" \" + \"1fds\"",
     checkShortParseFail "x <- \"fsdfd",
     checkShortParseFail "x <- \"\"fsdfd",
@@ -266,6 +265,24 @@ tests = [
     checkShortParseSuccess "x <- `require` y",
     checkShortParseSuccess "x <- `reduce<#x,#y>` y",
     checkShortParseFail "x <- `typename<#y>` y",
+
+    checkShortParseSuccess "x <- 123.456",
+    checkShortParseSuccess "x <- \\d123.456",
+    checkShortParseFail "x <- 123.",
+    checkShortParseFail "x <- \\d123.",
+    checkShortParseSuccess "x <- 123.456E1",
+    checkShortParseFail "x <- \\d123.456E1",
+
+    checkShortParseSuccess "x <- \\b101.101",
+    checkShortParseFail "x <- \\b101.",
+    checkShortParseFail "x <- \\b101.101E1",
+
+    checkShortParseSuccess "x <- \\xABC.DEF",
+    checkShortParseFail "x <- \\xABC.",
+
+    checkShortParseSuccess "x <- \\o123.456",
+    checkShortParseFail "x <- \\o123.",
+    checkShortParseFail "x <- \\o123.456E1",
 
     checkParsesAs "'\"'"
                   (\e -> case e of
@@ -449,15 +466,27 @@ tests = [
                                    _ -> False),
 
     checkParsesAs "1.2345" (\e -> case e of
-                                       (Literal (DecimalLiteral _ 12345 (-4))) -> True
+                                       (Literal (DecimalLiteral _ 12345 (-4) 10)) -> True
                                        _ -> False),
 
     checkParsesAs "1.2345E+4" (\e -> case e of
-                                          (Literal (DecimalLiteral _ 12345 0)) -> True
+                                          (Literal (DecimalLiteral _ 12345 0 10)) -> True
                                           _ -> False),
 
     checkParsesAs "1.2345E-4" (\e -> case e of
-                                          (Literal (DecimalLiteral _ 12345 (-8))) -> True
+                                          (Literal (DecimalLiteral _ 12345 (-8) 10)) -> True
+                                          _ -> False),
+
+    checkParsesAs "\\xF.F" (\e -> case e of
+                                          (Literal (DecimalLiteral _ 255 (-1) 16)) -> True
+                                          _ -> False),
+
+    checkParsesAs "\\o7.7" (\e -> case e of
+                                          (Literal (DecimalLiteral _ 63 (-1) 8)) -> True
+                                          _ -> False),
+
+    checkParsesAs "\\b1.1" (\e -> case e of
+                                          (Literal (DecimalLiteral _ 3 (-1) 2)) -> True
                                           _ -> False),
 
     checkParseMatch "$NoTrace$" pragmaNoTrace

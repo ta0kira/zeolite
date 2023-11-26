@@ -75,6 +75,9 @@ concrete Char {
 // Literals:
 // - . required, with at least one digit on either side, e.g., 0.1
 // - Scientific notation: 0.1E-10, etc.
+// - Hex:    \xABC.DEF, etc.
+// - Octal:  \o777.266, etc.
+// - Binary: \b011.011, etc.
 //
 // Notes:
 // - You must use () to make a function call on a literal, e.g, (1.1).asInt().

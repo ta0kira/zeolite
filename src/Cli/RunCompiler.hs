@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -203,9 +203,9 @@ parseTracesFile (f,s) = runTextParser (between nullParse endOfDoc tracesFile) f 
     sequence_ $ intercalate [string_ ","] $ map ((:[]) . parseColTitle) tracesLogHeader
     some (char '\n' <|> char '\r') >> return ()
   parseSingle = do
-    ms <- parseDec
+    ms <- fmap snd parseDec
     string_ ","
-    pid <- parseDec
+    pid <- fmap snd parseDec
     string_ ","
     func <- quotedString
     string_ ","

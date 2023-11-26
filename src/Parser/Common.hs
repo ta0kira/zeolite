@@ -94,7 +94,6 @@ module Parser.Common (
   parseDec,
   parseHex,
   parseOct,
-  parseSubOne,
   pragmaArgsEnd,
   pragmaArgsStart,
   pragmaEnd,
@@ -495,20 +494,17 @@ digitCharVal c
   | c >= 'a' && c <= 'f' = 10 + ord(c) - ord('a')
   | otherwise = undefined
 
-parseDec :: TextParser Integer
-parseDec = labeled "base-10" $ fmap snd $ parseIntCommon 10 digitChar
+parseDec :: TextParser (Integer,Integer)
+parseDec = labeled "base-10" $ parseIntCommon 10 digitChar
 
-parseHex :: TextParser Integer
-parseHex = labeled "base-16" $ fmap snd $ parseIntCommon 16 hexDigitChar
+parseHex :: TextParser (Integer,Integer)
+parseHex = labeled "base-16" $ parseIntCommon 16 hexDigitChar
 
-parseOct :: TextParser Integer
-parseOct = labeled "base-8" $ fmap snd $ parseIntCommon 8 octDigitChar
+parseOct :: TextParser (Integer,Integer)
+parseOct = labeled "base-8" $ parseIntCommon 8 octDigitChar
 
-parseBin :: TextParser Integer
-parseBin = labeled "base-2" $ fmap snd $ parseIntCommon 2 (oneOf "01")
-
-parseSubOne :: TextParser (Integer,Integer)
-parseSubOne = parseIntCommon 10 digitChar
+parseBin :: TextParser (Integer,Integer)
+parseBin = labeled "base-2" $ parseIntCommon 2 (oneOf "01")
 
 parseIntCommon :: Integer -> TextParser Char -> TextParser (Integer,Integer)
 parseIntCommon b p = do

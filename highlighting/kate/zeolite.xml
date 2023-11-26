@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.25"
+    version="3.26"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -311,10 +311,10 @@
         <RegExpr attribute="Error" context="#stay" String="\.[#A-Z][A-Za-z0-9]*" />
         <RegExpr attribute="Error" context="#stay" String="\.\[" />
         <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+\b" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)\\[dD][0-9]+\b" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)\\[oO][0-7]+\b" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)\\[bB][01]+\b" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+(\.[0-9a-fA-F]+|)\b" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[dD][0-9]+(\.[0-9]+|)\b" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[oO][0-7]+(\.[0-7]+|)\b" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[bB][01]+(\.[01]+|)\b" />
         <RegExpr attribute="Number" context="#stay" String="(-|)[0-9]+\.[0-9]*([eE](\+|-|)[0-9]+|)\b" />
         <RegExpr attribute="Number" context="#stay" String="\b(-|)[0-9]+\b" />
         <DetectChar attribute="Infix Func" context="#stay" char="`" />

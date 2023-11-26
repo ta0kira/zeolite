@@ -1839,7 +1839,9 @@ Builtin `concrete` types:
 - **`CharBuffer`**: Mutable, fixed-size buffer of `Char`. This type has no
   literals.
 - **`Float`** _[unboxed]_: Use decimal notation, e.g., `0.0` or `1.0E1`. You
-  *must* have digits on both sides of the `.`.
+  *must* have digits on both sides of the `.`. As of compiler version
+  `0.24.0.0`, you can also escape hex with `\x`, octal with `\o`, and binary
+  with `\b`.
 - **`Identifier<#x>`** _[unboxed]_: An opaque identifier used to compare
   underlying `@value` instances.
 - **`Int`** _[unboxed]_: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal

@@ -668,43 +668,45 @@ instance ParseFromSource (ValueLiteral SourceContext) where
   sourceParser = labeled "literal" $
                  -- NOTE: StringLiteral, CharLiteral, and BoolLiteral are parsed
                  -- as ExpressionStart.
-                 escapedInteger <|>
+                 escapedIntegerOrDecimal <|>
                  integerOrDecimal <|>
                  emptyLiteral where
-    escapedInteger = do
+    escapedIntegerOrDecimal = do
       c <- getSourceContext
       escapeStart
       b <- oneOf "bBoOdDxX"
-      d <- case b of
-               'b' -> parseBin
-               'B' -> parseBin
-               'o' -> parseOct
-               'O' -> parseOct
-               'd' -> parseDec
-               'D' -> parseDec
-               'x' -> parseHex
-               'X' -> parseHex
-               _ -> undefined
-      optionalSpace
-      return $ IntegerLiteral [c] True d
+      let (digitParser,base) = case b of
+                                    'b' -> (parseBin,2)
+                                    'B' -> (parseBin,2)
+                                    'o' -> (parseOct,8)
+                                    'O' -> (parseOct,8)
+                                    'd' -> (parseDec,10)
+                                    'D' -> (parseDec,10)
+                                    'x' -> (parseHex,16)
+                                    'X' -> (parseHex,16)
+                                    _ -> undefined
+      d <- fmap snd digitParser
+      decimal c d False base digitParser <|> integer c d True
     integerOrDecimal = do
       c <- getSourceContext
-      d <- parseDec
-      decimal c d <|> integer c d
-    decimal c d = do
+      d <- fmap snd parseDec
+      decimal c d True 10 parseDec <|> integer c d False
+    decimal c d allowExp base digitParser = do
       char_ '.'
-      (n,d2) <- parseSubOne
-      e <- decExponent <|> return 0
+      (n,d2) <- digitParser
+      e <- if allowExp
+              then decExponent <|> return 0
+              else return 0
       optionalSpace
-      return $ DecimalLiteral [c] (d*10^n + d2) (e - n)
+      return $ DecimalLiteral [c] (d*base^n + d2) (e - n) base
     decExponent = do
       string_ "e" <|> string_ "E"
       s <- (string_ "+" >> return 1) <|> (string_ "-" >> return (-1)) <|> return 1
-      e <- parseDec
+      e <- fmap snd parseDec
       return (s*e)
-    integer c d = do
+    integer c d unsigned = do
       optionalSpace
-      return $ IntegerLiteral [c] False d
+      return $ IntegerLiteral [c] unsigned d
     emptyLiteral = do
       c <- getSourceContext
       kwEmpty
@@ -726,7 +728,7 @@ instance ParseFromSource (ValueOperation SourceContext) where
     selectReturn = labeled "return selection" $ do
       c <- getSourceContext
       sepAfter_ (string_ "{")
-      pos <- labeled "return position" parseDec
+      pos <- labeled "return position" $ fmap snd parseDec
       sepAfter_ (string_ "}")
       return $ SelectReturn [c] (fromIntegral pos)
 

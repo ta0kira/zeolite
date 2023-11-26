@@ -637,8 +637,8 @@ compileExpression = compile where
     callFunctionSpec c (Positional [(Nothing,e)]) fa
   compile (UnaryExpression _ (NamedOperator c "-") (Literal (IntegerLiteral _ _ l))) =
     compile (Literal (IntegerLiteral c False (-l)))
-  compile (UnaryExpression _ (NamedOperator c "-") (Literal (DecimalLiteral _ l e))) =
-    compile (Literal (DecimalLiteral c (-l) e))
+  compile (UnaryExpression _ (NamedOperator c "-") (Literal (DecimalLiteral _ l e b))) =
+    compile (Literal (DecimalLiteral c (-l) e b))
   compile (UnaryExpression _ (NamedOperator c o) e) = do
     (Positional ts,e') <- compileExpression e
     t' <- requireSingle c ts
@@ -1017,10 +1017,17 @@ compileValueLiteral (IntegerLiteral c False l) = do
   -- written out as a literal looks like an unsigned overflow. Using ULL here
   -- silences that warning.
   return $ expressionFromLiteral PrimInt (show l ++ "ULL")
-compileValueLiteral (DecimalLiteral _ l e) = do
+compileValueLiteral (DecimalLiteral _ l e 10) = do
   csAddRequired (Set.fromList [BuiltinFloat])
   -- TODO: Check bounds.
   return $ expressionFromLiteral PrimFloat (show l ++ "E" ++ show e)
+compileValueLiteral (DecimalLiteral _ l e b) = do
+  csAddRequired (Set.fromList [BuiltinFloat])
+  let scale = if e < 0
+                 then "/" ++ show (b^(-e))
+                 else "*" ++ show (b^e)
+  -- TODO: Check bounds.
+  return $ expressionFromLiteral PrimFloat ("(" ++ show l ++ "E0" ++ scale ++ ")")
 compileValueLiteral (BoolLiteral _ True) = do
   csAddRequired (Set.fromList [BuiltinBool])
   return $ expressionFromLiteral PrimBool "true"

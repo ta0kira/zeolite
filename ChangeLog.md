@@ -67,6 +67,15 @@
   foo <-> bar
   ```
 
+* **[new]** Allows hex, octal, and binary floating-point literals. (Exponents
+  not allowed due to ambiguity during hex parsing.)
+
+  ```text
+  Float value1 <- \xFED.CBA
+  Float value2 <- \o765.432
+  Float value3 <- \b101.010
+  ```
+
 ### Libraries
 
 * **[breaking]** Updates `Testing` in `lib/testing` to handle `optional` and to

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ instance ParseFromSource (IntegrationTestHeader SourceContext) where
         many (sepAfter quotedString)
       parseTimeout = labeled "testcase timeout" $ do
         keyword "timeout"
-        fmap Just (sepAfter parseDec)
+        fmap (Just . snd) (sepAfter parseDec)
       requireOrExclude = parseAny2 require exclude where
         require = do
           keyword "require"

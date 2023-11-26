@@ -329,18 +329,18 @@ data ValueLiteral c =
   StringLiteral [c] String |
   CharLiteral [c] Char |
   IntegerLiteral [c] Bool Integer |
-  DecimalLiteral [c] Integer Integer |
+  DecimalLiteral [c] Integer Integer Integer |
   BoolLiteral [c] Bool |
   EmptyLiteral [c]
   deriving (Show)
 
 getValueLiteralContext :: ValueLiteral c -> [c]
-getValueLiteralContext (StringLiteral c _)    = c
-getValueLiteralContext (CharLiteral c _)      = c
-getValueLiteralContext (IntegerLiteral c _ _) = c
-getValueLiteralContext (DecimalLiteral c _ _) = c
-getValueLiteralContext (BoolLiteral c _)      = c
-getValueLiteralContext (EmptyLiteral c)       = c
+getValueLiteralContext (StringLiteral c _)      = c
+getValueLiteralContext (CharLiteral c _)        = c
+getValueLiteralContext (IntegerLiteral c _ _)   = c
+getValueLiteralContext (DecimalLiteral c _ _ _) = c
+getValueLiteralContext (BoolLiteral c _)        = c
+getValueLiteralContext (EmptyLiteral c)         = c
 
 data ValueOperation c =
   TypeConversion [c] GeneralInstance |

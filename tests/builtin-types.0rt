@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1057,4 +1057,34 @@ unittest singleNullAsBool {
   if (b2 != true) {
     fail(b2)
   }
+}
+
+
+testcase "Float parsing" {
+  success
+}
+
+unittest decUnescaped {
+  \ Testing.checkEquals(123.456e-3,123.0/1000.0+456.0/1000.0/1000.0)
+  \ Testing.checkEquals(123.456e3,123.0*1000.0+456.0)
+}
+
+unittest decEscaped {
+  \ Testing.checkEquals(\d123.456,123.456)
+  \ Testing.checkEquals(\D123.456,123.456)
+}
+
+unittest hexEscaped {
+  \ Testing.checkEquals(\xff.ee,255.0+238.0/256.0)
+  \ Testing.checkEquals(\Xff.ee,255.0+238.0/256.0)
+}
+
+unittest octEscaped {
+  \ Testing.checkEquals(\o10.10,8.125)
+  \ Testing.checkEquals(\O10.10,8.125)
+}
+
+unittest binEscaped {
+  \ Testing.checkEquals(\b101.101,5.0+5.0/8.0)
+  \ Testing.checkEquals(\B101.101,5.0+5.0/8.0)
 }
