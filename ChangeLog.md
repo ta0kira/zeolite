@@ -67,6 +67,15 @@
   foo <-> bar
   ```
 
+* **[new]** Adds the `<-|` operator to conditionally overwrite an `optional`
+  variable if it's empty.
+
+  ```text
+  optional Int value <- empty
+  value <-| 123  // Assigned, because value was empty.
+  value <-| 456  // Not assigned, because value wasn't empty.
+  ```
+
 * **[new]** Updates the return type of inline `<-` to use the type on the right
   side of the expression, rather than the variable's type.
 

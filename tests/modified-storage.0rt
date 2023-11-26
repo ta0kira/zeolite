@@ -356,6 +356,52 @@ unittest boxedToBoxed {
 }
 
 
+testcase "conditional assignment" {
+  success
+}
+
+concrete Helper {
+  @type notCalled () -> (all)
+}
+
+define Helper {
+  notCalled () {
+    fail("should not be called")
+  }
+}
+
+unittest shortCircuit {
+  optional Int value <- 123
+  value <-| Helper.notCalled()
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(value,123)
+}
+
+unittest unboxedToUnboxed {
+  optional Int value <- empty
+
+  value <-| 123
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(value,123)
+
+  value <-| 456
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(value,123)
+}
+
+unittest boxedToBoxed {
+  optional String value <- empty
+
+  value <-| "message"
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(require(value),"message")
+
+  value <-| "other"
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(require(value),"message")
+}
+
+
 testcase "conditional inline assignment wrong return type" {
   error
   require "Formatted"
@@ -410,4 +456,25 @@ testcase "conditional inline assignment weak" {
 unittest test {
   weak Int value <- 456
   Int value2 <- (value <-| 123)
+}
+
+
+testcase "conditional assignment wrong return count" {
+  error
+  require "return"
+}
+
+concrete Helper {
+  @type get () -> (Int,Int)
+}
+
+define Helper {
+  get () {
+    return 1, 2
+  }
+}
+
+unittest test {
+  optional Int value <- 456
+  value <-| Helper.get()
 }

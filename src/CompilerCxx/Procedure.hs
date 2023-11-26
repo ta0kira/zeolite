@@ -375,6 +375,9 @@ compileStatement (Assignment c as e) = message ??> do
       csWrite [scoped ++ variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
+compileStatement (AssignmentEmpty c n e) = do
+  (_,e') <- compileExpressionStart (InlineAssignment c n AssignIfEmpty e)
+  csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 compileStatement (MarkReadOnly c vs) = mapM_ (\v -> csSetReadOnly (UsedVariable c v)) vs
 compileStatement (MarkHidden   c vs) = mapM_ (\v -> csSetHidden   (UsedVariable c v)) vs
@@ -937,7 +940,10 @@ compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n o e) = do
   (VariableValue _ s t0 _) <- getWritableVariable c n
-  (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
+  e2 <- compileExpression e
+  when (length (pValues $ fst $ e2) /= 1) $
+    compilerErrorM $ "Expected single return" ++ formatFullContextBrace c
+  let (Positional [t],e') = e2
   when (o == AssignIfEmpty && not (isOptionalValue t0)) $
     compilerErrorM $ "Variable must have an optional type" ++ formatFullContextBrace c
   when (o == AssignIfEmpty) $ csCheckVariableInit [UsedVariable c n]

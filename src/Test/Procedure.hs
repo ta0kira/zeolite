@@ -284,6 +284,10 @@ tests = [
     checkShortParseFail "x <- \\o123.",
     checkShortParseFail "x <- \\o123.456E1",
 
+    checkShortParseFail "Int x <-| 123",
+    checkShortParseFail "_ <-| 123",
+    checkShortParseFail "x, y <-| 123",
+
     checkParsesAs "'\"'"
                   (\e -> case e of
                               (Expression _ (UnambiguousLiteral (CharLiteral _ '"')) []) -> True

@@ -140,6 +140,15 @@ instance ParseFromSource (Statement SourceContext) where
     parseAssign = labeled "assignment" $ do
       c <- getSourceContext
       as <- sepBy sourceParser (sepAfter $ string_ ",")
+      case as of
+           [ExistingVariable (InputValue _ n)] -> parseAssignEmpty c n <|> parseAlwaysAssign c as
+           _ -> parseAlwaysAssign c as
+    parseAssignEmpty c n = do
+      assignEmptyOperator
+      e <- sourceParser
+      statementEnd
+      return $ AssignmentEmpty [c] n e
+    parseAlwaysAssign c as = do
       assignOperator
       assignExpr c as <|> assignDefer c as
     parseSwap = labeled "swap" $ do

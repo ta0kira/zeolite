@@ -869,6 +869,22 @@ value &lt;- <span style='color:#b08000;'>1</span>
   <span style='color:#006e28;'>\</span> foo(<b>require</b>(value))
 }</pre>
 
+As of compiler version `0.24.0.0`, you can use `<-|` to conditionally overwrite
+an `optional` variable if it's currently `empty`.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
+value <b><span style='color:#006e28;'>&lt;-|</span></b> <span style='color:#b08000;'>123</span>    <span style='color:#898887;'>// Assigned, because value was empty.</span>
+value <b><span style='color:#006e28;'>&lt;-|</span></b> <span style='color:#b08000;'>456</span>    <span style='color:#898887;'>// Not assigned, because value wasn't empty.</span>
+value <b><span style='color:#006e28;'>&lt;-|</span></b> foo()  <span style='color:#898887;'>// foo() isn't called unless value is empty.</span></pre>
+
+Note that if the right side _isn't_ optional then you can use the result as
+non-optional.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
+<i><span style='color:#0057ae;'>Int</span></i> value2 <b><span style='color:#006e28;'>&lt;-</span></b> (value <b><span style='color:#006e28;'>&lt;-|</span></b> <span style='color:#b08000;'>123</span>)</pre>
+
 **`weak`** values allow your program to access a value *if it is available*,
 without holding up that value's cleanup if nothing else needs it. This can be
 used to let threads clean themselves up (example below) or to handle cycles in

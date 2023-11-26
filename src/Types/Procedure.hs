@@ -181,6 +181,7 @@ data Statement c =
   RawFailCall String |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (Positional (Assignable c)) (Expression c) |
+  AssignmentEmpty [c] VariableName (Expression c) |
   VariableSwap [c] (OutputValue c) (OutputValue c) |
   DeferredVariables [c] [Assignable c] |
   NoValueExpression [c] (VoidExpression c) |
@@ -205,6 +206,7 @@ getStatementContext (ExitCall c _)          = c
 getStatementContext (RawFailCall _)         = []
 getStatementContext (IgnoreValues c _)      = c
 getStatementContext (Assignment c _ _)      = c
+getStatementContext (AssignmentEmpty c _ _) = c
 getStatementContext (VariableSwap c _ _)    = c
 getStatementContext (DeferredVariables c _) = c
 getStatementContext (NoValueExpression c _) = c
