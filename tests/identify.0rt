@@ -221,3 +221,55 @@ define Test {
     }
   }
 }
+
+
+testcase "disallow identify on weak" {
+  error
+  require "[Ww]eak"
+}
+
+unittest test {
+  weak String value <- empty
+  \ identify(value)
+}
+
+
+testcase "disallow identify with params" {
+  error
+  require "param"
+}
+
+unittest test {
+  \ identify<Formatted>("value")
+}
+
+
+testcase "too many args to identify" {
+  error
+  require "arg"
+}
+
+unittest test {
+  \ identify("value",123)
+}
+
+
+testcase "too many returns passed to to identify" {
+  error
+  require "return"
+  require "arg"
+}
+
+unittest test {
+  \ identify(Helper.foo())
+}
+
+concrete Helper {
+  @type foo () -> (Int,Int)
+}
+
+define Helper {
+  foo () {
+    return 1, 2
+  }
+}

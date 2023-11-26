@@ -135,13 +135,13 @@ hasPrimitiveValue _                 = False
 
 isStoredUnboxed :: ValueType -> Bool
 isStoredUnboxed t
-  | t == boolRequiredValue    = True
-  | t == intRequiredValue     = True
-  | t == floatRequiredValue   = True
-  | t == charRequiredValue    = True
-  | isPointerRequiredValue t  = True
+  | t == boolRequiredValue      = True
+  | t == intRequiredValue       = True
+  | t == floatRequiredValue     = True
+  | t == charRequiredValue      = True
+  | isPointerRequiredValue t    = True
   | isIdentifierRequiredValue t = True
-  | otherwise                 = False
+  | otherwise                   = False
 
 expressionFromLiteral :: PrimitiveType -> String -> (ExpressionType,ExpressionValue)
 expressionFromLiteral PrimString e =
@@ -174,24 +174,24 @@ useAsWhatever (UnboxedPrimitive _ e) = e
 useAsWhatever (LazySingle e)         = useAsWhatever $ getFromLazy e
 
 useAsReturns :: ExpressionValue -> String
-useAsReturns (OpaqueMulti e)                   = e
-useAsReturns (WrappedSingle e)                 = "ReturnTuple(" ++ e ++ ")"
-useAsReturns (UnwrappedSingle e)               = "ReturnTuple(" ++ e ++ ")"
-useAsReturns (BoxedPrimitive PrimBool e)       = "ReturnTuple(Box_Bool(" ++ e ++ "))"
-useAsReturns (BoxedPrimitive PrimString e)     = "ReturnTuple(Box_String(" ++ e ++ "))"
-useAsReturns (BoxedPrimitive PrimChar e)       = "ReturnTuple(Box_Char(" ++ e ++ "))"
-useAsReturns (BoxedPrimitive PrimInt e)        = "ReturnTuple(Box_Int(" ++ e ++ "))"
-useAsReturns (BoxedPrimitive PrimFloat e)      = "ReturnTuple(Box_Float(" ++ e ++ "))"
-useAsReturns (BoxedPrimitive PrimPointer e)    = "ReturnTuple(Box_Pointer<void>(" ++ e ++ "))"
+useAsReturns (OpaqueMulti e)                     = e
+useAsReturns (WrappedSingle e)                   = "ReturnTuple(" ++ e ++ ")"
+useAsReturns (UnwrappedSingle e)                 = "ReturnTuple(" ++ e ++ ")"
+useAsReturns (BoxedPrimitive PrimBool e)         = "ReturnTuple(Box_Bool(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimString e)       = "ReturnTuple(Box_String(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimChar e)         = "ReturnTuple(Box_Char(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimInt e)          = "ReturnTuple(Box_Int(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimFloat e)        = "ReturnTuple(Box_Float(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimPointer e)      = "ReturnTuple(Box_Pointer<void>(" ++ e ++ "))"
 useAsReturns (BoxedPrimitive PrimIdentifier e)   = "ReturnTuple(Box_Identifier(" ++ e ++ "))"
-useAsReturns (UnboxedPrimitive PrimBool e)     = "ReturnTuple(Box_Bool(" ++ e ++ "))"
-useAsReturns (UnboxedPrimitive PrimString e)   = "ReturnTuple(Box_String(" ++ e ++ "))"
-useAsReturns (UnboxedPrimitive PrimChar e)     = "ReturnTuple(Box_Char(" ++ e ++ "))"
-useAsReturns (UnboxedPrimitive PrimInt e)      = "ReturnTuple(Box_Int(" ++ e ++ "))"
-useAsReturns (UnboxedPrimitive PrimFloat e)    = "ReturnTuple(Box_Float(" ++ e ++ "))"
-useAsReturns (UnboxedPrimitive PrimPointer e)  = "ReturnTuple(Box_Pointer<void>(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimBool e)       = "ReturnTuple(Box_Bool(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimString e)     = "ReturnTuple(Box_String(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimChar e)       = "ReturnTuple(Box_Char(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimInt e)        = "ReturnTuple(Box_Int(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimFloat e)      = "ReturnTuple(Box_Float(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimPointer e)    = "ReturnTuple(Box_Pointer<void>(" ++ e ++ "))"
 useAsReturns (UnboxedPrimitive PrimIdentifier e) = "ReturnTuple(Box_Identifier(" ++ e ++ "))"
-useAsReturns (LazySingle e)                    = useAsReturns $ getFromLazy e
+useAsReturns (LazySingle e)                      = useAsReturns $ getFromLazy e
 
 useAsArgs :: ExpressionValue -> String
 useAsArgs (OpaqueMulti e)                     = e
@@ -255,9 +255,9 @@ useAsUnboxed PrimInt        (UnwrappedSingle e) = "(" ++ e ++ ").AsInt()"
 useAsUnboxed PrimFloat      (UnwrappedSingle e) = "(" ++ e ++ ").AsFloat()"
 useAsUnboxed PrimPointer    (UnwrappedSingle e) = "(" ++ e ++ ").AsPointer<OpaqueObject>()"
 useAsUnboxed PrimIdentifier (UnwrappedSingle e) = "(" ++ e ++ ").AsIdentifier()"
-useAsUnboxed _ (BoxedPrimitive _ e)           = e
-useAsUnboxed _ (UnboxedPrimitive _ e)         = e
-useAsUnboxed t (LazySingle e)                 = useAsUnboxed t $ getFromLazy e
+useAsUnboxed _ (BoxedPrimitive _ e)             = e
+useAsUnboxed _ (UnboxedPrimitive _ e)           = e
+useAsUnboxed t (LazySingle e)                   = useAsUnboxed t $ getFromLazy e
 
 valueAsWrapped :: ExpressionValue -> ExpressionValue
 valueAsWrapped (UnwrappedSingle e)                 = WrappedSingle e
