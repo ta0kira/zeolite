@@ -158,11 +158,11 @@ expressionFromLiteral PrimPointer _ = undefined
 expressionFromLiteral PrimIdentifier _ = undefined
 
 getFromLazy :: ExpressionValue -> ExpressionValue
-getFromLazy (OpaqueMulti e)        = OpaqueMulti $ e ++ ".Get()"
-getFromLazy (WrappedSingle e)      = WrappedSingle $ e ++ ".Get()"
-getFromLazy (UnwrappedSingle e)    = UnwrappedSingle $ e ++ ".Get()"
-getFromLazy (BoxedPrimitive t e)   = BoxedPrimitive t $ e ++ ".Get()"
-getFromLazy (UnboxedPrimitive t e) = UnboxedPrimitive t  $ e ++ ".Get()"
+getFromLazy (OpaqueMulti e)        = OpaqueMulti $ "(" ++ e ++ ").Get()"
+getFromLazy (WrappedSingle e)      = WrappedSingle $ "(" ++ e ++ ").Get()"
+getFromLazy (UnwrappedSingle e)    = UnwrappedSingle $ "(" ++ e ++ ").Get()"
+getFromLazy (BoxedPrimitive t e)   = BoxedPrimitive t $ "(" ++ e ++ ").Get()"
+getFromLazy (UnboxedPrimitive t e) = UnboxedPrimitive t  $ "(" ++ e ++ ").Get()"
 getFromLazy (LazySingle e)         = LazySingle $ getFromLazy e
 
 useAsWhatever :: ExpressionValue -> String
