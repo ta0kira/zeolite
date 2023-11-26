@@ -945,8 +945,8 @@ compileExpressionStart (InlineAssignment c n e) = do
   csUpdateAssigned n
   scoped <- autoScope s
   let lazy = s == CategoryScope
-  return (Positional [t0],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
-                                                     " = " ++ writeStoredVariable t0 e' ++ ")")
+  return (Positional [t],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
+                                                      " = " ++ writeStoredVariable t0 e' ++ ")")
 compileExpressionStart (InitializeValue c t es) = do
   scope <- csCurrentScope
   t' <- case scope of

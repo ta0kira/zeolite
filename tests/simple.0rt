@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020,2022 Kevin P. Barry
+Copyright 2020,2022-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -145,3 +145,43 @@ testcase "args escaped properly" {
 }
 
 unittest test {}
+
+
+testcase "inline assignment return type" {
+  success
+}
+
+unittest unboxedToUnboxed {
+  Int value <- 456
+  Int value2 <- (value <- 123)
+  \ Testing.checkEquals(value2,123)
+  \ Testing.checkEquals(value,123)
+}
+
+unittest unboxedToBoxed {
+  optional Formatted value <- empty
+  Int value2 <- (value <- 123)
+  \ Testing.checkEquals(value2,123)
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(require(value).formatted(),"123")
+}
+
+unittest boxedToBoxed {
+  optional Formatted value <- empty
+  String value2 <- (value <- "message")
+  \ Testing.checkEquals(value2,"message")
+  \ Testing.checkPresent(value)
+  \ Testing.checkEquals(require(value).formatted(),"message")
+}
+
+
+testcase "inline assignment wrong return type" {
+  error
+  require "String"
+  require "Int"
+}
+
+unittest test {
+  optional Formatted value <- empty
+  String value2 <- (value <- 123)
+}

@@ -67,6 +67,14 @@
   foo <-> bar
   ```
 
+* **[new]** Updates the return type of inline `<-` to use the type on the right
+  side of the expression, rather than the variable's type.
+
+  ```text
+  optional Formatted value <- empty
+  Int value2 <- (value <- 123)
+  ```
+
 * **[new]** Allows hex, octal, and binary floating-point literals. (Exponents
   not allowed due to ambiguity during hex parsing.)
 
