@@ -158,6 +158,7 @@
         <!--This prevents Initializer from capturing categories and statements.-->
         <DetectChar attribute="Normal Text" context="Braces" char="{" />
         <RegExpr attribute="Assign" context="#stay" String="&lt;-&gt;" />
+        <RegExpr attribute="Assign" context="#stay" String="&lt;-\|" />
         <RegExpr attribute="Assign" context="#stay" String="&lt;-|-&gt;" />
         <RegExpr attribute="Arg Label" context="#stay" String="[a-z][a-zA-Z0-9]*:" />
         <IncludeRules context="Any Expression" />

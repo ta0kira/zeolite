@@ -21,6 +21,7 @@ limitations under the License.
 module Types.Procedure (
   ArgValues(..),
   Assignable(..),
+  AssignmentType(..),
   ExecutableProcedure(..),
   Expression(..),
   ExpressionStart(..),
@@ -312,6 +313,11 @@ data FunctionCall c =
   FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Maybe (CallArgLabel c), Expression c))
   deriving (Show)
 
+data AssignmentType =
+  AlwaysAssign |
+  AssignIfEmpty
+  deriving (Eq,Show)
+
 data ExpressionStart c =
   NamedVariable (OutputValue c) |
   NamedMacro [c] MacroName |
@@ -320,7 +326,7 @@ data ExpressionStart c =
   UnqualifiedCall [c] (FunctionCall c) |
   BuiltinCall [c] (FunctionCall c) |
   ParensExpression [c] (Expression c) |
-  InlineAssignment [c] VariableName (Expression c) |
+  InlineAssignment [c] VariableName AssignmentType (Expression c) |
   InitializeValue [c] (Maybe TypeInstance) (Positional (Expression c)) |
   UnambiguousLiteral (ValueLiteral c)
   deriving (Show)

@@ -587,9 +587,9 @@ instance ParseFromSource (ExpressionStart SourceContext) where
     assign :: SourceContext -> TextParser (ExpressionStart SourceContext)
     assign c = do
       n <- sourceParser
-      assignOperator
+      o <- (assignEmptyOperator >> return AssignIfEmpty) <|> (assignOperator >> return AlwaysAssign)
       e <- sourceParser
-      return $ InlineAssignment [c] n e
+      return $ InlineAssignment [c] n o e
     expr :: SourceContext -> TextParser (ExpressionStart SourceContext)
     expr c = do
       e <- sourceParser

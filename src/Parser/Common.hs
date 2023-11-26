@@ -21,6 +21,7 @@ limitations under the License.
 module Parser.Common (
   ParseFromSource(..),
   anyComment,
+  assignEmptyOperator,
   assignOperator,
   blockComment,
   builtinValues,
@@ -165,6 +166,9 @@ useNewOperators = newCategory <|> newType where
 
 assignOperator :: TextParser ()
 assignOperator = operator "<-" >> return ()
+
+assignEmptyOperator :: TextParser ()
+assignEmptyOperator = operator "<-|" >> return ()
 
 swapOperator :: TextParser ()
 swapOperator = operator "<->" >> return ()

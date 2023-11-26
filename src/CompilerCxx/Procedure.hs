@@ -935,9 +935,12 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
             valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
 compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
-compileExpressionStart (InlineAssignment c n e) = do
+compileExpressionStart (InlineAssignment c n o e) = do
   (VariableValue _ s t0 _) <- getWritableVariable c n
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
+  when (o == AssignIfEmpty && not (isOptionalValue t0)) $
+    compilerErrorM $ "Variable must have an optional type" ++ formatFullContextBrace c
+  when (o == AssignIfEmpty) $ csCheckVariableInit [UsedVariable c n]
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t t0) <??
@@ -945,8 +948,16 @@ compileExpressionStart (InlineAssignment c n e) = do
   csUpdateAssigned n
   scoped <- autoScope s
   let lazy = s == CategoryScope
-  return (Positional [t],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
-                                                      " = " ++ writeStoredVariable t0 e' ++ ")")
+  let variable = scoped ++ variableName n
+  let assign = variable ++ " = " ++ writeStoredVariable t0 e'
+  let check = "BoxedValue::Present(" ++ useAsUnwrapped (readStoredVariable lazy t0 variable) ++ ")"
+  let alwaysAssign = readStoredVariable lazy t0 assign
+  let maybeAssign = readStoredVariable lazy t0 $ check ++ " ? " ++ variable ++ " : (" ++ assign ++ ")"
+  case o of
+       AlwaysAssign -> return (Positional [t],alwaysAssign)
+       AssignIfEmpty -> return (Positional [combineTypes t0 t],maybeAssign)
+  where
+    combineTypes (ValueType _ t1) (ValueType s _) = ValueType s t1
 compileExpressionStart (InitializeValue c t es) = do
   scope <- csCurrentScope
   t' <- case scope of

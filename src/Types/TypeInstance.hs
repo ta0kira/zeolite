@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2022,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ module Types.TypeInstance (
   getValueForParam,
   hasInferredParams,
   isDefinesFilter,
+  isOptionalValue,
   isRequiresFilter,
   isWeakValue,
   mapTypeGuesses,
@@ -123,6 +124,9 @@ instance Show ValueType where
 
 isWeakValue :: ValueType -> Bool
 isWeakValue = (== WeakValue) . vtRequired
+
+isOptionalValue :: ValueType -> Bool
+isOptionalValue = (== OptionalValue) . vtRequired
 
 requiredSingleton :: CategoryName -> ValueType
 requiredSingleton n = ValueType RequiredValue $ singleType $ JustTypeInstance $ TypeInstance n (Positional [])
