@@ -231,15 +231,10 @@ testcase "custom testcase is finished on exit" {
 
 concrete Helper {
   defines Testcase
-  @type started () -> (Bool)
 }
 
 define Helper {
   @category Bool started <- false
-
-  started () {
-    return started
-  }
 
   start () {
     started <- true
@@ -255,5 +250,40 @@ define Helper {
 }
 
 unittest test {
-  exit(1)
+  exit(0)
+}
+
+
+testcase "custom testcase is finished at most once with explicit exit" {
+  success Helper
+}
+
+concrete Helper {
+  defines Testcase
+  @type started () -> (Bool)
+}
+
+define Helper {
+  @category Bool started <- false
+  @category Bool called <- false
+
+  started () {
+    return started
+  }
+
+  start () {
+    started <- true
+  }
+
+  finish () {
+    if (called) {
+      fail("called twice")
+    }
+    called <- false
+  }
+}
+
+unittest test {
+  \ Testing.checkTrue(Helper.started())
+  exit(0)
 }
