@@ -960,9 +960,12 @@ compileExpressionStart (InlineAssignment c n o e) = do
   let alwaysAssign = readStoredVariable lazy t0 assign
   let maybeAssign = readStoredVariable lazy t0 $ check ++ " ? " ++ variable ++ " : (" ++ assign ++ ")"
   case o of
-       AlwaysAssign -> return (Positional [t],alwaysAssign)
+       AlwaysAssign -> return (Positional [upgradeType t0 t],alwaysAssign)
        AssignIfEmpty -> return (Positional [combineTypes t0 t],maybeAssign)
   where
+    upgradeType t1 t2
+      | isWeakValue t1 = t1
+      | otherwise = t2
     combineTypes (ValueType _ t1) (ValueType s _) = ValueType s t1
 compileExpressionStart (InitializeValue c t es) = do
   scope <- csCurrentScope
