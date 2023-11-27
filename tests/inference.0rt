@@ -438,7 +438,7 @@ define Convert {
 
 
 testcase "dependent implicit param inferred from requires" {
-  crash
+  failure
   require "m e s s a g e"
 }
 
@@ -471,7 +471,7 @@ define Type {
 
 
 testcase "dependent implicit param inferred from defines" {
-  crash
+  failure
   require "String"
 }
 
@@ -499,7 +499,7 @@ define Type {
 
 
 testcase "dependent implicit param inferred from allows" {
-  crash
+  failure
   require "String"
 }
 
@@ -527,7 +527,7 @@ define Type {
 
 
 testcase "dependent implicit param inferred from reverse allows" {
-  crash
+  failure
   require "String"
 }
 
@@ -555,7 +555,7 @@ define Type {
 
 
 testcase "dependent implicit param inferred from reverse requires" {
-  crash
+  failure
   require "String"
 }
 
@@ -608,7 +608,7 @@ define Type {
 
 
 testcase "filter guess merged with arg guess" {
-  crash
+  failure
   require "String"
   exclude "Formatted"
 }
@@ -705,7 +705,7 @@ define Test {
 
 
 testcase "variance allows guesses to be merged using meta type" {
-  crash
+  failure
   require "\[Int\|String\]"
 }
 
@@ -742,7 +742,7 @@ define Test {
 
 
 testcase "alternative guess eliminated by filter" {
-  crash
+  failure
   require "Int"
 }
 

@@ -213,7 +213,7 @@ define Type {
 
 testcase "Issue #126 is fixed" {
   // https://github.com/ta0kira/zeolite/issues/126
-  crash
+  failure
   require "message,12345,false"
 }
 
@@ -296,7 +296,7 @@ define Type {
 
 testcase "Issue #185 is fixed" {
   // https://github.com/ta0kira/zeolite/issues/185
-  crash
+  failure
   require "message"
 }
 

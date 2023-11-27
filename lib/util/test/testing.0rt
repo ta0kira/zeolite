@@ -26,7 +26,7 @@ unittest test {
 
 
 testcase "UtilTesting.checkError with value" {
-  crash
+  failure
   require "message"
 }
 
@@ -45,7 +45,7 @@ unittest test {
 
 
 testcase "UtilTesting.checkSuccess bad value" {
-  crash
+  failure
   require "message"
   require "foo"
 }
@@ -56,7 +56,7 @@ unittest test {
 
 
 testcase "UtilTesting.checkSuccess with error" {
-  crash
+  failure
   require "message"
   require "failure"
 }
@@ -76,7 +76,7 @@ unittest test {
 
 
 testcase "UtilTesting.checkSuccess bad value" {
-  crash
+  failure
   require "7.+0.*2"
 }
 
@@ -86,7 +86,7 @@ unittest test {
 
 
 testcase "UtilTesting.checkSuccess with error" {
-  crash
+  failure
   require "0.*2"
   require "failure"
 }

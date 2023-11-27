@@ -38,7 +38,7 @@ unittest negativePrecise {
 
 
 testcase "sleepSeconds() does not interfere with test timeout" {
-  crash
+  failure
   require "signal 14"
   timeout 1
 }
@@ -49,7 +49,7 @@ unittest test {
 
 
 testcase "sleepSecondsPrecise() does not interfere with test timeout" {
-  crash
+  failure
   require "signal 14"
   timeout 1
 }

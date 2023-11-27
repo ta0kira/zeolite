@@ -239,7 +239,7 @@ define Test {
 
 
 testcase "crash in if" {
-  crash
+  failure
   require "empty"
 }
 
@@ -252,7 +252,7 @@ unittest test {
 
 
 testcase "crash in elif" {
-  crash
+  failure
   require "empty"
 }
 

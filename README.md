@@ -2055,13 +2055,13 @@ slightly different, and `unittest` was not available.
 }
 
 
-<b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;intentional crash&quot;</span> {
-  <span style='color:#898887;'>// The test is expected to crash.</span>
-  <span style='color:#04e040;'>crash</span>
+<b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;intentional failure&quot;</span> {
+  <span style='color:#898887;'>// The test is expected to failure.</span>
+  <span style='color:#04e040;'>failure</span>
   <span style='color:#04e040;'>require</span> <span style='color:#04e040;'>stderr</span> <span style='color:#bf0303;'>&quot;message&quot;</span>  <span style='color:#898887;'>// stderr should include &quot;message&quot;.</span>
 }
 
-<span style='color:#898887;'>// Exactly one unittest must be defined when a crash is expected.</span>
+<span style='color:#898887;'>// Exactly one unittest must be defined when a failure is expected.</span>
 
 <b>unittest</b> <b><span style='color:#0057ae;'>myTest</span></b> {
   <span style='color:#898887;'>// Use the fail built-in to cause a test failure.</span>
@@ -2092,8 +2092,9 @@ Specific things to keep in mind with `testcase`:
   is specified in seconds. Specifing `timeout 0` disables the time limit.
 - To simplify parsing, there are a few limitations with how you order the fields
   in a `testcase`:
-  - The expected outcome (`success`, `crash`, `error`, `compiles`) must be at
-    the top.
+  - The expected outcome (`success`, `failure`, `error`, `compiles`) must be at
+    the top. (Prior to compiler version `0.24.0.0`, `crash` was used instead of
+    `failure`.)
   - All `require` and `exclude` patterns must be grouped together. (Put another
     way, if a field other than `require` or `exclude` follows one of those two,
     the parser will move on.)

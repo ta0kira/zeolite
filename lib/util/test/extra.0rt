@@ -41,7 +41,7 @@ unittest subSequence {
 
 
 testcase "Argv readAt out of bounds" {
-  crash
+  failure
   require "index 5"
 }
 
@@ -51,7 +51,7 @@ unittest test {
 
 
 testcase "Argv subSequence out of bounds" {
-  crash
+  failure
   require "index 5"
 }
 
@@ -85,7 +85,7 @@ unittest convertError {
 
 
 testcase "ErrorOr getError() crashes with value" {
-  crash
+  failure
   require "empty"
 }
 
@@ -96,7 +96,7 @@ unittest test {
 
 
 testcase "ErrorOr getValue() crashes with error" {
-  crash
+  failure
   require "error message"
 }
 
@@ -107,7 +107,7 @@ unittest test {
 
 
 testcase "ErrorOr convertError() crashes with no error" {
-  crash
+  failure
   require "no error"
 }
 
@@ -163,7 +163,7 @@ unittest defaultOrder {
 
 
 testcase "AlwaysEmpty.readAt fails" {
-  crash
+  failure
   require "empty"
 }
 
@@ -173,7 +173,7 @@ unittest readAt {
 
 
 testcase "AlwaysEmpty.writeAt fails" {
-  crash
+  failure
   require "empty"
 }
 

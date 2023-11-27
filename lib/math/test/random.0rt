@@ -59,7 +59,7 @@ unittest categorical {
 
 
 testcase "negative lambda in exponential" {
-  crash
+  failure
   require "lambda"
   require "-1"
 }
@@ -70,7 +70,7 @@ unittest test {
 
 
 testcase "negative standard deviation in gaussian" {
-  crash
+  failure
   require "standard deviation"
   require "-1"
 }
@@ -81,7 +81,7 @@ unittest test {
 
 
 testcase "empty range in uniform" {
-  crash
+  failure
   require "range"
   require "0,-1"
 }
@@ -92,7 +92,7 @@ unittest test {
 
 
 testcase "sampling with empty CategoricalTree" {
-  crash
+  failure
   require "less than the total"
 }
 

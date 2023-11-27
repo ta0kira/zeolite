@@ -169,7 +169,7 @@ unittest integrationTest { $DisableCoverage$
 
 
 testcase "negative size crashes" {
-  crash
+  failure
   require "size.+negative"
 }
 
@@ -179,7 +179,7 @@ unittest test {
 
 
 testcase "negative position crashes" {
-  crash
+  failure
   require "position.+negative"
 }
 
@@ -189,7 +189,7 @@ unittest test {
 
 
 testcase "position past end crashes" {
-  crash
+  failure
   require "position.+total"
 }
 

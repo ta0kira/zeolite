@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "NoTrace skips tracing" {
-  crash
+  failure
   require "message"
   require "Test\.error"
   exclude "Test\.noTrace"
@@ -43,7 +43,7 @@ define Test {
 }
 
 testcase "NoTrace works in cleanup" {
-  crash
+  failure
   require "message"
   require "Test\.error"
   exclude "Test\.noTrace"
@@ -72,7 +72,7 @@ define Test {
 
 
 testcase "TraceCreation captures trace" {
-  crash
+  failure
   require "message"
   require "Type.+creation"
 }
@@ -112,7 +112,7 @@ define Test {
 
 
 testcase "TraceCreation still works with NoTrace" {
-  crash
+  failure
   require "message"
   require "Type.+creation"
   exclude "Type\.call"
@@ -140,7 +140,7 @@ define Type {
 
 
 testcase "TraceCreation only uses the latest" {
-  crash
+  failure
   require "message"
   require "Type1.+creation"
   exclude "Type2.+creation"
@@ -185,7 +185,7 @@ define Type2 {
 
 
 testcase "correct function name used for non-merged function" {
-  crash
+  failure
   require "message"
   require "Type\.call"
   exclude "Base"

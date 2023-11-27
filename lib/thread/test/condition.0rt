@@ -150,7 +150,7 @@ define WaitAndUpdate {
 
 
 testcase "wait() crashes if not locked first" {
-  crash
+  failure
   require "waiting for condition"
 }
 
@@ -160,7 +160,7 @@ unittest test {
 
 
 testcase "timedWait() crashes if not locked first" {
-  crash
+  failure
   require "waiting for condition"
 }
 
@@ -170,7 +170,7 @@ unittest test {
 
 
 testcase "timedWait() crashes with negative wait" {
-  crash
+  failure
   require "-0\.1"
 }
 

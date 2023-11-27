@@ -32,7 +32,7 @@ unittest spinlockLockUnlock {
 
 
 testcase "MutexLock crashes if not freed" {
-  crash
+  failure
   require "not freed"
 }
 
@@ -43,7 +43,7 @@ unittest test {
 
 
 testcase "MutexLock crashes if freed twice" {
-  crash
+  failure
   require "freed multiple times"
 }
 

@@ -92,7 +92,7 @@ define WaitAndIncrement {
 
 
 testcase "EnumeratedBarrier crashes with negative count" {
-  crash
+  failure
   require "-4"
 }
 
@@ -102,7 +102,7 @@ unittest test {
 
 
 testcase "wait() crashes when references are lost" {
-  crash
+  failure
   require "BarrierWait.*destroyed"
 }
 
@@ -115,7 +115,7 @@ unittest test {
 
 
 testcase "references lost during wait() causes crash" {
-  crash
+  failure
   require "BarrierWait.*waiting"
 }
 
@@ -149,7 +149,7 @@ define WaitAndExit {
 
 
 testcase "wait() crashes when two threads use same BarrierWait" {
-  crash
+  failure
   require "BarrierWait.*in use"
 }
 

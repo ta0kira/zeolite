@@ -565,7 +565,7 @@ unittest resizeUp {
 
 
 testcase "CharBuffer read negative" {
-  crash
+  failure
   require "-10"
   require "bounds"
 }
@@ -576,7 +576,7 @@ unittest test {
 
 
 testcase "CharBuffer read past end" {
-  crash
+  failure
   require "3"
   require "bounds"
 }
@@ -587,7 +587,7 @@ unittest test {
 
 
 testcase "CharBuffer write negative" {
-  crash
+  failure
   require "-10"
   require "bounds"
 }
@@ -598,7 +598,7 @@ unittest test {
 
 
 testcase "CharBuffer write past end" {
-  crash
+  failure
   require "3"
   require "bounds"
 }
@@ -609,7 +609,7 @@ unittest test {
 
 
 testcase "CharBuffer new negative" {
-  crash
+  failure
   require "-10"
   require "size"
 }
@@ -620,7 +620,7 @@ unittest test {
 
 
 testcase "CharBuffer resize negative" {
-  crash
+  failure
   require "-10"
   require "size"
 }
@@ -708,7 +708,7 @@ unittest fromCharBuffer {
 
 
 testcase "String access negative" {
-  crash
+  failure
   require "-10"
   require "bounds"
 }
@@ -729,7 +729,7 @@ concrete Test {
 
 
 testcase "String access past end" {
-  crash
+  failure
   require "3"
   require "bounds"
 }
@@ -750,7 +750,7 @@ concrete Test {
 
 
 testcase "String subsequence past end" {
-  crash
+  failure
   require "3"
   require "size"
 }

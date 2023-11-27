@@ -134,7 +134,7 @@ define Test {
 
 
 testcase "@category member init when read" {
-  crash
+  failure
   require "do not use"
 }
 
@@ -166,7 +166,7 @@ define Test {
 
 
 testcase "@category member init when assigned" {
-  crash
+  failure
   require "do not use"
 }
 
@@ -198,7 +198,7 @@ define Test {
 
 
 testcase "@category member init when ignored" {
-  crash
+  failure
   require "do not use"
 }
 
@@ -258,7 +258,7 @@ define Test {
 
 
 testcase "@category init cycle" {
-  crash
+  failure
   require "Value1|Value2"
 }
 

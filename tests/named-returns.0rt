@@ -261,7 +261,7 @@ define Test {
 
 
 testcase "positional return sets named return" {
-  crash
+  failure
   require "message"
 }
 
@@ -313,7 +313,7 @@ define Test {
 
 
 testcase "named return not checked in condition that jumps" {
-  crash
+  failure
   require "success"
 }
 

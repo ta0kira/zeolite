@@ -211,7 +211,7 @@ define Type {
 
 
 testcase "negative Vector index" {
-  crash
+  failure
 }
 
 unittest test {
@@ -221,7 +221,7 @@ unittest test {
 
 
 testcase "Vector index out of bounds" {
-  crash
+  failure
 }
 
 unittest test {

@@ -47,7 +47,7 @@ unittest test {
 
 
 testcase "error writer" {
-  crash
+  failure
   require "message1"
   require "message2"
   require "message3"

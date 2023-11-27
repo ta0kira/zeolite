@@ -295,7 +295,7 @@ unittest cleanupBeforeReturn {
 
 
 testcase "crash in while" {
-  crash
+  failure
   require "empty"
 }
 
@@ -432,7 +432,7 @@ define Type {
 
 
 testcase "return set in predicate" {
-  crash
+  failure
   require "message"
 }
 

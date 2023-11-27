@@ -32,8 +32,10 @@
 
   This is a breaking change because `delegate` is now reserved.
 
+* **[breaking]** In `testcase`, renames `crash` to `failure`.
+
 * **[breaking]** In `testcase`, you can now optionally include a type name that
-  `defines Testcase` after `success`/`crash`. The test will automatically call
+  `defines Testcase` after `success`/`failure`. The test will automatically call
   `start()` and `finish()`, which is meant to allow custom checks upon test
   exit. This is breaking because `Testcase` is now reserved.
 

@@ -27,7 +27,7 @@ unittest test {
 
 
 testcase "MODULE_PATH is absolute" {
-  crash
+  failure
   require "Failed condition: /.+/tests"
 }
 
@@ -37,7 +37,7 @@ unittest test {
 
 
 testcase "MODULE_PATH from regular source" {
-  crash
+  failure
   require "Failed condition: /.+/tests"
 }
 
@@ -57,7 +57,7 @@ unittest test {
 
 
 testcase "macro used inline in expressions" {
-  crash
+  failure
   require "Failed condition: /.+/tests is the path"
 }
 
@@ -147,7 +147,7 @@ unittest test {
 
 
 testcase "source context" {
-  crash
+  failure
   require "tests/expr-lookup\.0rt"
 }
 

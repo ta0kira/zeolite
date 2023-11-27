@@ -47,7 +47,7 @@ define Test {
 
 
 testcase "basic crash test" {
-  crash
+  failure
   require stderr "testcase:"
   require stderr "failure message!!!"
   exclude stdout "failure message!!!"
@@ -127,7 +127,7 @@ unittest test {
 
 
 testcase "custom timeout works as expected" {
-  crash
+  failure
   require "signal 14"
   timeout 1
 }
@@ -188,7 +188,7 @@ unittest test {
 
 
 testcase "custom testcase is started and finished" {
-  crash Helper
+  failure Helper
   require "started"
   exclude "not started"
 }
@@ -224,7 +224,7 @@ unittest test {
 
 
 testcase "custom testcase is finished on exit" {
-  crash Helper
+  failure Helper
   require "started"
   exclude "not started"
 }

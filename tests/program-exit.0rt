@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "fail builtin" {
-  crash
+  failure
   require stderr "Failed"
   require stderr "failedReturn"
 }
@@ -80,7 +80,7 @@ define Test {
 
 
 testcase "exit builtin non-zero" {
-  crash
+  failure
   // Should not output a stack trace.
   exclude "exitReturn"
 }
@@ -112,7 +112,7 @@ unittest test {
 
 
 testcase "require empty" {
-  crash
+  failure
   require stderr "require.+empty"
 }
 

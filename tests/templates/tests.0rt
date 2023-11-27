@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "template compiles to binary" {
-  crash
+  failure
   require "Templated:create is not implemented"
 }
 
@@ -27,7 +27,7 @@ unittest test {
 
 
 testcase "private template generated" {
-  crash
+  failure
   require "Templated2\.create is not implemented"
 }
 

@@ -355,7 +355,7 @@ unittest test {
 
 
 testcase "deferred not checked in condition that jumps" {
-  crash
+  failure
   require "success"
 }
 

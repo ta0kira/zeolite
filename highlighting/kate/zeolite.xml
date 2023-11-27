@@ -144,8 +144,8 @@
 
     <list name="testcaseStatus">
       <item> compiles </item>
-      <item> crash </item>
       <item> error </item>
+      <item> failure </item>
       <item> success </item>
     </list>
 

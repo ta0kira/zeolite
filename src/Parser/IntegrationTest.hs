@@ -57,9 +57,9 @@ instance ParseFromSource (IntegrationTestHeader SourceContext) where
         c <- getSourceContext
         keyword "error"
         return $ ExpectCompilerError [c]
-      resultCrash = labeled "crash expectation" $ do
+      resultCrash = labeled "failure expectation" $ do
         c <- getSourceContext
-        keyword "crash"
+        keyword "failure"
         t <- fmap Just parseTestcaseType <|> return Nothing
         return $ ExpectRuntimeError [c] t
       resultSuccess = labeled "success expectation" $ do

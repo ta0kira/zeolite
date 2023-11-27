@@ -27,7 +27,7 @@ unittest test {
 
 
 testcase "checkEquals fail non-empty" {
-  crash
+  failure
   require stderr "13"
   require stderr "15"
 }
@@ -38,7 +38,7 @@ unittest test {
 
 
 testcase "checkEquals fail empty" {
-  crash
+  failure
   require stderr "13"
   require stderr "empty"
 }
@@ -60,7 +60,7 @@ unittest test {
 
 
 testcase "checkNotEquals fail non-empty" {
-  crash
+  failure
   require stderr "13.*13"
 }
 
@@ -70,7 +70,7 @@ unittest test {
 
 
 testcase "checkNotEquals fail empty" {
-  crash
+  failure
   require stderr "empty.*empty"
 }
 
@@ -94,7 +94,7 @@ unittest notFormatted {
 
 
 testcase "checkEmpty fail formatted" {
-  crash
+  failure
   require stderr "13"
   require stderr "empty"
 }
@@ -105,7 +105,7 @@ unittest test {
 
 
 testcase "checkEmpty fail unformatted" {
-  crash
+  failure
   require stderr "unknown"
   require stderr "empty"
 }
@@ -126,7 +126,7 @@ unittest test {
 
 
 testcase "checkPresent fail" {
-  crash
+  failure
   require stderr "empty"
 }
 
@@ -145,7 +145,7 @@ unittest test {
 
 
 testcase "checkBetween fail non-empty" {
-  crash
+  failure
   require stderr "13"
   require stderr "14"
   require stderr "15"
@@ -157,7 +157,7 @@ unittest test {
 
 
 testcase "checkBetween fail empty" {
-  crash
+  failure
   require stderr "empty"
   require stderr "14"
   require stderr "15"
@@ -169,7 +169,7 @@ unittest test {
 
 
 testcase "checkBetween bad range" {
-  crash
+  failure
   exclude stderr "14"
   require stderr "13"
   require stderr "15"
@@ -190,7 +190,7 @@ unittest test {
 
 
 testcase "checkGreaterThan fail non-empty" {
-  crash
+  failure
   require stderr "13"
   require stderr "14"
 }
@@ -201,7 +201,7 @@ unittest test {
 
 
 testcase "checkGreaterThan fail empty" {
-  crash
+  failure
   require stderr "empty"
   require stderr "14"
 }
@@ -221,7 +221,7 @@ unittest test {
 
 
 testcase "checkLessThan fail non-empty" {
-  crash
+  failure
   require stderr "13"
   require stderr "11"
 }
@@ -232,7 +232,7 @@ unittest test {
 
 
 testcase "checkLessThan fail empty" {
-  crash
+  failure
   require stderr "empty"
   require stderr "11"
 }
@@ -252,7 +252,7 @@ unittest test {
 
 
 testcase "checkTrue fail non-empty" {
-  crash
+  failure
   require stderr "true"
 }
 
@@ -262,7 +262,7 @@ unittest test {
 
 
 testcase "checkTrue fail empty" {
-  crash
+  failure
   require stderr "true"
 }
 
@@ -281,7 +281,7 @@ unittest test {
 
 
 testcase "checkFalse fail non-empty" {
-  crash
+  failure
   require stderr "false"
 }
 
@@ -291,7 +291,7 @@ unittest test {
 
 
 testcase "checkFalse fail empty" {
-  crash
+  failure
   require stderr "false"
 }
 

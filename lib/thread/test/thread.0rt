@@ -169,7 +169,7 @@ define CheckArgv {
 
 
 testcase "join() crashes if Thread not started yet" {
-  crash
+  failure
   require "thread.*started"
 }
 
@@ -188,7 +188,7 @@ unittest test {
 
 
 testcase "join() twice crashes" {
-  crash
+  failure
   require "thread.*started"
 }
 
@@ -198,7 +198,7 @@ unittest test {
 
 
 testcase "detach() crashes if Thread not started yet" {
-  crash
+  failure
   require "thread.*started"
 }
 
@@ -217,7 +217,7 @@ unittest test {
 
 
 testcase "detach() twice crashes" {
-  crash
+  failure
   require "thread.*started"
 }
 
@@ -246,7 +246,7 @@ unittest notStarted {
 
 
 testcase "creation tracing in Thread" {
-  crash
+  failure
   // Thread creation.
   require "CrashThread\.new"
   // Inherited trace from start call.

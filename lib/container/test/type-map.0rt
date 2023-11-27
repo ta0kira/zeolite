@@ -125,7 +125,7 @@ define Value {
 
 
 testcase "TypeKey formatted" {
-  crash
+  failure
   require "TypeKey<Int>\{[0-9a-fA-F]+\}"
 }
 

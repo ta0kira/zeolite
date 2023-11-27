@@ -125,7 +125,7 @@ runSingleTest b cl cm paths deps (f,s) = do
            checkContent rs es (lines warnings) [] []
 
     run (ExpectRuntimeError _ t rs es) args timeout cs ds ts = do
-      when (length ts /= 1) $ compilerErrorM "Exactly one unittest is required when crash is expected"
+      when (length ts /= 1) $ compilerErrorM "Exactly one unittest is required when failure is expected"
       uniqueTestNames ts
       execute False t rs es args timeout cs ds ts
 

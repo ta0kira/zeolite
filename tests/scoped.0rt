@@ -196,7 +196,7 @@ define Value {
 
 
 testcase "positional return sets named returns for cleanup" {
-  crash
+  failure
   require "message"
   exclude "failed"
 }
@@ -224,7 +224,7 @@ define Test {
 
 
 testcase "top-level assignment sets named return for cleanup" {
-  crash
+  failure
   require "message"
   exclude "failed"
 }
@@ -462,7 +462,7 @@ unittest test {
 
 
 testcase "cleanup skipped for fail" {
-  crash
+  failure
   require "scoped"
 }
 
@@ -563,7 +563,7 @@ define Value {
 
 
 testcase "separate trace context for cleanup" {
-  crash
+  failure
   require "Failed"
   require "cleanup block"
   require "Test\.run"
