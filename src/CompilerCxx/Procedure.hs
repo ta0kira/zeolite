@@ -31,6 +31,7 @@ module CompilerCxx.Procedure (
   compileLazyInit,
   compileRegularInit,
   compileTestProcedure,
+  compileWrapTestcase,
   procedureDeclaration,
   selectTestFromArgv1,
 ) where
@@ -1228,6 +1229,28 @@ compileMainProcedure tm em e = do
     compiler = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 procedure >>= put
+
+compileWrapTestcase :: (Ord c, Show c, CollectErrorsM m) =>
+  CategoryMap c -> ([c],TypeInstance) -> m (CompiledData [String])
+compileWrapTestcase tm (c,t) = do
+  ctx <- getMainContext tm Map.empty
+  runDataCompiler compiler ctx <??
+    "In testcase at " ++ formatFullContext c
+  where
+    compiler = do
+      ctx0 <- getCleanContext
+      lift (execStateT testcase ctx0) >>= put
+    testcase = do
+      let t2 = singleType $ JustTypeInstance t
+      r <- csResolver
+      lift $ validateGeneralInstanceForCall r Map.empty $ singleType $ JustTypeInstance t
+      lift $ validateAssignment r Map.empty t2 [DefinesFilter (DefinesInstance BuiltinTestcase (Positional []))]
+      start <- csGetTypeFunction c (Just t2) (FunctionName "start")
+      finish <- csGetTypeFunction c (Just t2) (FunctionName "finish")
+      csAddRequired $ Set.fromList [BuiltinTestcase]
+      csAddRequired $ categoriesFromTypes t2
+      t2' <- expandGeneralInstance t2
+      csWrite ["WrapTypeCall check_test(" ++ t2' ++ ", &" ++ functionName start ++ ", &" ++ functionName finish ++ ");"]
 
 compileTestProcedure :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> TestProcedure c -> m (CompiledData [String])

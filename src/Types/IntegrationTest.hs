@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ module Types.IntegrationTest (
 ) where
 
 import Types.TypeCategory
+import Types.TypeInstance
 import Types.DefinedCategory
 import Types.Procedure
 
@@ -67,11 +68,13 @@ data ExpectedResult c =
   } |
   ExpectRuntimeError {
     ereContext :: [c],
+    ereCategory :: Maybe ([c],TypeInstance),
     ereRequirePattern :: [OutputPattern],
     ereExcludePattern :: [OutputPattern]
   } |
   ExpectRuntimeSuccess {
     ersContext :: [c],
+    ereCategory :: Maybe ([c],TypeInstance),
     ersRequirePattern :: [OutputPattern],
     ersExcludePattern :: [OutputPattern]
   }
@@ -94,21 +97,21 @@ isExpectCompilerError (ExpectCompilerError _ _ _) = True
 isExpectCompilerError _                          = False
 
 isExpectRuntimeError :: ExpectedResult c -> Bool
-isExpectRuntimeError (ExpectRuntimeError _ _ _) = True
-isExpectRuntimeError _                          = False
+isExpectRuntimeError (ExpectRuntimeError _ _ _ _) = True
+isExpectRuntimeError _                            = False
 
 isExpectRuntimeSuccess :: ExpectedResult c -> Bool
-isExpectRuntimeSuccess (ExpectRuntimeSuccess _ _ _) = True
-isExpectRuntimeSuccess _                            = False
+isExpectRuntimeSuccess (ExpectRuntimeSuccess _ _ _ _) = True
+isExpectRuntimeSuccess _                              = False
 
 getRequirePattern :: ExpectedResult c -> [OutputPattern]
-getRequirePattern (ExpectCompiles _ rs _)       = rs
-getRequirePattern (ExpectCompilerError _ rs _)   = rs
-getRequirePattern (ExpectRuntimeError _ rs _)   = rs
-getRequirePattern (ExpectRuntimeSuccess _ rs _) = rs
+getRequirePattern (ExpectCompiles _ rs _)         = rs
+getRequirePattern (ExpectCompilerError _ rs _)     = rs
+getRequirePattern (ExpectRuntimeError _ _ rs _)   = rs
+getRequirePattern (ExpectRuntimeSuccess _ _ rs _) = rs
 
 getExcludePattern :: ExpectedResult c -> [OutputPattern]
-getExcludePattern (ExpectCompiles _ _ es)       = es
-getExcludePattern (ExpectCompilerError _ _ es)   = es
-getExcludePattern (ExpectRuntimeError _ _ es)   = es
-getExcludePattern (ExpectRuntimeSuccess _ _ es) = es
+getExcludePattern (ExpectCompiles _ _ es)         = es
+getExcludePattern (ExpectCompilerError _ _ es)    = es
+getExcludePattern (ExpectRuntimeError _ _ _ es)   = es
+getExcludePattern (ExpectRuntimeSuccess _ _ _ es) = es

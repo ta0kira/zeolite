@@ -1905,6 +1905,7 @@ Builtin `@type interface`s:
 - **`Default`**: Get the default `@value` with `default()`.
 - **`Equals<#x>`**: Compare values using `equals(x,y)`.
 - **`LessThan<#x>`**: Compare values using `lessThan(x,y)`.
+- **`Testcase`**: For use in `testcase`.
 
 Builtin meta-types:
 

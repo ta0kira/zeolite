@@ -28,6 +28,7 @@ import Parser.DefinedCategory ()
 import Parser.Procedure ()
 import Parser.TextParser
 import Parser.TypeCategory ()
+import Parser.TypeInstance ()
 import Types.IntegrationTest
 
 
@@ -59,11 +60,17 @@ instance ParseFromSource (IntegrationTestHeader SourceContext) where
       resultCrash = labeled "crash expectation" $ do
         c <- getSourceContext
         keyword "crash"
-        return $ ExpectRuntimeError [c]
+        t <- fmap Just parseTestcaseType <|> return Nothing
+        return $ ExpectRuntimeError [c] t
       resultSuccess = labeled "success expectation" $ do
         c <- getSourceContext
         keyword "success"
-        return $ ExpectRuntimeSuccess [c]
+        t <- fmap Just parseTestcaseType <|> return Nothing
+        return $ ExpectRuntimeSuccess [c] t
+      parseTestcaseType = do
+        c <- getSourceContext
+        t <- sourceParser
+        return ([c],t)
       parseArgs = labeled "testcase args" $ do
         keyword "args"
         many (sepAfter quotedString)

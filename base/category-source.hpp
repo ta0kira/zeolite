@@ -26,6 +26,7 @@ limitations under the License.
 #include <vector>
 
 #include "boxed.hpp"
+#include "cleanup.hpp"
 #include "cycle-check.hpp"
 #include "function.hpp"
 #include "returns.hpp"
@@ -39,7 +40,9 @@ limitations under the License.
   }
 
 #define BUILTIN_EXIT(e) { \
-    std::exit(e); \
+    int code = e; \
+    GlobalCleanup::Finish(code); \
+    std::exit(code); \
     __builtin_unreachable(); \
   }
 

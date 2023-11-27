@@ -749,13 +749,17 @@ generateMainFile tm em n f = "In the creation of the main binary procedure" ??> 
     argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
 generateTestFile :: (Ord c, Show c, CollectErrorsM m) =>
-  CategoryMap c -> ExprMap c  -> [String] -> [TestProcedure c] -> m (CompiledData [String])
-generateTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
+  CategoryMap c -> ExprMap c  -> [String] -> Maybe ([c],TypeInstance) -> [TestProcedure c] ->
+  m (CompiledData [String])
+generateTestFile tm em args t ts = "In the creation of the test binary procedure" ??> do
+  wrap <- case t of
+               Just t2 -> compileWrapTestcase tm t2
+               Nothing -> return emptyCode
   ts' <- fmap mconcat $ mapCompilerM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req traces _) = ts' <> sel
   let contentTop = mconcat [timeoutInclude,onlyCodes include,ts']
-  let contentMain = mconcat [setTimeout,argv,callLog,sel]
+  let contentMain = mconcat [setTimeout,argv,callLog,wrap,sel]
   let file = testsOnlySourceGuard ++ createMainCommon "testcase" contentTop contentMain
   return $ CompiledData req traces file where
     args' = map escapeChars args

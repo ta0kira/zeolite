@@ -84,6 +84,8 @@ instance ParseFromSource CategoryName where
         | n == "Pointer"    = BuiltinPointer
         | n == "Identifier" = BuiltinIdentifier
         | n == "Formatted"  = BuiltinFormatted
+        | n == "Order"      = BuiltinOrder
+        | n == "Testcase"   = BuiltinTestcase
         | otherwise = CategoryName n
 
 instance ParseFromSource ParamName where

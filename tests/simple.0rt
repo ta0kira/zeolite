@@ -185,3 +185,75 @@ unittest test {
   optional Formatted value <- empty
   String value2 <- (value <- 123)
 }
+
+
+testcase "custom testcase is started and finished" {
+  crash Helper
+  require "started"
+  exclude "not started"
+}
+
+concrete Helper {
+  defines Testcase
+  @type started () -> (Bool)
+}
+
+define Helper {
+  @category Bool started <- false
+
+  started () {
+    return started
+  }
+
+  start () {
+    started <- true
+  }
+
+  finish () {
+    if (started) {
+      fail("started")
+    } else {
+      fail("not started")
+    }
+  }
+}
+
+unittest test {
+  \ Testing.checkTrue(Helper.started())
+}
+
+
+testcase "custom testcase is finished on exit" {
+  crash Helper
+  require "started"
+  exclude "not started"
+}
+
+concrete Helper {
+  defines Testcase
+  @type started () -> (Bool)
+}
+
+define Helper {
+  @category Bool started <- false
+
+  started () {
+    return started
+  }
+
+  start () {
+    started <- true
+  }
+
+  finish () {
+    if (started) {
+      fail("started")
+    } else {
+      fail("not started")
+    }
+  }
+}
+
+unittest test {
+  exit(1)
+}

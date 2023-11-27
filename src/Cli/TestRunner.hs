@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ runSingleTest b cl cm paths deps (f,s) = do
              Just  t -> compilerWarningM $ "Explicit timeouts are ignored in " ++ ex2 ++ " tests: " ++ show t
 
     run (ExpectCompilerError _ rs es) _ _ cs ds ts = do
-      result <- toTrackedErrors $ compileAll [] cs ds ts
+      result <- toTrackedErrors $ compileAll Nothing [] cs ds ts
       if not $ isCompilerError result
          then compilerErrorM "Expected compilation failure"
          else fmap (:[]) $ return $ do
@@ -117,22 +117,22 @@ runSingleTest b cl cm paths deps (f,s) = do
            checkContent rs es (lines warnings ++ lines errors) [] []
 
     run (ExpectCompiles _ rs es) _ _ cs ds ts = do
-      result <- toTrackedErrors $ compileAll [] cs ds ts
+      result <- toTrackedErrors $ compileAll Nothing [] cs ds ts
       if isCompilerError result
          then fromTrackedErrors result >> return []
          else fmap (:[]) $ return $ do
            let warnings = show $ getCompilerWarnings result
            checkContent rs es (lines warnings) [] []
 
-    run (ExpectRuntimeError _ rs es) args timeout cs ds ts = do
+    run (ExpectRuntimeError _ t rs es) args timeout cs ds ts = do
       when (length ts /= 1) $ compilerErrorM "Exactly one unittest is required when crash is expected"
       uniqueTestNames ts
-      execute False rs es args timeout cs ds ts
+      execute False t rs es args timeout cs ds ts
 
-    run (ExpectRuntimeSuccess _ rs es) args timeout cs ds ts = do
+    run (ExpectRuntimeSuccess _ t rs es) args timeout cs ds ts = do
       when (null ts) $ compilerErrorM "At least one unittest is required when success is expected"
       uniqueTestNames ts
-      execute True rs es args timeout cs ds ts
+      execute True t rs es args timeout cs ds ts
 
     checkContent rs es comp err out = do
       let cr = checkRequired rs comp err out
@@ -157,8 +157,8 @@ runSingleTest b cl cm paths deps (f,s) = do
     testClash (n,ts) = "unittest " ++ show n ++ " is defined multiple times" !!>
       (mapCompilerM_ (compilerErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
-    execute s2 rs es args timeout cs ds ts = do
-      result <- toTrackedErrors $ compileAll args cs ds ts
+    execute s2 t rs es args timeout cs ds ts = do
+      result <- toTrackedErrors $ compileAll t args cs ds ts
       if isCompilerError result
          then return [result >> return ()]
          else do
@@ -185,10 +185,10 @@ runSingleTest b cl cm paths deps (f,s) = do
             (hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " passed ---")
             (hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " failed ---")
 
-    compileAll args cs ds ts = do
+    compileAll t args cs ds ts = do
       let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
-      fromTrackedErrors $ compileTestsModule cm ns1 args cs' ds ts
+      fromTrackedErrors $ compileTestsModule cm ns1 args t cs' ds ts
 
     checkRequired rs comp err out = mapCompilerM_ (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mapCompilerM_ (checkSubsetForRegex False comp err out) es

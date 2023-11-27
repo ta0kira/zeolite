@@ -32,6 +32,11 @@
 
   This is a breaking change because `delegate` is now reserved.
 
+* **[breaking]** In `testcase`, you can now optionally include a type name that
+  `defines Testcase` after `success`/`crash`. The test will automatically call
+  `start()` and `finish()`, which is meant to allow custom checks upon test
+  exit. This is breaking because `Testcase` is now reserved.
+
 * **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
   the `/*b+*/` in `a+/*b+*/c`.
 

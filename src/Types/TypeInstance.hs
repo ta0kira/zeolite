@@ -148,6 +148,7 @@ data CategoryName =
   BuiltinIdentifier |
   BuiltinFormatted |
   BuiltinOrder |
+  BuiltinTestcase |
   CategoryNone
 
 instance Show CategoryName where
@@ -162,6 +163,7 @@ instance Show CategoryName where
   show BuiltinIdentifier = "Identifier"
   show BuiltinFormatted  = "Formatted"
   show BuiltinOrder      = "Order"
+  show BuiltinTestcase   = "Testcase"
   show CategoryNone      = "(none)"
 
 instance Eq CategoryName where

@@ -118,6 +118,7 @@
       <item> ReadAt </item>
       <item> String </item>
       <item> SubSequence </item>
+      <item> Testcase </item>
       <item> WriteAt </item>
     </list>
 
@@ -268,6 +269,7 @@
       <context name="Test Header" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
+        <IncludeRules context="Any Type" />
         <DetectChar context="#pop#pop" char="}" lookAhead="true" />
         <keyword attribute="Test Keyword" context="Test Output" String="testcasePattern" />
         <keyword attribute="Test Keyword" context="Test Args" String="testcaseArgs" />

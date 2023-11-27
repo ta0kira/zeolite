@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -170,9 +170,9 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       return $ (f,ns3) `Set.insert` used
 
 compileTestsModule :: (Ord c, Show c, CollectErrorsM m) =>
-  LanguageModule c -> Namespace -> [String] -> [AnyCategory c] -> [DefinedCategory c] ->
-  [TestProcedure c] -> m ([CxxOutput],CxxOutput,[(FunctionName,[c])])
-compileTestsModule cm ns args cs ds ts = do
+  LanguageModule c -> Namespace -> [String] -> Maybe ([c],TypeInstance) -> [AnyCategory c] ->
+  [DefinedCategory c] -> [TestProcedure c] -> m ([CxxOutput],CxxOutput,[(FunctionName,[c])])
+compileTestsModule cm ns args t cs ds ts = do
   let xs = PrivateSource {
       psNamespace = ns,
       psTesting = True,
@@ -180,17 +180,17 @@ compileTestsModule cm ns args cs ds ts = do
       psDefine = ds
     }
   xx <- compileLanguageModule cm Map.empty [xs]
-  (main,fs) <- compileTestMain cm args xs ts
+  (main,fs) <- compileTestMain cm args t xs ts
   return (xx,main,fs)
 
 compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
-  LanguageModule c -> [String] -> PrivateSource c -> [TestProcedure c] ->
+  LanguageModule c -> [String] -> Maybe ([c],TypeInstance) -> PrivateSource c -> [TestProcedure c] ->
   m (CxxOutput,[(FunctionName,[c])])
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) args ts2 tests = do
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) args t ts2 tests = do
   tm' <- tm
-  (CompiledData req traces main) <- generateTestFile tm' em args tests
+  (CompiledData req traces main) <- generateTestFile tm' em args t tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req traces main
-  let tests' = map (\t -> (tpName t,tpContext t)) tests
+  let tests' = map (\t2 -> (tpName t2,tpContext t2)) tests
   return (output,tests') where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
