@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2022 Kevin P. Barry
+Copyright 2019-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -181,6 +181,13 @@ class TypeInstance {
     __builtin_unreachable();
   }
 };
+
+#define TYPE_VALUE_CALL_UNLESS_EMPTY(expr, func, args) ({ \
+    const BoxedValue result = expr; \
+    BoxedValue::Present(result) \
+        ? TypeValue::Call(result, func, args) \
+        : ReturnTuple(result); \
+    })
 
 class TypeValue {
  public:

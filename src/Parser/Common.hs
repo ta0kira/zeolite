@@ -115,6 +115,7 @@ module Parser.Common (
   swapOperator,
   typeSymbolGet,
   valueSymbolGet,
+  valueSymbolMaybeGet,
 ) where
 
 import Data.Char
@@ -147,6 +148,9 @@ statementEnd = sepAfter (string_ "")
 
 valueSymbolGet :: TextParser ()
 valueSymbolGet = sepAfter (string_ ".")
+
+valueSymbolMaybeGet :: TextParser ()
+valueSymbolMaybeGet = sepAfter (string_ "&.")
 
 categorySymbolGet :: TextParser ()
 categorySymbolGet = labeled ":" $ useNewOperators <|> sepAfter (string_ ":")

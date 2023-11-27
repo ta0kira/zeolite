@@ -76,6 +76,14 @@
   value <-| 456  // Not assigned, because value wasn't empty.
   ```
 
+* **[new]** Adds the `&.` value-call syntax to conditionally call a function on
+  an `optional` value.
+
+  ```text
+  optional Int value <- 123
+  optional Formatted formatted <- value&.formatted()
+  ```
+
 * **[new]** Updates the return type of inline `<-` to use the type on the right
   side of the expression, rather than the variable's type.
 

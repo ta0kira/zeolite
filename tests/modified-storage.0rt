@@ -478,3 +478,106 @@ unittest test {
   optional Int value <- 456
   value <-| Helper.get()
 }
+
+
+testcase "optional value calls" {
+  success
+}
+
+concrete Helper {
+  @type notCalled () -> (all)
+}
+
+define Helper {
+  notCalled () {
+    fail("should not be called")
+  }
+}
+
+unittest nonEmpty {
+  optional Int value <- 123
+  \ Testing.checkEquals(value&.formatted(),"123")
+}
+
+unittest chainedCalls {
+  optional Int value <- 123
+  \ Testing.checkEquals(value&.formatted()&.readAt(0),'1')
+}
+
+unittest emptyValue {
+  optional Int value <- empty
+  \ Testing.checkEquals(value&.formatted(),empty)
+}
+
+unittest shortCircuit {
+  optional String value <- empty
+  \ value&.readAt(Helper.notCalled())
+}
+
+
+testcase "conditional call return types become optional" {
+  error
+  require "storage modifier"
+}
+
+unittest test {
+  optional Int value <- empty
+  String value2 <- value&.formatted()
+}
+
+
+testcase "conditional call not allowed for required" {
+  error
+  require "[Oo]ptional"
+}
+
+unittest test {
+  \ "123"&.readAt(0)
+}
+
+
+testcase "conditional call not allowed for weak" {
+  error
+  require "[Oo]ptional"
+}
+
+unittest test {
+  weak String value <- empty
+  \ value&.readAt(0)
+}
+
+
+testcase "conditional call chained with multi returns" {
+  success
+}
+
+concrete Value {
+  @type new () -> (Value)
+  @value get () -> (optional Int,Int)
+}
+
+define Value {
+  new () {
+    return Value{ }
+  }
+
+  get () {
+    return 1, 2
+  }
+}
+
+unittest test {
+  optional Value value <- Value.new()
+  \ Testing.checkEquals(value&.get(){1}&.formatted(),"2")
+}
+
+
+testcase "conditional call bad function name" {
+  error
+  require "foo"
+}
+
+unittest test {
+  optional String value <- empty
+  \ value&.foo()
+}

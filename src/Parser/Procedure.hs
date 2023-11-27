@@ -725,10 +725,10 @@ instance ParseFromSource (ValueOperation SourceContext) where
   sourceParser = try valueCall <|> try conversion <|> selectReturn where
     valueCall = labeled "function call" $ do
       c <- getSourceContext
-      valueSymbolGet
+      o <- (valueSymbolGet >> return AlwaysCall) <|> (valueSymbolMaybeGet >> return CallUnlessEmpty)
       n <- sourceParser
       f <- parseFunctionCall c n
-      return $ ValueCall [c] f
+      return $ ValueCall [c] o f
     conversion = labeled "type conversion" $ do
       c <- getSourceContext
       inferredParam

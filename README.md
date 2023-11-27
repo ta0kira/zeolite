@@ -869,8 +869,8 @@ value &lt;- <span style='color:#b08000;'>1</span>
   <span style='color:#006e28;'>\</span> foo(<b>require</b>(value))
 }</pre>
 
-As of compiler version `0.24.0.0`, you can use `<-|` to conditionally overwrite
-an `optional` variable if it's currently `empty`.
+As of compiler version `0.24.0.0`, you can use **`<-|`** to conditionally
+overwrite an `optional` variable if it's currently `empty`.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
@@ -884,6 +884,16 @@ non-optional.
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
 <i><span style='color:#0057ae;'>Int</span></i> value2 <b><span style='color:#006e28;'>&lt;-</span></b> (value <b><span style='color:#006e28;'>&lt;-|</span></b> <span style='color:#b08000;'>123</span>)</pre>
+
+As of compiler version `0.24.0.0`, you can conditionally call a function on an
+`optional` value if it's non-`empty` using **`&.`**.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>123</span>
+<span style='color:#898887;'>// All returned values will be optional.</span>
+<b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> formatted <b><span style='color:#006e28;'>&lt;-</span></b> value&amp;<span style='color:#644a9b;'>.</span>formatted()
+<span style='color:#898887;'>// foo() won't be called unless the readAt call is going to be made.</span>
+<b>optional</b> <i><span style='color:#0057ae;'>Char</span></i> char <b><span style='color:#006e28;'>&lt;-</span></b> formatted&amp;<span style='color:#644a9b;'>.</span>readAt(foo())</pre>
 
 **`weak`** values allow your program to access a value *if it is available*,
 without holding up that value's cleanup if nothing else needs it. This can be

@@ -504,8 +504,8 @@ compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilati
   let currType = orderOptionalValue $ fixTypeParams t2
   let currExpr    = BuiltinCall [] $ FunctionCall [] BuiltinRequire (Positional []) (Positional [(Nothing,RawExpression (Positional [currType]) (UnwrappedSingle currVar))])
   let currPresent = BuiltinCall [] $ FunctionCall [] BuiltinPresent (Positional []) (Positional [(Nothing,RawExpression (Positional [currType]) (UnwrappedSingle currVar))])
-  let callNext = Expression c1 currExpr [ValueCall c1 $ FunctionCall c1 (FunctionName "next") (Positional []) (Positional [])]
-  let callGet  = Expression c2 currExpr [ValueCall c2 $ FunctionCall c2 (FunctionName "get")  (Positional []) (Positional [])]
+  let callNext = Expression c1 currExpr [ValueCall c1 AlwaysCall $ FunctionCall c1 (FunctionName "next") (Positional []) (Positional [])]
+  let callGet  = Expression c2 currExpr [ValueCall c2 AlwaysCall $ FunctionCall c2 (FunctionName "get")  (Positional []) (Positional [])]
   (Positional [typeGet],exprNext) <- compileExpression callNext
   when (typeGet /= currType) $ compilerErrorM $ "Unexpected return type from next(): " ++ show typeGet ++ " (expected) " ++ show currType ++ " (actual)"
   let assnGet = if isAssignableDiscard a then [] else [Assignment c2 (Positional [a]) callGet]
@@ -622,7 +622,7 @@ compileExpression = compile where
   callFunctionSpec c as (FunctionSpec _ (TypeFunction c2 tn) fn ps) =
     compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps as)) [])
   callFunctionSpec c as (FunctionSpec _ (ValueFunction c2 e0) fn ps) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps as)])
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c AlwaysCall (FunctionCall c fn ps as)])
   callFunctionSpec c as (FunctionSpec c2 UnqualifiedFunction fn ps) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps as)) [])
   compile (Literal l) = compileValueLiteral l
@@ -675,7 +675,7 @@ compileExpression = compile where
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
     compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e2) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))])
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c AlwaysCall (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e2) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression _ e1 (NamedOperator c o) e2) = do
@@ -754,11 +754,11 @@ compileExpression = compile where
     (lift $ checkValueAssignment r fa t' vt) <??
       "In explicit type conversion at " ++ formatFullContext c
     return (Positional [vt],e')
-  transform e (ValueCall c f) = do
+  transform e (ValueCall c o f) = do
     (Positional ts,e') <- e
     t' <- requireSingle c ts
-    f' <- lookupValueFunction t' f
-    compileFunctionCall (Just $ useAsUnwrapped e') f' f
+    f' <- lookupValueFunction t' o f
+    compileFunctionCall (o == CallUnlessEmpty) (Just $ useAsUnwrapped e') f' f
   transform e (SelectReturn c pos) = do
     (Positional ts,e') <- e
     when (not $ isOpaqueMulti e') $
@@ -771,16 +771,28 @@ compileExpression = compile where
     compilerErrorM $ "Function call requires 1 return but found but found {" ++
                             intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c2
 
+forceOptionalReturns :: [c] -> ScopedFunction c -> ScopedFunction c
+forceOptionalReturns c0 (ScopedFunction c n t s as rs ps fs ms) =
+  ScopedFunction c n t s as rs' ps fs ms where
+    rs' = fmap forceOptional rs
+    forceOptional (PassedValue c2 (ValueType RequiredValue t2)) = (PassedValue (c0 ++ c2) (ValueType OptionalValue t2))
+    forceOptional t2 = t2
+
 lookupValueFunction :: (Ord c, Show c, CollectErrorsM m,
                         CompilerContext c m [String] a) =>
-  ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
-lookupValueFunction (ValueType WeakValue t) (FunctionCall c _ _ _) =
+  ValueType -> ValueCallType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
+lookupValueFunction (ValueType OptionalValue t) CallUnlessEmpty f@(FunctionCall c _ _ _) = do
+  f' <- lookupValueFunction (ValueType RequiredValue t) AlwaysCall f
+  return $ forceOptionalReturns c f'
+lookupValueFunction t CallUnlessEmpty (FunctionCall c _ _ _) =
+  compilerErrorM $ "Optional type required for &. but got " ++ show t ++ formatFullContextBrace c
+lookupValueFunction (ValueType WeakValue t) _ (FunctionCall c _ _ _) =
   compilerErrorM $ "Use strong to convert weak " ++ show t ++
                         " to optional first" ++ formatFullContextBrace c
-lookupValueFunction (ValueType OptionalValue t) (FunctionCall c _ _ _) =
+lookupValueFunction (ValueType OptionalValue t) _ (FunctionCall c _ _ _) =
   compilerErrorM $ "Use require to convert optional " ++ show t ++
                         " to required first" ++ formatFullContextBrace c
-lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
+lookupValueFunction (ValueType RequiredValue t) _ (FunctionCall c n _ _) =
   csGetTypeFunction c (Just t) n
 
 compileExpressionStart :: (Ord c, Show c, CollectErrorsM m,
@@ -805,7 +817,7 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csAddRequired $ Set.fromList [t,sfType f']
   t' <- expandCategory t
-  compileFunctionCall (Just t') f' f
+  compileFunctionCall False (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   self <- autoSelfType
   t' <- lift $ replaceSelfInstance self (singleType t)
@@ -822,7 +834,7 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   t2 <- if same
            then return Nothing
            else fmap Just $ expandGeneralInstance t'
-  compileFunctionCall t2 f' f
+  compileFunctionCall False t2 f' f
   where
     maybeSingleType = lift . tryCompilerM . matchOnlyLeaf
     checkSame (Just (JustTypeInstance t2)) = csSameType t2
@@ -831,7 +843,7 @@ compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
   f' <- lift $ collectFirstM [tryCategory ctx,tryNonCategory ctx] <?? "In function call at " ++ formatFullContext c
   csAddRequired $ Set.fromList [sfType f']
-  compileFunctionCall Nothing f' f
+  compileFunctionCall False Nothing f' f
   where
     tryCategory ctx = ccGetCategoryFunction ctx c Nothing n
     tryNonCategory ctx = do
@@ -1065,9 +1077,9 @@ disallowInferred = mapCompilerM disallow . pValues where
 
 compileFunctionCall :: (Ord c, Show c, CollectErrorsM m,
                         CompilerContext c m [String] a) =>
-  Maybe String -> ScopedFunction c -> FunctionCall c ->
+  Bool -> Maybe String -> ScopedFunction c -> FunctionCall c ->
   CompilerState a m (ExpressionType,ExpressionValue)
-compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
+compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
   r <- csResolver
   fa <- csAllFilters
   es' <- sequence $ map (compileExpression . snd) $ pValues es
@@ -1129,13 +1141,16 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
     assemble Nothing scoped _ _ paramsArgs =
       return $ scoped ++ callName (sfName f) ++ "(" ++ paramsArgs ++ ")"
     assemble (Just e2) _ _ ValueScope paramsArgs =
-      return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
+      return $ valueCaller ++ "(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
     assemble (Just e2) _ _ TypeScope paramsArgs =
       return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
     assemble (Just e2) _ _ _ paramsArgs =
       return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ paramsArgs ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
+    valueCaller
+      | optionalValue = "TYPE_VALUE_CALL_UNLESS_EMPTY"
+      | otherwise = valueBase ++ "::Call"
     getValues [(Positional ts,e2)] = return (ts,[useAsArgs e2])
     -- Multi-expression => must all be singles.
     getValues rs = do

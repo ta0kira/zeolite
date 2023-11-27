@@ -43,6 +43,7 @@ module Types.Procedure (
   Statement(..),
   TestProcedure(..),
   TraceType(..),
+  ValueCallType(..),
   ValueLiteral(..),
   ValueOperation(..),
   VariableName(..),
@@ -350,9 +351,14 @@ getValueLiteralContext (DecimalLiteral c _ _ _) = c
 getValueLiteralContext (BoolLiteral c _)        = c
 getValueLiteralContext (EmptyLiteral c)         = c
 
+data ValueCallType =
+  AlwaysCall |
+  CallUnlessEmpty
+  deriving (Eq,Show)
+
 data ValueOperation c =
   TypeConversion [c] GeneralInstance |
-  ValueCall [c] (FunctionCall c) |
+  ValueCall [c] ValueCallType (FunctionCall c) |
   SelectReturn [c] Int
   deriving (Show)
 
