@@ -969,15 +969,15 @@ compileExpressionStart (InlineAssignment c n o e) = do
   let variable = scoped ++ variableName n
   let assign = variable ++ " = " ++ writeStoredVariable t0 e'
   let check = "BoxedValue::Present(" ++ useAsUnwrapped (readStoredVariable lazy t0 variable) ++ ")"
-  let alwaysAssign = readStoredVariable lazy t0 assign
+  let assignAndGet = readStoredVariable lazy t0 assign
+  let alwaysAssign = if isWeakValue t0 && not (isWeakValue t)
+                        then UnwrappedSingle $ "BoxedValue::Strong(" ++ useAsUnwrapped assignAndGet ++ ")"
+                        else assignAndGet
   let maybeAssign = readStoredVariable lazy t0 $ check ++ " ? " ++ variable ++ " : (" ++ assign ++ ")"
   case o of
-       AlwaysAssign -> return (Positional [upgradeType t0 t],alwaysAssign)
+       AlwaysAssign -> return (Positional [t],alwaysAssign)
        AssignIfEmpty -> return (Positional [combineTypes t0 t],maybeAssign)
   where
-    upgradeType t1 t2
-      | isWeakValue t1 = t1
-      | otherwise = t2
     combineTypes (ValueType _ t1) (ValueType s _) = ValueType s t1
 compileExpressionStart (InitializeValue c t es) = do
   scope <- csCurrentScope

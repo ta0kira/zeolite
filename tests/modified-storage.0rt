@@ -305,6 +305,40 @@ unittest emptyVal {
 }
 
 
+testcase "inline assignment to weak" {
+  success
+}
+
+unittest unboxed {
+  weak Int value <- empty
+  Int value2 <- (value <- 123)
+  \ Testing.checkEquals(value2,123)
+  \ Testing.checkEquals(strong(value),123)
+}
+
+unittest boxedNoRefs {
+  weak String value <- empty
+  \ Testing.checkEquals((value <- "message"),"message")
+  \ Testing.checkEquals(strong(value),empty)
+}
+
+unittest boxedRefs {
+  weak String value <- empty
+  String original <- "message"
+  String value2 <- (value <- original)
+  \ Testing.checkEquals(value2,original)
+  \ Testing.checkEquals(strong(value),original)
+}
+
+unittest weakToWeak {
+  weak String value <- empty
+  String original <- "message"
+  weak String value2 <- original
+  \ Testing.checkEquals(`strong` (value <- value2),original)
+  \ Testing.checkEquals(strong(value),original)
+}
+
+
 testcase "conditional inline assignment" {
   success
 }
@@ -323,7 +357,6 @@ unittest shortCircuit {
   optional Int value <- 123
   Int value2 <- (value <-| Helper.notCalled())
   \ Testing.checkEquals(value2,123)
-  \ Testing.checkPresent(value)
   \ Testing.checkEquals(value,123)
 }
 
@@ -332,12 +365,10 @@ unittest unboxedToUnboxed {
 
   Int value2 <- (value <-| 123)
   \ Testing.checkEquals(value2,123)
-  \ Testing.checkPresent(value)
   \ Testing.checkEquals(value,123)
 
   Int value3 <- (value <-| 456)
   \ Testing.checkEquals(value3,123)
-  \ Testing.checkPresent(value)
   \ Testing.checkEquals(value,123)
 }
 
@@ -346,13 +377,11 @@ unittest boxedToBoxed {
 
   String value2 <- (value <-| "message")
   \ Testing.checkEquals(value2,"message")
-  \ Testing.checkPresent(value)
-  \ Testing.checkEquals(require(value),"message")
+  \ Testing.checkEquals(value,"message")
 
   String value3 <- (value <-| "other")
   \ Testing.checkEquals(value3,"message")
-  \ Testing.checkPresent(value)
-  \ Testing.checkEquals(require(value),"message")
+  \ Testing.checkEquals(value,"message")
 }
 
 
@@ -373,7 +402,6 @@ define Helper {
 unittest shortCircuit {
   optional Int value <- 123
   value <-| Helper.notCalled()
-  \ Testing.checkPresent(value)
   \ Testing.checkEquals(value,123)
 }
 
@@ -381,11 +409,9 @@ unittest unboxedToUnboxed {
   optional Int value <- empty
 
   value <-| 123
-  \ Testing.checkPresent(value)
   \ Testing.checkEquals(value,123)
 
   value <-| 456
-  \ Testing.checkPresent(value)
   \ Testing.checkEquals(value,123)
 }
 
@@ -393,12 +419,10 @@ unittest boxedToBoxed {
   optional String value <- empty
 
   value <-| "message"
-  \ Testing.checkPresent(value)
-  \ Testing.checkEquals(require(value),"message")
+  \ Testing.checkEquals(value,"message")
 
   value <-| "other"
-  \ Testing.checkPresent(value)
-  \ Testing.checkEquals(require(value),"message")
+  \ Testing.checkEquals(value,"message")
 }
 
 
