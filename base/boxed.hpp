@@ -127,22 +127,22 @@ class BoxedValue {
     return *this;
   }
 
-  inline BoxedValue(PrimBool value)
+  inline explicit BoxedValue(PrimBool value)
     : union_{ .type_ = UnionValue::Type::BOOL, .value_ = { .as_bool_ = value } } {}
 
-  inline BoxedValue(PrimChar value)
+  inline explicit BoxedValue(PrimChar value)
     : union_{ .type_ = UnionValue::Type::CHAR, .value_ = { .as_char_ = value } } {}
 
-  inline BoxedValue(PrimInt value)
+  inline explicit BoxedValue(PrimInt value)
     : union_{ .type_ = UnionValue::Type::INT, .value_ = { .as_int_ = value } } {}
 
-  inline BoxedValue(PrimFloat value)
+  inline explicit BoxedValue(PrimFloat value)
     : union_{ .type_ = UnionValue::Type::FLOAT, .value_ = { .as_float_ = value } } {}
 
-  inline BoxedValue(PrimPointer value)
+  inline explicit BoxedValue(PrimPointer value)
     : union_{ .type_ = UnionValue::Type::POINTER, .value_ = { .as_pointer_ = value } } {}
 
-  inline BoxedValue(PrimIdentifier value)
+  inline explicit BoxedValue(PrimIdentifier value)
     : union_{ .type_ = UnionValue::Type::IDENTIFIER, .value_ = { .as_identifier_ = value } } {}
 
   template<class T, class... As>
