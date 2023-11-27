@@ -279,7 +279,7 @@ define Helper {
     if (called) {
       fail("called twice")
     }
-    called <- false
+    called <- true
   }
 }
 

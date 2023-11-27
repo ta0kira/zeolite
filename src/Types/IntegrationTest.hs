@@ -74,7 +74,7 @@ data ExpectedResult c =
   } |
   ExpectRuntimeSuccess {
     ersContext :: [c],
-    ereCategory :: Maybe ([c],TypeInstance),
+    ersCategory :: Maybe ([c],TypeInstance),
     ersRequirePattern :: [OutputPattern],
     ersExcludePattern :: [OutputPattern]
   }

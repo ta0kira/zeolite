@@ -1243,7 +1243,7 @@ compileWrapTestcase tm (c,t) = do
     testcase = do
       let t2 = singleType $ JustTypeInstance t
       r <- csResolver
-      lift $ validateGeneralInstanceForCall r Map.empty $ singleType $ JustTypeInstance t
+      lift $ validateGeneralInstanceForCall r Map.empty t2
       lift $ validateAssignment r Map.empty t2 [DefinesFilter (DefinesInstance BuiltinTestcase (Positional []))]
       start <- csGetTypeFunction c (Just t2) (FunctionName "start")
       finish <- csGetTypeFunction c (Just t2) (FunctionName "finish")
