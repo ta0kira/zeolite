@@ -572,6 +572,36 @@ unittest test {
 }
 
 
+testcase "conditional call only happens once" {
+  success
+}
+
+concrete Value {
+  @type new () -> (optional Value)
+  @value get () -> (Int)
+}
+
+define Value {
+  @category Bool used <- false
+
+  new () {
+    if (used) {
+      fail("already called")
+    }
+    used <- true
+    return Value{ }
+  }
+
+  get () {
+    return 1
+  }
+}
+
+unittest test {
+  \ Testing.checkEquals(Value.new()&.get()&.formatted()&.readAt(0),'1')
+}
+
+
 testcase "conditional call bad function name" {
   error
   require "foo"
