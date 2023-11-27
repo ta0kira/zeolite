@@ -2056,7 +2056,7 @@ slightly different, and `unittest` was not available.
 
 
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;intentional failure&quot;</span> {
-  <span style='color:#898887;'>// The test is expected to failure.</span>
+  <span style='color:#898887;'>// The test is expected to fail.</span>
   <span style='color:#04e040;'>failure</span>
   <span style='color:#04e040;'>require</span> <span style='color:#04e040;'>stderr</span> <span style='color:#bf0303;'>&quot;message&quot;</span>  <span style='color:#898887;'>// stderr should include &quot;message&quot;.</span>
 }

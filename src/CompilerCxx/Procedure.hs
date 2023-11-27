@@ -1235,7 +1235,7 @@ compileWrapTestcase :: (Ord c, Show c, CollectErrorsM m) =>
 compileWrapTestcase tm (c,t) = do
   ctx <- getMainContext tm Map.empty
   runDataCompiler compiler ctx <??
-    "In testcase at " ++ formatFullContext c
+    "In custom testcase checker at " ++ formatFullContext c
   where
     compiler = do
       ctx0 <- getCleanContext
