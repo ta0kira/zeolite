@@ -182,11 +182,11 @@ class TypeInstance {
   }
 };
 
-#define TYPE_VALUE_CALL_UNLESS_EMPTY(expr, func, args) ({ \
+#define TYPE_VALUE_CALL_UNLESS_EMPTY(expr, func, args, count) ({ \
     const BoxedValue result = expr; \
     BoxedValue::Present(result) \
         ? TypeValue::Call(result, func, args) \
-        : ReturnTuple(result); \
+        : ReturnTuple(count); \
     })
 
 class TypeValue {

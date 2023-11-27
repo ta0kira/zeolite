@@ -1141,16 +1141,16 @@ compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
     assemble Nothing scoped _ _ paramsArgs =
       return $ scoped ++ callName (sfName f) ++ "(" ++ paramsArgs ++ ")"
     assemble (Just e2) _ _ ValueScope paramsArgs =
-      return $ valueCaller ++ "(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
+      if optionalValue
+         then return $ "TYPE_VALUE_CALL_UNLESS_EMPTY(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ", " ++ show returnCount ++ ")"
+         else return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
     assemble (Just e2) _ _ TypeScope paramsArgs =
       return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ paramsArgs ++ ")"
     assemble (Just e2) _ _ _ paramsArgs =
       return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ paramsArgs ++ ")"
+    returnCount = length $ pValues $ sfReturns f
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
-    valueCaller
-      | optionalValue = "TYPE_VALUE_CALL_UNLESS_EMPTY"
-      | otherwise = valueBase ++ "::Call"
     getValues [(Positional ts,e2)] = return (ts,[useAsArgs e2])
     -- Multi-expression => must all be singles.
     getValues rs = do

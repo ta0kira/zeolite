@@ -547,7 +547,7 @@ unittest test {
 }
 
 
-testcase "conditional call chained with multi returns" {
+testcase "conditional call with multi returns" {
   success
 }
 
@@ -566,9 +566,17 @@ define Value {
   }
 }
 
-unittest test {
+unittest chained {
   optional Value value <- Value.new()
   \ Testing.checkEquals(value&.get(){1}&.formatted(),"2")
+}
+
+unittest notCalled {
+  optional Value value <- empty
+  optional Int result1, optional Int result2 <- value&.get()
+  \ Testing.checkEmpty(result1)
+  \ Testing.checkEmpty(result2)
+
 }
 
 
