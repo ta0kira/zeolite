@@ -1,0 +1,209 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$TestsOnly$
+
+concrete TestReportTree {
+  refines TestReport
+
+  @type new (Formatted,ValueList<Formatted>) -> (#self)
+
+  @value writeTo (IndentAppend) -> ()
+}
+
+define TestReportTree {
+  $ReadOnlyExcept[messages,children]$
+
+  @value Formatted title
+  @value ValueList<Formatted> context
+  @value ValueList<Formatted> messages
+  @value ValueList<TestReportTree> children
+
+  new (title,context) {
+    return #self{ title, context, ValueList<Formatted>.new(), ValueList<TestReportTree>.new() }
+  }
+
+  writeTo (output) {
+    // TODO: This is very inefficient. Maybe pruning should happen first?
+    if (!hasError()) {
+      return _
+    }
+    \ output.append(title)
+    scoped {
+      \ output.pushIndent()
+    } cleanup {
+      \ output.popIndent()
+    } in {
+      \ writeMessagesTo(output)
+      \ writeContextTo(output)
+      \ writeChildrenTo(output)
+    }
+  }
+
+  addError (message) {
+    \ messages.append(message)
+    return self
+  }
+
+  newSection (newTitle) {
+    #self new <- new(newTitle,ValueList<Formatted>.new())
+    \ children.append(new)
+    return new
+  }
+
+  discardReport () {
+    messages <- ValueList<Formatted>.new()
+    children <- ValueList<TestReportTree>.new()
+    return self
+  }
+
+  hasError () {
+    if (!messages.isEmpty()) {
+      return true
+    }
+    traverse (children.defaultOrder() -> TestReportTree child) {
+      if (child.hasError()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  @value writeContextTo (IndentAppend) -> ()
+  writeContextTo (output) {
+    $Hidden[messages,children]$
+      scoped {
+      \ output.pushIndent()
+    } cleanup {
+      \ output.popIndent()
+    } in traverse (context.defaultOrder() -> Formatted line) {
+      \ output.append(line)
+    }
+  }
+
+  @value writeMessagesTo (IndentAppend) -> ()
+  writeMessagesTo (output) {
+    $Hidden[context,children]$
+    if (!messages.isEmpty()) {
+      traverse (messages.defaultOrder() -> Formatted line) {
+        \ output.append(line)
+      }
+    }
+  }
+
+  @value writeChildrenTo (IndentAppend) -> ()
+  writeChildrenTo (output) {
+    $Hidden[messages,context]$
+    traverse (children.defaultOrder() -> TestReportTree child) {
+      \ output.append("---")
+      \ child.writeTo(output)
+    }
+  }
+}
+
+define TestChecker {
+  @category Bool started <- false
+  @category Bool inProgress <- false
+  @category Int testCount <- 0
+  @category ValueList<TestReportTree> reports <- ValueList<TestReportTree>.new()
+
+  start () {
+    if (started) {
+      fail("Testcase already started.")
+    }
+    started <- true
+    inProgress <- true
+  }
+
+  finish () { $NoTrace$
+    \ checkTestingStarted()
+    if (inProgress) {
+      inProgress <- false
+      \ checkNow()
+    }
+  }
+
+  isFailing () {
+    \ checkTestingStarted()
+    traverse (reports.defaultOrder() -> TestReportTree report) {
+      if (report.hasError()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  checkNow () { $NoTrace$
+    \ checkTestingStarted()
+    if (isFailing()) {
+      \ TestHandler:failAndExit(formatErrors().formatted())
+    }
+  }
+
+  newReport (title,context) {
+    \ checkTestingAllowed()
+    ValueList<Formatted> contextList <- ValueList<Formatted>.new()
+    traverse (context -> Formatted item) {
+      String stringItem <- item.formatted()
+      // TODO: Get rid of this hard coding.
+      if (stringItem == "From testcase") {
+        break
+      } else {
+        \ contextList.append(stringItem)
+      }
+    }
+    String numberedTitle <- String.builder()
+        .append("Check #")
+        .append((testCount <- testCount+1))
+        .append(": ")
+        .append(title)
+        .build()
+    TestReportTree report <- TestReportTree.new(numberedTitle,contextList)
+    \ reports.append(report)
+    return report
+  }
+
+  @category formatErrors () -> (Formatted)
+  formatErrors () {
+    IndentAppend output <- IndentAppend.new(String.builder())
+    \ output.append("TestChecker failures:")
+    scoped {
+      \ output.pushIndent()
+    } cleanup {
+      \ output.popIndent()
+    } in traverse (reports.defaultOrder() -> TestReportTree report) {
+      \ report.writeTo(output)
+      \ output.addNewline()
+    }
+    return output.build()
+  }
+
+  @category checkTestingStarted () -> ()
+  checkTestingStarted () {
+    if (!started) {
+      fail("Testcase was not started.")
+    }
+  }
+
+  @category checkTestingAllowed () -> ()
+  checkTestingAllowed () {
+    if (!started || !inProgress) {
+      fail("Testcase not started or no longer in progress.")
+    }
+  }
+}

@@ -1,0 +1,143 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$TestsOnly$
+
+define Matches {
+  with (value,matcher) { $NoTrace$
+    if (delegate -> `execute`) {
+      \ TestChecker.checkNow()
+    }
+  }
+
+  tryWith (value,matcher) { $NoTrace$
+    \ delegate -> `execute`
+  }
+
+  or (left,right) {
+    return OrMatcher:new(left,right)
+  }
+
+  @category execute<#x> (optional #x,ValueMatcher<#x>) -> (Bool)
+  execute (value,matcher) { $NoTrace$
+    String title <- String.builder()
+        .append("Matches with ")
+        .append(matcher.summary())
+        .build()
+    TestReport report <- TestChecker.newReport(title: title,context: $CallTrace$)
+    \ value `matcher.check` report
+    return report.hasError()
+  }
+}
+
+concrete OrMatcher<#x|> {
+  refines ValueMatcher<#x>
+
+  @category new<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
+}
+
+define OrMatcher {
+  @value ValueMatcher<#x> left
+  @value ValueMatcher<#x> right
+
+  new (left,right) {
+    return delegate -> OrMatcher<#x>
+  }
+
+  check (actual,report) {
+    TestReport leftReport <- report.newSection(title: left.summary())
+    TestReport rightReport <- report.newSection(title: right.summary())
+    \ actual `left.check` leftReport
+    if (!leftReport.hasError()) {
+      return _
+    }
+    $Hidden[left]$
+    \ actual `right.check` rightReport
+    if (!rightReport.hasError()) {
+      \ leftReport.discardReport()
+    }
+  }
+
+  summary () {
+    return String.builder()
+        .append("either (")
+        .append(left.summary())
+        .append(") or (")
+        .append(right.summary())
+        .append(")")
+        .build()
+  }
+}
+
+define MultiChecker {
+  $ReadOnlyExcept[]$
+
+  @value TestReport report
+
+  new (report) {
+    return delegate -> #self
+  }
+
+  check (value,matcher) {
+    TestReport newReport <- report.newSection(title: matcher.summary())
+    \ value `matcher.check` newReport
+    if (newReport.hasError()) {
+      return empty
+    } else {
+      return self
+    }
+  }
+
+  tryCheck (value,matcher) {
+    TestReport newReport <- report.newSection(title: matcher.summary())
+    \ value `matcher.check` newReport
+    return self
+  }
+}
+
+define CheckValue {
+  @value #x expected
+
+  equals (expected) {
+    return delegate -> CheckValue<#x>
+  }
+
+  check (actual,report) {
+    if (`present` actual) {
+      if (!(`require` actual `#x.equals` expected)) {
+        \ report.addError(message: String.builder()
+            .append("\"")
+            .append(`require` actual)
+            .append("\" does not equal \"")
+            .append(expected)
+            .append("\"")
+            .build())
+      }
+    } else {
+        \ report.addError(message: String.builder()
+            .append("empty does not equal \"")
+            .append(expected)
+            .append("\"")
+            .build())
+    }
+  }
+
+  summary () {
+    return "value equals"
+  }
+}

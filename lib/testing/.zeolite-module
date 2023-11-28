@@ -4,4 +4,10 @@ extra_paths: [
   "lib/testing/src"
   "lib/testing/test"
 ]
+extra_files: [
+  category_source {
+    source: "lib/testing/src/Extension_TestHandler.cpp"
+    categories: [TestHandler]
+  }
+]
 mode: incremental {}

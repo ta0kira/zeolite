@@ -1,0 +1,116 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define IndentAppend {
+  $ReadOnlyExcept[indentCount]$
+
+  @value [Append<Formatted>&Build<Formatted>] output
+  @value Int indentCount
+
+  new (output) {
+    return #self{ output, 0 }
+  }
+
+  pushIndent () {
+    indentCount <- indentCount+1
+  }
+
+  popIndent () {
+    indentCount <- indentCount-1
+  }
+
+  addNewline () {
+    \ output.append("\n")
+    return self
+  }
+
+  append (value) {
+    scoped {
+      Int count <- 0
+    } in while (count < indentCount) {
+      \ output.append("  ")
+    } update {
+      count <- count+1
+    }
+    \ output.append(value).append("\n")
+    return self
+  }
+
+  build () {
+    return output.build()
+  }
+}
+
+concrete ListNode<#x> {
+  refines Order<#x>
+
+  @type new (#x) -> (#self)
+  @value setNext (optional ListNode<#x>) -> (#self)
+}
+
+define ListNode {
+  $ReadOnly[value]$
+
+  @value #x value
+  @value optional #self next
+
+  new (value) {
+    return #self{ value, empty }
+  }
+
+  setNext (newNext) {
+    next <- newNext
+    return self
+  }
+
+  next () {
+    return next
+  }
+
+  get () {
+    return value
+  }
+}
+
+define ValueList {
+  @value optional ListNode<#x> head
+  @value optional ListNode<#x> tail
+
+  new () {
+    return #self{ empty, empty }
+  }
+
+  isEmpty () {
+    return ! `present` head
+  }
+
+  append (value) {
+    scoped {
+      ListNode<#x> node <- ListNode<#x>.new(value)
+    } in {
+      head <-| node
+      \ tail&.setNext(node)
+      tail <- node
+    }
+    return self
+  }
+
+  defaultOrder () {
+    return head
+  }
+}

@@ -1,0 +1,53 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$TestsOnly$
+
+@value interface ValueMatcher<#x|> {
+  check (optional #x,TestReport) -> ()
+  summary () -> (Formatted)
+}
+
+concrete Matches {
+  @category tryWith<#x> (optional #x,ValueMatcher<#x>) -> ()
+  @category with<#x> (optional #x,ValueMatcher<#x>) -> ()
+//   @category not<#x> (ValueMatcher<#x>) -> (ValueMatcher<#x>)
+  @category or<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
+//   @category and<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
+//   @category anyOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
+//   @category allOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
+//   @category noneOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
+}
+
+concrete MultiChecker {
+  @type new (TestReport) -> (#self)
+
+  @value check<#x> (optional #x,ValueMatcher<#x>) -> (optional #self)
+  @value tryCheck<#x> (optional #x,ValueMatcher<#x>) -> (#self)
+}
+
+concrete CheckValue<#x|> {
+  refines ValueMatcher<#x>
+  #x requires Formatted
+  #x defines Equals<#x>
+
+  @category equals<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (#x) -> (ValueMatcher<#x>)
+}
