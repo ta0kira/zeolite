@@ -1247,7 +1247,7 @@ compileWrapTestcase tm (c,t) = do
       lift $ validateAssignment r Map.empty t2 [DefinesFilter (DefinesInstance BuiltinTestcase (Positional []))]
       start <- csGetTypeFunction c (Just t2) (FunctionName "start")
       finish <- csGetTypeFunction c (Just t2) (FunctionName "finish")
-      csAddRequired $ Set.fromList [BuiltinTestcase]
+      csAddRequired $ Set.fromList [sfType start,sfType finish]
       csAddRequired $ categoriesFromTypes t2
       t2' <- expandGeneralInstance t2
       csWrite ["WrapTypeCall check_test(" ++ t2' ++ ", &" ++ functionName start ++ ", &" ++ functionName finish ++ ");"]

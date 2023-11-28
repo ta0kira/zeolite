@@ -84,6 +84,22 @@ test_check_defs() {
 }
 
 
+test_custom_testcase() {
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r tests/custom-testcase -f
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -t tests/custom-testcase 2>&1 || true)
+  if ! echo "$output" | egrep -q 'Passed.+ 0 .*Failed.+ 4 .*'; then
+    show_message 'Expected 4 failed tests and 0 passing:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if [[ $(echo "$output" | egrep -c 'custom testcase') -ne 4 ]]; then
+    show_message 'Expected 4 test failures to be related to "custom testcase":'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 require_patterns() {
   local output=$1
   local error=0
@@ -567,6 +583,7 @@ ALL_TESTS=(
   test_bad_path
   test_bad_system_include
   test_check_defs
+  test_custom_testcase
   test_example_hello
   test_example_parser
   test_example_primes
