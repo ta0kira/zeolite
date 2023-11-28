@@ -33,6 +33,7 @@ module Types.Procedure (
   InputValue(..),
   InstanceOrInferred(..),
   IteratedLoop(..),
+  MacroExpression(..),
   MacroName(..),
   Operator(..),
   OutputValue(..),
@@ -324,6 +325,7 @@ data AssignmentType =
 data ExpressionStart c =
   NamedVariable (OutputValue c) |
   NamedMacro [c] MacroName |
+  ExpressionMacro [c] MacroExpression |
   CategoryCall [c] CategoryName (FunctionCall c) |
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c) |
@@ -372,6 +374,10 @@ instance Show MacroName where
   show = mnName
 
 data TraceType = NoTrace | TraceCreation deriving (Show)
+
+data MacroExpression =
+  MacroCallTrace
+  deriving (Show)
 
 data PragmaProcedure c =
   PragmaTracing {

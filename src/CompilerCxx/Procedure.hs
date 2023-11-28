@@ -814,6 +814,15 @@ compileExpressionStart (NamedMacro c n) = do
   -- NOTE: This will be skipped if expression compilation fails.
   csReleaseExprMacro c n
   return e'
+compileExpressionStart (ExpressionMacro c MacroCallTrace) = do
+  -- TODO: This needs to fail for non-$TestsOnly$.
+  csAddRequired $ Set.fromList [BuiltinOrder,BuiltinFormatted]
+  let formatted = singleType $ JustTypeInstance (TypeInstance BuiltinFormatted (Positional []))
+  let order = singleType $ JustTypeInstance (TypeInstance BuiltinOrder (Positional [formatted]))
+  nextFunc <- csGetTypeFunction c (Just order) (FunctionName "next")
+  getFunc <- csGetTypeFunction c (Just order) (FunctionName "get")
+  let getTrace = "GetCallTrace(" ++ functionName getFunc ++ ", " ++ functionName nextFunc ++ ")"
+  return (Positional [orderOptionalValue formatted],UnwrappedSingle getTrace)
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csAddRequired $ Set.fromList [t,sfType f']

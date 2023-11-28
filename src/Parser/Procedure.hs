@@ -580,6 +580,7 @@ instance ParseFromSource (ExpressionStart SourceContext) where
                  builtinValue <|>
                  sourceContext <|>
                  exprLookup <|>
+                 exprMacro <|>
                  categoryCall <|>
                  -- Keep this before typeCall, since it does a look-ahead for {.
                  initalize <|>
@@ -622,6 +623,9 @@ instance ParseFromSource (ExpressionStart SourceContext) where
       case pragma of
            (PragmaExprLookup c name) -> return $ NamedMacro c name
            _ -> undefined  -- Should be caught above.
+    exprMacro = do
+      (c,macro) <- macroExpression
+      return $ ExpressionMacro [c] macro
     variableOrUnqualified = do
       c <- getSourceContext
       n <- sourceParser :: TextParser VariableName
@@ -775,6 +779,10 @@ pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
 pragmaSourceContext :: TextParser (PragmaExpr SourceContext)
 pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
   parseAt c = PragmaSourceContext c
+
+macroExpression :: TextParser (SourceContext,MacroExpression)
+macroExpression = callTrace where
+  callTrace = autoPragma "CallTrace" $ Left (flip (,) MacroCallTrace)
 
 data MarkType = ReadOnly | Hidden deriving (Show)
 

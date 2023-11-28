@@ -233,6 +233,9 @@ class TypeValue {
   }
 };
 
+// TODO: This shouldn't be visible outside of $TestsOnly$.
+BoxedValue GetCallTrace(const ValueFunction& get_func, const ValueFunction& next_func);
+
 template <int P, class T>
 class InstanceCache {
  public:

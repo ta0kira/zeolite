@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -148,11 +148,12 @@ unittest test {
 
 testcase "source context" {
   failure
-  require "tests/expr-lookup\.0rt"
+  require "Failed condition: .*tests/expr-lookup\.0rt"
 }
 
 unittest test {
-  fail($SourceContext$)
+  Formatted context <- $SourceContext$
+  fail(context)
 }
 
 
@@ -167,4 +168,22 @@ testcase "recursive expression" {
 
 unittest test {
   String value <- $ExprLookup[USES_RECURSIVE]$
+}
+
+
+testcase "call trace" {
+  failure
+  require "Failed condition: .*tests/expr-lookup\.0rt .*testcase"
+}
+
+unittest test {
+  optional Order<Formatted> trace <- $CallTrace$
+  \ Testing.checkPresent(trace)
+  \ Testing.checkPresent(trace&.next())
+  String combined <- String.builder()
+      .append(require(trace).get())
+      .append(" ")
+      .append(require(trace&.next()).get())
+      .build()
+  fail(combined)
 }

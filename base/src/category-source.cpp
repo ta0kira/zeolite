@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -269,4 +269,43 @@ const PrimString& TypeValue::AsString() const {
 PrimCharBuffer& TypeValue::AsCharBuffer() {
   FAIL() << CategoryName() << " is not a CharBuffer value";
   __builtin_unreachable();
+}
+
+namespace {
+
+class CallTrace : public TypeValue {
+ public:
+  CallTrace(BoxedValue next, std::string trace, const ValueFunction& get_func, const ValueFunction& next_func)
+    : next_(std::move(next)), trace_(std::move(trace)), next_func_(next_func), get_func_(get_func) {}
+
+  std::string CategoryName() const override {
+    return "CallTrace";
+  }
+
+  ReturnTuple Dispatch(const ValueFunction& label, const ParamsArgs& params_args) override {
+    if (&label == &next_func_) {
+      return ReturnTuple(next_);
+    }
+    if (&label == &get_func_) {
+      return ReturnTuple(Box_String(trace_));
+    }
+    return TypeValue::Dispatch(label, params_args);
+  }
+
+ private:
+  const BoxedValue next_;
+  const std::string trace_;
+  const ValueFunction& get_func_;
+  const ValueFunction& next_func_;
+};
+
+}  // namespace
+
+BoxedValue GetCallTrace(const ValueFunction& get_func, const ValueFunction& next_func) {
+  const TraceList trace = TraceContext::GetTrace();
+  BoxedValue head;
+  for (auto current = trace.rbegin(), end = trace.rend(); current != end; ++current) {
+    head = BoxedValue::New<CallTrace>(head, (*current)(), get_func, next_func);
+  }
+  return head;
 }
