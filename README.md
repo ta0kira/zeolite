@@ -1852,6 +1852,8 @@ for creating identifiers that don't otherwise have a unique member.
 
 See
 [`builtin.0rp`](https://github.com/ta0kira/zeolite/blob/master/base/builtin.0rp)
+and
+[`testing.0rp`](https://github.com/ta0kira/zeolite/blob/master/base/testing.0rp)
 for more details about builtin types. (For your locally-installed version, which
 might differ, see `$(zeolite --get-path)/base/builtin.0rp`.)
 
@@ -1921,10 +1923,13 @@ Builtin meta-types:
 #### Builtin Constants
 
 - **`empty`** (`optional all`): A missing `optional` value.
+- **`false`** (`Bool`): Obvious.
 - **`self`** (`#self`): The value being operated on in `@value` functions.
+- **`true`** (`Bool`): Obvious.
 
 #### Builtin Functions
 
+- **`identify`**: Returns an `Identifier<#x>` for the value.
 - **`present`**: Check `optional` for `empty`.
 - **`reduce<#x,#y>(value)`**: See
   [Runtime Type Reduction](#runtime-type-reduction).
@@ -2332,6 +2337,12 @@ These can be used in place of language expressions.
   `.zeolite-module` (see `ExprLookup` below), the context will be within the
   `.zeolite-module` file itself. (Remember that macro substitution *is not* a
   preprocessor stage, unlike the C preprocessor.)
+
+- **`$CallTrace$`**. (As of compiler version `0.24.0.0`.) Inserts an
+  `optional Order<Formatted>` containing the current call trace. This is only
+  available in `.0rt` test files and in `.0rx` with `$TestsOnly$`. This cannot
+  be used outside of non-test code, just so that logic can't depend on where the
+  call originated from.
 
 - **`$ExprLookup[`**_`MACRO_NAME`_**`]$`**. (As of compiler version
   `0.6.0.0`.) This directly substitutes in a language expression, as if it was

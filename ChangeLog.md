@@ -42,6 +42,9 @@
 * **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
   the `/*b+*/` in `a+/*b+*/c`.
 
+* **[new]** Adds the `$CallTrace$` macro to get a call trace for testing
+  purposes.
+
 * **[new]** Adds the option to provide _enforced_ labels for function args.
 
   ```text
