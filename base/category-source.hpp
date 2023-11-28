@@ -233,9 +233,6 @@ class TypeValue {
   }
 };
 
-// TODO: This shouldn't be visible outside of $TestsOnly$.
-BoxedValue GetCallTrace(const ValueFunction& get_func, const ValueFunction& next_func);
-
 template <int P, class T>
 class InstanceCache {
  public:
@@ -271,5 +268,9 @@ class InstanceCache {
   std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
   std::map<typename ParamsKey<P>::Type, W<T>> cache_;
 };
+
+#ifdef ZEOLITE_TESTS_ONLY__YOUR_MODULE_IS_BROKEN_IF_YOU_USE_THIS_IN_HAND_WRITTEN_CODE
+BoxedValue GetCallTrace(const ValueFunction& get_func, const ValueFunction& next_func);
+#endif
 
 #endif  // CATEGORY_SOURCE_HPP_

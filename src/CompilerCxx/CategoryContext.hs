@@ -42,9 +42,9 @@ import Types.TypeInstance
 
 
 getContextForInit :: (Show c, CollectErrorsM m) =>
-  CategoryMap c -> ExprMap c -> AnyCategory c -> DefinedCategory c ->
+  Bool -> CategoryMap c -> ExprMap c -> AnyCategory c -> DefinedCategory c ->
   SymbolScope -> m (ProcedureContext c)
-getContextForInit tm em t d s = do
+getContextForInit to tm em t d s = do
   let ps = Positional $ getCategoryParams t
   -- NOTE: This is always ValueScope for initializer checks.
   let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
@@ -85,13 +85,14 @@ getContextForInit tm em t d s = do
       _pcExprMap = em,
       _pcReservedMacros = [],
       _pcNoTrace = False,
+      _pcTestsOnly = to,
       _pcTraces = [],
       _pcParentCall = Nothing
     }
 
 getProcedureContext :: (Show c, CollectErrorsM m) =>
-  ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
-getProcedureContext (ScopeContext tm t ps ms pa fa va em)
+  Bool -> ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
+getProcedureContext to (ScopeContext tm t ps ms pa fa va em)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
                     (ExecutableProcedure _ _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
@@ -146,6 +147,7 @@ getProcedureContext (ScopeContext tm t ps ms pa fa va em)
       _pcExprMap = em,
       _pcReservedMacros = [],
       _pcNoTrace = False,
+      _pcTestsOnly = to,
       _pcTraces = [],
       _pcParentCall = parentCall
     }
@@ -154,8 +156,8 @@ getProcedureContext (ScopeContext tm t ps ms pa fa va em)
     args = Positional $ zip (map snd $ pValues as1) (pValues $ avNames as2)
     parentCall = Just (fmap vpParam ps1,args)
 
-getMainContext :: CollectErrorsM m => CategoryMap c -> ExprMap c -> m (ProcedureContext c)
-getMainContext tm em = return $ ProcedureContext {
+getMainContext :: CollectErrorsM m => Bool -> CategoryMap c -> ExprMap c -> m (ProcedureContext c)
+getMainContext to tm em = return $ ProcedureContext {
     _pcScope = LocalScope,
     _pcType = CategoryNone,
     _pcExtParams = Positional [],
@@ -181,6 +183,7 @@ getMainContext tm em = return $ ProcedureContext {
     _pcExprMap = em,
     _pcReservedMacros = [],
     _pcNoTrace = False,
+    _pcTestsOnly = to,
     _pcTraces = [],
     _pcParentCall = Nothing
   }

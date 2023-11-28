@@ -592,7 +592,7 @@ generateCategoryDefinition testing = common where
     createParam p = onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
 
   inlineCategoryConstructor t d tm em = do
-    ctx <- getContextForInit tm em t d CategoryScope
+    ctx <- getContextForInit testing tm em t d CategoryScope
     initMembers <- runDataCompiler (sequence $ map compileLazyInit members) ctx
     let initMembersStr = intercalate ", " $ cdOutput initMembers
     let initColon = if null initMembersStr then "" else " : "
@@ -709,7 +709,7 @@ generateCategoryDefinition testing = common where
       "CycleCheck<" ++ n2 ++ "> marker(*this);"
     ]
 
-  defineProcedure t = compileExecutableProcedure (isImmutable t)
+  defineProcedure t = compileExecutableProcedure testing (isImmutable t)
   declareProcedure t = procedureDeclaration (isImmutable t)
 
 isImmutable :: AnyCategory c -> Bool

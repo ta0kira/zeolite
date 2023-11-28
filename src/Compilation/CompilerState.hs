@@ -56,6 +56,7 @@ module Compilation.CompilerState (
   csGetNoTrace,
   csGetOutput,
   csGetParamScope,
+  csGetTestsOnly,
   csGetTypeFunction,
   csGetVariable,
   csInheritDeferred,
@@ -152,6 +153,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccReleaseExprMacro :: a -> [c] -> MacroName -> m a
   ccSetNoTrace :: a -> Bool -> m a
   ccGetNoTrace :: a -> m Bool
+  ccGetTestsOnly :: a -> m Bool
   ccAddTrace :: a -> String -> m a
   ccGetTraces :: a -> m [String]
   ccCanForward :: a -> [ParamName] -> [VariableName] -> m Bool
@@ -361,6 +363,9 @@ csSetNoTrace t = fmap (\x -> ccSetNoTrace x t) get >>= lift >>= put
 
 csGetNoTrace :: CompilerContext c m s a => CompilerState a m Bool
 csGetNoTrace = fmap ccGetNoTrace get >>= lift
+
+csGetTestsOnly :: CompilerContext c m s a => CompilerState a m Bool
+csGetTestsOnly = fmap ccGetTestsOnly get >>= lift
 
 csAddTrace :: CompilerContext c m s a => String -> CompilerState a m ()
 csAddTrace t = fmap (\x -> ccAddTrace x t) get >>= lift >>= put

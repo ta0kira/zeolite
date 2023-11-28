@@ -88,12 +88,12 @@ data CxxFunctionType =
   deriving Show
 
 compileExecutableProcedure :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> CxxFunctionType -> ScopeContext c -> ScopedFunction c ->
+  Bool -> Bool -> CxxFunctionType -> ScopeContext c -> ScopedFunction c ->
   ExecutableProcedure c -> m (CompiledData [String])
-compileExecutableProcedure immutable cxxType ctx
+compileExecutableProcedure to immutable cxxType ctx
   ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
   pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
-  ctx' <- getProcedureContext ctx ff pp
+  ctx' <- getProcedureContext to ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
   procedureTrace <- setProcedureTrace
   creationTrace  <- setCreationTrace
@@ -815,7 +815,8 @@ compileExpressionStart (NamedMacro c n) = do
   csReleaseExprMacro c n
   return e'
 compileExpressionStart (ExpressionMacro c MacroCallTrace) = do
-  -- TODO: This needs to fail for non-$TestsOnly$.
+  to <- csGetTestsOnly
+  when (not to) $ compilerErrorM $ "$CallTrace$ is a $TestsOnly$ macro" ++ formatFullContextBrace c
   csAddRequired $ Set.fromList [BuiltinOrder,BuiltinFormatted]
   let formatted = singleType $ JustTypeInstance (TypeInstance BuiltinFormatted (Positional []))
   let order = singleType $ JustTypeInstance (TypeInstance BuiltinOrder (Positional [formatted]))
@@ -1232,7 +1233,7 @@ guessParams r fa args params ps ts = do
 compileMainProcedure :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])
 compileMainProcedure tm em e = do
-  ctx <- getMainContext tm em
+  ctx <- getMainContext False tm em
   runDataCompiler compiler ctx where
     procedure = Procedure [] [IgnoreValues [] e]
     compiler = do
@@ -1242,7 +1243,7 @@ compileMainProcedure tm em e = do
 compileWrapTestcase :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],TypeInstance) -> m (CompiledData [String])
 compileWrapTestcase tm (c,t) = do
-  ctx <- getMainContext tm Map.empty
+  ctx <- getMainContext False tm Map.empty
   runDataCompiler compiler ctx <??
     "In custom testcase checker at " ++ formatFullContext c
   where
@@ -1264,7 +1265,7 @@ compileWrapTestcase tm (c,t) = do
 compileTestProcedure :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> TestProcedure c -> m (CompiledData [String])
 compileTestProcedure tm em (TestProcedure c n cov p) = do
-  ctx <- getMainContext tm em
+  ctx <- getMainContext True tm em
   p' <- runDataCompiler compiler ctx <??
     "In unittest " ++ show n ++ formatFullContextBrace c
   return $ mconcat [

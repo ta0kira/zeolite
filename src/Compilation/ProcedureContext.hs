@@ -89,6 +89,7 @@ data ProcedureContext c =
     _pcExprMap :: ExprMap c,
     _pcReservedMacros :: [(MacroName,[c])],
     _pcNoTrace :: Bool,
+    _pcTestsOnly :: Bool,
     _pcTraces :: [String],
     _pcParentCall :: Maybe (Positional ParamName,Positional (Maybe (CallArgLabel c), InputValue c))
   }
@@ -409,6 +410,7 @@ instance (Show c, CollectErrorsM m) =>
   ccReleaseExprMacro ctx _ n = return $ ctx & pcReservedMacros %~ (filter ((/= n) . fst))
   ccSetNoTrace ctx t = return $ ctx & pcNoTrace .~ t
   ccGetNoTrace = return . (^. pcNoTrace)
+  ccGetTestsOnly = return . (^. pcTestsOnly)
   ccAddTrace ctx "" = return ctx
   ccAddTrace ctx t = return $ ctx & pcTraces <>~ [t]
   ccGetTraces = return . (^. pcTraces)
