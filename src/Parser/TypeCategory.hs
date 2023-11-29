@@ -69,9 +69,9 @@ instance ParseFromSource (AnyCategory SourceContext) where
       open
       pg <- pragmas
       (rs,ds,vs) <- parseRefinesDefinesFilters
-      (fs,_) <- parseFunctionsWithVisibility $ parseScopedFunction parseScope (return n)
+      (fs,fv) <- parseFunctionsWithVisibility $ parseScopedFunction parseScope (return n)
       close
-      return $ ValueConcrete [c] NoNamespace n pg ps rs ds vs fs
+      return $ ValueConcrete [c] NoNamespace n pg fv ps rs ds vs fs
     pragmas = fmap (:[]) immutable <|> return []
     immutable = do
       c <- getSourceContext

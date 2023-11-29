@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ tests = [
     checkOperationFail
       ("testfiles" </> "partial.0rx")
       (checkConnectedTypes $ Map.fromList [
-          (CategoryName "Parent",ValueConcrete [] NoNamespace (CategoryName "Parent") [] [] [] [] [] [])
+          (CategoryName "Parent",ValueConcrete [] NoNamespace (CategoryName "Parent") [] [] [] [] [] [] [])
         ]),
 
     checkOperationSuccess ("testfiles" </> "value_refines_value.0rx") (checkConnectionCycles Map.empty),
@@ -1099,13 +1099,13 @@ getTypeDefinesFilters ts s = do
 
 scrapeAllRefines :: [AnyCategory c] -> [(String, String)]
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueInterface _ _ n _ _ rs _)    = map ((,) n . vrType) rs
-  scrapeSingle (ValueConcrete _ _ n _ _ rs _ _ _) = map ((,) n . vrType) rs
+  scrapeSingle (ValueInterface _ _ n _ _ rs _)      = map ((,) n . vrType) rs
+  scrapeSingle (ValueConcrete _ _ n _ _ _ rs _ _ _) = map ((,) n . vrType) rs
   scrapeSingle _ = []
 
 scrapeAllDefines :: [AnyCategory c] -> [(String, String)]
 scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueConcrete _ _ n _ _ _ ds _ _) = map ((,) n . vdType) ds
+  scrapeSingle (ValueConcrete _ _ n _ _ _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
 checkPaired :: Show a => (a -> a -> TrackedErrors ()) -> [a] -> [a] -> TrackedErrors ()
