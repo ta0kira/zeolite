@@ -93,7 +93,7 @@ getContextForInit to tm em t d s = do
 getProcedureContext :: (Show c, CollectErrorsM m) =>
   Bool -> ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
 getProcedureContext to (ScopeContext tm t ps ms pa fa va em)
-                    ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
+                    ff@(ScopedFunction _ _ _ s _ as1 rs1 ps1 fs _)
                     (ExecutableProcedure _ _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1

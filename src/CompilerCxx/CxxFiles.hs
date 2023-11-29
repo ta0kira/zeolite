@@ -716,7 +716,7 @@ isImmutable :: AnyCategory c -> Bool
 isImmutable = any isCategoryImmutable . getCategoryPragmas
 
 formatFunctionTypes :: Show c => ScopedFunction c -> [String]
-formatFunctionTypes (ScopedFunction c _ _ s as rs ps fa _) = [location,args,returns,params] ++ filters where
+formatFunctionTypes (ScopedFunction c _ _ s _ as rs ps fa _) = [location,args,returns,params] ++ filters where
   location = show s ++ " function declared at " ++ formatFullContext c
   args    = "Arg Types:    (" ++ intercalate ", " (map singleArg $ pValues as)  ++ ")"
   returns = "Return Types: (" ++ intercalate ", " (map (show . pvType) $ pValues rs)  ++ ")"
@@ -1038,7 +1038,7 @@ getCategoryMentions t = Set.fromList $ fromRefines (getCategoryRefines t) ++
   fromDefines ds = Set.toList $ Set.unions $ map (categoriesFromDefine . vdType) ds
   fromDefine (DefinesInstance d ps) = d:(fromGenerals $ pValues ps)
   fromFunctions fs = concat $ map fromFunction fs
-  fromFunction (ScopedFunction _ _ t2 _ as rs _ fs _) =
+  fromFunction (ScopedFunction _ _ t2 _ _ as rs _ fs _) =
     [t2] ++ (fromGenerals $ map (vtType . pvType) (map fst (pValues as) ++ pValues rs)) ++ fromFilters fs
   fromFilters fs = concat $ map (fromFilter . pfFilter) fs
   fromFilter (TypeFilter _ t2)  = Set.toList $ categoriesFromTypes t2

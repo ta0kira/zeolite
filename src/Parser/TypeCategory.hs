@@ -196,7 +196,7 @@ parseFunctionsWithVisibility func = labeled "visibility" $ sepBy anyType optiona
     (fs,vs) <- merge v ps
     return (fs,v:vs)
   merge _ _ = return ([],[])
-  setVis _ f = f  -- TODO: Set visibility in f.
+  setVis v (ScopedFunction c n t s _ as rs ps fs ms) = (ScopedFunction c n t s v as rs ps fs ms)
 
 parseScopedFunction ::
   TextParser SymbolScope -> TextParser CategoryName -> TextParser (ScopedFunction SourceContext)
@@ -208,7 +208,7 @@ parseScopedFunction sp tp = labeled "function" $ do
   as <- fmap Positional $ typeList "arg label" singleArg
   sepAfter_ (string "->")
   rs <- fmap Positional $ typeList "return type" singleReturn
-  return $ ScopedFunction [c] n t s as rs ps fa []
+  return $ ScopedFunction [c] n t s FunctionVisibilityDefault as rs ps fa []
   where
     parseName = do
       s <- sp -- Could be a constant, i.e., nothing consumed.

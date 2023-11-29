@@ -39,6 +39,7 @@ module Types.TypeCategory (
   checkCategoryInstances,
   checkConnectedTypes,
   checkConnectionCycles,
+  checkFunctionCallVisibility,
   checkParamVariances,
   declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
@@ -746,7 +747,11 @@ validateCategoryFunction r t f = do
          TypeScope     -> validatateFunctionType r pa vm funcType
          ValueScope    -> validatateFunctionType r pa vm funcType
          _             -> return ()
-    getFunctionFilterMap f >>= disallowBoundedParams where
+    getFunctionFilterMap f >>= disallowBoundedParams
+    checkVis (sfScope f) (sfVisibility f) where
+      checkVis CategoryScope va@(FunctionVisibility _ _) =
+        compilerErrorM $ "Category functions must not have restricted visibility: " ++ show va
+      checkVis _ _ = return ()
       message
         | getCategoryName t == sfType f = "In function:\n---\n" ++ show f ++ "\n---\n"
         | otherwise = "In function inherited from " ++ show (sfType f) ++
@@ -932,9 +937,9 @@ mergeFunctions r tm pm fm rs ds fs = do
                                           show (length es) ++ " times:\n---\n" ++
                                           intercalate "\n---\n" (map show es)
       | otherwise = do
-        let ff@(ScopedFunction c n2 t s as rs2 ps fa ms) = head es
+        let ff@(ScopedFunction c n2 t s v as rs2 ps fa ms) = head es
         mapCompilerM_ (checkMerge ff) is
-        return $ ScopedFunction c n2 t s as rs2 ps fa (ms ++ is)
+        return $ ScopedFunction c n2 t s v as rs2 ps fa (ms ++ is)
         where
           checkMerge f1 f2
             | sfScope f1 /= sfScope f2 =
@@ -943,12 +948,16 @@ mergeFunctions r tm pm fm rs ds fs = do
                                show f2 ++ "\n  ->\n" ++ show f1
             | otherwise =
               "In function merge:\n---\n" ++ show f2 ++ "\n  ->\n" ++ show f1 ++ "\n---\n" ??> do
+                checkMergeVis (sfVisibility f1) (sfVisibility f2)
                 f1' <- parsedToFunctionType f1
                 f2' <- parsedToFunctionType f2
                 case sfScope f1 of
                      CategoryScope -> checkFunctionConvert r Map.empty Map.empty f2' f1'
                      _             -> checkFunctionConvert r fm pm f2' f1'
                 processPairs_ checkArgNames (sfArgs f1) (sfArgs f2)
+          checkMergeVis FunctionVisibilityDefault _ = return ()
+          checkMergeVis v1 v2 =
+            compilerErrorM $ "Cannot supersede " ++ show v2 ++ " with " ++ show v1
           checkArgNames (_,n1) (_,n2)
             | fmap calName n1 == fmap calName n2 = return ()
           checkArgNames t1 t2 =
@@ -997,6 +1006,7 @@ data FunctionVisibility c =
     fvTypes :: [([c],GeneralInstance)]
   } |
   FunctionVisibilityDefault
+  deriving (Eq)
 
 instance Show c => Show (FunctionVisibility c) where
   show FunctionVisibilityDefault = "visibility _"
@@ -1008,6 +1018,7 @@ data ScopedFunction c =
     sfName :: FunctionName,
     sfType :: CategoryName,
     sfScope :: SymbolScope,
+    sfVisibility :: FunctionVisibility c,
     sfArgs :: Positional (PassedValue c, Maybe (CallArgLabel c)),
     sfReturns :: Positional (PassedValue c),
     sfParams :: Positional (ValueParam c),
@@ -1019,11 +1030,11 @@ instance Show c => Show (ScopedFunction c) where
   show f = showFunctionInContext (show (sfScope f) ++ " ") "" f
 
 sameFunction :: ScopedFunction c -> ScopedFunction c -> Bool
-sameFunction (ScopedFunction _ n1 t1 s1 _ _ _ _ _) (ScopedFunction _ n2 t2 s2 _ _ _ _ _) =
+sameFunction (ScopedFunction _ n1 t1 s1 _ _ _ _ _ _) (ScopedFunction _ n2 t2 s2 _ _ _ _ _ _) =
   all id [n1 == n2, t1 == t2, s1 == s2]
 
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
-showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =
+showFunctionInContext s indent (ScopedFunction cs n t _ _ as rs ps fa ms) =
   indent ++ s ++ "/*" ++ show t ++ "*/ " ++ show n ++
   showParams (pValues ps) ++ " " ++ formatContext cs ++ "\n" ++
   concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
@@ -1054,7 +1065,7 @@ instance Show c => Show (PassedValue c) where
 
 parsedToFunctionType :: (Show c, CollectErrorsM m) =>
   ScopedFunction c -> m FunctionType
-parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
+parsedToFunctionType (ScopedFunction c n _ _ _ as rs ps fa _) = do
   let as' = Positional $ map (pvType . fst) $ pValues as
   let rs' = Positional $ map pvType $ pValues rs
   let ps' = Positional $ map vpParam $ pValues ps
@@ -1080,7 +1091,7 @@ uncheckedSubFunction = unfixedSubFunction . fmap fixTypeParams
 
 unfixedSubFunction :: (Show c, CollectErrorsM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
-unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
+unfixedSubFunction pa ff@(ScopedFunction c n t s v as rs ps fa ms) =
   "In function:\n---\n" ++ show ff ++ "\n---\n" ??> do
     let unresolved = Map.fromList $ map (\n2 -> (n2,singleType $ JustParamName False n2)) $ map vpParam $ pValues ps
     let pa' = pa `Map.union` unresolved
@@ -1088,7 +1099,8 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
     rs' <- fmap Positional $ mapCompilerM (subPassed pa') $ pValues rs
     fa' <- mapCompilerM (subFilter pa') fa
     ms' <- mapCompilerM (uncheckedSubFunction pa) ms
-    return $ (ScopedFunction c n t s as' rs' ps fa' ms')
+    v' <- subVisibility pa' v
+    return $ (ScopedFunction c n t s v' as' rs' ps fa' ms')
     where
       subPassedNamed pa2 (a,n2) = do
         a2 <- subPassed pa2 a
@@ -1099,16 +1111,24 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
       subFilter pa2 (ParamFilter c2 n2 f) = do
         f' <- uncheckedSubFilter (getValueForParam pa2) f
         return $ ParamFilter c2 n2 f'
+      subVisibility _ FunctionVisibilityDefault = return FunctionVisibilityDefault
+      subVisibility pa2 (FunctionVisibility c2 ts) = do
+        ts' <- mapCompilerM (subVisibilitySingle pa2) ts
+        return $ FunctionVisibility c2 ts'
+      subVisibilitySingle pa2 (c2,t2) = do
+        t2' <- uncheckedSubInstance (getValueForParam pa2) t2
+        return (c2,t2')
 
 replaceSelfFunction :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
-replaceSelfFunction self ff@(ScopedFunction c n t s as rs ps fa ms) =
+replaceSelfFunction self ff@(ScopedFunction c n t s v as rs ps fa ms) =
   "In function:\n---\n" ++ show ff ++ "\n---\n" ??> do
     as' <- fmap Positional $ mapCompilerM subPassedNamed $ pValues as
     rs' <- fmap Positional $ mapCompilerM subPassed $ pValues rs
     fa' <- mapCompilerM subFilter fa
     ms' <- mapCompilerM (replaceSelfFunction self) ms
-    return $ (ScopedFunction c n t s as' rs' ps fa' ms')
+    v' <- subVisibility v
+    return $ (ScopedFunction c n t s v' as' rs' ps fa' ms')
     where
       subPassedNamed (a,n2) = do
         a2 <- subPassed a
@@ -1119,6 +1139,22 @@ replaceSelfFunction self ff@(ScopedFunction c n t s as rs ps fa ms) =
       subFilter (ParamFilter c2 n2 f) = do
         f' <- replaceSelfFilter self f
         return $ ParamFilter c2 n2 f'
+      subVisibility FunctionVisibilityDefault = return FunctionVisibilityDefault
+      subVisibility (FunctionVisibility c2 ts) = do
+        ts' <- mapCompilerM subVisibilitySingle ts
+        return $ FunctionVisibility c2 ts'
+      subVisibilitySingle (c2,t2) = do
+        t2' <- replaceSelfInstance self t2
+        return (c2,t2')
+
+checkFunctionCallVisibility :: (Show c, CollectErrorsM m, TypeResolver r) =>
+  r -> ParamFilters -> ScopedFunction c -> GeneralInstance -> m ()
+checkFunctionCallVisibility r fs f = check (sfVisibility f) where
+  check FunctionVisibilityDefault _ = return ()
+  check (FunctionVisibility _ ts) t0 = "Cannot call " ++ show (sfName f) ++ " in context of " ++ show t0 !!>
+    collectFirstM_ (map (checkSingle t0) ts)
+  checkSingle t0 (c,t) = "In visibility " ++ show t ++ formatFullContextBrace c ??>
+    checkGeneralMatch r fs Covariant t0 t
 
 data PatternMatch =
   TypePattern {

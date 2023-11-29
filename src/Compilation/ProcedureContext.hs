@@ -147,7 +147,17 @@ instance (Show c, CollectErrorsM m) =>
                  case t of
                       Just t0 -> replaceSelfInstance self t0
                       Nothing -> return self
-    getFunction t' t' where
+    f <- getFunction t' t'
+    when (ctx ^. pcType /= sfType f && ctx ^. pcType /= CategoryNone) $
+      "In call to " ++ show (sfName f) ++ formatFullContextBrace c ??> checkVisibility (ctx ^. pcScope) (sfVisibility f) f
+    return f where
+      checkVisibility _ FunctionVisibilityDefault _ = return ()
+      checkVisibility CategoryScope v _ = "Function restricted to @type and @value contexts" ??> compilerErrorM (show v)
+      checkVisibility _ _ f = do
+        r <- ccResolver ctx
+        allFilters <- ccAllFilters ctx
+        self <- fmap (singleType . JustTypeInstance) $ ccSelfType ctx
+        checkFunctionCallVisibility r allFilters f self
       multipleMatchError t2 fs = do
         "Multiple matches for function " ++ show n ++ " called on " ++ show t2 ++ formatFullContextBrace c !!>
           mapErrorsM (map show fs)

@@ -91,7 +91,7 @@ compileExecutableProcedure :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> Bool -> CxxFunctionType -> ScopeContext c -> ScopedFunction c ->
   ExecutableProcedure c -> m (CompiledData [String])
 compileExecutableProcedure to immutable cxxType ctx
-  ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
+  ff@(ScopedFunction _ _ _ s _ as1 rs1 ps1 _ _)
   pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
   ctx' <- getProcedureContext to ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
@@ -773,8 +773,8 @@ compileExpression = compile where
                             intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c2
 
 forceOptionalReturns :: [c] -> ScopedFunction c -> ScopedFunction c
-forceOptionalReturns c0 (ScopedFunction c n t s as rs ps fs ms) =
-  ScopedFunction c n t s as rs' ps fs ms where
+forceOptionalReturns c0 (ScopedFunction c n t s v as rs ps fs ms) =
+  ScopedFunction c n t s v as rs' ps fs ms where
     rs' = fmap forceOptional rs
     forceOptional (PassedValue c2 (ValueType RequiredValue t2)) = (PassedValue (c0 ++ c2) (ValueType OptionalValue t2))
     forceOptional t2 = t2

@@ -143,12 +143,12 @@ setInternalFunctions r t fs = do
   foldr (update fm) (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
   pm = getCategoryParamMap t
-  update fm f@(ScopedFunction c n t2 s as rs ps fs2 ms) fa = do
+  update fm f@(ScopedFunction c n t2 s v as rs ps fs2 ms) fa = do
     validateCategoryFunction r t f
     fa' <- fa
     case n `Map.lookup` fa' of
          Nothing -> return $ Map.insert n f fa'
-         (Just f0@(ScopedFunction c2 _ _ _ _ _ _ _ ms2)) -> do
+         (Just f0@(ScopedFunction c2 _ _ _ _ _ _ _ _ ms2)) -> do
            ("In function merge:\n---\n" ++ show f0 ++
              "\n  ->\n" ++ show f ++ "\n---\n") ??> do
               f0' <- parsedToFunctionType f0
@@ -156,7 +156,7 @@ setInternalFunctions r t fs = do
               case s of
                    CategoryScope -> checkFunctionConvert r Map.empty Map.empty f0' f'
                    _             -> checkFunctionConvert r fm pm f0' f'
-           return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs2 ([f0]++ms++ms2)) fa'
+           return $ Map.insert n (ScopedFunction (c++c2) n t2 s v as rs ps fs2 ([f0]++ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, CollectErrorsM m) =>
   Map.Map FunctionName (ScopedFunction c) -> [ExecutableProcedure c] ->
@@ -271,6 +271,7 @@ mergeInternalInheritance tm d = "In definition of " ++ show (dcName d) ++ format
                sfName = sfName f,
                sfType = sfType f,
                sfScope = sfScope f,
+               sfVisibility = sfVisibility f,
                sfArgs = sfArgs f,
                sfReturns = sfReturns f,
                sfParams = sfParams f,

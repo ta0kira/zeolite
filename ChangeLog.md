@@ -32,6 +32,18 @@
 
   This is a breaking change because `delegate` is now reserved.
 
+* **[breaking]** Adds the `visibility` keyword to limit calling of
+  `@value`/`@type` functions to specific type contexts. This is breaking because
+  `visibility` is now reserved.
+
+  ```text
+  concrete Foo {
+    visibility Bar, Baz  // Functions below here are only visible from Bar or Baz.
+
+    @type call () -> ()
+  }
+  ```
+
 * **[breaking]** In `testcase`, renames `crash` to `failure`.
 
 * **[breaking]** In `testcase`, you can now optionally include a type name that

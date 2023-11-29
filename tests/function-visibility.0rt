@@ -54,3 +54,297 @@ concrete Test<#x> {
 }
 
 define Test {}
+
+
+testcase "restricted visibility not allowed for @category" {
+  error
+  require "visibility"
+  require "foo"
+}
+
+concrete Test {
+  visibility all
+
+  @category foo () -> ()
+}
+
+define Test {
+  foo () {}
+}
+
+
+testcase "restricted visibility not allowed for merge" {
+  error
+  require "visibility"
+  require "default"
+}
+
+concrete Test {
+  defines Default
+
+  visibility all
+
+  @type default () -> (Test)
+}
+
+define Test {
+  default () { return #self{ } }
+}
+
+
+testcase "restricted visibility not broken by internal merge" {
+  compiles
+}
+
+concrete Test {
+  visibility all
+
+  @type default () -> (Test)
+}
+
+define Test {
+  @type default () -> (Test)
+  default () {
+    return #self{ }
+  }
+}
+
+
+testcase "restricted visibility ignored in own category" {
+  compiles
+}
+
+concrete Test {
+  visibility all
+
+  @type default () -> (Test)
+}
+
+define Test {
+  default () {
+    return #self{ }
+  }
+
+  @type foo () -> ()
+  foo () {
+    \ default()
+  }
+
+  @category bar () -> ()
+  bar () {
+    \ Test.default()
+  }
+}
+
+
+testcase "restricted visibility ignored in unittest" {
+  success
+}
+
+unittest test {
+  \ Test.default()
+}
+
+concrete Test {
+  visibility all
+
+  @type default () -> (Test)
+}
+
+define Test {
+  default () {
+    return #self{ }
+  }
+}
+
+
+testcase "visibilty is covariant" {
+  compiles
+}
+
+@value interface Base<|#x> {}
+
+concrete Test {
+  visibility Base<Formatted>
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+}
+
+concrete Value {
+  refines Base<String>
+
+  @type test () -> ()
+}
+
+define Value {
+  test () {
+    \ Test.call()
+  }
+}
+
+
+testcase "visibilty checked in @category function" {
+  error
+  require "visibility"
+  require "call"
+}
+
+concrete Test {
+  visibility Value
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+}
+
+concrete Value {
+  @category test () -> ()
+}
+
+define Value {
+  test () {
+    \ Test.call()
+  }
+}
+
+
+testcase "visibilty checked in @category member" {
+  error
+  require "visibility"
+  require "call"
+}
+
+concrete Test {
+  visibility Value
+
+  @type call () -> (Int)
+}
+
+define Test {
+  call () {
+    return 1
+  }
+}
+
+concrete Value {}
+
+define Value {
+  @category Int value <- Test.call()
+}
+
+
+testcase "visibilty checked in @category function with reset" {
+  compiles
+}
+
+concrete Test {
+  visibility Value
+  visibility _
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+}
+
+concrete Value {
+  @category test () -> ()
+}
+
+define Value {
+  test () {
+    \ Test.call()
+  }
+}
+
+
+testcase "visibility handles #self" {
+  error
+  require "visibility"
+  require "Append<Test>"
+}
+
+concrete Test {
+  visibility Append<#self>
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+}
+
+concrete Value {
+  refines Append<Int>
+}
+
+define Value {
+  append (_) {
+    \ Test.call()
+    return self
+  }
+}
+
+
+testcase "visibility handles params" {
+  error
+  require "visibility"
+  require "Append<Int>"
+}
+
+concrete Test<#x> {
+  visibility Append<#x>
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+}
+
+concrete Value {
+  refines Append<String>
+}
+
+define Value {
+  append (_) {
+    \ Test<Int>.call()
+    return self
+  }
+}
+
+
+testcase "visibilty allows any" {
+  compiles
+}
+
+@value interface Base {}
+
+concrete Test {
+  visibility String, Int, Base, Bool
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+}
+
+concrete Value {
+  refines Base
+
+  @type test () -> ()
+}
+
+define Value {
+  test () {
+    \ Test.call()
+  }
+}

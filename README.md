@@ -63,6 +63,7 @@ of this document.
     - [Explicit Type Conversion](#explicit-type-conversion)
     - [Runtime Type Reduction](#runtime-type-reduction)
     - [Value Instance Comparison](#value-instance-comparison)
+    - [Limited Function Visibility](#limited-function-visibility)
   - [Builtins](#builtins)
     - [Reserved Words](#reserved-words)
     - [Builtin Types](#builtin-types)
@@ -1798,6 +1799,33 @@ for creating identifiers that don't otherwise have a unique member.
   `identifier(2) == identifier(2)`, whereas
   `identifier("value") != identifier("value")`, due to storage differences.
 
+#### Limited Function Visibility
+
+As of compiler version `0.24.0.0`, you can restrict where `@value` and `@type`
+functions can be called from with the **visibility** keyword.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  <span style='color:#898887;'>// This applies to everything below.</span>
+  <b>visibility</b> <span style='color:#0057ae;'>Factory</span>
+
+  <span style='color:#898887;'>// This can only be called from Factory.</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+
+  <span style='color:#898887;'>// This resets the visibility to the default.</span>
+  <b>visibility</b> <b>_</b>
+
+  <span style='color:#644a9b;'>@value</span> call () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}</pre>
+
+- You can specify multiple types separated by `,`.
+- You will get a compiler error if you declare a `@category` function when the
+  visibility is other than the default.
+- Functions with restricted visibility can't be called from `@category`
+  functions because the full type where the call originates isn't defined.
+- The category's own definition and `unittest`s are exempt from visibility
+  requirements.
+
 ### Builtins
 
 #### Reserved Words
@@ -1845,6 +1873,7 @@ for creating identifiers that don't otherwise have a unique member.
 [`typename`](#builtin-functions)
 [`unittest`](#writing-tests)
 [`update`](#loops)
+[`visibility`](#limited-function-visibility)
 [`weak`](#optional-and-weak-values)
 [`while`](#loops)
 
