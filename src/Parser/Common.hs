@@ -75,6 +75,7 @@ module Parser.Common (
   kwUnittest,
   kwUpdate,
   kwValue,
+  kwVisibility,
   kwWeak,
   kwWhile,
   labeled,
@@ -315,6 +316,9 @@ kwUpdate = keyword "update"
 kwValue :: TextParser ()
 kwValue = keyword "@value"
 
+kwVisibility :: TextParser ()
+kwVisibility = keyword "visibility"
+
 kwWeak :: TextParser ()
 kwWeak = keyword "weak"
 
@@ -380,6 +384,7 @@ isKeyword = foldr (<|>) empty $ map try [
     kwUnittest,
     kwUpdate,
     kwValue,
+    kwVisibility,
     kwWeak,
     kwWhile
   ]

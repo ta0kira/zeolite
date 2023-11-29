@@ -25,6 +25,7 @@ module Types.TypeCategory (
   CategoryMap,
   CategoryResolver(..),
   FunctionName(..),
+  FunctionVisibility(..),
   Namespace(..),
   ParamFilter(..),
   PassedValue(..),
@@ -975,6 +976,17 @@ instance Show c => Show (CallArgLabel c) where
 
 matchesCallArgLabel :: CallArgLabel c -> String -> Bool
 matchesCallArgLabel (CallArgLabel _ n1) n2 = init n1 == n2
+
+data FunctionVisibility c =
+  FunctionVisibility {
+    fvContext :: [c],
+    fvTypes :: [([c],GeneralInstance)]
+  } |
+  FunctionVisibilityDefault
+
+instance Show c => Show (FunctionVisibility c) where
+  show FunctionVisibilityDefault = "visibility _"
+  show (FunctionVisibility c ts) = "visibility " ++ intercalate ", " (map (show . snd) ts) ++ formatFullContextBrace c
 
 data ScopedFunction c =
   ScopedFunction {

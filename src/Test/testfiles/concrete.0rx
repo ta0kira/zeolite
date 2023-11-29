@@ -9,15 +9,21 @@ concrete/*!!!*/Type<#a,#b // <- contravariant params
   #c defines // <- used with type-interface filters
     Equals<#c /* <- a type arg */>
 
+  visibility _
+
   @category create<#x>
     #x requires Type1<Type3>
   () -> (optional Type1<Type3>)
+
+  visibility #self
 
   @type create2<#y>
     #y requires #x
     #y allows T2
     #y defines T3
   () -> (optional #x)
+
+  visibility Append<String>
 
   @value get () -> (Type1<Type3>)
   @value set (Type1<Type3>) -> ()

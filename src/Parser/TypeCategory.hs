@@ -69,7 +69,7 @@ instance ParseFromSource (AnyCategory SourceContext) where
       open
       pg <- pragmas
       (rs,ds,vs) <- parseRefinesDefinesFilters
-      fs <- flip sepBy optionalSpace $ parseScopedFunction parseScope (return n)
+      (fs,_) <- parseFunctionsWithVisibility $ parseScopedFunction parseScope (return n)
       close
       return $ ValueConcrete [c] NoNamespace n pg ps rs ds vs fs
     pragmas = fmap (:[]) immutable <|> return []
@@ -168,6 +168,35 @@ instance ParseFromSource (CallArgLabel SourceContext) where
     e <- many alphaNumChar
     sepAfter $ char_ ':'
     return $ CallArgLabel [c] (b:e ++ ":")
+
+instance ParseFromSource (FunctionVisibility SourceContext) where
+  sourceParser = labeled "visibility" $ do
+    c <- getSourceContext
+    kwVisibility
+    visDefault <|> visTypes c where
+      visDefault = do
+        kwIgnore
+        return $ FunctionVisibilityDefault
+      visTypes c = do
+        ts <- sepBy1 singleType (sepAfter $ string ",")
+        return $ FunctionVisibility [c] ts
+      singleType = do
+        c <- getSourceContext
+        t <- sourceParser
+        return ([c],t)
+
+parseFunctionsWithVisibility :: TextParser (ScopedFunction SourceContext) ->
+  TextParser ([ScopedFunction SourceContext],[FunctionVisibility SourceContext])
+parseFunctionsWithVisibility func = labeled "visibility" $ sepBy anyType optionalSpace >>= merge FunctionVisibilityDefault where
+  anyType = fmap Left func <|> fmap Right sourceParser
+  merge v0 (Left f:ps) = do
+    (fs,vs) <- merge v0 ps
+    return (setVis v0 f:fs,vs)
+  merge _ (Right v:ps) = do
+    (fs,vs) <- merge v ps
+    return (fs,v:vs)
+  merge _ _ = return ([],[])
+  setVis _ f = f  -- TODO: Set visibility in f.
 
 parseScopedFunction ::
   TextParser SymbolScope -> TextParser CategoryName -> TextParser (ScopedFunction SourceContext)
