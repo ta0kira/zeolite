@@ -28,10 +28,12 @@ define IndentAppend {
 
   pushIndent () {
     indentCount <- indentCount+1
+    return self
   }
 
   popIndent () {
     indentCount <- indentCount-1
+    return self
   }
 
   addNewline () {

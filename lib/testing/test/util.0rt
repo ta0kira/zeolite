@@ -16,3 +16,107 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+testcase "IndentAppend" {
+  success
+}
+
+unittest nothingAppended {
+  String result <- IndentAppend.new(String.builder())
+      .build()
+      .formatted()
+  \ Testing.checkEquals(result,"")
+}
+
+unittest addNewline {
+  String result <- IndentAppend.new(String.builder())
+      .addNewline()
+      .build()
+      .formatted()
+  \ Testing.checkEquals(result,"\n")
+}
+
+unittest usesNewlines {
+  String result <- IndentAppend.new(String.builder())
+      .append("message1")
+      .append("message2")
+      .build()
+      .formatted()
+  \ Testing.checkEquals(result,"message1\nmessage2\n")
+}
+
+unittest indents {
+  String result <- IndentAppend.new(String.builder())
+      .pushIndent()
+      .append("message1")
+      .pushIndent()
+      .append("message2")
+      .popIndent()
+      .popIndent()
+      .append("message3")
+      .build()
+      .formatted()
+  \ Testing.checkEquals(result,"  message1\n    message2\nmessage3\n")
+}
+
+
+testcase "ValueList" {
+  success
+}
+
+concrete Helper {
+  @type new (ValueList<Int>) -> (Helper)
+
+  @value checkNext (Int) -> (Helper)
+  @value checkFinished () -> ()
+}
+
+define Helper {
+  @value optional Order<Int> current
+
+  new (list) {
+    return Helper{ list.defaultOrder() }
+  }
+
+  checkNext (value) {
+    \ Testing.checkEquals(current&.get(),value)
+    current <- current&.next()
+    return self
+  }
+
+  checkFinished () {
+    if (`present` current) {
+      fail("list not empty")
+    }
+  }
+}
+
+unittest nothingAdded {
+  ValueList<Int> list <- ValueList<Int>.new()
+  \ Testing.checkTrue(list.isEmpty())
+  \ Helper.new(list)
+      .checkFinished()
+}
+
+unittest withItems {
+  ValueList<Int> list <- ValueList<Int>.new()
+      .append(1)
+      .append(2)
+      .append(3)
+  \ Testing.checkFalse(list.isEmpty())
+  \ Helper.new(list)
+      .checkNext(1)
+      .checkNext(2)
+      .checkNext(3)
+      .checkFinished()
+}
+
+
+testcase "TestHandler skips tracing" {
+  failure
+  require "message"
+  exclude "exitTest"
+}
+
+unittest exitTest {
+  \ TestHandler:failAndExit("message")
+}

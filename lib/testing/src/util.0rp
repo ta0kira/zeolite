@@ -24,8 +24,8 @@ concrete IndentAppend {
 
   @type new ([Append<Formatted>&Build<Formatted>]) -> (#self)
 
-  @value pushIndent () -> ()
-  @value popIndent () -> ()
+  @value pushIndent () -> (#self)
+  @value popIndent () -> (#self)
   @value addNewline () -> (#self)
 }
 
