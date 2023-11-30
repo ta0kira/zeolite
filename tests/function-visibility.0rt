@@ -183,7 +183,7 @@ define Test {
 }
 
 
-testcase "visibilty is covariant" {
+testcase "visibilty checks correct conversion direction" {
   compiles
 }
 
