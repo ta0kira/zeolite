@@ -380,7 +380,11 @@ define Value {
 
 
 testcase "conversion can change visibility" {
-  compiles
+  success
+}
+
+unittest test {
+  \ Test.test()
 }
 
 @value interface Base<|#x> {}
@@ -390,7 +394,7 @@ concrete Value<|#x> {
 
   visibility Base<#x>
 
-  @type call () -> ()
+  @value call () -> ()
 }
 
 define Value {

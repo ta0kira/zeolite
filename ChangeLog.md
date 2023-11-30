@@ -54,6 +54,8 @@
 * **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
   the `/*b+*/` in `a+/*b+*/c`.
 
+* **[fix]** Fixes checking that a `@type` function isn't called on a `@value`.
+
 * **[new]** Adds the `$CallTrace$` macro to get a call trace for testing
   purposes.
 

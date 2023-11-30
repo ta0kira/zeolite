@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -942,5 +942,99 @@ define Value {
 
   diffValue () {
     return Value<#y>.call()
+  }
+}
+
+
+testcase "cannot use @category function as @type function" {
+  error
+  require "something"
+  require "category"
+}
+
+concrete Test {}
+
+define Test {
+  @category something () -> ()
+  something () { }
+
+  @category test () -> ()
+  test () {
+    \ Test.something()
+  }
+}
+
+
+testcase "cannot use @category function as @value function" {
+  error
+  require "something"
+  require "category"
+}
+
+concrete Test {}
+
+define Test {
+  @category something () -> ()
+  something () { }
+
+  @category test () -> ()
+  test () {
+    \ Test{ }.something()
+  }
+}
+
+
+testcase "cannot use @type function as @value function" {
+  error
+  require "something"
+  require "value"
+}
+
+concrete Test {}
+
+define Test {
+  @type something () -> ()
+  something () { }
+
+  @category test () -> ()
+  test () {
+    \ Test{ }.something()
+  }
+}
+
+
+testcase "cannot use @value function as @type function" {
+  error
+  require "something"
+  require "type"
+}
+
+concrete Test {}
+
+define Test {
+  @value something () -> ()
+  something () { }
+
+  @category test () -> ()
+  test () {
+    \ Test.something()
+  }
+}
+
+
+testcase "cannot implicitly use @value function as @type function" {
+  error
+  require "something"
+}
+
+concrete Test {}
+
+define Test {
+  @value something () -> ()
+  something () { }
+
+  @type test () -> ()
+  test () {
+    \ something()
   }
 }

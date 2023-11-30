@@ -793,8 +793,12 @@ lookupValueFunction (ValueType WeakValue t) _ (FunctionCall c _ _ _) =
 lookupValueFunction (ValueType OptionalValue t) _ (FunctionCall c _ _ _) =
   compilerErrorM $ "Use require to convert optional " ++ show t ++
                         " to required first" ++ formatFullContextBrace c
-lookupValueFunction (ValueType RequiredValue t) _ (FunctionCall c n _ _) =
-  csGetTypeFunction c (Just t) n
+lookupValueFunction (ValueType RequiredValue t) _ (FunctionCall c n _ _) = do
+  f' <- csGetTypeFunction c (Just t) n
+  when (sfScope f' /= ValueScope) $ compilerErrorM $ "Function " ++ show n ++
+                                                     " cannot be used as a value function" ++
+                                                     formatFullContextBrace c
+  return f'
 
 compileExpressionStart :: (Ord c, Show c, CollectErrorsM m,
                            CompilerContext c m [String] a) =>
