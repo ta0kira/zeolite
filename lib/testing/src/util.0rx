@@ -16,6 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+$TestsOnly$
+
 define IndentAppend {
   $ReadOnlyExcept[indentCount]$
 
@@ -115,5 +117,97 @@ define ValueList {
 
   defaultOrder () {
     return head
+  }
+}
+
+define TestReportTree {
+  $ReadOnlyExcept[messages,children]$
+
+  @value Formatted title
+  @value ValueList<Formatted> context
+  @value ValueList<Formatted> messages
+  @value ValueList<TestReportTree> children
+
+  new (title,context) {
+    return #self{ title, context, ValueList<Formatted>.new(), ValueList<TestReportTree>.new() }
+  }
+
+  writeTo (output) {
+    if (!hasError()) {
+      return _
+    }
+    \ output.append(title)
+    scoped {
+      \ output.pushIndent()
+    } cleanup {
+      \ output.popIndent()
+    } in {
+      \ writeMessagesTo(output)
+      \ writeContextTo(output)
+      \ writeChildrenTo(output)
+    }
+  }
+
+  addError (message) {
+    \ messages.append(message)
+    return self
+  }
+
+  newSection (newTitle) {
+    #self new <- new(newTitle,ValueList<Formatted>.new())
+    \ children.append(new)
+    return new
+  }
+
+  discardReport () {
+    messages <- ValueList<Formatted>.new()
+    children <- ValueList<TestReportTree>.new()
+    return self
+  }
+
+  hasError () {
+    // TODO: This is very inefficient. Maybe pruning should happen first?
+    if (!messages.isEmpty()) {
+      return true
+    }
+    traverse (children.defaultOrder() -> TestReportTree child) {
+      if (child.hasError()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  @value writeContextTo (IndentAppend) -> ()
+  writeContextTo (output) {
+    $Hidden[messages,children]$
+      scoped {
+      \ output.pushIndent()
+    } cleanup {
+      \ output.popIndent()
+    } in traverse (context.defaultOrder() -> Formatted line) {
+      \ output.append(line)
+    }
+  }
+
+  @value writeMessagesTo (IndentAppend) -> ()
+  writeMessagesTo (output) {
+    $Hidden[context,children]$
+    if (!messages.isEmpty()) {
+      traverse (messages.defaultOrder() -> Formatted line) {
+        \ output.append(line)
+      }
+    }
+  }
+
+  @value writeChildrenTo (IndentAppend) -> ()
+  writeChildrenTo (output) {
+    $Hidden[messages,context]$
+    traverse (children.defaultOrder() -> TestReportTree child) {
+      if (child.hasError()) {
+        \ output.append("---")
+      }
+      \ child.writeTo(output)
+    }
   }
 }

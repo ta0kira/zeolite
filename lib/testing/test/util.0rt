@@ -120,3 +120,46 @@ testcase "TestHandler skips tracing" {
 unittest exitTest {
   \ TestHandler:failAndExit("message")
 }
+
+
+testcase "TestReportTree success" {
+  success
+}
+
+unittest nothingAdded {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ Testing.checkEquals(output.build().formatted(),"")
+}
+
+unittest nonFailingSections {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.newSection(title: "child1")
+  \ report.newSection(title: "child2")
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ Testing.checkEquals(output.build().formatted(),"")
+}
+
+
+testcase "TestReportTree doesn't include non-failing sections" {
+  failure
+  require "title"
+  require "child2"
+  require "message2"
+  require "child4"
+  require "message4"
+  exclude "child1"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.newSection(title: "child1")
+  \ report.newSection(title: "child2").addError(message: "message2")
+  \ report.newSection(title: "child3").addError(message: "message3").discardReport()
+  \ report.newSection(title: "child4").addError(message: "message4")
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  fail(output.build())
+}

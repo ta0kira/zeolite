@@ -17,6 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 $ModuleOnly$
+$TestsOnly$
 
 concrete IndentAppend {
   refines Append<Formatted>
@@ -40,4 +41,12 @@ concrete ValueList<#x> {
 // See Extension_TestHandler.cpp.
 concrete TestHandler {
   @category failAndExit (String) -> ()
+}
+
+concrete TestReportTree {
+  refines TestReport
+
+  @type new (Formatted,ValueList<Formatted>) -> (#self)
+
+  @value writeTo (IndentAppend) -> ()
 }
