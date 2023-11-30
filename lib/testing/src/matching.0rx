@@ -30,7 +30,23 @@ define Matches {
   }
 
   or (left,right) {
-    return OrMatcher:new(left,right)
+    return delegate -> `OrMatcher:new`
+  }
+
+  not (matcher) {
+    return delegate -> `NotMatcher:new`
+  }
+
+  and (left,right) {
+    return delegate -> `AndMatcher:new`
+  }
+
+  anyOf (matchers) {
+    return delegate -> `AnyOfMatcher:new`
+  }
+
+  allOf (matchers) {
+    return delegate -> `AllOfMatcher:new`
   }
 
   @category execute<#x> (optional #x,ValueMatcher<#x>) -> (Bool)
@@ -81,6 +97,133 @@ define OrMatcher {
         .append(right.summary())
         .append(")")
         .build()
+  }
+}
+
+concrete NotMatcher<#x|> {
+  refines ValueMatcher<#x>
+
+  @category new<#x> (ValueMatcher<#x>) -> (ValueMatcher<#x>)
+}
+
+define NotMatcher {
+  @value ValueMatcher<#x> matcher
+
+  new (matcher) {
+    return delegate -> NotMatcher<#x>
+  }
+
+  check (actual,report) {
+    \ delegate -> `matcher.check`
+    if (report.hasError()) {
+      \ report.discardReport()
+    } else {
+      \ report.addError(message: String.builder()
+          .append("expected failure to match with ")
+          .append(matcher.summary())
+          .build())
+    }
+  }
+
+  summary () {
+    return String.builder()
+        .append("not (")
+        .append(matcher.summary())
+        .append(")")
+        .build()
+  }
+}
+
+concrete AndMatcher<#x|> {
+  refines ValueMatcher<#x>
+
+  @category new<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
+}
+
+define AndMatcher {
+  @value ValueMatcher<#x> left
+  @value ValueMatcher<#x> right
+
+  new (left,right) {
+    return delegate -> AndMatcher<#x>
+  }
+
+  check (actual,report) {
+    TestReport leftReport <- report.newSection(title: left.summary())
+    TestReport rightReport <- report.newSection(title: right.summary())
+    \ actual `left.check` leftReport
+    \ actual `right.check` rightReport
+  }
+
+  summary () {
+    return String.builder()
+        .append("both (")
+        .append(left.summary())
+        .append(") and (")
+        .append(right.summary())
+        .append(")")
+        .build()
+  }
+}
+
+concrete AnyOfMatcher<#x|> {
+  refines ValueMatcher<#x>
+
+  @category new<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
+}
+
+define AnyOfMatcher {
+  @value DefaultOrder<ValueMatcher<#x>> matchers
+
+  new (matchers) {
+    return delegate -> AnyOfMatcher<#x>
+  }
+
+  check (actual,report) {
+    ValueList<TestReport> reports <- ValueList<TestReport>.new()
+    traverse (matchers.defaultOrder() -> ValueMatcher<#x> matcher) {
+      TestReport subReport <- report.newSection(title: matcher.summary())
+      $Hidden[report]$
+      \ actual `matcher.check` subReport
+      if (subReport.hasError()) {
+        \ reports.append(subReport)
+      } else {
+        traverse (reports.defaultOrder() -> TestReport failed) {
+          \ failed.discardReport()
+        }
+        break
+      }
+    }
+  }
+
+  summary () {
+    return "match any of"
+  }
+}
+
+concrete AllOfMatcher<#x|> {
+  refines ValueMatcher<#x>
+
+  @category new<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
+}
+
+define AllOfMatcher {
+  @value DefaultOrder<ValueMatcher<#x>> matchers
+
+  new (matchers) {
+    return delegate -> AllOfMatcher<#x>
+  }
+
+  check (actual,report) {
+    traverse (matchers.defaultOrder() -> ValueMatcher<#x> matcher) {
+      TestReport subReport <- report.newSection(title: matcher.summary())
+      $Hidden[report]$
+      \ actual `matcher.check` subReport
+    }
+  }
+
+  summary () {
+    return "match all of"
   }
 }
 
