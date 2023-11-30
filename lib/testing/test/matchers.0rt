@@ -1,0 +1,129 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "CheckAlways" {
+  success
+}
+
+unittest match {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.addError(message: "message")
+  \ CheckAlways:match().check(123,report)
+  \ Testing.checkFalse(report.hasError())
+}
+
+unittest error {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ CheckAlways:error("message").check(123,report)
+  \ Testing.checkTrue(report.hasError())
+}
+
+
+testcase "CheckAlways:die" {
+  failure
+  require "something"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.addError(message: "message")
+  \ CheckAlways:die("something").check(123,report)
+}
+
+
+testcase "CheckValue:equals success" {
+  success TestChecker
+}
+
+unittest nonEmpty {
+  \ "foo" `Matches:with` CheckValue:equals("foo")
+}
+
+unittest bothEmpty {
+  \ empty `Matches:with<String>` CheckValue:equals<String>(empty)
+}
+
+
+testcase "CheckValue:equals failure not equal" {
+  failure TestChecker
+  require "foo"
+  require "bar"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:equals("bar")
+}
+
+
+testcase "CheckValue:equals failure left empty" {
+  failure TestChecker
+  require "empty"
+  require "bar"
+}
+
+unittest test {
+  \ empty `Matches:with<String>` CheckValue:equals("bar")
+}
+
+
+testcase "CheckValue:equals failure right empty" {
+  failure TestChecker
+  require "foo"
+  require "empty"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` CheckValue:equals<String>(empty)
+}
+
+
+testcase "CheckValue:notEquals success" {
+  success TestChecker
+}
+
+unittest nonEmpty {
+  \ "foo" `Matches:with` CheckValue:notEquals("bar")
+}
+
+unittest leftEmpty {
+  \ empty `Matches:with<String>` CheckValue:notEquals("bar")
+}
+
+unittest rightEmpty {
+  \ "foo" `Matches:with<String>` CheckValue:notEquals<String>(empty)
+}
+
+
+testcase "CheckValue:notEquals failure non-empty" {
+  failure TestChecker
+  require "foo"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:notEquals("foo")
+}
+
+
+testcase "CheckValue:notEquals failure empty" {
+  failure TestChecker
+  require "empty"
+}
+
+unittest test {
+  \ empty `Matches:with<String>` CheckValue:notEquals<String>(empty)
+}

@@ -161,5 +161,5 @@ unittest test {
   \ report.newSection(title: "child4").addError(message: "message4")
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.writeTo(output)
-  fail(output.build())
+  \ TestHandler:failAndExit(output.build().formatted())
 }

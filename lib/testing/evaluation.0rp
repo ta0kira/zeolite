@@ -24,7 +24,7 @@ $TestsOnly$
 //    success TestChecker
 // }
 concrete Matches {
-  // Predicate execution.
+  // Predicate evaluation.
   @category tryWith<#x> (optional #x,ValueMatcher<#x>) -> ()
   @category with<#x> (optional #x,ValueMatcher<#x>) -> ()
 
@@ -36,22 +36,14 @@ concrete Matches {
   @category allOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
 }
 
+// Base interface for custom value matchers.
 @value interface ValueMatcher<#x|> {
   check (optional #x,TestReport) -> ()
   summary () -> (Formatted)
 }
 
-concrete CheckValue<#x|> {
-  refines ValueMatcher<#x>
-  #x requires Formatted
-  #x defines Equals<#x>
-
-  @category equals<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (#x) -> (ValueMatcher<#x>)
-}
-
+// Helper to check multiple members of a single object.
+// NOTE: Can only be constructed in a ValueMatcher.
 concrete MultiChecker {
   @value check<#x> (optional #x,ValueMatcher<#x>) -> (optional #self)
   @value tryCheck<#x> (optional #x,ValueMatcher<#x>) -> (#self)

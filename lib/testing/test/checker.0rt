@@ -46,6 +46,17 @@ unittest test {
 }
 
 
+testcase "TestChecker.start fails if already started" {
+  failure
+  require "already started"
+}
+
+unittest test {
+  \ TestChecker.start()
+  \ TestChecker.start()
+}
+
+
 testcase "TestChecker.newReport fails if not started" {
   failure
   require "not started"

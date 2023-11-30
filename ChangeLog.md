@@ -131,6 +131,8 @@
   not require `Formatted`. This is breaking because `Testing.checkOptional` was
   removed; use `Testing.checkEquals` instead.
 
+* **[new]** Adds support for custom value matchers in tests to `lib/testing`.
+
 ### Compiler CLI
 
 * **[new]** Allows single-`-` CLI options to be clustered, e.g., `-rfj8`, which

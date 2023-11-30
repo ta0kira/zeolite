@@ -1,0 +1,246 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "Matches no errors" {
+  success TestChecker
+}
+
+unittest withOnce {
+  \ "foo" `Matches:with<String>` CheckAlways:match()
+}
+
+unittest withMulti {
+  \ "foo" `Matches:with<String>` CheckAlways:match()
+  \ "foo" `Matches:with<String>` CheckAlways:match()
+}
+
+unittest tryWithOnce {
+  \ "foo" `Matches:tryWith<String>` CheckAlways:match()
+}
+
+unittest tryWithMulti {
+  \ "foo" `Matches:tryWith<String>` CheckAlways:match()
+  \ "foo" `Matches:tryWith<String>` CheckAlways:match()
+}
+
+
+testcase "Matches:with fails immediately" {
+  failure TestChecker
+  require "message1"
+  exclude "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` CheckAlways:error("message1")
+  \ "foo" `Matches:with<String>` CheckAlways:error("message2")
+}
+
+
+testcase "Matches:tryWith fails later" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:tryWith<String>` CheckAlways:error("message1")
+  \ "foo" `Matches:tryWith<String>` CheckAlways:error("message2")
+}
+
+
+testcase "Matches:with doesn't evaluate pending errors" {
+  failure TestChecker
+  require "message2"
+  exclude "message1"
+}
+
+unittest test {
+  \ "foo" `Matches:tryWith<String>` CheckAlways:error("message1")
+  \ "foo" `Matches:with<String>` CheckAlways:match()
+  fail("message2")
+}
+
+
+testcase "MultiChecker.check short cicuits" {
+  failure
+  require "message1"
+  exclude "message2"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+
+  \ MultiChecker.new(report)
+      .check<String>("foo",CheckAlways:match())
+      &.check<String>("foo",CheckAlways:error("message1"))
+      &.check<String>("foo",CheckAlways:error("message2"))
+
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
+}
+
+
+testcase "MultiChecker.tryCheck continues" {
+  failure
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+
+  \ MultiChecker.new(report)
+      .tryCheck<String>("foo",CheckAlways:match())
+      .tryCheck<String>("foo",CheckAlways:error("message1"))
+      .tryCheck<String>("foo",CheckAlways:error("message2"))
+
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
+}
+
+
+testcase "Matches:not success" {
+  success TestChecker
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` `Matches:not` CheckAlways:error("message")
+}
+
+
+testcase "Matches:not failure" {
+  failure TestChecker
+  require "expected failure"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` `Matches:not` CheckAlways:match()
+}
+
+
+testcase "Matches:or success" {
+  success TestChecker
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:or` CheckAlways:match())
+  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:or` CheckAlways:error("message"))
+  \ "foo" `Matches:with<String>` (CheckAlways:error("message") `Matches:or` CheckAlways:match())
+}
+
+
+testcase "Matches:or failure" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` (CheckAlways:error("message1") `Matches:or` CheckAlways:error("message2"))
+}
+
+
+testcase "Matches:and success" {
+  success TestChecker
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:and` CheckAlways:match())
+}
+
+
+testcase "Matches:and failure both" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` (CheckAlways:error("message1") `Matches:and` CheckAlways:error("message2"))
+}
+
+
+testcase "Matches:and failure one" {
+  failure TestChecker
+  require "message"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:and` CheckAlways:error("message"))
+}
+
+
+testcase "Matches:anyOf success" {
+  success TestChecker
+}
+
+unittest someMatching {
+  \ "foo" `Matches:with<String>` Matches:anyOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:error("message"))
+      .append(CheckAlways:match())
+      .append(CheckAlways:die("message")))
+}
+
+unittest emptyList {
+  \ "foo" `Matches:with<String>` Matches:anyOf(ValueList<ValueMatcher<any>>.new())
+}
+
+
+testcase "Matches:anyOf failure" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` Matches:anyOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:error("message1"))
+      .append(CheckAlways:error("message2")))
+}
+
+
+testcase "Matches:allOf success" {
+  success TestChecker
+}
+
+unittest allMatching {
+  \ "foo" `Matches:with<String>` Matches:allOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:match())
+      .append(CheckAlways:match()))
+}
+
+unittest emptyList {
+  \ "foo" `Matches:with<String>` Matches:allOf(ValueList<ValueMatcher<any>>.new())
+}
+
+
+testcase "Matches:allOf failure" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with<String>` Matches:allOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:match())
+      .append(CheckAlways:error("message1"))
+      .append(CheckAlways:match())
+      .append(CheckAlways:error("message2")))
+}

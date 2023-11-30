@@ -28,13 +28,20 @@ concrete TestChecker {
 
   @type isFailing () -> (Bool)
   @type checkNow () -> ()
-
   @type newReport (Formatted title:,optional Order<Formatted> context:) -> (TestReport)
 }
 
+// Interface used by predicate testers and matchers to report errors.
 @value interface TestReport {
+  // Adds a new error message.
   addError (Formatted message:) -> (#self)
+
+  // Adds a child section without changing the error status.
   newSection (Formatted title:) -> (#self)
+
+  // Discards error messages and child sections.
   discardReport () -> (#self)
+
+  // Returns true if there are error messages, or if a child has an error.
   hasError () -> (Bool)
 }

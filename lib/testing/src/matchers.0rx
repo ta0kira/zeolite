@@ -1,0 +1,120 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$TestsOnly$
+
+define CheckValue {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  @value Bool invert
+  @value optional #x expected
+
+  equals (expected) {
+    return CheckValue<#x>{ false, expected }
+  }
+
+  notEquals (expected) {
+    return CheckValue<#x>{ true, expected }
+  }
+
+  check (actual,report) {
+    Bool match <- defer
+    if (`present` actual && `present` expected) {
+      match <- require(actual) `#x.equals` require(expected)
+    } else {
+      match <- ! `present` actual && ! `present` expected
+    }
+    if (invert && match) {
+      \ report.addError(message: String.builder()
+          .append("\"")
+          .append(`autoFormat` actual)
+          .append(" equals \"")
+          .append(`autoFormat` expected)
+          .append("\"")
+          .build())
+    } elif (!invert && !match) {
+      \ report.addError(message: String.builder()
+          .append("\"")
+          .append(`autoFormat` actual)
+          .append(" does not equal \"")
+          .append(`autoFormat` expected)
+          .append("\"")
+          .build())
+    }
+  }
+
+  summary () {
+    if (invert) {
+      return "value not equals"
+    } else {
+      return "value equals"
+    }
+  }
+
+  @value autoFormat (optional #x) -> (Formatted)
+  autoFormat (value) {
+    if (`present` value) {
+      return `require` value
+    } else {
+      return "empty"
+    }
+  }
+}
+
+define CheckAlways {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<any>
+
+  @value Bool die
+  @value optional Formatted message
+
+  match () {
+    return CheckAlways{ false, empty }
+  }
+
+  error (message) {
+    return CheckAlways{ false, message }
+  }
+
+  die (message) {
+    return CheckAlways{ true, message }
+  }
+
+  check (_,report) {
+    if (! `present` message) {
+      \ report.discardReport()
+    } elif (die) {
+      fail(`require` message)
+    } else {
+      \ report.addError(message: `require` message)
+    }
+  }
+
+  summary () {
+    if (die) {
+      return "always die"
+    } elif (`present` message) {
+      return "always error"
+    } else {
+      return "always pass"
+    }
+  }
+}

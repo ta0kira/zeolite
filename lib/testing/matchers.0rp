@@ -15,3 +15,33 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$TestsOnly$
+
+// Unconditional outcomes regardless of the actual value.
+concrete CheckAlways {
+  // Unconditionally match.
+  @category match () -> (ValueMatcher<any>)
+
+  // Unconditional error.
+  @category error (Formatted) -> (ValueMatcher<any>)
+
+  // Immediate crash if the matcher is used to check a value.
+  @category die (Formatted) -> (ValueMatcher<any>)
+}
+
+// Simple equality-based value checks.
+concrete CheckValue<#x|> {
+  #x requires Formatted
+  #x defines Equals<#x>
+
+  @category equals<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (optional #x) -> (ValueMatcher<#x>)
+
+  @category notEquals<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (optional #x) -> (ValueMatcher<#x>)
+}
