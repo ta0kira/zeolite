@@ -704,7 +704,7 @@ checkParamVariances tm0 ts = do
     checkVisibility r vm (FunctionVisibility _ ts2) =
       collectAllM_ (map (checkVisibilitySingle r vm) ts2)
     checkVisibilitySingle r vm (c,t) =
-      validateInstanceVariance r vm Contravariant t <??
+      validateInstanceVariance r vm Covariant t <??
         "In visibility " ++ show t ++ formatFullContextBrace c
 
 checkCategoryInstances :: (Show c, CollectErrorsM m) =>

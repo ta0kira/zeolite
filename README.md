@@ -1830,6 +1830,10 @@ functions can be called from with the **`visibility`** keyword.
   category itself and `unittest`.
 - `visibility any` will prevent functions from getting called in `@category`
   functions but not anywhere else.
+- For `@value` functions with limited visibility, sometimes an [explicit type
+  conversion](#explicit-type-conversion) of the value will be needed prior to
+  making the function call, e.g., `value?Parent.call()`. The effect is that the
+  allowed argument and return types could be more limited.
 
 ### Builtins
 

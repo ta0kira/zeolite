@@ -43,25 +43,25 @@ concrete Test<#x> {
 define Test {}
 
 
-testcase "visibility disallows covariant" {
+testcase "visibility disallows contravariant" {
   error
   require "visibility"
   require "#x"
-  require "contravariant"
+  require "covariant"
 }
 
-concrete Test<|#x> {
+concrete Test<#x|> {
   visibility #x
 }
 
 define Test {}
 
 
-testcase "visibility allows contravariant" {
+testcase "visibility allows covariant" {
   compiles
 }
 
-concrete Test<#x|> {
+concrete Test<|#x> {
   visibility #x
 }
 
@@ -73,7 +73,7 @@ testcase "visibility allowed types" {
 }
 
 concrete Test<#x> {
-  visibility [Int|Char]
+  visibility [Int|Char], #self
   visibility _
   visibility #x, Test<#x>
 }
@@ -293,11 +293,11 @@ define Value {
 testcase "visibility handles #self" {
   error
   require "visibility"
-  require "Append<Test>"
+  require "Order<Test>"
 }
 
 concrete Test {
-  visibility Append<#self>
+  visibility Order<#self>
 
   @type call () -> ()
 }
@@ -307,13 +307,17 @@ define Test {
 }
 
 concrete Value {
-  refines Append<Int>
+  refines Order<Int>
 }
 
 define Value {
-  append (_) {
+  next () {
     \ Test.call()
-    return self
+    return empty
+  }
+
+  get () {
+    return 1
   }
 }
 
@@ -371,5 +375,41 @@ concrete Value {
 define Value {
   test () {
     \ Test.call()
+  }
+}
+
+
+testcase "conversion can change visibility" {
+  compiles
+}
+
+@value interface Base<|#x> {}
+
+concrete Value<|#x> {
+  @type new () -> (#self)
+
+  visibility Base<#x>
+
+  @type call () -> ()
+}
+
+define Value {
+  new () {
+    return #self{ }
+  }
+
+  call () { }
+}
+
+concrete Test {
+  refines Base<Formatted>
+
+  @type test () -> ()
+}
+
+define Test {
+  test () {
+    Value<Int> value <- Value<Int>.new()
+    \ value?Value<Formatted>.call()
   }
 }
