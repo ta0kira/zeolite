@@ -66,6 +66,7 @@ concrete ListNode<#x> {
 }
 
 define ListNode {
+  $FlatCleanup[next]$
   $ReadOnly[value]$
 
   @value #x value

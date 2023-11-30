@@ -16,3 +16,128 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+testcase "TestChecker.isFailing fails if not started" {
+  failure
+  require "not started"
+}
+
+unittest test {
+  \ TestChecker.isFailing()
+}
+
+
+testcase "TestChecker.finish fails if not started" {
+  failure
+  require "not started"
+}
+
+unittest test {
+  \ TestChecker.finish()
+}
+
+
+testcase "TestChecker.checkNow fails if not started" {
+  failure
+  require "not started"
+}
+
+unittest test {
+  \ TestChecker.checkNow()
+}
+
+
+testcase "TestChecker.newReport fails if not started" {
+  failure
+  require "not started"
+}
+
+unittest test {
+  \ TestChecker.newReport(title: "title",context: empty)
+}
+
+
+testcase "TestChecker explicit start and finish" {
+  success
+}
+
+unittest test {
+  \ TestChecker.start()
+  \ TestChecker.newReport(title: "title",context: empty)
+  \ TestChecker.newReport(title: "title",context: empty).newSection(title: "subtitle")
+  \ Testing.checkFalse(TestChecker.isFailing())
+  \ TestChecker.checkNow()
+  \ TestChecker.finish()
+}
+
+
+testcase "TestChecker succeeds by default" {
+  success TestChecker
+}
+
+unittest test {}
+
+
+testcase "TestChecker fails when error added to report" {
+  failure TestChecker
+  require "context1"
+  require "context2"
+  require "title1"
+  require "message1"
+  require "title2"
+  require "message2"
+  exclude "testError"
+}
+
+unittest testError {
+  ValueList<String> context <- ValueList<String>.new()
+      .append("context1")
+      .append("context2")
+  \ TestChecker.newReport(title: "title1",context: context.defaultOrder()).addError(message: "message1")
+  \ TestChecker.newReport(title: "title2",context: empty).addError(message: "message2")
+}
+
+
+testcase "TestChecker fails when error added to child" {
+  failure TestChecker
+  require "title"
+  require "child"
+  require "message"
+  exclude "testError"
+}
+
+unittest testError {
+  TestReport report <- TestChecker.newReport(title: "title",context: empty)
+  TestReport child <- report.newSection(title: "child")
+  \ child.addError(message: "message")
+}
+
+
+testcase "TestChecker ignores discarded errors" {
+  success TestChecker
+}
+
+unittest topLevel {
+  TestReport report <- TestChecker.newReport(title: "title",context: empty)
+  \ Testing.checkFalse(report.hasError())
+
+  \ report.addError(message: "message")
+  \ Testing.checkTrue(report.hasError())
+
+  \ report.discardReport()
+  \ Testing.checkFalse(report.hasError())
+}
+
+unittest recursive {
+  TestReport report <- TestChecker.newReport(title: "title",context: empty)
+  TestReport child <- report.newSection(title: "child")
+  \ Testing.checkFalse(report.hasError())
+  \ Testing.checkFalse(child.hasError())
+
+  \ child.addError(message: "message")
+  \ Testing.checkTrue(report.hasError())
+  \ Testing.checkTrue(child.hasError())
+
+  \ report.discardReport()
+  \ Testing.checkFalse(report.hasError())
+  \ Testing.checkTrue(child.hasError())
+}
