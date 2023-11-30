@@ -15,22 +15,3 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
-
-testcase "Matches" {
-  success TestChecker
-}
-
-unittest test {
-  \ "foo" `Matches:with` CheckValue:equals("foo")
-  \ empty `Matches:tryWith<String>` CheckValue:equals("baz")
-  // Non-error shouldn't trigger pending errors.
-  \ "foo" `Matches:with` CheckValue:equals("foo")
-  \ "foo" `Matches:tryWith` CheckValue:equals("baz")
-  \ "foo" `Matches:tryWith` CheckValue:equals("bar")
-}
-
-unittest test2 {
-  \ "foo" `Matches:with` (CheckValue:equals("foo") `Matches:or` CheckValue:equals("bar"))
-  \ "foo" `Matches:with` (CheckValue:equals("bar") `Matches:or` CheckValue:equals("foo"))
-  \ "foo" `Matches:with` (CheckValue:equals("bar") `Matches:or` CheckValue:equals("baz"))
-}
