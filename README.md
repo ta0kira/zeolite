@@ -1802,7 +1802,7 @@ for creating identifiers that don't otherwise have a unique member.
 #### Limited Function Visibility
 
 As of compiler version `0.24.0.0`, you can restrict where `@value` and `@type`
-functions can be called from with the **visibility** keyword.
+functions can be called from with the **`visibility`** keyword.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
@@ -1815,6 +1815,7 @@ functions can be called from with the **visibility** keyword.
   <span style='color:#898887;'>// This resets the visibility to the default.</span>
   <b>visibility</b> <b>_</b>
 
+  <span style='color:#898887;'>// This can be called from anywhere.</span>
   <span style='color:#644a9b;'>@value</span> call () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }</pre>
 
@@ -1825,6 +1826,10 @@ functions can be called from with the **visibility** keyword.
   functions because the full type where the call originates isn't defined.
 - The category's own definition and `unittest`s are exempt from visibility
   requirements.
+- `visibility all` will prevent functions from being called outside of the
+  category itself and `unittest`.
+- `visibility any` will prevent functions from getting called in `@category`
+  functions but not anywhere else.
 
 ### Builtins
 
