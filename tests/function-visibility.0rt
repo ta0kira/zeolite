@@ -43,12 +43,37 @@ concrete Test<#x> {
 define Test {}
 
 
+testcase "visibility disallows covariant" {
+  error
+  require "visibility"
+  require "#x"
+  require "contravariant"
+}
+
+concrete Test<|#x> {
+  visibility #x
+}
+
+define Test {}
+
+
+testcase "visibility allows contravariant" {
+  compiles
+}
+
+concrete Test<#x|> {
+  visibility #x
+}
+
+define Test {}
+
+
 testcase "visibility allowed types" {
   compiles
 }
 
 concrete Test<#x> {
-  visibility [Int|Char], #self
+  visibility [Int|Char]
   visibility _
   visibility #x, Test<#x>
 }

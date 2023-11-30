@@ -681,11 +681,12 @@ checkParamVariances tm0 ts = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       collectAllM_ (map (checkRefine r vm) rs)
-    checkCategory r t@(ValueConcrete c _ n _ _ ps rs ds _ _) = categoryContext t ??> do
+    checkCategory r t@(ValueConcrete c _ n _ fv ps rs ds _ _) = categoryContext t ??> do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       collectAllM_ (map (checkRefine r vm) rs)
       collectAllM_ (map (checkDefine r vm) ds)
+      collectAllM_ (map (checkVisibility r vm) fv)
     checkCategory _ t@(InstanceInterface c _ n _ ps _) = categoryContext t ??> do
       noDuplicates c n ps
     noDuplicates c n ps = collectAllM_ (map checkCount $ group $ sort $ map vpParam ps) where
@@ -699,6 +700,12 @@ checkParamVariances tm0 ts = do
     checkDefine r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t <??
         "In " ++ show t ++ formatFullContextBrace c
+    checkVisibility _ _ FunctionVisibilityDefault = return ()
+    checkVisibility r vm (FunctionVisibility _ ts2) =
+      collectAllM_ (map (checkVisibilitySingle r vm) ts2)
+    checkVisibilitySingle r vm (c,t) =
+      validateInstanceVariance r vm Contravariant t <??
+        "In visibility " ++ show t ++ formatFullContextBrace c
 
 checkCategoryInstances :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
