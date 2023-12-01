@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,103 +17,103 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "sanity check all functions" {
-  success
+  success TestChecker
 }
 
 unittest cos {
-  \ Testing.checkBetween(Math.cos(2.0),-0.42,-0.41)
+  \ Math.cos(2.0) `Matches:with` CheckValue:between(-0.42,-0.41)
 }
 
 unittest sin {
-  \ Testing.checkBetween(Math.sin(2.0),0.90,0.91)
+  \ Math.sin(2.0) `Matches:with` CheckValue:between(0.90,0.91)
 }
 
 unittest tan {
-  \ Testing.checkBetween(Math.tan(2.0),-2.19,-2.18)
+  \ Math.tan(2.0) `Matches:with` CheckValue:between(-2.19,-2.18)
 }
 
 unittest acos {
-  \ Testing.checkBetween(Math.acos(0.5),1.04,1.05)
+  \ Math.acos(0.5) `Matches:with` CheckValue:between(1.04,1.05)
 }
 
 unittest asin {
-  \ Testing.checkBetween(Math.asin(0.5),0.52,0.53)
+  \ Math.asin(0.5) `Matches:with` CheckValue:between(0.52,0.53)
 }
 
 unittest atan {
-  \ Testing.checkBetween(Math.atan(0.5),0.46,0.47)
+  \ Math.atan(0.5) `Matches:with` CheckValue:between(0.46,0.47)
 }
 
 unittest cosh {
-  \ Testing.checkBetween(Math.cosh(2.0),3.76,3.77)
+  \ Math.cosh(2.0) `Matches:with` CheckValue:between(3.76,3.77)
 }
 
 unittest sinh {
-  \ Testing.checkBetween(Math.sinh(2.0),3.62,3.63)
+  \ Math.sinh(2.0) `Matches:with` CheckValue:between(3.62,3.63)
 }
 
 unittest tanh {
-  \ Testing.checkBetween(Math.tanh(2.0),0.96,0.97)
+  \ Math.tanh(2.0) `Matches:with` CheckValue:between(0.96,0.97)
 }
 
 unittest acosh {
-  \ Testing.checkBetween(Math.acosh(2.0),1.31,1.32)
+  \ Math.acosh(2.0) `Matches:with` CheckValue:between(1.31,1.32)
 }
 
 unittest asinh {
-  \ Testing.checkBetween(Math.asinh(2.0),1.44,1.45)
+  \ Math.asinh(2.0) `Matches:with` CheckValue:between(1.44,1.45)
 }
 
 unittest atanh {
-  \ Testing.checkBetween(Math.atanh(0.5),0.54,0.55)
+  \ Math.atanh(0.5) `Matches:with` CheckValue:between(0.54,0.55)
 }
 
 unittest exp {
-  \ Testing.checkBetween(Math.exp(1.0),2.71,2.72)
+  \ Math.exp(1.0) `Matches:with` CheckValue:between(2.71,2.72)
 }
 
 unittest log {
-  \ Testing.checkBetween(Math.log(9.0),2.19,2.20)
+  \ Math.log(9.0) `Matches:with` CheckValue:between(2.19,2.20)
 }
 
 unittest log10 {
-  \ Testing.checkBetween(Math.log10(100.0),1.99,2.01)
+  \ Math.log10(100.0) `Matches:with` CheckValue:between(1.99,2.01)
 }
 
 unittest log2 {
-  \ Testing.checkBetween(Math.log2(8.0),2.99,3.01)
+  \ Math.log2(8.0) `Matches:with` CheckValue:between(2.99,3.01)
 }
 
 unittest pow {
-  \ Testing.checkBetween(Math.pow(2.0,3.0),7.99,8.01)
+  \ Math.pow(2.0,3.0) `Matches:with` CheckValue:between(7.99,8.01)
 }
 
 unittest sqrt {
-  \ Testing.checkBetween(Math.sqrt(4.0),1.99,2.01)
+  \ Math.sqrt(4.0) `Matches:with` CheckValue:between(1.99,2.01)
 }
 
 unittest ceil {
-  \ Testing.checkBetween(Math.ceil(2.2),2.99,3.01)
+  \ Math.ceil(2.2) `Matches:with` CheckValue:between(2.99,3.01)
 }
 
 unittest floor {
-  \ Testing.checkBetween(Math.floor(2.2),1.99,2.01)
+  \ Math.floor(2.2) `Matches:with` CheckValue:between(1.99,2.01)
 }
 
 unittest fmod {
-  \ Testing.checkBetween(Math.fmod(7.0,4.0),2.99,3.01)
+  \ Math.fmod(7.0,4.0) `Matches:with` CheckValue:between(2.99,3.01)
 }
 
 unittest trunc {
-  \ Testing.checkBetween(Math.trunc(2.2),1.99,2.01)
+  \ Math.trunc(2.2) `Matches:with` CheckValue:between(1.99,2.01)
 }
 
 unittest round {
-  \ Testing.checkBetween(Math.round(2.7),2.99,3.01)
+  \ Math.round(2.7) `Matches:with` CheckValue:between(2.99,3.01)
 }
 
 unittest fabs {
-  \ Testing.checkBetween(Math.fabs(-10.0),9.99,10.01)
+  \ Math.fabs(-10.0) `Matches:with` CheckValue:between(9.99,10.01)
 }
 
 unittest isinf {

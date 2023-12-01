@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "basic Token tests" {
-  success
+  success TestChecker
 }
 
 unittest equals {
@@ -27,8 +27,8 @@ unittest equals {
 
 unittest lessThan {
   \ Token.from("message") `Token.lessThan` Token.from("message") `Matches:with` CheckValue:equals(false)
-  \ Testing.checkTrue((Token.from("message") `Token.lessThan` Token.from("other")) ^
-                      (Token.from("other") `Token.lessThan` Token.from("message")))
+  \ ((Token.from("message") `Token.lessThan` Token.from("other")) ^
+     (Token.from("other") `Token.lessThan` Token.from("message"))) `Matches:with` CheckValue:equals(true)
 }
 
 unittest formatted {

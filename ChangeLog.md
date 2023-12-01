@@ -146,7 +146,7 @@
 
   unittest test {
     \ Testing.checkEquals("something","other")
-    \ Testing.checkBetween(3,2,7)
+    \ 3 `Matches:with` ValueCheck:between(2,7)
   }
   ```
 
