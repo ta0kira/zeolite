@@ -587,7 +587,8 @@ instance ParseFromSource (ExpressionStart SourceContext) where
                  typeCall <|>
                  stringLiteral <|>
                  charLiteral <|>
-                 boolLiteral where
+                 boolLiteral <|>
+                 emptyLiteral where
     parens = do
       c <- getSourceContext
       sepAfter (string_ "(")
@@ -676,14 +677,17 @@ instance ParseFromSource (ExpressionStart SourceContext) where
       c <- getSourceContext
       b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)
       return $ UnambiguousLiteral $ BoolLiteral [c] b
+    emptyLiteral = do
+      c <- getSourceContext
+      kwEmpty
+      return $ UnambiguousLiteral $ EmptyLiteral [c]
 
 instance ParseFromSource (ValueLiteral SourceContext) where
   sourceParser = labeled "literal" $
-                 -- NOTE: StringLiteral, CharLiteral, and BoolLiteral are parsed
-                 -- as ExpressionStart.
+                 -- NOTE: StringLiteral, CharLiteral, BoolLiteral , and
+                 -- EmptyLiteral are parsed as ExpressionStart.
                  escapedIntegerOrDecimal <|>
-                 integerOrDecimal <|>
-                 emptyLiteral where
+                 integerOrDecimal where
     escapedIntegerOrDecimal = do
       c <- getSourceContext
       escapeStart
@@ -720,10 +724,6 @@ instance ParseFromSource (ValueLiteral SourceContext) where
     integer c d unsigned = do
       optionalSpace
       return $ IntegerLiteral [c] unsigned d
-    emptyLiteral = do
-      c <- getSourceContext
-      kwEmpty
-      return $ EmptyLiteral [c]
 
 instance ParseFromSource (ValueOperation SourceContext) where
   sourceParser = try valueCall <|> try conversion <|> selectReturn where

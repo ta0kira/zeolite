@@ -55,7 +55,7 @@ unittest nonEmpty {
 }
 
 unittest bothEmpty {
-  \ empty `Matches:with<String>` CheckValue:equals<String>(empty)
+  \ empty?String `Matches:with` CheckValue:equals(empty?String)
 }
 
 
@@ -77,7 +77,7 @@ testcase "CheckValue:equals failure left empty" {
 }
 
 unittest test {
-  \ empty `Matches:with<String>` CheckValue:equals("bar")
+  \ empty?String `Matches:with` CheckValue:equals("bar")
 }
 
 
@@ -88,7 +88,7 @@ testcase "CheckValue:equals failure right empty" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` CheckValue:equals<String>(empty)
+  \ "foo" `Matches:with` CheckValue:equals(empty?String)
 }
 
 
@@ -101,11 +101,11 @@ unittest nonEmpty {
 }
 
 unittest leftEmpty {
-  \ empty `Matches:with<String>` CheckValue:notEquals("bar")
+  \ empty?String `Matches:with` CheckValue:notEquals("bar")
 }
 
 unittest rightEmpty {
-  \ "foo" `Matches:with<String>` CheckValue:notEquals<String>(empty)
+  \ "foo" `Matches:with` CheckValue:notEquals(empty?String)
 }
 
 
@@ -125,5 +125,5 @@ testcase "CheckValue:notEquals failure empty" {
 }
 
 unittest test {
-  \ empty `Matches:with<String>` CheckValue:notEquals<String>(empty)
+  \ empty?String `Matches:with` CheckValue:notEquals(empty?String)
 }

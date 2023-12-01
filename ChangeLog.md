@@ -56,6 +56,9 @@
 
 * **[fix]** Fixes checking that a `@type` function isn't called on a `@value`.
 
+* **[fix]** Updates parsing of `empty` to allow explicit type conversion, e.g.,
+  `empty?String`.
+
 * **[new]** Adds the `$CallTrace$` macro to get a call trace for testing
   purposes.
 
