@@ -9,21 +9,32 @@
 <!-- Highlighting: "Zeolite" -->
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// $TestsOnly$ means that categories in this file are only available in .0rt and</span>
+<span style='color:#898887;'>// in other files that use $TestsOnly$.</span>
 <b><i><span style='color:#8060c0;'>$TestsOnly$</span></i></b>
 
 <span style='color:#898887;'>// A contrived object for test data.</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>TestData</span></b> {
-  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) -&gt; (<span style='color:#0057ae;'>TestData</span>)
+  <span style='color:#898887;'>// This is used in tests. This allows fine-grained error information, vs. just</span>
+  <span style='color:#898887;'>// comparing the entire object for equality. (Also see parser-test.0rt.)</span>
+  <b>refines</b> <span style='color:#0057ae;'>TestCompare</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#644a9b;'>@value</span> getName        () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
-  <span style='color:#644a9b;'>@value</span> getDescription () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
-  <span style='color:#644a9b;'>@value</span> getBoolean     () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+  <span style='color:#644a9b;'>@value</span> name        () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+  <span style='color:#644a9b;'>@value</span> description () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+  <span style='color:#644a9b;'>@value</span> boolean     () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+
+  <span style='color:#898887;'>// This limits visibility of everything below. In this case, we don't want</span>
+  <span style='color:#898887;'>// anyone besides TestDataParser (and unittest) to construct TestData.</span>
+  <b>visibility</b> <span style='color:#0057ae;'>TestDataParser</span>
+
+  <span style='color:#898887;'>// We can give arguments labels to require calls to be clearer.</span>
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>name:</span>,<i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>description:</span>,<i><span style='color:#0057ae;'>Bool</span></i> <span style='color:#006e28;'>boolean:</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TestData</span>)
 }
 
 
 <span style='color:#898887;'>// Parses the test-data.txt file using a one-off format.</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>TestDataParser</span></b> {
-  <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>)
 }
 </pre>
 </body>

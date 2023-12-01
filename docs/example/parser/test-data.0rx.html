@@ -20,16 +20,33 @@
     <b>return</b> <span style='color:#0057ae;'>TestData</span>{ name, description, boolean }
   }
 
-  getName () {
+  name () {
     <b>return</b> name
   }
 
-  getDescription () {
+  description () {
     <b>return</b> description
   }
 
-  getBoolean () {
+  boolean () {
     <b>return</b> boolean
+  }
+
+  <span style='color:#898887;'>// From TestCompare&lt;TestData&gt;.</span>
+  testCompare (actual,report) {
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>MultiChecker</span><span style='color:#644a9b;'>.</span>new(report)
+        <span style='color:#644a9b;'>.</span>tryCheck(
+            <span style='color:#006e28;'>title:</span> <span style='color:#bf0303;'>&quot;name&quot;</span>,
+            actual<span style='color:#644a9b;'>.</span>name(),
+            <span style='color:#0057ae;'>CheckValue</span><span style='color:#644a9b;'>:</span>equals(name))
+        <span style='color:#644a9b;'>.</span>tryCheck(
+            <span style='color:#006e28;'>title:</span> <span style='color:#bf0303;'>&quot;description&quot;</span>,
+            actual<span style='color:#644a9b;'>.</span>description(),
+            <span style='color:#0057ae;'>CheckValue</span><span style='color:#644a9b;'>:</span>equals(description))
+        <span style='color:#644a9b;'>.</span>tryCheck(
+            <span style='color:#006e28;'>title:</span> <span style='color:#bf0303;'>&quot;boolean&quot;</span>,
+            actual<span style='color:#644a9b;'>.</span>boolean(),
+            <span style='color:#0057ae;'>CheckValue</span><span style='color:#644a9b;'>:</span>equals(boolean))
   }
 }
 
@@ -86,9 +103,11 @@
       <b>return</b> context<span style='color:#644a9b;'>.</span>convertError()
     } <b>else</b> {
       <b>return</b> context<span style='color:#644a9b;'>.</span>setValue(
-        <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value(<span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>.</span>create(name<span style='color:#644a9b;'>.</span>getValue(),
-                                         description<span style='color:#644a9b;'>.</span>getValue(),
-                                         boolean<span style='color:#644a9b;'>.</span>getValue())))
+        <span style='color:#898887;'>// Since TestData.create specifies labels, we _must_ use them here.</span>
+        <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value(<span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>.</span>create(
+            <span style='color:#006e28;'>name:</span>        name<span style='color:#644a9b;'>.</span>getValue(),
+            <span style='color:#006e28;'>description:</span> description<span style='color:#644a9b;'>.</span>getValue(),
+            <span style='color:#006e28;'>boolean:</span>     boolean<span style='color:#644a9b;'>.</span>getValue())))
     }
   }
 
