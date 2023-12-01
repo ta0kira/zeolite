@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,26 +17,26 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "Argv checks" {
-  success
+  success TestChecker
   args "arg1" "arg2" "arg3" "arg4"
 }
 
 unittest global {
   Int count <- Argv.global().size()
-  \ Testing.checkEquals(count,5)
-  \ Testing.checkEquals(Argv.global().readAt(0),"testcase")
-  \ Testing.checkEquals(Argv.global().readAt(1),"arg1")
-  \ Testing.checkEquals(Argv.global().readAt(2),"arg2")
-  \ Testing.checkEquals(Argv.global().readAt(3),"arg3")
-  \ Testing.checkEquals(Argv.global().readAt(4),"arg4")
+  \ count `Matches:with` CheckValue:equals(5)
+  \ Argv.global().readAt(0) `Matches:with` CheckValue:equals("testcase")
+  \ Argv.global().readAt(1) `Matches:with` CheckValue:equals("arg1")
+  \ Argv.global().readAt(2) `Matches:with` CheckValue:equals("arg2")
+  \ Argv.global().readAt(3) `Matches:with` CheckValue:equals("arg3")
+  \ Argv.global().readAt(4) `Matches:with` CheckValue:equals("arg4")
 }
 
 unittest subSequence {
   ReadAt<String> argv <- Argv.global().subSequence(2,2)
   Int count <- argv.size()
-  \ Testing.checkEquals(count,2)
-  \ Testing.checkEquals(argv.readAt(0),"arg2")
-  \ Testing.checkEquals(argv.readAt(1),"arg3")
+  \ count `Matches:with` CheckValue:equals(2)
+  \ argv.readAt(0) `Matches:with` CheckValue:equals("arg2")
+  \ argv.readAt(1) `Matches:with` CheckValue:equals("arg3")
 }
 
 
@@ -61,26 +61,26 @@ unittest test {
 
 
 testcase "ErrorOr checks" {
-  success
+  success TestChecker
 }
 
 unittest withValue {
   ErrorOr<Int> value <- ErrorOr:value<Int>(10)
-  \ Testing.checkFalse(value.isError())
-  \ Testing.checkEquals(value.getValue(),10)
+  \ value.isError() `Matches:with` CheckValue:equals(false)
+  \ value.getValue() `Matches:with` CheckValue:equals(10)
 }
 
 unittest withError {
   ErrorOr<String> value <- ErrorOr:error("error message")
-  \ Testing.checkTrue(value.isError())
-  \ Testing.checkEquals(value.getError().formatted(),"error message")
+  \ value.isError() `Matches:with` CheckValue:equals(true)
+  \ value.getError().formatted() `Matches:with` CheckValue:equals("error message")
 }
 
 unittest convertError {
   scoped {
     ErrorOr<String> error <- ErrorOr:error("error message")
   } in ErrorOr<Int> value <- error.convertError()
-  \ Testing.checkEquals(value.getError().formatted(),"error message")
+  \ value.getError().formatted() `Matches:with` CheckValue:equals("error message")
 }
 
 
@@ -118,28 +118,28 @@ unittest test {
 
 
 testcase "Void tests" {
-  success
+  success TestChecker
 }
 
 unittest formatted {
-  \ Testing.checkEquals(Void.default().formatted(),"Void")
+  \ Void.default().formatted() `Matches:with` CheckValue:equals("Void")
 }
 
 unittest lessThan {
-  \ Testing.checkFalse(Void.default() `Void.lessThan` Void.default())
+  \ Void.default() `Void.lessThan` Void.default() `Matches:with` CheckValue:equals(false)
 }
 
 unittest equals {
-  \ Testing.checkTrue(Void.default() `Void.equals` Void.default())
+  \ Void.default() `Void.equals` Void.default() `Matches:with` CheckValue:equals(true)
 }
 
 unittest hashed {
-  \ Testing.checkEquals(Void.default().duplicate().hashed(),Void.default().hashed())
+  \ Void.default().duplicate().hashed() `Matches:with` CheckValue:equals(Void.default().hashed())
 }
 
 
 testcase "AlwaysEmpty tests" {
-  success
+  success TestChecker
 }
 
 unittest conversions {
@@ -148,11 +148,11 @@ unittest conversions {
 }
 
 unittest size {
-  \ Testing.checkEquals(AlwaysEmpty.default().size(),0)
+  \ AlwaysEmpty.default().size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest duplicate {
-  \ Testing.checkEquals(AlwaysEmpty.default().duplicate().size(),0)
+  \ AlwaysEmpty.default().duplicate().size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest defaultOrder {

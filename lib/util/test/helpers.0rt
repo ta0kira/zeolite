@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,73 +17,73 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "comparator helper tests" {
-  success
+  success TestChecker
 }
 
 unittest orderHLessThan {
-  \ Testing.checkFalse("".defaultOrder()    `OrderH:lessThan` "".defaultOrder())
-  \ Testing.checkTrue("a".defaultOrder()    `OrderH:lessThan` "abc".defaultOrder())
-  \ Testing.checkFalse("b".defaultOrder()   `OrderH:lessThan` "abc".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThan` "abc".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThan` "a".defaultOrder())
-  \ Testing.checkTrue("abc".defaultOrder()  `OrderH:lessThan` "b".defaultOrder())
+  \ "".defaultOrder()    `OrderH:lessThan` "".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "a".defaultOrder()    `OrderH:lessThan` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "b".defaultOrder()   `OrderH:lessThan` "abc".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:lessThan` "abc".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:lessThan` "a".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder()  `OrderH:lessThan` "b".defaultOrder() `Matches:with` CheckValue:equals(true)
 }
 
 unittest orderHLessThanWith {
-  \ Testing.checkFalse("".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "".defaultOrder())
-  \ Testing.checkTrue("a".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
-  \ Testing.checkTrue("b".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "a".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "b".defaultOrder())
+  \ "".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "a".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "b".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "a".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "b".defaultOrder() `Matches:with` CheckValue:equals(false)
 }
 
 unittest orderHEquals {
-  \ Testing.checkTrue("".defaultOrder()     `OrderH:equals` "".defaultOrder())
-  \ Testing.checkFalse("a".defaultOrder()   `OrderH:equals` "abc".defaultOrder())
-  \ Testing.checkTrue("abc".defaultOrder()  `OrderH:equals` "abc".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:equals` "a".defaultOrder())
+  \ "".defaultOrder()     `OrderH:equals` "".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "a".defaultOrder()   `OrderH:equals` "abc".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder()  `OrderH:equals` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "abc".defaultOrder() `OrderH:equals` "a".defaultOrder() `Matches:with` CheckValue:equals(false)
 }
 
 unittest orderHEqualsWith {
-  \ Testing.checkTrue("".defaultOrder()     `OrderH:equalsWith<?,IgnoreCase>` "".defaultOrder())
-  \ Testing.checkFalse("a".defaultOrder()   `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder())
-  \ Testing.checkTrue("abc".defaultOrder()  `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "DEF".defaultOrder())
-  \ Testing.checkFalse("abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "A".defaultOrder())
+  \ "".defaultOrder()     `OrderH:equalsWith<?,IgnoreCase>` "".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "a".defaultOrder()   `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder()  `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "DEF".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "A".defaultOrder() `Matches:with` CheckValue:equals(false)
 }
 
 unittest readAtHLessThan {
-  \ Testing.checkFalse(""    `ReadAtH:lessThan` "")
-  \ Testing.checkTrue("a"    `ReadAtH:lessThan` "abc")
-  \ Testing.checkFalse("b"   `ReadAtH:lessThan` "abc")
-  \ Testing.checkFalse("abc" `ReadAtH:lessThan` "abc")
-  \ Testing.checkFalse("abc" `ReadAtH:lessThan` "a")
-  \ Testing.checkTrue("abc"  `ReadAtH:lessThan` "b")
+  \ ""    `ReadAtH:lessThan` "" `Matches:with` CheckValue:equals(false)
+  \ "a"    `ReadAtH:lessThan` "abc" `Matches:with` CheckValue:equals(true)
+  \ "b"   `ReadAtH:lessThan` "abc" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:lessThan` "abc" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:lessThan` "a" `Matches:with` CheckValue:equals(false)
+  \ "abc"  `ReadAtH:lessThan` "b" `Matches:with` CheckValue:equals(true)
 }
 
 unittest readAtHLessThanWith {
-  \ Testing.checkFalse(""    `ReadAtH:lessThanWith<?,Reversed<Char>>` "")
-  \ Testing.checkTrue("a"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
-  \ Testing.checkTrue("b"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
-  \ Testing.checkFalse("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc")
-  \ Testing.checkFalse("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "a")
-  \ Testing.checkFalse("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "b")
+  \ ""    `ReadAtH:lessThanWith<?,Reversed<Char>>` "" `Matches:with` CheckValue:equals(false)
+  \ "a"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(true)
+  \ "b"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(true)
+  \ "abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "a" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "b" `Matches:with` CheckValue:equals(false)
 }
 
 unittest readAtHEquals {
-  \ Testing.checkTrue(""     `ReadAtH:equals` "")
-  \ Testing.checkFalse("a"   `ReadAtH:equals` "abc")
-  \ Testing.checkTrue("abc"  `ReadAtH:equals` "abc")
-  \ Testing.checkFalse("abc" `ReadAtH:equals` "a")
+  \ ""     `ReadAtH:equals` "" `Matches:with` CheckValue:equals(true)
+  \ "a"   `ReadAtH:equals` "abc" `Matches:with` CheckValue:equals(false)
+  \ "abc"  `ReadAtH:equals` "abc" `Matches:with` CheckValue:equals(true)
+  \ "abc" `ReadAtH:equals` "a" `Matches:with` CheckValue:equals(false)
 }
 
 unittest readAtHEqualsWith {
-  \ Testing.checkTrue(""     `ReadAtH:equalsWith<?,IgnoreCase>` "")
-  \ Testing.checkFalse("a"   `ReadAtH:equalsWith<?,IgnoreCase>` "ABC")
-  \ Testing.checkTrue("abc"  `ReadAtH:equalsWith<?,IgnoreCase>` "ABC")
-  \ Testing.checkFalse("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "DEF")
-  \ Testing.checkFalse("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "a")
+  \ ""     `ReadAtH:equalsWith<?,IgnoreCase>` "" `Matches:with` CheckValue:equals(true)
+  \ "a"   `ReadAtH:equalsWith<?,IgnoreCase>` "ABC" `Matches:with` CheckValue:equals(false)
+  \ "abc"  `ReadAtH:equalsWith<?,IgnoreCase>` "ABC" `Matches:with` CheckValue:equals(true)
+  \ "abc" `ReadAtH:equalsWith<?,IgnoreCase>` "DEF" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:equalsWith<?,IgnoreCase>` "a" `Matches:with` CheckValue:equals(false)
 }
 
 concrete IgnoreCase {
@@ -106,41 +106,41 @@ define IgnoreCase {
 }
 
 unittest reversed {
-  \ Testing.checkFalse(0 `Reversed<Int>.lessThan` 0)
-  \ Testing.checkFalse(0 `Reversed<Int>.lessThan` 1)
-  \ Testing.checkTrue(1  `Reversed<Int>.lessThan` 0)
+  \ 0 `Reversed<Int>.lessThan` 0 `Matches:with` CheckValue:equals(false)
+  \ 0 `Reversed<Int>.lessThan` 1 `Matches:with` CheckValue:equals(false)
+  \ 1  `Reversed<Int>.lessThan` 0 `Matches:with` CheckValue:equals(true)
 }
 
 unittest bySizeLessThan {
-  \ Testing.checkFalse(""   `BySize.lessThan` "")
-  \ Testing.checkTrue("b"   `BySize.lessThan` "ac")
-  \ Testing.checkFalse("ac" `BySize.lessThan` "b")
-  \ Testing.checkFalse("a"  `BySize.lessThan` "b")
+  \ ""   `BySize.lessThan` "" `Matches:with` CheckValue:equals(false)
+  \ "b"   `BySize.lessThan` "ac" `Matches:with` CheckValue:equals(true)
+  \ "ac" `BySize.lessThan` "b" `Matches:with` CheckValue:equals(false)
+  \ "a"  `BySize.lessThan` "b" `Matches:with` CheckValue:equals(false)
 }
 
 unittest bySizeEquals {
-  \ Testing.checkTrue(""    `BySize.equals` "")
-  \ Testing.checkFalse("b"  `BySize.equals` "ac")
-  \ Testing.checkFalse("ac" `BySize.equals` "b")
-  \ Testing.checkTrue("a"   `BySize.equals` "b")
+  \ ""    `BySize.equals` "" `Matches:with` CheckValue:equals(true)
+  \ "b"  `BySize.equals` "ac" `Matches:with` CheckValue:equals(false)
+  \ "ac" `BySize.equals` "b" `Matches:with` CheckValue:equals(false)
+  \ "a"   `BySize.equals` "b" `Matches:with` CheckValue:equals(true)
 }
 
 unittest alwaysEqualLessThan {
-  \ Testing.checkFalse(""   `AlwaysEqual.lessThan` "")
-  \ Testing.checkFalse("b"  `AlwaysEqual.lessThan` "ac")
-  \ Testing.checkFalse("ac" `AlwaysEqual.lessThan` "b")
+  \ ""   `AlwaysEqual.lessThan` "" `Matches:with` CheckValue:equals(false)
+  \ "b"  `AlwaysEqual.lessThan` "ac" `Matches:with` CheckValue:equals(false)
+  \ "ac" `AlwaysEqual.lessThan` "b" `Matches:with` CheckValue:equals(false)
 }
 
 unittest alwaysEqualEquals {
-  \ Testing.checkTrue(""   `AlwaysEqual.equals` "")
-  \ Testing.checkTrue("b"  `AlwaysEqual.equals` "ac")
-  \ Testing.checkTrue("ac" `AlwaysEqual.equals` "b")
-  \ Testing.checkTrue("a"  `AlwaysEqual.equals` "b")
+  \ ""   `AlwaysEqual.equals` "" `Matches:with` CheckValue:equals(true)
+  \ "b"  `AlwaysEqual.equals` "ac" `Matches:with` CheckValue:equals(true)
+  \ "ac" `AlwaysEqual.equals` "b" `Matches:with` CheckValue:equals(true)
+  \ "a"  `AlwaysEqual.equals` "b" `Matches:with` CheckValue:equals(true)
 }
 
 
 testcase "iteration tests" {
-  success
+  success TestChecker
 }
 
 unittest orderHCopyTo {
@@ -171,11 +171,11 @@ unittest readAtHForwardOrder {
   ValueSource source <- ValueSource.new(false,10)
   Int expected <- 0
   traverse (`ReadAtH:forwardOrder` source -> Value actual) {
-    \ Testing.checkEquals(actual.get(),expected)
+    \ actual.get() `Matches:with` CheckValue:equals(expected)
   } update {
     expected <- expected+1
   }
-  \ Testing.checkEquals(expected,10)
+  \ expected `Matches:with` CheckValue:equals(10)
 }
 
 unittest readAtHForwardOrderEmpty {
@@ -189,11 +189,11 @@ unittest readAtHReverseOrder {
   ValueSource source <- ValueSource.new(false,10)
   Int expected <- 9
   traverse (`ReadAtH:reverseOrder` source -> Value actual) {
-    \ Testing.checkEquals(actual.get(),expected)
+    \ actual.get() `Matches:with` CheckValue:equals(expected)
   } update {
     expected <- expected-1
   }
-  \ Testing.checkEquals(expected,-1)
+  \ expected `Matches:with` CheckValue:equals(-1)
 }
 
 unittest readAtHReverseOrderEmpty {
@@ -207,11 +207,11 @@ unittest readAtHIterateWith {
   ValueSource source <- ValueSource.new(false,10)
   Int expected <- 0
   traverse (source `ReadAtH:iterateWith` `Counter.zeroIndexed` 5 -> Value actual) {
-    \ Testing.checkEquals(actual.get(),expected)
+    \ actual.get() `Matches:with` CheckValue:equals(expected)
   } update {
     expected <- expected+1
   }
-  \ Testing.checkEquals(expected,5)
+  \ expected `Matches:with` CheckValue:equals(5)
 }
 
 concrete ValueOrder {
@@ -268,11 +268,11 @@ define ValueCheck {
   }
 
   checkEnd () {
-    \ Testing.checkEquals(current,target)
+    \ current `Matches:with` CheckValue:equals(target)
   }
 
   append (x) {
-    \ Testing.checkEquals(x.get(),current)
+    \ x.get() `Matches:with` CheckValue:equals(current)
     current <- current+1
     return self
   }
@@ -341,25 +341,25 @@ define ValueSource {
   }
 
   readAt (i) {
-    \ Testing.checkBetween(i,0,size-1)
+    \ i `Matches:with` CheckValue:between(0,size-1)
     return Value.new(original,i)
   }
 }
 
 
 testcase "formatting tests" {
-  success
+  success TestChecker
 }
 
 unittest emptyValue {
-  \ Testing.checkEquals(FormattedH:try<Char>(empty).formatted(),"Char{empty}")
-  \ Testing.checkEquals(FormattedH:try(empty).formatted(),"all{empty}")
+  \ FormattedH:try<Char>(empty).formatted() `Matches:with` CheckValue:equals("Char{empty}")
+  \ FormattedH:try(empty).formatted() `Matches:with` CheckValue:equals("all{empty}")
 }
 
 unittest formattedValue {
-  \ Testing.checkEquals(FormattedH:try(123).formatted(),"123")
+  \ FormattedH:try(123).formatted() `Matches:with` CheckValue:equals("123")
 }
 
 unittest nonFormattedValue {
-  \ Testing.checkEquals(FormattedH:try(String.builder()).formatted(),"[Append<Formatted>&Build<String>]{?}")
+  \ FormattedH:try(String.builder()).formatted() `Matches:with` CheckValue:equals("[Append<Formatted>&Build<String>]{?}")
 }

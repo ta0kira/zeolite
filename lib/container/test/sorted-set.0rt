@@ -29,7 +29,7 @@ unittest addAndRemove {
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     \ set.add((i*hash)%max)
-    \ Testing.checkEquals(set.size(),i+1)
+    \ set.size() `Matches:with` CheckValue:equals(i+1)
   }
 
   // Remove only the odd elements.
@@ -38,26 +38,26 @@ unittest addAndRemove {
       // Remove it twice to ensure idempotence.
       \ set.remove(i).remove(i)
     }
-    \ Testing.checkEquals(set.size(),max-(i+1)/2)
+    \ set.size() `Matches:with` CheckValue:equals(max-(i+1)/2)
   }
 
   // Validate set membership.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkEquals(set.member(i),i%2 == 0)
+    \ set.member(i) `Matches:with` CheckValue:equals(i%2 == 0)
   }
 }
 
 unittest append {
   SortedSet<Int> set <- SortedSet<Int>.new()
   \ set.append(3)
-  \ Testing.checkEquals(set.size(),1)
-  \ Testing.checkTrue(set.member(3))
+  \ set.size() `Matches:with` CheckValue:equals(1)
+  \ set.member(3) `Matches:with` CheckValue:equals(true)
 }
 
 unittest removeNotPresent {
   SortedSet<Int> set <- SortedSet<Int>.new().add(1).add(2).add(4)
   \ set.remove(3)
-  \ Testing.checkEquals(set.size(),3)
+  \ set.size() `Matches:with` CheckValue:equals(3)
 }
 
 unittest defaultOrder {
@@ -74,11 +74,11 @@ unittest defaultOrder {
   // Validate the traversal order.
   Int index <- 0
   traverse (set.defaultOrder() -> Int entry) {
-    \ Testing.checkEquals(entry,index)
+    \ entry `Matches:with` CheckValue:equals(index)
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,max)
+  \ index `Matches:with` CheckValue:equals(max)
 }
 
 unittest defaultOrderEmpty {
@@ -102,10 +102,10 @@ unittest reverseOrder {
   Int index <- max
   traverse (set.reverseOrder() -> Int entry) {
     index <- index-1
-    \ Testing.checkEquals(entry,index)
+    \ entry `Matches:with` CheckValue:equals(index)
   }
 
-  \ Testing.checkEquals(index,0)
+  \ index `Matches:with` CheckValue:equals(0)
 }
 
 unittest getForward {
@@ -123,10 +123,10 @@ unittest getForward {
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
     traverse (set.getForward(index) -> Int entry) {
-      \ Testing.checkEquals(entry,index)
+      \ entry `Matches:with` CheckValue:equals(index)
       index <- index+1
     }
-    \ Testing.checkEquals(index,max)
+    \ index `Matches:with` CheckValue:equals(max)
   }
 }
 
@@ -139,7 +139,7 @@ unittest getForwardNotFound {
   } in if (!present(start)) {
     fail("Failed")
   } else {
-    \ Testing.checkEquals(require(start).get(),5)
+    \ require(start).get() `Matches:with` CheckValue:equals(5)
   }
 
   scoped {
@@ -164,10 +164,10 @@ unittest getReverse {
   traverse (Counter.zeroIndexed(max) -> Int i) {
     Int index <- i
     traverse (set.getReverse(index) -> Int entry) {
-      \ Testing.checkEquals(entry,index)
+      \ entry `Matches:with` CheckValue:equals(index)
       index <- index-1
     }
-    \ Testing.checkEquals(index,-1)
+    \ index `Matches:with` CheckValue:equals(-1)
   }
 }
 
@@ -180,7 +180,7 @@ unittest getReverseNotFound {
   } in if (!present(start)) {
     fail("Failed")
   } else {
-    \ Testing.checkEquals(require(start).get(),1)
+    \ require(start).get() `Matches:with` CheckValue:equals(1)
   }
 
   scoped {
@@ -194,12 +194,12 @@ unittest duplicate {
   SortedSet<Int> set <- SortedSet<Int>.new().add(1).add(2)
 
   SortedSet<Int> copy <- set.duplicate()
-  \ Testing.checkEquals(copy.size(),2)
-  \ Testing.checkTrue(copy.member(1))
-  \ Testing.checkTrue(copy.member(1))
+  \ copy.size() `Matches:with` CheckValue:equals(2)
+  \ copy.member(1) `Matches:with` CheckValue:equals(true)
+  \ copy.member(1) `Matches:with` CheckValue:equals(true)
 
   \ copy.remove(2)
-  \ Testing.checkEquals(copy.size(),1)
-  \ Testing.checkTrue(copy.member(1))
-  \ Testing.checkTrue(set.member(2))
+  \ copy.size() `Matches:with` CheckValue:equals(1)
+  \ copy.member(1) `Matches:with` CheckValue:equals(true)
+  \ set.member(2) `Matches:with` CheckValue:equals(true)
 }

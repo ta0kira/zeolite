@@ -22,12 +22,12 @@ testcase "Vector tests" {
 
 unittest createSize {
   Vector<Int> values <- Vector:createSize<Int>(10)
-  \ Testing.checkEquals(values.size(),10)
+  \ values.size() `Matches:with` CheckValue:equals(10)
 
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
-    \ Testing.checkEquals(values.readAt(i),Int.default())
+    \ values.readAt(i) `Matches:with` CheckValue:equals(Int.default())
   } update {
     i <- i+1
   }
@@ -40,16 +40,16 @@ unittest append {
     Int i <- 0
   } in while (i < 10) {
     \ values.append(i)
-    \ Testing.checkEquals(values.size(),i+1)
+    \ values.size() `Matches:with` CheckValue:equals(i+1)
   } update {
     i <- i+1
   }
-  \ Testing.checkEquals(values.size(),10)
+  \ values.size() `Matches:with` CheckValue:equals(10)
 
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
-    \ Testing.checkEquals(values.readAt(i),i)
+    \ values.readAt(i) `Matches:with` CheckValue:equals(i)
   } update {
     i <- i+1
   }
@@ -62,21 +62,21 @@ unittest pushAndPop {
     Int i <- 0
   } in while (i < 10) {
     \ values.push(i)
-    \ Testing.checkEquals(values.size(),i+1)
+    \ values.size() `Matches:with` CheckValue:equals(i+1)
   } update {
     i <- i+1
   }
-  \ Testing.checkEquals(values.size(),10)
+  \ values.size() `Matches:with` CheckValue:equals(10)
 
   scoped {
     Int i <- 0
   } in while (i < 10) {
-    \ Testing.checkEquals(values.pop(),10-i-1)
-    \ Testing.checkEquals(values.size(),10-i-1)
+    \ values.pop() `Matches:with` CheckValue:equals(10-i-1)
+    \ values.size() `Matches:with` CheckValue:equals(10-i-1)
   } update {
     i <- i+1
   }
-  \ Testing.checkEquals(values.size(),0)
+  \ values.size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest writeAt {
@@ -93,7 +93,7 @@ unittest writeAt {
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
-    \ Testing.checkEquals(values.readAt(i),2*i)
+    \ values.readAt(i) `Matches:with` CheckValue:equals(2*i)
   } update {
     i <- i+1
   }
@@ -110,26 +110,26 @@ unittest traverseVector {
   \ vector.push(1)
 
   traverse (vector.defaultOrder() -> Int i) {
-    \ Testing.checkEquals(i,vector.readAt(index))
+    \ i `Matches:with` CheckValue:equals(vector.readAt(index))
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,6)
+  \ index `Matches:with` CheckValue:equals(6)
 }
 
 unittest duplicate {
   Vector<Int> vector <- Vector<Int>.default().push(1).push(2)
 
   Vector<Int> copy <- vector.duplicate()
-  \ Testing.checkEquals(copy.size(),2)
-  \ Testing.checkEquals(copy.readAt(0),1)
-  \ Testing.checkEquals(copy.readAt(1),2)
+  \ copy.size() `Matches:with` CheckValue:equals(2)
+  \ copy.readAt(0) `Matches:with` CheckValue:equals(1)
+  \ copy.readAt(1) `Matches:with` CheckValue:equals(2)
 
   \ copy.writeAt(1,3)
   \ copy.pop()
-  \ Testing.checkEquals(copy.size(),1)
-  \ Testing.checkEquals(copy.readAt(0),1)
-  \ Testing.checkEquals(vector.readAt(1),2)
+  \ copy.size() `Matches:with` CheckValue:equals(1)
+  \ copy.readAt(0) `Matches:with` CheckValue:equals(1)
+  \ vector.readAt(1) `Matches:with` CheckValue:equals(2)
 }
 
 concrete Value {
@@ -158,13 +158,13 @@ unittest test {
   Vector<Type> values <- Vector:createSize<Type>(10)
   \ values.readAt(3).set(7)
 
-  \ Testing.checkEquals(values.readAt(3),Type.create(7))
+  \ values.readAt(3) `Matches:with` CheckValue:equals(Type.create(7))
 
   scoped {
     Int i <- 0
   } in while (i < values.size()) {
     if (i != 3) {
-      \ Testing.checkEquals(values.readAt(i),Type.create(0))
+      \ values.readAt(i) `Matches:with` CheckValue:equals(Type.create(0))
     }
   } update {
     i <- i+1

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021,2023 Kevin P. Barry
+Copyright 2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,86 +15,6 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
-
-testcase "UtilTesting.checkError with error" {
-  success
-}
-
-unittest test {
-  \ UtilTesting.checkError(ErrorOr:error("failure"))
-}
-
-
-testcase "UtilTesting.checkError with value" {
-  failure
-  require "message"
-}
-
-unittest test {
-  \ UtilTesting.checkError(ErrorOr:value("message"))
-}
-
-
-testcase "UtilTesting.checkSuccess success" {
-  success
-}
-
-unittest test {
-  \ UtilTesting.checkSuccess(ErrorOr:value("message"),"message")
-}
-
-
-testcase "UtilTesting.checkSuccess bad value" {
-  failure
-  require "message"
-  require "foo"
-}
-
-unittest test {
-  \ UtilTesting.checkSuccess(ErrorOr:value("foo"),"message")
-}
-
-
-testcase "UtilTesting.checkSuccess with error" {
-  failure
-  require "message"
-  require "failure"
-}
-
-unittest test {
-  \ UtilTesting.checkSuccess(ErrorOr:error("failure"),"message")
-}
-
-
-testcase "UtilTesting.checkSuccessBetween success" {
-  success
-}
-
-unittest test {
-  \ UtilTesting.checkSuccessBetween(ErrorOr:value(1),0,2)
-}
-
-
-testcase "UtilTesting.checkSuccess bad value" {
-  failure
-  require "7.+0.*2"
-}
-
-unittest test {
-  \ UtilTesting.checkSuccessBetween(ErrorOr:value(7),0,2)
-}
-
-
-testcase "UtilTesting.checkSuccess with error" {
-  failure
-  require "0.*2"
-  require "failure"
-}
-
-unittest test {
-  \ UtilTesting.checkSuccessBetween(ErrorOr:error("failure"),0,2)
-}
-
 
 testcase "CheckString:contains success" {
   success TestChecker
@@ -239,4 +159,83 @@ testcase "CheckString:endsWith failure too long" {
 
 unittest test {
   \ "345" `Matches:with` CheckString:endsWith("12345")
+}
+
+
+testcase "CheckErrorOr success" {
+  success TestChecker
+}
+
+unittest value {
+  \ ErrorOr:value(123) `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
+}
+
+unittest error {
+  \ ErrorOr:error("something")?ErrorOr<Int> `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
+}
+
+
+testcase "CheckErrorOr:value failure with value" {
+  failure TestChecker
+  require "456"
+  require "123"
+}
+
+unittest test {
+  \ ErrorOr:value(456) `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
+}
+
+
+testcase "CheckErrorOr:value failure with error" {
+  failure TestChecker
+  require "something"
+  require "123"
+}
+
+unittest test {
+  \ ErrorOr:error("something")?ErrorOr<Int> `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
+}
+
+
+testcase "CheckErrorOr:value failure with empty" {
+  failure TestChecker
+  require "empty"
+  require "123"
+}
+
+unittest test {
+  \ empty?ErrorOr<Int> `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
+}
+
+
+testcase "CheckErrorOr:error failure with value" {
+  failure TestChecker
+  require "456"
+  require "something"
+}
+
+unittest test {
+  \ ErrorOr:value(456) `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
+}
+
+
+testcase "CheckErrorOr:error failure with error" {
+  failure TestChecker
+  require "message"
+  require "something"
+}
+
+unittest test {
+  \ ErrorOr:error("message")?ErrorOr<Int> `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
+}
+
+
+testcase "CheckErrorOr:error failure with empty" {
+  failure TestChecker
+  require "empty"
+  require "something"
+}
+
+unittest test {
+  \ empty?ErrorOr<Int> `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
 }

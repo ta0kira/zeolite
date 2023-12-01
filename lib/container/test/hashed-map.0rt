@@ -29,7 +29,7 @@ unittest integrationTest {
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     \ map.set(new,i)
-    \ Testing.checkEquals(map.size(),i+1)
+    \ map.size() `Matches:with` CheckValue:equals(i+1)
   }
 
   // Check and remove values.
@@ -55,14 +55,14 @@ unittest integrationTest {
           .flush()
     }
     \ map.remove(new)
-    \ Testing.checkEquals(map.size(),count-i-1)
+    \ map.size() `Matches:with` CheckValue:equals(count-i-1)
   }
 }
 
 unittest removeNotPresent {
   HashedMap<Int,Int> map <- HashedMap<Int,Int>.new().set(1,1).set(2,2).set(4,4)
   \ map.remove(3)
-  \ Testing.checkEquals(map.size(),3)
+  \ map.size() `Matches:with` CheckValue:equals(3)
 }
 
 unittest defaultOrder {
@@ -81,13 +81,13 @@ unittest defaultOrder {
   // Validate traversal coverage.
   Int index <- 0
   traverse (map.defaultOrder() -> KeyValue<Int,Int> entry) {
-    \ Testing.checkFalse(visited.readAt(entry.getKey()))
-    \ Testing.checkEquals((entry.getValue()*hash)%max,entry.getKey())
+    \ visited.readAt(entry.getKey()) `Matches:with` CheckValue:equals(false)
+    \ (entry.getValue()*hash)%max `Matches:with` CheckValue:equals(entry.getKey())
     \ visited.writeAt(entry.getKey(),true)
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,max)
+  \ index `Matches:with` CheckValue:equals(max)
 }
 
 unittest defaultOrderEmpty {
@@ -112,12 +112,12 @@ unittest keyOrder {
   // Validate traversal coverage.
   Int index <- 0
   traverse (map.keyOrder() -> Int key) {
-    \ Testing.checkFalse(visited.readAt(key))
+    \ visited.readAt(key) `Matches:with` CheckValue:equals(false)
     \ visited.writeAt(key,true)
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,max)
+  \ index `Matches:with` CheckValue:equals(max)
 }
 
 unittest valueOrder {
@@ -136,12 +136,12 @@ unittest valueOrder {
   // Validate traversal coverage.
   Int index <- 0
   traverse (map.valueOrder() -> Int value) {
-    \ Testing.checkFalse(visited.readAt(value))
+    \ visited.readAt(value) `Matches:with` CheckValue:equals(false)
     \ visited.writeAt(value,true)
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,max)
+  \ index `Matches:with` CheckValue:equals(max)
 }
 
 unittest duplicate {
@@ -154,19 +154,19 @@ unittest duplicate {
   }
 
   HashedMap<Int,Int> copy <- map.duplicate()
-  \ Testing.checkEquals(copy.size(),map.size())
+  \ copy.size() `Matches:with` CheckValue:equals(map.size())
   traverse (Counter.zeroIndexed(max) -> Int i) {
     $Hidden[map]$
-    \ Testing.checkEquals(copy.get(i),i)
+    \ copy.get(i) `Matches:with` CheckValue:equals(i)
   }
 
   \ copy.set(2,5)
   \ copy.remove(7)
   $Hidden[copy]$
 
-  \ Testing.checkEquals(map.size(),max)
+  \ map.size() `Matches:with` CheckValue:equals(max)
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkEquals(map.get(i),i)
+    \ map.get(i) `Matches:with` CheckValue:equals(i)
   }
 }
 
@@ -174,7 +174,7 @@ unittest duplicateEmpty {
   HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
   HashedMap<Int,Int> copy <- map.duplicate()
   \ map.set(1,1)
-  \ Testing.checkEquals(copy.size(),0)
+  \ copy.size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest weakSetExists {
@@ -185,14 +185,14 @@ unittest weakSetExists {
 
   Value value0 <- Value.new(5)
   Value value1 <- map.weakSet(1,value0)
-  \ Testing.checkEquals(map.size(),3)
+  \ map.size() `Matches:with` CheckValue:equals(3)
 
-  \ Testing.checkEquals(value0.get(),5)
-  \ Testing.checkEquals(value1.get(),1)
+  \ value0.get() `Matches:with` CheckValue:equals(5)
+  \ value1.get() `Matches:with` CheckValue:equals(1)
 
   \ value0.set(10)
-  \ Testing.checkEquals(value1.get(),1)
-  \ Testing.checkEquals(map.get(1),Value.new(1))
+  \ value1.get() `Matches:with` CheckValue:equals(1)
+  \ map.get(1) `Matches:with` CheckValue:equals(Value.new(1))
 }
 
 unittest weakSetMissing {
@@ -203,14 +203,14 @@ unittest weakSetMissing {
 
   Value value0 <- Value.new(5)
   Value value1 <- map.weakSet(7,value0)
-  \ Testing.checkEquals(map.size(),4)
+  \ map.size() `Matches:with` CheckValue:equals(4)
 
-  \ Testing.checkEquals(value0.get(),5)
-  \ Testing.checkEquals(value1.get(),5)
+  \ value0.get() `Matches:with` CheckValue:equals(5)
+  \ value1.get() `Matches:with` CheckValue:equals(5)
 
   \ value0.set(10)
-  \ Testing.checkEquals(value1.get(),10)
-  \ Testing.checkEquals(map.get(7),Value.new(10))
+  \ value1.get() `Matches:with` CheckValue:equals(10)
+  \ map.get(7) `Matches:with` CheckValue:equals(Value.new(10))
 }
 
 concrete Value {

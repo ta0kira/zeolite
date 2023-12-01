@@ -129,7 +129,7 @@ unittest isnan {
 }
 
 unittest abs {
-  \ Testing.checkEquals(Math.abs(-10),10)
-  \ Testing.checkEquals(Math.abs(10),10)
-  \ Testing.checkEquals(Math.abs(0),0)
+  \ Math.abs(-10) `Matches:with` CheckValue:equals(10)
+  \ Math.abs(10) `Matches:with` CheckValue:equals(10)
+  \ Math.abs(0) `Matches:with` CheckValue:equals(0)
 }

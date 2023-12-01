@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021-2022 Kevin P. Barry
+Copyright 2021-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "counter tests" {
-  success
+  success TestChecker
 }
 
 unittest zeroIndexed {
   Int index <- 0
 
   traverse (Counter.zeroIndexed(10) -> Int i) {
-    \ Testing.checkEquals(i,index)
+    \ i `Matches:with` CheckValue:equals(index)
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,10)
+  \ index `Matches:with` CheckValue:equals(10)
 }
 
 unittest zeroIndexedEmpty {
@@ -41,11 +41,11 @@ unittest revZeroIndexed {
   Int index <- 9
 
   traverse (Counter.revZeroIndexed(10) -> Int i) {
-    \ Testing.checkEquals(i,index)
+    \ i `Matches:with` CheckValue:equals(index)
     index <- index-1
   }
 
-  \ Testing.checkEquals(index,-1)
+  \ index `Matches:with` CheckValue:equals(-1)
 }
 
 unittest revZeroIndexedEmpty {
@@ -58,13 +58,13 @@ unittest unlimitedCount {
   Int index <- 0
 
   traverse (Counter.unlimited() -> Int i) {
-    \ Testing.checkEquals(i,index)
+    \ i `Matches:with` CheckValue:equals(index)
     if ((index <- index+1) >= 10) {
       break
     }
   }
 
-  \ Testing.checkEquals(index,10)
+  \ index `Matches:with` CheckValue:equals(10)
 }
 
 unittest builderReversePositive {
@@ -77,11 +77,11 @@ unittest builderReversePositive {
                 .limit(17)
                 .reverse()
                 .done() -> Int i) {
-    \ Testing.checkEquals(i,index)
+    \ i `Matches:with` CheckValue:equals(index)
     index <- index-5
   }
 
-  \ Testing.checkEquals(index,-2)
+  \ index `Matches:with` CheckValue:equals(-2)
 }
 
 unittest builderReverseNegative {
@@ -94,22 +94,22 @@ unittest builderReverseNegative {
                 .limit(3)
                 .reverse()
                 .done() -> Int i) {
-    \ Testing.checkEquals(i,index)
+    \ i `Matches:with` CheckValue:equals(index)
     index <- index+5
   }
 
-  \ Testing.checkEquals(index,22)
+  \ index `Matches:with` CheckValue:equals(22)
 }
 
 unittest times {
   Int index <- 0
 
   traverse ("message" `Repeat:times` 10 -> String m) {
-    \ Testing.checkEquals(m,"message")
+    \ m `Matches:with` CheckValue:equals("message")
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,10)
+  \ index `Matches:with` CheckValue:equals(10)
 }
 
 unittest timesEmpty {
@@ -122,47 +122,47 @@ unittest unlimitedValue {
   Int index <- 0
 
   traverse (Repeat:unlimited("message") -> String m) {
-    \ Testing.checkEquals(m,"message")
+    \ m `Matches:with` CheckValue:equals("message")
     if ((index <- index+1) >= 10) {
       break
     }
   }
 
-  \ Testing.checkEquals(index,10)
+  \ index `Matches:with` CheckValue:equals(10)
 }
 
 unittest minMax {
   scoped {
     Int x, Int y <- Ranges:minMax(10,3)
   } in {
-    \ Testing.checkEquals(x,3)
-    \ Testing.checkEquals(y,10)
+    \ x `Matches:with` CheckValue:equals(3)
+    \ y `Matches:with` CheckValue:equals(10)
   }
 
   scoped {
     Int x, Int y <- Ranges:minMax(3,10)
   } in {
-    \ Testing.checkEquals(x,3)
-    \ Testing.checkEquals(y,10)
+    \ x `Matches:with` CheckValue:equals(3)
+    \ y `Matches:with` CheckValue:equals(10)
   }
 }
 
 unittest min {
   scoped {
     Int x <- Ranges:min(10,3)
-  } in \ Testing.checkEquals(x,3)
+  } in \ x `Matches:with` CheckValue:equals(3)
 
   scoped {
     Int x <- Ranges:min(3,10)
-  } in \ Testing.checkEquals(x,3)
+  } in \ x `Matches:with` CheckValue:equals(3)
 }
 
 unittest max {
   scoped {
     Int x <- Ranges:max(10,3)
-  } in \ Testing.checkEquals(x,10)
+  } in \ x `Matches:with` CheckValue:equals(10)
 
   scoped {
     Int x <- Ranges:max(3,10)
-  } in \ Testing.checkEquals(x,10)
+  } in \ x `Matches:with` CheckValue:equals(10)
 }

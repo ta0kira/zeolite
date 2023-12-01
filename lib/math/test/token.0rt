@@ -21,22 +21,22 @@ testcase "basic Token tests" {
 }
 
 unittest equals {
-  \ Testing.checkEquals(Token.from("message"),Token.from("message"))
-  \ Testing.checkFalse(Token.from("message") `Token.equals` Token.from("other"))
+  \ Token.from("message") `Matches:with` CheckValue:equals(Token.from("message"))
+  \ Token.from("message") `Token.equals` Token.from("other") `Matches:with` CheckValue:equals(false)
 }
 
 unittest lessThan {
-  \ Testing.checkFalse(Token.from("message") `Token.lessThan` Token.from("message"))
+  \ Token.from("message") `Token.lessThan` Token.from("message") `Matches:with` CheckValue:equals(false)
   \ Testing.checkTrue((Token.from("message") `Token.lessThan` Token.from("other")) ^
                       (Token.from("other") `Token.lessThan` Token.from("message")))
 }
 
 unittest formatted {
-  \ Testing.checkEquals(Token.from("message").formatted(),"message")
+  \ Token.from("message").formatted() `Matches:with` CheckValue:equals("message")
 }
 
 unittest hashed {
-  \ Testing.checkNotEquals(Token.from("message").hashed(),Token.from("other").hashed())
-  \ Testing.checkNotEquals(Token.from("message").hashed(),"message".hashed())
-  \ Testing.checkEquals(Token.from("message").hashed(),Token.from("message").hashed())
+  \ Token.from("message").hashed() `Matches:with` CheckValue:notEquals(Token.from("other").hashed())
+  \ Token.from("message").hashed() `Matches:with` CheckValue:notEquals("message".hashed())
+  \ Token.from("message").hashed() `Matches:with` CheckValue:equals(Token.from("message").hashed())
 }

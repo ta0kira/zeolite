@@ -25,14 +25,14 @@ unittest integrationTest {
   $ReadOnly[max]$
   SimpleQueue<Int> queue <- SimpleQueue<Int>.default()
   traverse (`Counter.zeroIndexed` max -> Int value) {
-    \ Testing.checkEquals(queue.size(),value)
+    \ queue.size() `Matches:with` CheckValue:equals(value)
     \ queue.append(value)
   }
   traverse (`Counter.zeroIndexed` max -> Int value) {
-    \ Testing.checkEquals(queue.size(),max-value)
-    \ Testing.checkEquals(queue.pop(),value)
+    \ queue.size() `Matches:with` CheckValue:equals(max-value)
+    \ queue.pop() `Matches:with` CheckValue:equals(value)
   }
-  \ Testing.checkEquals(queue.size(),0)
+  \ queue.size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest duplicate {
@@ -45,8 +45,8 @@ unittest duplicate {
   \ queue.pop()
   $Hidden[queue]$
   traverse (`Counter.zeroIndexed` max -> Int value) {
-    \ Testing.checkEquals(copy.size(),max-value)
-    \ Testing.checkEquals(copy.pop(),value)
+    \ copy.size() `Matches:with` CheckValue:equals(max-value)
+    \ copy.pop() `Matches:with` CheckValue:equals(value)
   }
-  \ Testing.checkEquals(copy.size(),0)
+  \ copy.size() `Matches:with` CheckValue:equals(0)
 }

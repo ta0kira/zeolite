@@ -22,7 +22,7 @@ testcase "EnumeratedBarrier tests" {
 
 unittest correctCount {
   ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(13)
-  \ Testing.checkEquals(barriers.size(),13)
+  \ barriers.size() `Matches:with` CheckValue:equals(13)
 }
 
 unittest waitForOneThread {
@@ -32,7 +32,7 @@ unittest waitForOneThread {
 
 unittest zeroAllowed {
   ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(0)
-  \ Testing.checkEquals(barriers.size(),0)
+  \ barriers.size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest waitForMultipleThreads {
@@ -44,10 +44,10 @@ unittest waitForMultipleThreads {
   Thread thread2 <- ProcessThread.from(WaitAndIncrement.create(2,value,mutex,barriers.readAt(2))).start()
 
   \ barriers.readAt(0).wait()
-  \ Testing.checkEquals(value.get(),2)
+  \ value.get() `Matches:with` CheckValue:equals(2)
 
   \ barriers.readAt(0).wait()
-  \ Testing.checkEquals(value.get(),4)
+  \ value.get() `Matches:with` CheckValue:equals(4)
 
   \ thread1.join()
   \ thread2.join()

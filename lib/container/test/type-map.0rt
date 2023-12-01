@@ -27,21 +27,21 @@ unittest basicOperations {
   TypeKey<String> keyString <- TypeKey<String>.new()
   TypeKey<Value>  keyValue  <- TypeKey<Value>.new()
 
-  \ Testing.checkEquals(map.get(keyInt),   empty)
-  \ Testing.checkEquals(map.get(keyString),empty)
-  \ Testing.checkEquals(map.get(keyValue), empty)
+  \ map.get(keyInt) `Matches:with` CheckValue:equals(   empty)
+  \ map.get(keyString) `Matches:with` CheckValue:equals(empty)
+  \ map.get(keyValue) `Matches:with` CheckValue:equals( empty)
 
   \ map.set(keyInt,1)
   \ map.set(keyString,"a")
   \ map.set(keyValue,Value.new())
 
-  \ Testing.checkEquals(map.get(keyInt),   1)
-  \ Testing.checkEquals(map.get(keyString),"a")
-  \ Testing.checkEquals(map.get(keyValue), Value.new())
+  \ map.get(keyInt) `Matches:with` CheckValue:equals(   1)
+  \ map.get(keyString) `Matches:with` CheckValue:equals("a")
+  \ map.get(keyValue) `Matches:with` CheckValue:equals( Value.new())
 
   \ map.remove(keyString)
 
-  \ Testing.checkEquals(map.get(keyString),empty)
+  \ map.get(keyString) `Matches:with` CheckValue:equals(empty)
 }
 
 unittest wrongReturnType {
@@ -51,10 +51,10 @@ unittest wrongReturnType {
 
   // Added as Formatted, which means it cannot be retrieved as String later.
   \ map.set<Formatted>(keyString,"a")
-  \ Testing.checkEquals(map.get<String>(keyString),empty)
+  \ map.get<String>(keyString) `Matches:with` CheckValue:equals(empty)
 
   \ map.set<String>(keyString,"a")
-  \ Testing.checkEquals(map.get<String>(keyString),"a")
+  \ map.get<String>(keyString) `Matches:with` CheckValue:equals("a")
 }
 
 unittest duplicate {
@@ -64,13 +64,13 @@ unittest duplicate {
   TypeMap map <- TypeMap.new().set(keyInt,1).set(keyString,"a")
 
   TypeMap copy <- map.duplicate()
-  \ Testing.checkEquals(copy.get(keyInt),1)
-  \ Testing.checkEquals(copy.get(keyString),"a")
+  \ copy.get(keyInt) `Matches:with` CheckValue:equals(1)
+  \ copy.get(keyString) `Matches:with` CheckValue:equals("a")
 
   \ copy.remove(keyString)
-  \ Testing.checkEquals(copy.get(keyInt),1)
-  \ Testing.checkEquals(copy.get(keyString),empty)
-  \ Testing.checkEquals(map.get(keyString),"a")
+  \ copy.get(keyInt) `Matches:with` CheckValue:equals(1)
+  \ copy.get(keyString) `Matches:with` CheckValue:equals(empty)
+  \ map.get(keyString) `Matches:with` CheckValue:equals("a")
 }
 
 unittest getValues {
@@ -82,9 +82,9 @@ unittest getValues {
 
   [Container&SetReader<String>] actual <- map.getAll(SortedSet<String>.new())
 
-  \ Testing.checkEquals(actual.size(),2)
-  \ Testing.checkTrue(actual.member("one"))
-  \ Testing.checkTrue(actual.member("two"))
+  \ actual.size() `Matches:with` CheckValue:equals(2)
+  \ actual.member("one") `Matches:with` CheckValue:equals(true)
+  \ actual.member("two") `Matches:with` CheckValue:equals(true)
 }
 
 unittest keyEquals {
@@ -92,14 +92,14 @@ unittest keyEquals {
   TypeKey<Int>    key2 <- TypeKey<Int>.new()
   TypeKey<String> key3 <- TypeKey<String>.new()
   \ Testing.checkEquals<TypeKey<Int>>(key1,key1)
-  \ Testing.checkFalse(key1 `TypeKey<any>.equals` key2)
-  \ Testing.checkFalse(key1 `TypeKey<any>.equals` key3)
+  \ key1 `TypeKey<any>.equals` key2 `Matches:with` CheckValue:equals(false)
+  \ key1 `TypeKey<any>.equals` key3 `Matches:with` CheckValue:equals(false)
 }
 
 unittest keyHashed {
   TypeKey<Int> key1 <- TypeKey<Int>.new()
   TypeKey<Int> key2 <- TypeKey<Int>.new()
-  \ Testing.checkNotEquals(key1.hashed(),key2.hashed())
+  \ key1.hashed() `Matches:with` CheckValue:notEquals(key2.hashed())
 }
 
 concrete Value {

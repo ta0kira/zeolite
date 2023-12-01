@@ -65,15 +65,15 @@ define CheckValue {
   }
 
   lessThan (upper) {
-    return ValueRange<#x>.new(empty,upper)
+    return ValueBounds<#x>.new(empty,upper)
   }
 
   greaterThan (lower) {
-    return ValueRange<#x>.new(lower,empty)
+    return ValueBounds<#x>.new(lower,empty)
   }
 
   between (lower,upper) {
-    return ValueRange<#x>.new(lower,upper)
+    return ValueBounds<#x>.new(lower,upper)
   }
 }
 
@@ -160,14 +160,14 @@ define ValueEquals {
   }
 }
 
-concrete ValueRange<#x> {
+concrete ValueBounds<#x> {
   #x requires Formatted
   #x defines LessThan<#x>
 
   @type new (optional #x,optional #x) -> (ValueMatcher<#x>)
 }
 
-define ValueRange {
+define ValueBounds {
   $ReadOnlyExcept[]$
 
   refines ValueMatcher<#x>

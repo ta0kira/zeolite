@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021,2023 Kevin P. Barry
+Copyright 2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,47 +15,6 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
-
-$TestsOnly$
-
-define UtilTesting {
-  checkError (x) {
-    if (!x.isError()) {
-      fail(String.builder()
-          .append("expected an error but got value ")
-          .append(x.getValue())
-          .build())
-    }
-  }
-
-  checkSuccess (x,y) {
-    if (x.isError()) {
-      fail(String.builder()
-          .append("expected ")
-          .append(y)
-          .append(" but got error ")
-          .append(x.getError())
-          .build())
-    } else {
-      \ Testing.checkEquals(x.getValue(),y)
-    }
-  }
-
-  checkSuccessBetween (x,l,h) {
-    if (x.isError()) {
-      fail(String.builder()
-          .append("expected value between ")
-          .append(l)
-          .append(" and ")
-          .append(h)
-          .append(" but got error ")
-          .append(x.getError())
-          .build())
-    } else {
-      \ Testing.checkBetween(x.getValue(),l,h)
-    }
-  }
-}
 
 define CheckString {
   $ReadOnlyExcept[]$
@@ -132,6 +91,69 @@ define CheckString {
       return output.append(" does not end with \"").append(expected).append("\"").build()
     } else {
       return output.append(" does not contain \"").append(expected).append("\"").build()
+    }
+  }
+}
+
+define CheckErrorOr {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<ErrorOr<#x>>
+
+  @value optional ValueMatcher<#x> valueMatcher
+  @value optional ValueMatcher<String> errorMatcher
+
+  value (valueMatcher) {
+    return CheckErrorOr<#x>{ valueMatcher, empty }
+  }
+
+  error (errorMatcher) {
+    return CheckErrorOr<#x>{ empty, errorMatcher }
+  }
+
+  check (actual,report) {
+    optional #x value <- empty
+    if (`present` actual && !require(actual).isError()) {
+      value <- require(actual).getValue()
+    }
+    optional String error <- empty
+    if (`present` actual && require(actual).isError()) {
+      error <- require(actual).getError().formatted()
+    }
+    MultiChecker checker <- MultiChecker.new(report)
+    if (`present` valueMatcher) {
+      \ checker.tryCheck(title: "value",value,require(valueMatcher))
+    } elif (`present` value) {
+      \ report.newSection(title: "value")
+          .addError(message: String.builder()
+              .append("expected empty but got \"")
+              .append(`FormattedH:try` require(value))
+              .append("\"")
+              .build())
+    }
+    if (`present` errorMatcher) {
+      \ checker.tryCheck(title: "error",error,require(errorMatcher))
+    } elif (`present` error) {
+      \ report.newSection(title: "error")
+          .addError(message: String.builder()
+              .append("expected empty but got \"")
+              .append(require(error).formatted())
+              .append("\"")
+              .build())
+    }
+  }
+
+  summary () {
+    if (present(valueMatcher)) {
+      return String.builder()
+          .append(typename<ErrorOr<#x>>())
+          .append(" has matching value")
+          .build()
+    } else {
+      return String.builder()
+          .append(typename<ErrorOr<#x>>())
+          .append(" has error")
+          .build()
     }
   }
 }

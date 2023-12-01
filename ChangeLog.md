@@ -134,25 +134,45 @@
 
 ### Libraries
 
-* **[breaking]** Updates `Testing` in `lib/testing` to handle `optional` and to
-  not require `Formatted`. This is breaking because `Testing.checkOptional` was
-  removed; use `Testing.checkEquals` instead.
-
-* **[new]** Adds the `TestChecker` `testcase` checker (see previous section) to
-  `lib/testing` to help support custom matchers.
-
-* **[new]** Adds support for custom value matchers in tests to `lib/testing`,
-  as well as `String` matching in `lib/util`.
+* **[breaking]** Removes `Testing` from `lib/testing` entirely. Use the new
+  testing approach instead. (More details in items further down.)
 
   ```text
+  // Old way.
+
+  testcase "my tests" {
+    success
+  }
+
+  unittest test {
+    \ Testing.checkEquals("something","other")
+    \ Testing.checkBetween(3,2,7)
+  }
+  ```
+
+  ```text
+  // New way.
+
   testcase "my tests" {
     success TestChecker  // <- enables checking of matchers
   }
 
   unittest test {
-    \ "something" `Matches:with` CheckString:contains("thing")
+    \ "something" `Matches:with` CheckValue:equals("other")
+    \ 3 `Matches:with` CheckValue:between(2,7)
   }
   ```
+
+  Also see the `.0rp` files in `lib/testing`.
+
+* **[breaking]** Removes `UtilTesting` from `lib/util` entirely. Use the new
+  testing approach instead.
+
+* **[new]** Adds the `TestChecker` `testcase` checker (see previous section) to
+  `lib/testing` to help support custom matchers.
+
+* **[new]** Adds support for custom value matchers in tests to `lib/testing`,
+  as well as `String`/`ErrorOr` matching in `lib/util`.
 
   Custom matchers support sequencing, recursion, and conditional failures.
 

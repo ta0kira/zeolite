@@ -7,7 +7,7 @@ unittest test {
   ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll` raw
   TestData data <- errorOrData.getValue()
 
-  \ Testing.checkEquals(data.getName(),"example data")
-  \ Testing.checkEquals(data.getDescription(),"THIS_IS_A_TOKEN")
-  \ Testing.checkFalse(data.getBoolean())
+  \ data.getName() `Matches:with` CheckValue:equals("example data")
+  \ data.getDescription() `Matches:with` CheckValue:equals("THIS_IS_A_TOKEN")
+  \ data.getBoolean() `Matches:with` CheckValue:equals(false)
 }

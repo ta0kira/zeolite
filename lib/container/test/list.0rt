@@ -40,11 +40,11 @@ unittest forwardTraverse {
       .append(4)
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals(require(head).get(),value)
+    \ require(head).get() `Matches:with` CheckValue:equals(value)
   } update {
     head <- require(head).next()
   }
-  \ Testing.checkFalse(present(head))
+  \ present(head) `Matches:with` CheckValue:equals(false)
 }
 
 unittest reverseTraverse {
@@ -67,11 +67,11 @@ unittest reverseTraverse {
       .append(3)
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals(require(tail).get(),value)
+    \ require(tail).get() `Matches:with` CheckValue:equals(value)
   } update {
     tail <- require(tail).prev()
   }
-  \ Testing.checkFalse(present(tail))
+  \ present(tail) `Matches:with` CheckValue:equals(false)
 }
 
 unittest setNext {
@@ -99,12 +99,12 @@ unittest setNext {
   optional LinkedNode<Int> after2  <- Helper.jumpBy(3,head2)
   optional LinkedNode<Int> before2 <- require(after2).prev()
 
-  \ Testing.checkEquals(require(require(before1).setNext(after2)).get(),1)
+  \ require(require(before1).setNext(after2)).get() `Matches:with` CheckValue:equals(1)
 
-  \ Testing.checkFalse(present(require(after1).prev()))
-  \ Testing.checkEquals(require(require(before1).next()).get(),11)
-  \ Testing.checkEquals(require(require(after2).prev()).get(),5)
-  \ Testing.checkFalse(present(require(before2).next()))
+  \ present(require(after1).prev()) `Matches:with` CheckValue:equals(false)
+  \ require(require(before1).next()).get() `Matches:with` CheckValue:equals(11)
+  \ require(require(after2).prev()).get() `Matches:with` CheckValue:equals(5)
+  \ present(require(before2).next()) `Matches:with` CheckValue:equals(false)
 }
 
 unittest setPrev {
@@ -132,12 +132,12 @@ unittest setPrev {
   optional LinkedNode<Int> after2  <- Helper.jumpBy(3,head2)
   optional LinkedNode<Int> before2 <- require(after2).prev()
 
-  \ Testing.checkEquals(require(require(after1).setPrev(before2)).get(),5)
+  \ require(require(after1).setPrev(before2)).get() `Matches:with` CheckValue:equals(5)
 
-  \ Testing.checkEquals(require(require(after1).prev()).get(),15)
-  \ Testing.checkFalse(present(require(before1).next()))
-  \ Testing.checkFalse(present(require(after2).prev()))
-  \ Testing.checkEquals(require(require(before2).next()).get(),1)
+  \ require(require(after1).prev()).get() `Matches:with` CheckValue:equals(15)
+  \ present(require(before1).next()) `Matches:with` CheckValue:equals(false)
+  \ present(require(after2).prev()) `Matches:with` CheckValue:equals(false)
+  \ require(require(before2).next()).get() `Matches:with` CheckValue:equals(1)
 }
 
 unittest setNextSame {
@@ -155,8 +155,8 @@ unittest setNextSame {
 
   \ require(before).setNext(after)
 
-  \ Testing.checkEquals(require(require(after).prev()).get(),5)
-  \ Testing.checkEquals(require(require(before).next()).get(),1)
+  \ require(require(after).prev()).get() `Matches:with` CheckValue:equals(5)
+  \ require(require(before).next()).get() `Matches:with` CheckValue:equals(1)
 }
 
 unittest setPrevSame {
@@ -174,8 +174,8 @@ unittest setPrevSame {
 
   \ require(after).setPrev(before)
 
-  \ Testing.checkEquals(require(require(after).prev()).get(),5)
-  \ Testing.checkEquals(require(require(before).next()).get(),1)
+  \ require(require(after).prev()).get() `Matches:with` CheckValue:equals(5)
+  \ require(require(before).next()).get() `Matches:with` CheckValue:equals(1)
 }
 
 unittest setNextSelf {
@@ -193,9 +193,9 @@ unittest setNextSelf {
 
   \ require(before).setNext(before)
 
-  \ Testing.checkFalse(present(require(after).prev()))
-  \ Testing.checkEquals(require(require(before).prev()).get(),5)
-  \ Testing.checkEquals(require(require(before).next()).get(),5)
+  \ present(require(after).prev()) `Matches:with` CheckValue:equals(false)
+  \ require(require(before).prev()).get() `Matches:with` CheckValue:equals(5)
+  \ require(require(before).next()).get() `Matches:with` CheckValue:equals(5)
 }
 
 unittest setPrevSelf {
@@ -213,9 +213,9 @@ unittest setPrevSelf {
 
   \ require(after).setPrev(after)
 
-  \ Testing.checkFalse(present(require(before).next()))
-  \ Testing.checkEquals(require(require(after).prev()).get(),1)
-  \ Testing.checkEquals(require(require(after).next()).get(),1)
+  \ present(require(before).next()) `Matches:with` CheckValue:equals(false)
+  \ require(require(after).prev()).get() `Matches:with` CheckValue:equals(1)
+  \ require(require(after).next()).get() `Matches:with` CheckValue:equals(1)
 }
 
 unittest duplicate {
@@ -241,11 +241,11 @@ unittest duplicate {
   $Hidden[head]$
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals(require(head2).get(),value)
+    \ require(head2).get() `Matches:with` CheckValue:equals(value)
   } update {
     head2 <- require(head2).next()
   }
-  \ Testing.checkFalse(present(head2))
+  \ present(head2) `Matches:with` CheckValue:equals(false)
 }
 
 unittest hugeCleanup { $DisableCoverage$
@@ -275,11 +275,11 @@ unittest forwardTraverseSingle {
       .append(4)
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals(require(head).get(),value)
+    \ require(head).get() `Matches:with` CheckValue:equals(value)
   } update {
     head <- require(head).next()
   }
-  \ Testing.checkFalse(present(head))
+  \ present(head) `Matches:with` CheckValue:equals(false)
 }
 
 unittest duplicateSingle {
@@ -305,11 +305,11 @@ unittest duplicateSingle {
   $Hidden[head]$
 
   traverse (expected.defaultOrder() -> Int value) {
-    \ Testing.checkEquals(require(head2).get(),value)
+    \ require(head2).get() `Matches:with` CheckValue:equals(value)
   } update {
     head2 <- require(head2).next()
   }
-  \ Testing.checkFalse(present(head2))
+  \ present(head2) `Matches:with` CheckValue:equals(false)
 }
 
 unittest hugeCleanupSingle { $DisableCoverage$

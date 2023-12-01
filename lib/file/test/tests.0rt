@@ -70,7 +70,7 @@ unittest forceRead {
     \ writer.freeResource()
   } in \ writer.writeBlock(data)
 
-  \ Testing.checkEquals(FileTesting.forceReadFile("testfile"),data)
+  \ FileTesting.forceReadFile("testfile") `Matches:with` CheckValue:equals(data)
 }
 
 unittest readEmpty {

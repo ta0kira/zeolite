@@ -29,7 +29,7 @@ unittest addAndRemove {
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     \ set.add((i*hash)%max)
-    \ Testing.checkEquals(set.size(),i+1)
+    \ set.size() `Matches:with` CheckValue:equals(i+1)
   }
 
   // Remove only the odd elements.
@@ -38,26 +38,26 @@ unittest addAndRemove {
       // Remove it twice to ensure idempotence.
       \ set.remove(i).remove(i)
     }
-    \ Testing.checkEquals(set.size(),max-(i+1)/2)
+    \ set.size() `Matches:with` CheckValue:equals(max-(i+1)/2)
   }
 
   // Validate set membership.
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ Testing.checkEquals(set.member(i),i%2 == 0)
+    \ set.member(i) `Matches:with` CheckValue:equals(i%2 == 0)
   }
 }
 
 unittest append {
   HashedSet<Int> set <- HashedSet<Int>.new()
   \ set.append(3)
-  \ Testing.checkEquals(set.size(),1)
-  \ Testing.checkTrue(set.member(3))
+  \ set.size() `Matches:with` CheckValue:equals(1)
+  \ set.member(3) `Matches:with` CheckValue:equals(true)
 }
 
 unittest removeNotPresent {
   HashedSet<Int> set <- HashedSet<Int>.new().add(1).add(2).add(4)
   \ set.remove(3)
-  \ Testing.checkEquals(set.size(),3)
+  \ set.size() `Matches:with` CheckValue:equals(3)
 }
 
 unittest defaultOrder {
@@ -76,12 +76,12 @@ unittest defaultOrder {
   // Validate traversal coverage.
   Int index <- 0
   traverse (set.defaultOrder() -> Int entry) {
-    \ Testing.checkFalse(visited.readAt(entry))
+    \ visited.readAt(entry) `Matches:with` CheckValue:equals(false)
     \ visited.writeAt(entry,true)
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,max)
+  \ index `Matches:with` CheckValue:equals(max)
 }
 
 unittest defaultOrderEmpty {
@@ -94,12 +94,12 @@ unittest duplicate {
   HashedSet<Int> set <- HashedSet<Int>.new().add(1).add(2)
 
   HashedSet<Int> copy <- set.duplicate()
-  \ Testing.checkEquals(copy.size(),2)
-  \ Testing.checkTrue(copy.member(1))
-  \ Testing.checkTrue(copy.member(1))
+  \ copy.size() `Matches:with` CheckValue:equals(2)
+  \ copy.member(1) `Matches:with` CheckValue:equals(true)
+  \ copy.member(1) `Matches:with` CheckValue:equals(true)
 
   \ copy.remove(2)
-  \ Testing.checkEquals(copy.size(),1)
-  \ Testing.checkTrue(copy.member(1))
-  \ Testing.checkTrue(set.member(2))
+  \ copy.size() `Matches:with` CheckValue:equals(1)
+  \ copy.member(1) `Matches:with` CheckValue:equals(true)
+  \ set.member(2) `Matches:with` CheckValue:equals(true)
 }

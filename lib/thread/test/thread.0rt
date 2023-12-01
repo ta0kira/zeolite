@@ -22,11 +22,11 @@ testcase "simple Thread test" {
 
 unittest test {
   CountLoop counter <- CountLoop.create(10000)
-  \ Testing.checkEquals(counter.get(),0)
+  \ counter.get() `Matches:with` CheckValue:equals(0)
   \ counter.start()
-  \ Testing.checkEquals(counter.get(),10000)
+  \ counter.get() `Matches:with` CheckValue:equals(10000)
   \ counter.start()
-  \ Testing.checkEquals(counter.get(),20000)
+  \ counter.get() `Matches:with` CheckValue:equals(20000)
 }
 
 concrete CountLoop {
@@ -89,7 +89,7 @@ unittest test {
   Thread oddThread  <- ProcessThread.from(EvenOrOdd.create(mutex,false,10,value)).start()
   \ evenThread.join()
   \ oddThread.join()
-  \ Testing.checkEquals(value.get(),20)
+  \ value.get() `Matches:with` CheckValue:equals(20)
 }
 
 concrete EvenOrOdd {
@@ -163,7 +163,7 @@ define CheckArgv {
   }
 
   run () {
-    \ Testing.checkEquals(Argv.global().readAt(1),"arg1")
+    \ Argv.global().readAt(1) `Matches:with` CheckValue:equals("arg1")
   }
 }
 

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021,2023 Kevin P. Barry
+Copyright 2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,42 +16,15 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$TestsOnly$
-
-// General lib/util helpers for use in unit tests.
-concrete UtilTesting {
-  // Check the value for an ErrorOr error. Crashes if it is not an error.
-  //
-  // Args:
-  // - ErrorOr<Formatted>: Actual value.
-  @type checkError (ErrorOr<Formatted>) -> ()
-
-  // Check the values for equality. Crashes if they are not equal.
-  //
-  // Args:
-  // - ErrorOr<#x>: Actual value.
-  // - #x: Expected value.
-  @type checkSuccess<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (ErrorOr<#x>,#x) -> ()
-
-  // Check that the value is within a range. Crashes if it is not in the range.
-  //
-  // Args:
-  // - ErrorOr<#x>: Actual value.
-  // - #x: Lower bound.
-  // - #x: Upper bound.
-  @type checkSuccessBetween<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-    #x defines LessThan<#x>
-  (ErrorOr<#x>,#x,#x) -> ()
-}
-
 // Simple sub-string checks.
 concrete CheckString {
   @category contains (Formatted) -> (ValueMatcher<String>)
   @category startsWith (Formatted) -> (ValueMatcher<String>)
   @category endsWith (Formatted) -> (ValueMatcher<String>)
+}
+
+// Checks the contents of an ErrorOr.
+concrete CheckErrorOr<#x> {
+  @category value<#x> (ValueMatcher<#x>) -> (ValueMatcher<ErrorOr<#x>>)
+  @category error<#x> (ValueMatcher<String>) -> (ValueMatcher<ErrorOr<#x>>)
 }

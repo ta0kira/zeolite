@@ -42,7 +42,7 @@ unittest resumeAll {
   \ thread1.join()
   \ thread2.join()
 
-  \ Testing.checkEquals(value.get(),4)
+  \ value.get() `Matches:with` CheckValue:equals(4)
 }
 
 unittest resumeOne {
@@ -69,7 +69,7 @@ unittest resumeOne {
   \ thread1.join()
   \ thread2.join()
 
-  \ Testing.checkEquals(value.get(),3)
+  \ value.get() `Matches:with` CheckValue:equals(3)
 }
 
 unittest forceWaitTimeout {
@@ -82,7 +82,7 @@ unittest forceWaitTimeout {
   \ cond.resumeOne()
   \ thread.join()
 
-  \ Testing.checkEquals(value.get(),1)
+  \ value.get() `Matches:with` CheckValue:equals(1)
 }
 
 unittest waitNoTimeout {
