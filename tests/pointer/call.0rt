@@ -49,8 +49,16 @@ define CallHelper {
 }
 
 unittest test {
-  \ CallHelper.call("DATA") `Testing.checkEquals` "DATA has been processed as Request"
-  \ CallHelper.call2("DATA") `Testing.checkEquals` "REQUEST has been processed as Message"
+  scoped {
+    String value <- CallHelper.call("DATA")
+  } in if (value != "DATA has been processed as Request") {
+    fail(value)
+  }
+  scoped {
+    String value <- CallHelper.call2("DATA")
+  } in if (value != "REQUEST has been processed as Message") {
+    fail(value)
+  }
 }
 
 
@@ -75,30 +83,70 @@ define Helper {
   }
 
   call () {
-    \ Request.getData(requestPointer) `Testing.checkEquals` "request"
-    \ Response.getData(responsePointer) `Testing.checkEquals` "response"
+    scoped {
+      String value <- Request.getData(requestPointer)
+    } in if (value != "request") {
+      fail(value)
+    }
+    scoped {
+      String value <- Response.getData(responsePointer)
+    } in if (value != "response") {
+      fail(value)
+    }
 
     Pointer<Request> localRequest <- requestPointer
     Pointer<Response> localResponse <- responsePointer
-    \ Request.getData(localRequest) `Testing.checkEquals` "request"
-    \ Response.getData(localResponse) `Testing.checkEquals` "response"
+    scoped {
+      String value <- Request.getData(localRequest)
+    } in if (value != "request") {
+      fail(value)
+    }
+    scoped {
+      String value <- Response.getData(localResponse)
+    } in if (value != "response") {
+      fail(value)
+    }
 
     localRequest <- request.asRequest()
     localResponse <- response.asResponse()
-    \ Request.getData(localRequest) `Testing.checkEquals` "request"
-    \ Response.getData(localResponse) `Testing.checkEquals` "response"
+    scoped {
+      String value <- Request.getData(localRequest)
+    } in if (value != "request") {
+      fail(value)
+    }
+    scoped {
+      String value <- Response.getData(localResponse)
+    } in if (value != "response") {
+      fail(value)
+    }
 
     requestPointer <- localRequest
     responsePointer <- localResponse
-    \ Request.getData(requestPointer) `Testing.checkEquals` "request"
-    \ Response.getData(responsePointer) `Testing.checkEquals` "response"
+    scoped {
+      String value <- Request.getData(requestPointer)
+    } in if (value != "request") {
+      fail(value)
+    }
+    scoped {
+      String value <- Response.getData(responsePointer)
+    } in if (value != "response") {
+      fail(value)
+    }
 
     // Test swapping.
     Request request2 <- Request.create("request2")
     Pointer<Request> requestPointer2 <- request2.asRequest()
     localRequest <-> requestPointer2
-    \ Request.getData(localRequest) `Testing.checkEquals` "request2"
-    \ Request.getData(requestPointer2) `Testing.checkEquals` "request"
+    scoped {
+      String value <- Request.getData(localRequest)
+    } in if (value != "request2") {
+      fail(value)
+    }
+    scoped {
+      String value <- Request.getData(requestPointer2)
+    } in if (value != "request") {
+      fail(value)
+    }
   }
 }
 

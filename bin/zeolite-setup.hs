@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,13 +69,13 @@ arBinary    = "ar"
 libraries :: [String]
 libraries = [
     "base",
+    "tests",
     "lib/testing",
     "lib/util",
     "lib/container",
     "lib/file",
     "lib/math",
-    "lib/thread",
-    "tests"
+    "lib/thread"
   ]
 
 optionalLibraries :: [String]

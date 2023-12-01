@@ -1,8 +1,5 @@
 root: "../.."
 path: "tests/pointer"
-private_deps: [
-  "lib/testing"
-]
 extra_files: [
   category_source {
     source: "tests/pointer/Extension_Request.cpp"
