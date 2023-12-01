@@ -305,6 +305,16 @@ unittest emptyVal {
 }
 
 
+testcase "call from empty" {
+  error
+  require "optional"
+}
+
+unittest test {
+  \ empty.foo()
+}
+
+
 testcase "inline assignment to weak" {
   success
 }
@@ -642,4 +652,24 @@ testcase "conditional call bad function name" {
 unittest test {
   optional String value <- empty
   \ value&.foo()
+}
+
+
+testcase "conditional call from empty" {
+  error
+  require "formatted"
+  require "all"
+}
+
+unittest test {
+  \ empty&.formatted()
+}
+
+
+testcase "conditional call from converted empty" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEmpty(empty?Formatted&.formatted())
 }

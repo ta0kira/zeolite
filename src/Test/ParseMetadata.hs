@@ -427,7 +427,7 @@ tests = [
                   [(MacroName "MY_MACRO",
                     Expression _ (BuiltinCall _
                       (FunctionCall _ BuiltinRequire (Positional [])
-                        (Positional [(Nothing,Literal (EmptyLiteral _))]))) []),
+                        (Positional [(Nothing,Expression _ (UnambiguousLiteral (EmptyLiteral _)) [])]))) []),
                    (MacroName "MY_OTHER_MACRO",
                     Expression _
                       (TypeCall _ _

@@ -83,7 +83,7 @@ tests = [
     checkShortParseSuccess "\\ (false).call()",
     checkShortParseSuccess "\\ false.call()",
     checkShortParseFail "\\ 1.call()",
-    checkShortParseFail "\\ empty.call()",
+    checkShortParseSuccess "\\ empty.call()",
 
     checkShortParseSuccess "\\ foo(arg1: 123)",
     checkShortParseFail "\\ foo(arg1 : 123)",
