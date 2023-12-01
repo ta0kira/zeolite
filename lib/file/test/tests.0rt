@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "read and write" {
-  success
+  success TestChecker
 }
 
 unittest readWrite {
@@ -28,12 +28,12 @@ unittest readWrite {
   } cleanup {
     \ writer.freeResource()
   } in {
-    \ Testing.checkEmpty(writer.getFileError())
+    \ present(writer.getFileError()) `Matches:with` CheckValue:equals(false)
     Int writeSize <- writer.writeBlock(data)
     if (writeSize != data.size()) {
       fail(writeSize)
     }
-    \ Testing.checkEmpty(writer.getFileError())
+    \ present(writer.getFileError()) `Matches:with` CheckValue:equals(false)
   }
 
   scoped {
@@ -41,7 +41,7 @@ unittest readWrite {
   } cleanup {
     \ reader.freeResource()
   } in {
-    \ Testing.checkEmpty(reader.getFileError())
+    \ present(reader.getFileError()) `Matches:with` CheckValue:equals(false)
 
     scoped {
       String data2 <- reader.readBlock(8)
@@ -53,7 +53,7 @@ unittest readWrite {
     } in if (data2 != "some\x00data") {
       fail("\"" + data2 + "\"")
     }
-    \ Testing.checkEmpty(reader.getFileError())
+    \ present(reader.getFileError()) `Matches:with` CheckValue:equals(false)
 
     if (!reader.pastEnd()) {
       fail("more data in file")
@@ -81,7 +81,7 @@ unittest readEmpty {
   if (data != "") {
     fail("\"" + data + "\"")
   }
-  \ Testing.checkEmpty(reader.getFileError())
+  \ present(reader.getFileError()) `Matches:with` CheckValue:equals(false)
   if (!reader.pastEnd()) {
     fail("more data in file")
   }
@@ -89,13 +89,13 @@ unittest readEmpty {
 
 unittest readMissing {
   RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
-  \ Testing.checkPresent(reader.getFileError())
+  \ present(reader.getFileError()) `Matches:with` CheckValue:equals(true)
 }
 
 unittest unwritable {
   RawFileWriter writer <- RawFileWriter.open("testfile")
   \ writer.freeResource()
-  \ Testing.checkPresent(writer.getFileError())
+  \ present(writer.getFileError()) `Matches:with` CheckValue:equals(true)
 }
 
 
