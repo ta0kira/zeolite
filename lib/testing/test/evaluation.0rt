@@ -78,17 +78,21 @@ unittest test {
 
 testcase "MultiChecker.check short cicuits" {
   failure
-  require "message1"
-  exclude "message2"
+  require "title0"
+  require "title2"
+  require "message2"
+  exclude "title1"
+  exclude "title3"
+  exclude "message3"
 }
 
 unittest test {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
 
   \ MultiChecker.new(report)
-      .check<String>("foo",CheckAlways:match())
-      &.check<String>("foo",CheckAlways:error("message1"))
-      &.check<String>("foo",CheckAlways:error("message2"))
+      .check<String>(title: "title1","foo",CheckAlways:match())
+      &.check<String>(title: "title2","foo",CheckAlways:error("message2"))
+      &.check<String>(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.writeTo(output)
@@ -98,17 +102,45 @@ unittest test {
 
 testcase "MultiChecker.tryCheck continues" {
   failure
-  require "message1"
+  require "title0"
+  require "title2"
   require "message2"
+  require "title3"
+  require "message3"
+  exclude "title1"
 }
 
 unittest test {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
 
   \ MultiChecker.new(report)
-      .tryCheck<String>("foo",CheckAlways:match())
-      .tryCheck<String>("foo",CheckAlways:error("message1"))
-      .tryCheck<String>("foo",CheckAlways:error("message2"))
+      .tryCheck<String>(title: "title1","foo",CheckAlways:match())
+      .tryCheck<String>(title: "title2","foo",CheckAlways:error("message2"))
+      .tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
+
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
+}
+
+
+testcase "MultiChecker.check doesn't force pending errors" {
+  failure
+  require "title0"
+  require "title1"
+  require "message1"
+  require "title3"
+  require "message3"
+  exclude "title2"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
+
+  \ MultiChecker.new(report)
+      .tryCheck<String>(title: "title1","foo",CheckAlways:error("message1"))
+      .check<String>(title: "title2","foo",CheckAlways:match())
+      &.tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.writeTo(output)

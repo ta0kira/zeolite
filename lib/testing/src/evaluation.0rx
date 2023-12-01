@@ -236,19 +236,28 @@ define MultiChecker {
     return delegate -> #self
   }
 
-  check (value,matcher) {
-    TestReport newReport <- report.newSection(title: matcher.summary())
-    \ value `matcher.check` newReport
-    if (newReport.hasError()) {
+  check (title,value,matcher) {
+    if (delegate -> `execute`) {
       return empty
     } else {
       return self
     }
   }
 
-  tryCheck (value,matcher) {
-    TestReport newReport <- report.newSection(title: matcher.summary())
-    \ value `matcher.check` newReport
+  tryCheck (title,value,matcher) {
+    \ delegate -> `execute`
     return self
+  }
+
+  @value execute<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (Bool)
+  execute (title,value,matcher) {
+    String fullTitle <- String.builder()
+        .append(title)
+        .append(": ")
+        .append(matcher.summary())
+        .build()
+    TestReport newReport <- report.newSection(title: fullTitle)
+    \ value `matcher.check` newReport
+    return newReport.hasError()
   }
 }

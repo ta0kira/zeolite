@@ -45,8 +45,8 @@ concrete Matches {
 // Helper to check multiple members of a single object.
 // NOTE: Can only be constructed in a ValueMatcher.
 concrete MultiChecker {
-  @value check<#x> (optional #x,ValueMatcher<#x>) -> (optional #self)
-  @value tryCheck<#x> (optional #x,ValueMatcher<#x>) -> (#self)
+  @value check<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (optional #self)
+  @value tryCheck<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (#self)
 
   visibility ValueMatcher<all>
 
