@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,85 @@ define UtilTesting {
           .build())
     } else {
       \ Testing.checkBetween(x.getValue(),l,h)
+    }
+  }
+}
+
+define CheckString {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<String>
+
+  @value String expected
+  @value Bool fromStart
+  @value Bool toEnd
+
+  contains (expected) {
+    return CheckString{ expected.formatted(), false, false }
+  }
+
+  startsWith (expected) {
+    return CheckString{ expected.formatted(), true, false }
+  }
+
+  endsWith (expected) {
+    return CheckString{ expected.formatted(), false, true }
+  }
+
+  check (actual,report) {
+    if (! `present` actual) {
+      \ report.addError(message: appendErrorAndBuild(String.builder().append("empty")))
+      return _
+    }
+    String value <- require(actual)
+    $Hidden[actual]$
+    Int startIndex <- 0
+    if (toEnd) {
+      startIndex <- value.size()-expected.size()
+    }
+    while (startIndex >= 0 && startIndex+expected.size() <= value.size()) {
+      Bool matches <- true
+      scoped {
+        Int index <- startIndex
+        $Hidden[startIndex]$
+      } in traverse (expected.defaultOrder() -> Char char) {
+        $Hidden[expected]$
+        if (value.readAt(index) != char) {
+          matches <- false
+          break
+        }
+      } update {
+        index <- index+1
+      }
+      if (matches) {
+        return _
+      } elif (fromStart || toEnd) {
+        break
+      }
+    } update {
+      startIndex <- startIndex+1
+    }
+    \ report.addError(message: appendErrorAndBuild(String.builder().append("\"").append(value).append("\"")))
+  }
+
+  summary () {
+    if (fromStart) {
+      return "String starts with"
+    } elif (toEnd) {
+      return "String ends with"
+    } else {
+      return "String contains"
+    }
+  }
+
+  @value appendErrorAndBuild ([Append<Formatted>&Build<String>]) -> (String)
+  appendErrorAndBuild (output) {
+    if (fromStart) {
+      return output.append(" does not start with \"").append(expected).append("\"").build()
+    } elif (toEnd) {
+      return output.append(" does not end with \"").append(expected).append("\"").build()
+    } else {
+      return output.append(" does not contain \"").append(expected).append("\"").build()
     }
   }
 }

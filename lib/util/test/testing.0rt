@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,4 +93,150 @@ testcase "UtilTesting.checkSuccess with error" {
 
 unittest test {
   \ UtilTesting.checkSuccessBetween(ErrorOr:error("failure"),0,2)
+}
+
+
+testcase "CheckString:contains success" {
+  success TestChecker
+}
+
+unittest entireString {
+  \ "1234567890" `Matches:with` CheckString:contains("1234567890")
+}
+
+unittest beginning {
+  \ "1234567890" `Matches:with` CheckString:contains("12345")
+}
+
+unittest end {
+  \ "1234567890" `Matches:with` CheckString:contains("67890")
+}
+
+unittest middle {
+  \ "1234567890" `Matches:with` CheckString:contains("4567")
+}
+
+
+testcase "CheckString:contains failure empty" {
+  failure TestChecker
+  require "does not contain"
+  require "empty"
+}
+
+unittest test {
+  \ empty?String `Matches:with` CheckString:contains("567890")
+}
+
+
+testcase "CheckString:contains failure partial" {
+  failure TestChecker
+  require "does not contain"
+  require "567890"
+}
+
+unittest test {
+  \ "123456789" `Matches:with` CheckString:contains("567890")
+}
+
+
+testcase "CheckString:contains failure too long" {
+  failure TestChecker
+  require "does not contain"
+  require "123"
+}
+
+unittest test {
+  \ "123" `Matches:with` CheckString:contains("12345")
+}
+
+
+testcase "CheckString:startsWith success" {
+  success TestChecker
+}
+
+unittest entireString {
+  \ "1234567890" `Matches:with` CheckString:startsWith("1234567890")
+}
+
+unittest beginning {
+  \ "1234567890" `Matches:with` CheckString:startsWith("12345")
+}
+
+
+testcase "CheckString:startsWith failure empty" {
+  failure TestChecker
+  require "does not start with"
+  require "empty"
+}
+
+unittest test {
+  \ empty?String `Matches:with` CheckString:startsWith("567890")
+}
+
+
+testcase "CheckString:startsWith failure not at start" {
+  failure TestChecker
+  require "does not start with"
+  require "567890"
+}
+
+unittest test {
+  \ "1234567890" `Matches:with` CheckString:startsWith("567890")
+}
+
+
+testcase "CheckString:startsWith failure too long" {
+  failure TestChecker
+  require "does not start with"
+  require "123"
+}
+
+unittest test {
+  \ "123" `Matches:with` CheckString:startsWith("12345")
+}
+
+
+testcase "CheckString:endsWith success" {
+  success TestChecker
+}
+
+unittest entireString {
+  \ "1234567890" `Matches:with` CheckString:endsWith("1234567890")
+}
+
+unittest end {
+  \ "1234567890" `Matches:with` CheckString:endsWith("567890")
+}
+
+
+testcase "CheckString:endsWith failure empty" {
+  failure TestChecker
+  require "does not end with"
+  require "empty"
+}
+
+unittest test {
+  \ empty?String `Matches:with` CheckString:endsWith("567890")
+}
+
+
+testcase "CheckString:endsWith failure not at end" {
+  failure TestChecker
+  require "does not end with"
+  require "123456"
+}
+
+unittest test {
+  \ "1234567890" `Matches:with` CheckString:endsWith("123456")
+}
+
+
+testcase "CheckString:endsWith failure too long" {
+  failure TestChecker
+  require "does not end with"
+  require "345"
+}
+
+unittest test {
+  \ "345" `Matches:with` CheckString:endsWith("12345")
 }

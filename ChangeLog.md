@@ -134,7 +134,23 @@
   not require `Formatted`. This is breaking because `Testing.checkOptional` was
   removed; use `Testing.checkEquals` instead.
 
-* **[new]** Adds support for custom value matchers in tests to `lib/testing`.
+* **[new]** Adds the `TestChecker` `testcase` checker (see previous section) to
+  `lib/testing` to help support custom matchers.
+
+* **[new]** Adds support for custom value matchers in tests to `lib/testing`,
+  as well as `String` matching in `lib/util`.
+
+  ```text
+  testcase "my tests" {
+    success TestChecker  // <- enables checking of matchers
+  }
+
+  unittest test {
+    \ "something" `Matches:with` CheckString:contains("thing")
+  }
+  ```
+
+  Custom matchers support sequencing, recursion, and conditional failures.
 
 ### Compiler CLI
 

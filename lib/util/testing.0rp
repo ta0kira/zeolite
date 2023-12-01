@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,4 +47,11 @@ concrete UtilTesting {
     #x defines Equals<#x>
     #x defines LessThan<#x>
   (ErrorOr<#x>,#x,#x) -> ()
+}
+
+// Simple sub-string checks.
+concrete CheckString {
+  @category contains (Formatted) -> (ValueMatcher<String>)
+  @category startsWith (Formatted) -> (ValueMatcher<String>)
+  @category endsWith (Formatted) -> (ValueMatcher<String>)
 }
