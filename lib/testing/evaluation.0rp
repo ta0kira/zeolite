@@ -24,9 +24,21 @@ $TestsOnly$
 //    success TestChecker
 // }
 concrete Matches {
-  // Predicate evaluation.
-  @category tryWith<#x> (optional #x,ValueMatcher<#x>) -> ()
+  // Fails immediately if match fails.
   @category with<#x> (optional #x,ValueMatcher<#x>) -> ()
+
+  // Fails later if match fails.
+  @category tryWith<#x> (optional #x,ValueMatcher<#x>) -> ()
+
+  // Fails immediately if match fails.
+  @category value<#x>
+    #x requires TestCompare<#x>
+  (#x,#x) -> ()
+
+  // Fails later if match fails.
+  @category tryValue<#x>
+    #x requires TestCompare<#x>
+  (#x,#x) -> ()
 
   // Predicate manipulation.
   @category not<#x> (ValueMatcher<#x>) -> (ValueMatcher<#x>)
@@ -36,19 +48,14 @@ concrete Matches {
   @category allOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
 }
 
-// Base interface for custom value matchers.
-@value interface ValueMatcher<#x|> {
-  check (optional #x,TestReport) -> ()
-  summary () -> (Formatted)
-}
+// Unconditional outcomes regardless of the actual value.
+concrete CheckAlways {
+  // Unconditionally match.
+  @category match () -> (ValueMatcher<any>)
 
-// Helper to check multiple members of a single object.
-// NOTE: Can only be constructed in a ValueMatcher.
-concrete MultiChecker {
-  @value check<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (optional #self)
-  @value tryCheck<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (#self)
+  // Unconditional error.
+  @category error (Formatted) -> (ValueMatcher<any>)
 
-  visibility ValueMatcher<all>
-
-  @type new (TestReport) -> (#self)
+  // Immediate crash if the matcher is used to check a value.
+  @category die (Formatted) -> (ValueMatcher<any>)
 }

@@ -38,6 +38,24 @@ unittest tryWithMulti {
   \ "foo" `Matches:tryWith<String>` CheckAlways:match()
 }
 
+unittest valueOnce {
+  \ TestValue.default() `Matches:value` TestValue.default()
+}
+
+unittest valueMulti {
+  \ TestValue.default() `Matches:value` TestValue.default()
+  \ TestValue.default() `Matches:value` TestValue.default()
+}
+
+unittest tryValueOnce {
+  \ TestValue.default() `Matches:tryValue` TestValue.default()
+}
+
+unittest tryValueMulti {
+  \ TestValue.default() `Matches:tryValue` TestValue.default()
+  \ TestValue.default() `Matches:tryValue` TestValue.default()
+}
+
 
 testcase "Matches:with fails immediately" {
   failure TestChecker
@@ -63,6 +81,34 @@ unittest test {
 }
 
 
+testcase "Matches:value fails immediately" {
+  failure TestChecker
+  require "message1"
+  exclude "321"
+  exclude "message2"
+  exclude "999"
+}
+
+unittest test {
+  \ TestValue.default() `Matches:value` TestValue.new(123,"message1",empty)
+  \ TestValue.default() `Matches:value` TestValue.new(321,"message2",999)
+}
+
+
+testcase "Matches:tryValue fails later" {
+  failure TestChecker
+  require "message1"
+  require "321"
+  require "message2"
+  require "999"
+}
+
+unittest test {
+  \ TestValue.default() `Matches:tryValue` TestValue.new(123,"message1",empty)
+  \ TestValue.default() `Matches:tryValue` TestValue.new(321,"message2",999)
+}
+
+
 testcase "Matches:with doesn't evaluate pending errors" {
   failure TestChecker
   require "message2"
@@ -76,75 +122,16 @@ unittest test {
 }
 
 
-testcase "MultiChecker.check short cicuits" {
-  failure
-  require "title0"
-  require "title2"
+testcase "Matches:value doesn't evaluate pending errors" {
+  failure TestChecker
   require "message2"
-  exclude "title1"
-  exclude "title3"
-  exclude "message3"
+  exclude "message1"
 }
 
 unittest test {
-  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
-
-  \ MultiChecker.new(report)
-      .check<String>(title: "title1","foo",CheckAlways:match())
-      &.check<String>(title: "title2","foo",CheckAlways:error("message2"))
-      &.check<String>(title: "title3","foo",CheckAlways:error("message3"))
-
-  IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
-  \ TestHandler:failAndExit(output.build().formatted())
-}
-
-
-testcase "MultiChecker.tryCheck continues" {
-  failure
-  require "title0"
-  require "title2"
-  require "message2"
-  require "title3"
-  require "message3"
-  exclude "title1"
-}
-
-unittest test {
-  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
-
-  \ MultiChecker.new(report)
-      .tryCheck<String>(title: "title1","foo",CheckAlways:match())
-      .tryCheck<String>(title: "title2","foo",CheckAlways:error("message2"))
-      .tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
-
-  IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
-  \ TestHandler:failAndExit(output.build().formatted())
-}
-
-
-testcase "MultiChecker.check doesn't force pending errors" {
-  failure
-  require "title0"
-  require "title1"
-  require "message1"
-  require "title3"
-  require "message3"
-  exclude "title2"
-}
-
-unittest test {
-  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
-
-  \ MultiChecker.new(report)
-      .tryCheck<String>(title: "title1","foo",CheckAlways:error("message1"))
-      .check<String>(title: "title2","foo",CheckAlways:match())
-      &.tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
-
-  IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
-  \ TestHandler:failAndExit(output.build().formatted())
+  \ TestValue.default() `Matches:tryValue` TestValue.new(123,"message1",empty)
+  \ TestValue.default() `Matches:value` TestValue.default()
+  fail("message2")
 }
 
 

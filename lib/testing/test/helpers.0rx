@@ -18,15 +18,34 @@ limitations under the License.
 
 $TestsOnly$
 
-// NOTE: You must set the testcase checker in order to use this.
-//
-// testcase "my testcase" {
-//    success TestChecker
-// }
-concrete TestChecker {
-  defines Testcase
+define TestValue {
+  $ReadOnlyExcept[]$
 
-  @type isFailing () -> (Bool)
-  @type checkNow () -> ()
-  @type newReport (Formatted title:,optional Order<Formatted> context:) -> (TestReport)
+  @value Int number
+  @value String message
+  @value optional Int error
+
+  new (number,message,error) {
+    return delegate -> #self
+  }
+
+  default () {
+    return new(123,"message",empty)
+  }
+
+  testCompare (actual,report) {
+    \ MultiChecker.new(report)
+        .tryCheck(title: "number",actual.number(),CheckValue:equals(number))
+        .tryCheck(title: "message",actual.message(),CheckValue:equals(message))
+        .tryCheck(title: "error",actual.error(),CheckValue:equals(error))
+  }
+
+  @value number () -> (Int)
+  number () { return number }
+
+  @value message () -> (String)
+  message () { return message }
+
+  @value error () -> (optional Int)
+  error () { return error }
 }

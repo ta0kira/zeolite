@@ -16,17 +16,13 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+$ModuleOnly$
 $TestsOnly$
 
-// NOTE: You must set the testcase checker in order to use this.
-//
-// testcase "my testcase" {
-//    success TestChecker
-// }
-concrete TestChecker {
-  defines Testcase
+concrete TestValue {
+  refines TestCompare<TestValue>
+  // TestValue.new(123,"message",empty)
+  defines Default
 
-  @type isFailing () -> (Bool)
-  @type checkNow () -> ()
-  @type newReport (Formatted title:,optional Order<Formatted> context:) -> (TestReport)
+  @type new (Int,String,optional Int) -> (#self)
 }

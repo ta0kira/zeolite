@@ -27,7 +27,7 @@ unittest match {
   \ Testing.checkFalse(report.hasError())
 }
 
-unittest error {
+unittest fromWithoutError {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
   \ CheckAlways:error("message").check(123,report)
   \ Testing.checkTrue(report.hasError())
@@ -43,6 +43,78 @@ unittest test {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
   \ report.addError(message: "message")
   \ CheckAlways:die("something").check(123,report)
+}
+
+
+testcase "MultiChecker.check short cicuits" {
+  failure
+  require "title0"
+  require "title2"
+  require "message2"
+  exclude "title1"
+  exclude "title3"
+  exclude "message3"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
+
+  \ MultiChecker.new(report)
+      .check<String>(title: "title1","foo",CheckAlways:match())
+      &.check<String>(title: "title2","foo",CheckAlways:error("message2"))
+      &.check<String>(title: "title3","foo",CheckAlways:error("message3"))
+
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
+}
+
+
+testcase "MultiChecker.tryCheck continues" {
+  failure
+  require "title0"
+  require "title2"
+  require "message2"
+  require "title3"
+  require "message3"
+  exclude "title1"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
+
+  \ MultiChecker.new(report)
+      .tryCheck<String>(title: "title1","foo",CheckAlways:match())
+      .tryCheck<String>(title: "title2","foo",CheckAlways:error("message2"))
+      .tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
+
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
+}
+
+
+testcase "MultiChecker.check doesn't force pending errors" {
+  failure
+  require "title0"
+  require "title1"
+  require "message1"
+  require "title3"
+  require "message3"
+  exclude "title2"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
+
+  \ MultiChecker.new(report)
+      .tryCheck<String>(title: "title1","foo",CheckAlways:error("message1"))
+      .check<String>(title: "title2","foo",CheckAlways:match())
+      &.tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
+
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
 }
 
 
@@ -126,4 +198,33 @@ testcase "CheckValue:notEquals failure empty" {
 
 unittest test {
   \ empty?String `Matches:with` CheckValue:notEquals(empty?String)
+}
+
+
+testcase "CheckValue:from success" {
+  success TestChecker
+}
+
+unittest test {
+  \ TestValue.default() `Matches:with` `CheckValue:from` TestValue.default()
+}
+
+
+testcase "CheckValue:from failure not equal" {
+  failure TestChecker
+  require "message1"
+}
+
+unittest test {
+  \ TestValue.default() `Matches:with` `CheckValue:from` TestValue.new(123,"message1",empty)
+}
+
+
+testcase "CheckValue:from failure left empty" {
+  failure TestChecker
+  require "empty"
+}
+
+unittest test {
+  \ empty?TestValue `Matches:with` `CheckValue:from` TestValue.new(123,"message1",empty)
 }

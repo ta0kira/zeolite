@@ -16,24 +16,34 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$TestsOnly$
+// Supports test comparisons.
+// NOTE: This should be refined in #x.
+@value interface TestCompare<#x|> {
+  testCompare (#x actual:,TestReport) -> ()
+}
 
-// Unconditional outcomes regardless of the actual value.
-concrete CheckAlways {
-  // Unconditionally match.
-  @category match () -> (ValueMatcher<any>)
+// Base interface for custom value matchers.
+@value interface ValueMatcher<#x|> {
+  check (optional #x,TestReport) -> ()
+  summary () -> (Formatted)
+}
 
-  // Unconditional error.
-  @category error (Formatted) -> (ValueMatcher<any>)
+// Helper to check multiple members of a single object.
+concrete MultiChecker {
+  @value check<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (optional #self)
+  @value tryCheck<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (#self)
 
-  // Immediate crash if the matcher is used to check a value.
-  @category die (Formatted) -> (ValueMatcher<any>)
+  // Can only be constructed by value checkers.
+  visibility ValueMatcher<all>, TestCompare<all>
+
+  @type new (TestReport) -> (#self)
 }
 
 // Simple equality-based value checks.
 concrete CheckValue<#x|> {
-  #x requires Formatted
-  #x defines Equals<#x>
+  @category from<#x>
+    #x requires TestCompare<#x>
+  (#x) -> (ValueMatcher<#x>)
 
   @category equals<#x>
     #x requires Formatted
@@ -44,4 +54,19 @@ concrete CheckValue<#x|> {
     #x requires Formatted
     #x defines Equals<#x>
   (optional #x) -> (ValueMatcher<#x>)
+}
+
+// Interface used by predicate testers and matchers to report errors.
+@value interface TestReport {
+  // Adds a new error message.
+  addError (Formatted message:) -> (#self)
+
+  // Adds a child section without changing the error status.
+  newSection (Formatted title:) -> (#self)
+
+  // Discards error messages and child sections.
+  discardReport () -> (#self)
+
+  // Returns true if there are error messages, or if a child has an error.
+  hasError () -> (Bool)
 }

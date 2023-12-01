@@ -16,9 +16,96 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$TestsOnly$
+define MultiChecker {
+  $ReadOnlyExcept[]$
+
+  @value TestReport report
+
+  new (report) {
+    return delegate -> #self
+  }
+
+  check (title,value,matcher) {
+    if (delegate -> `executeMatch`) {
+      return empty
+    } else {
+      return self
+    }
+  }
+
+  tryCheck (title,value,matcher) {
+    \ delegate -> `executeMatch`
+    return self
+  }
+
+  @value executeMatch<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (Bool)
+  executeMatch (title,value,matcher) {
+    String fullTitle <- String.builder()
+        .append(title)
+        .append(": ")
+        .append(matcher.summary())
+        .build()
+    TestReport newReport <- report.newSection(title: fullTitle)
+    \ value `matcher.check` newReport
+    return newReport.hasError()
+  }
+}
 
 define CheckValue {
+  from (expected) {
+    return ValueTester<#x>.new(expected)
+  }
+
+  equals (expected) {
+    return ValueEquals<#x>.new(false,expected)
+  }
+
+  notEquals (expected) {
+    return ValueEquals<#x>.new(true,expected)
+  }
+}
+
+concrete ValueTester<#x> {
+  #x requires TestCompare<#x>
+
+  @type new (#x) -> (ValueMatcher<#x>)
+}
+
+define ValueTester {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  @value #x expected
+
+  new (expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    if (! `present` actual) {
+      \ report.addError(message: "expected value but got empty")
+    } else {
+      \ expected.testCompare(actual: require(actual),report)
+    }
+  }
+
+  summary () {
+    return String.builder()
+        .append("matches ")
+        .append(typename<#x>())
+        .build()
+  }
+}
+
+concrete ValueEquals<#x> {
+  #x requires Formatted
+  #x defines Equals<#x>
+
+  @type new (Bool,optional #x) -> (ValueMatcher<#x>)
+}
+
+define ValueEquals {
   $ReadOnlyExcept[]$
 
   refines ValueMatcher<#x>
@@ -26,12 +113,8 @@ define CheckValue {
   @value Bool invert
   @value optional #x expected
 
-  equals (expected) {
-    return CheckValue<#x>{ false, expected }
-  }
-
-  notEquals (expected) {
-    return CheckValue<#x>{ true, expected }
+  new (invert,expected) {
+    return delegate -> #self
   }
 
   check (actual,report) {
@@ -43,19 +126,15 @@ define CheckValue {
     }
     if (invert && match) {
       \ report.addError(message: String.builder()
-          .append("\"")
           .append(`autoFormat` actual)
-          .append(" equals \"")
+          .append(" equals ")
           .append(`autoFormat` expected)
-          .append("\"")
           .build())
     } elif (!invert && !match) {
       \ report.addError(message: String.builder()
-          .append("\"")
           .append(`autoFormat` actual)
-          .append(" does not equal \"")
+          .append(" does not equal ")
           .append(`autoFormat` expected)
-          .append("\"")
           .build())
     }
   }
@@ -71,50 +150,13 @@ define CheckValue {
   @value autoFormat (optional #x) -> (Formatted)
   autoFormat (value) {
     if (`present` value) {
-      return `require` value
+      return String.builder()
+          .append("\"")
+          .append(`require` value)
+          .append("\"")
+          .build()
     } else {
       return "empty"
-    }
-  }
-}
-
-define CheckAlways {
-  $ReadOnlyExcept[]$
-
-  refines ValueMatcher<any>
-
-  @value Bool die
-  @value optional Formatted message
-
-  match () {
-    return CheckAlways{ false, empty }
-  }
-
-  error (message) {
-    return CheckAlways{ false, message }
-  }
-
-  die (message) {
-    return CheckAlways{ true, message }
-  }
-
-  check (_,report) {
-    if (! `present` message) {
-      \ report.discardReport()
-    } elif (die) {
-      fail(`require` message)
-    } else {
-      \ report.addError(message: `require` message)
-    }
-  }
-
-  summary () {
-    if (die) {
-      return "always die"
-    } elif (`present` message) {
-      return "always error"
-    } else {
-      return "always pass"
     }
   }
 }

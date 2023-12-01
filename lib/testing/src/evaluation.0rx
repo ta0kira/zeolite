@@ -20,13 +20,23 @@ $TestsOnly$
 
 define Matches {
   with (value,matcher) { $NoTrace$
-    if (delegate -> `execute`) {
+    if (delegate -> `executeMatch`) {
       \ TestChecker.checkNow()
     }
   }
 
   tryWith (value,matcher) { $NoTrace$
-    \ delegate -> `execute`
+    \ delegate -> `executeMatch`
+  }
+
+  value (actual,expected) { $NoTrace$
+    if (delegate -> `executeValue`) {
+      \ TestChecker.checkNow()
+    }
+  }
+
+  tryValue (actual,expected) { $NoTrace$
+    \ delegate -> `executeValue`
   }
 
   or (left,right) {
@@ -49,8 +59,8 @@ define Matches {
     return delegate -> `AllOfMatcher:new`
   }
 
-  @category execute<#x> (optional #x,ValueMatcher<#x>) -> (Bool)
-  execute (value,matcher) { $NoTrace$
+  @category executeMatch<#x> (optional #x,ValueMatcher<#x>) -> (Bool)
+  executeMatch (value,matcher) { $NoTrace$
     String title <- String.builder()
         .append("Matches with ")
         .append(matcher.summary())
@@ -58,6 +68,60 @@ define Matches {
     TestReport report <- TestChecker.newReport(title: title,context: $CallTrace$)
     \ value `matcher.check` report
     return report.hasError()
+  }
+
+  @category executeValue<#x>
+    #x requires TestCompare<#x>
+  (#x,#x) -> (Bool)
+  executeValue (actual,expected) { $NoTrace$
+    String title <- String.builder()
+        .append("Matches ")
+        .append(typename<#x>())
+        .build()
+    TestReport report <- TestChecker.newReport(title: title,context: $CallTrace$)
+    \ expected.testCompare(actual: actual,report)
+    return report.hasError()
+  }
+}
+
+define CheckAlways {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<any>
+
+  @value Bool die
+  @value optional Formatted message
+
+  match () {
+    return CheckAlways{ false, empty }
+  }
+
+  error (message) {
+    return CheckAlways{ false, message }
+  }
+
+  die (message) {
+    return CheckAlways{ true, message }
+  }
+
+  check (_,report) {
+    if (! `present` message) {
+      \ report.discardReport()
+    } elif (die) {
+      fail(`require` message)
+    } else {
+      \ report.addError(message: `require` message)
+    }
+  }
+
+  summary () {
+    if (die) {
+      return "always die"
+    } elif (`present` message) {
+      return "always error"
+    } else {
+      return "always pass"
+    }
   }
 }
 
@@ -224,40 +288,5 @@ define AllOfMatcher {
 
   summary () {
     return "match all of"
-  }
-}
-
-define MultiChecker {
-  $ReadOnlyExcept[]$
-
-  @value TestReport report
-
-  new (report) {
-    return delegate -> #self
-  }
-
-  check (title,value,matcher) {
-    if (delegate -> `execute`) {
-      return empty
-    } else {
-      return self
-    }
-  }
-
-  tryCheck (title,value,matcher) {
-    \ delegate -> `execute`
-    return self
-  }
-
-  @value execute<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (Bool)
-  execute (title,value,matcher) {
-    String fullTitle <- String.builder()
-        .append(title)
-        .append(": ")
-        .append(matcher.summary())
-        .build()
-    TestReport newReport <- report.newSection(title: fullTitle)
-    \ value `matcher.check` newReport
-    return newReport.hasError()
   }
 }
