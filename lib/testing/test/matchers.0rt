@@ -201,30 +201,30 @@ unittest test {
 }
 
 
-testcase "CheckValue:from success" {
+testcase "CheckValue:using success" {
   success TestChecker
 }
 
 unittest test {
-  \ TestValue.default() `Matches:with` `CheckValue:from` TestValue.default()
+  \ TestValue.default() `Matches:with` `CheckValue:using` TestValue.default()
 }
 
 
-testcase "CheckValue:from failure not equal" {
+testcase "CheckValue:using failure not equal" {
   failure TestChecker
   require "message1"
 }
 
 unittest test {
-  \ TestValue.default() `Matches:with` `CheckValue:from` TestValue.new(123,"message1",empty)
+  \ TestValue.default() `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
 }
 
 
-testcase "CheckValue:from failure left empty" {
+testcase "CheckValue:using failure left empty" {
   failure TestChecker
   require "empty"
 }
 
 unittest test {
-  \ empty?TestValue `Matches:with` `CheckValue:from` TestValue.new(123,"message1",empty)
+  \ empty?TestValue `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
 }

@@ -52,7 +52,7 @@ define MultiChecker {
 }
 
 define CheckValue {
-  from (expected) {
+  using (expected) {
     return ValueTester<#x>.new(expected)
   }
 

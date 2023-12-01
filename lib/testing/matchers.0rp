@@ -41,7 +41,7 @@ concrete MultiChecker {
 
 // Simple equality-based value checks.
 concrete CheckValue<#x|> {
-  @category from<#x>
+  @category using<#x>
     #x requires TestCompare<#x>
   (#x) -> (ValueMatcher<#x>)
 
