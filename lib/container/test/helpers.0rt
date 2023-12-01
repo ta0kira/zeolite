@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,45 +17,45 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "comparator helper tests" {
-  success
+  success TestChecker
 }
 
 unittest keyValueHLessThan {
-  \ KV.new(1,"a") `KeyValueH:lessThan` KV.new(1,"a") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"a") `KeyValueH:lessThan` KV.new(1,"b") `Matches:with` CheckValue:equals(true)
-  \ KV.new(2,"a") `KeyValueH:lessThan` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"b") `KeyValueH:lessThan` KV.new(2,"a") `Matches:with` CheckValue:equals(true)
+  \ (KV.new(1,"a") `KeyValueH:lessThan` KV.new(1,"a")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:lessThan` KV.new(1,"b")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(2,"a") `KeyValueH:lessThan` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"b") `KeyValueH:lessThan` KV.new(2,"a")) `Matches:with` CheckValue:equals(true)
 }
 
 unittest keyValueHLessThanWith {
-  \ KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"a") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(2,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"b") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(2,"a") `Matches:with` CheckValue:equals(true)
+  \ (KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"a")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(2,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"b") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(2,"a")) `Matches:with` CheckValue:equals(true)
 
-  \ KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"a") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b") `Matches:with` CheckValue:equals(true)
-  \ KV.new(2,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b") `Matches:with` CheckValue:equals(true)
-  \ KV.new(1,"b") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(2,"a") `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"a")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(2,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(1,"b") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(2,"a")) `Matches:with` CheckValue:equals(false)
 }
 
 unittest keyValueHEquals {
-  \ KV.new(1,"a") `KeyValueH:equals` KV.new(1,"a") `Matches:with` CheckValue:equals(true)
-  \ KV.new(1,"a") `KeyValueH:equals` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(2,"a") `KeyValueH:equals` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"b") `KeyValueH:equals` KV.new(2,"a") `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:equals` KV.new(1,"a")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(1,"a") `KeyValueH:equals` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(2,"a") `KeyValueH:equals` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"b") `KeyValueH:equals` KV.new(2,"a")) `Matches:with` CheckValue:equals(false)
 }
 
 unittest keyValueHEqualsWith {
-  \ KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"a") `Matches:with` CheckValue:equals(true)
-  \ KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b") `Matches:with` CheckValue:equals(true)
-  \ KV.new(2,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"b") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(2,"a") `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"a")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(2,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"b") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(2,"a")) `Matches:with` CheckValue:equals(false)
 
-  \ KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"a") `Matches:with` CheckValue:equals(true)
-  \ KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(2,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b") `Matches:with` CheckValue:equals(false)
-  \ KV.new(1,"b") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(2,"a") `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"a")) `Matches:with` CheckValue:equals(true)
+  \ (KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(2,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b")) `Matches:with` CheckValue:equals(false)
+  \ (KV.new(1,"b") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(2,"a")) `Matches:with` CheckValue:equals(false)
 }
 
 unittest integrationTest {
@@ -64,9 +64,9 @@ unittest integrationTest {
   SortedMap<Int,String> map2 <- SortedMap<Int,String>.new()
       .set(1,"a").set(2,"b").set(3,"c").set(4,"d")
 
-  \ map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    map2.defaultOrder() `Matches:with` CheckValue:equals(true)
-  \ map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         map2.defaultOrder() `Matches:with` CheckValue:equals(false)
-  \ map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` map2.defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ (map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    map2.defaultOrder()) `Matches:with` CheckValue:equals(true)
+  \ (map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         map2.defaultOrder()) `Matches:with` CheckValue:equals(false)
+  \ (map1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` map2.defaultOrder()) `Matches:with` CheckValue:equals(false)
 }
 
 concrete KVEquals<#k,#v> {

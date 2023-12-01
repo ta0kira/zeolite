@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "TypeMap tests" {
-  success
+  success TestChecker
 }
 
 unittest basicOperations {
@@ -27,9 +27,9 @@ unittest basicOperations {
   TypeKey<String> keyString <- TypeKey<String>.new()
   TypeKey<Value>  keyValue  <- TypeKey<Value>.new()
 
-  \ map.get(keyInt) `Matches:with` CheckValue:equals(   empty)
-  \ map.get(keyString) `Matches:with` CheckValue:equals(empty)
-  \ map.get(keyValue) `Matches:with` CheckValue:equals( empty)
+  \ map.get(keyInt)    `Matches:with` CheckValue:equals(empty?Int)
+  \ map.get(keyString) `Matches:with` CheckValue:equals(empty?String)
+  \ map.get(keyValue)  `Matches:with` CheckValue:equals(empty?Value)
 
   \ map.set(keyInt,1)
   \ map.set(keyString,"a")
@@ -41,7 +41,7 @@ unittest basicOperations {
 
   \ map.remove(keyString)
 
-  \ map.get(keyString) `Matches:with` CheckValue:equals(empty)
+  \ map.get(keyString) `Matches:with` CheckValue:equals(empty?String)
 }
 
 unittest wrongReturnType {
@@ -51,7 +51,7 @@ unittest wrongReturnType {
 
   // Added as Formatted, which means it cannot be retrieved as String later.
   \ map.set<Formatted>(keyString,"a")
-  \ map.get<String>(keyString) `Matches:with` CheckValue:equals(empty)
+  \ map.get<String>(keyString) `Matches:with` CheckValue:equals(empty?String)
 
   \ map.set<String>(keyString,"a")
   \ map.get<String>(keyString) `Matches:with` CheckValue:equals("a")
@@ -68,9 +68,9 @@ unittest duplicate {
   \ copy.get(keyString) `Matches:with` CheckValue:equals("a")
 
   \ copy.remove(keyString)
-  \ copy.get(keyInt) `Matches:with` CheckValue:equals(1)
-  \ copy.get(keyString) `Matches:with` CheckValue:equals(empty)
-  \ map.get(keyString) `Matches:with` CheckValue:equals("a")
+  \ copy.get(keyInt)    `Matches:with` CheckValue:equals(1)
+  \ copy.get(keyString) `Matches:with` CheckValue:equals(empty?String)
+  \ map.get(keyString)  `Matches:with` CheckValue:equals("a")
 }
 
 unittest getValues {
@@ -91,9 +91,10 @@ unittest keyEquals {
   TypeKey<Int>    key1 <- TypeKey<Int>.new()
   TypeKey<Int>    key2 <- TypeKey<Int>.new()
   TypeKey<String> key3 <- TypeKey<String>.new()
-  \ Testing.checkEquals<TypeKey<Int>>(key1,key1)
-  \ key1 `TypeKey<any>.equals` key2 `Matches:with` CheckValue:equals(false)
-  \ key1 `TypeKey<any>.equals` key3 `Matches:with` CheckValue:equals(false)
+  \ key1 `Matches:with` CheckValue:equals<TypeKey<Int>>(key1)
+  \ (key1 `TypeKey<any>.equals` key2) `Matches:with` CheckValue:equals(false)
+  \ (key1 `TypeKey<any>.equals` key2) `Matches:with` CheckValue:equals(false)
+  \ (key1 `TypeKey<any>.equals` key3) `Matches:with` CheckValue:equals(false)
 }
 
 unittest keyHashed {

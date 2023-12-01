@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "HashedMap tests" {
-  success
+  success TestChecker
 }
 
 unittest integrationTest {
