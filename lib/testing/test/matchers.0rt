@@ -24,13 +24,13 @@ unittest match {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
   \ report.addError(message: "message")
   \ CheckAlways:match().check(123,report)
-  \ Testing.checkFalse(report.hasError())
+  \ Testing.checkEquals(report.hasError(),false)
 }
 
 unittest fromWithoutError {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
   \ CheckAlways:error("message").check(123,report)
-  \ Testing.checkTrue(report.hasError())
+  \ Testing.checkEquals(report.hasError(),true)
 }
 
 
@@ -227,4 +227,111 @@ testcase "CheckValue:using failure left empty" {
 
 unittest test {
   \ empty?TestValue `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
+}
+
+
+testcase "CheckValue:lessThan success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 0 `Matches:with` CheckValue:lessThan(1)
+}
+
+
+testcase "CheckValue:lessThan failure non-empty" {
+  failure TestChecker
+  require "100"
+  require "20"
+}
+
+unittest test {
+  \ 100 `Matches:with` CheckValue:lessThan(20)
+}
+
+
+testcase "CheckValue:lessThan failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:lessThan(20)
+}
+
+
+testcase "CheckValue:greaterThan success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:greaterThan(0)
+}
+
+
+testcase "CheckValue:greaterThan failure non-empty" {
+  failure TestChecker
+  require "10"
+  require "200"
+}
+
+unittest test {
+  \ 10 `Matches:with` CheckValue:greaterThan(200)
+}
+
+
+testcase "CheckValue:greaterThan failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:greaterThan(20)
+}
+
+
+testcase "CheckValue:between success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:between(0,3)
+}
+
+
+testcase "CheckValue:between failure below" {
+  failure TestChecker
+  require "3"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 3 `Matches:with` CheckValue:between(5,200)
+}
+
+
+testcase "CheckValue:between failure above" {
+  failure TestChecker
+  require "300"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 300 `Matches:with` CheckValue:between(5,200)
+}
+
+
+testcase "CheckValue:between failure empty" {
+  failure TestChecker
+  require "empty"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:between(5,200)
 }

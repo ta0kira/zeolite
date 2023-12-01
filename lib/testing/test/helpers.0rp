@@ -26,3 +26,10 @@ concrete TestValue {
 
   @type new (Int,String,optional Int) -> (#self)
 }
+
+concrete Testing {
+  @type checkEquals<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (optional #x,optional #x) -> ()
+}

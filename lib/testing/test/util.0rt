@@ -92,7 +92,7 @@ define Helper {
 
 unittest nothingAdded {
   ValueList<Int> list <- ValueList<Int>.new()
-  \ Testing.checkTrue(list.isEmpty())
+  \ Testing.checkEquals(list.isEmpty(),true)
   \ Helper.new(list)
       .checkFinished()
 }
@@ -102,7 +102,7 @@ unittest withItems {
       .append(1)
       .append(2)
       .append(3)
-  \ Testing.checkFalse(list.isEmpty())
+  \ Testing.checkEquals(list.isEmpty(),false)
   \ Helper.new(list)
       .checkNext(1)
       .checkNext(2)

@@ -63,6 +63,18 @@ define CheckValue {
   notEquals (expected) {
     return ValueEquals<#x>.new(true,expected)
   }
+
+  lessThan (upper) {
+    return ValueRange<#x>.new(empty,upper)
+  }
+
+  greaterThan (lower) {
+    return ValueRange<#x>.new(lower,empty)
+  }
+
+  between (lower,upper) {
+    return ValueRange<#x>.new(lower,upper)
+  }
 }
 
 concrete ValueTester<#x> {
@@ -126,15 +138,15 @@ define ValueEquals {
     }
     if (invert && match) {
       \ report.addError(message: String.builder()
-          .append(`autoFormat` actual)
+          .append(`Format:autoFormat` actual)
           .append(" equals ")
-          .append(`autoFormat` expected)
+          .append(`Format:autoFormat` expected)
           .build())
     } elif (!invert && !match) {
       \ report.addError(message: String.builder()
-          .append(`autoFormat` actual)
+          .append(`Format:autoFormat` actual)
           .append(" does not equal ")
-          .append(`autoFormat` expected)
+          .append(`Format:autoFormat` expected)
           .build())
     }
   }
@@ -146,17 +158,69 @@ define ValueEquals {
       return "value equals"
     }
   }
+}
 
-  @value autoFormat (optional #x) -> (Formatted)
-  autoFormat (value) {
-    if (`present` value) {
-      return String.builder()
-          .append("\"")
-          .append(`require` value)
-          .append("\"")
-          .build()
+concrete ValueRange<#x> {
+  #x requires Formatted
+  #x defines LessThan<#x>
+
+  @type new (optional #x,optional #x) -> (ValueMatcher<#x>)
+}
+
+define ValueRange {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  @value optional #x lower
+  @value optional #x upper
+
+  new (lower,upper) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    Bool match <- `present` actual
+    if (match && `present` lower) {
+      match <- !(`require` actual `#x.lessThan` `require` lower)
+    }
+    if (match && `present` upper) {
+      match <- !(`require` upper `#x.lessThan` `require` actual)
+    }
+    if (!match) {
+      if (`present` lower && `present` upper) {
+        \ report.addError(message: String.builder()
+            .append(`Format:autoFormat` actual)
+            .append(" is not between ")
+            .append(`require` lower)
+            .append(" and ")
+            .append(`require` upper)
+            .build())
+      } elif (`present` lower) {
+        \ report.addError(message: String.builder()
+            .append(`Format:autoFormat` actual)
+            .append(" is not greater than ")
+            .append(`require` lower)
+            .build())
+      } elif (`present` upper) {
+        \ report.addError(message: String.builder()
+            .append(`Format:autoFormat` actual)
+            .append(" is not less than ")
+            .append(`require` upper)
+            .build())
+      }
+    }
+  }
+
+  summary () {
+    if (`present` lower && `present` upper) {
+      return "value is between"
+    } elif (`present` lower) {
+      return "value is greater than"
+    } elif (`present` upper) {
+      return "value is less than"
     } else {
-      return "empty"
+      return "value is"
     }
   }
 }

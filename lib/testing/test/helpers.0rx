@@ -49,3 +49,21 @@ define TestValue {
   @value error () -> (optional Int)
   error () { return error }
 }
+
+define Testing {
+  checkEquals (x,y) { $NoTrace$
+    Bool failed <- false
+    if (`present` x && `present` y && !#x.equals(`require` x,`require` y)) {
+      failed <- true
+    } elif (`present` x != `present` y) {
+      failed <- true
+    }
+    if (failed) {
+      fail(String.builder()
+          .append(`Format:autoFormat` x)
+          .append(" is not equal to ")
+          .append(`Format:autoFormat` y)
+          .build())
+    }
+  }
+}

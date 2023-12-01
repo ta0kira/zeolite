@@ -75,7 +75,7 @@ unittest test {
   \ TestChecker.start()
   \ TestChecker.newReport(title: "title",context: empty)
   \ TestChecker.newReport(title: "title",context: empty).newSection(title: "subtitle")
-  \ Testing.checkFalse(TestChecker.isFailing())
+  \ Testing.checkEquals(TestChecker.isFailing(),false)
   \ TestChecker.checkNow()
   \ TestChecker.finish()
 }
@@ -129,26 +129,26 @@ testcase "TestChecker ignores discarded errors" {
 
 unittest topLevel {
   TestReport report <- TestChecker.newReport(title: "title",context: empty)
-  \ Testing.checkFalse(report.hasError())
+  \ Testing.checkEquals(report.hasError(),false)
 
   \ report.addError(message: "message")
-  \ Testing.checkTrue(report.hasError())
+  \ Testing.checkEquals(report.hasError(),true)
 
   \ report.discardReport()
-  \ Testing.checkFalse(report.hasError())
+  \ Testing.checkEquals(report.hasError(),false)
 }
 
 unittest recursive {
   TestReport report <- TestChecker.newReport(title: "title",context: empty)
   TestReport child <- report.newSection(title: "child")
-  \ Testing.checkFalse(report.hasError())
-  \ Testing.checkFalse(child.hasError())
+  \ Testing.checkEquals(report.hasError(),false)
+  \ Testing.checkEquals(child.hasError(),false)
 
   \ child.addError(message: "message")
-  \ Testing.checkTrue(report.hasError())
-  \ Testing.checkTrue(child.hasError())
+  \ Testing.checkEquals(report.hasError(),true)
+  \ Testing.checkEquals(child.hasError(),true)
 
   \ report.discardReport()
-  \ Testing.checkFalse(report.hasError())
-  \ Testing.checkTrue(child.hasError())
+  \ Testing.checkEquals(report.hasError(),false)
+  \ Testing.checkEquals(child.hasError(),true)
 }

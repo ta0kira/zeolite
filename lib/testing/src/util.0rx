@@ -16,8 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$TestsOnly$
-
 define IndentAppend {
   $ReadOnlyExcept[indentCount]$
 
@@ -208,6 +206,20 @@ define TestReportTree {
         \ output.append("---")
       }
       \ child.writeTo(output)
+    }
+  }
+}
+
+define Format {
+  autoFormat (value) {
+    if (`present` value) {
+      return String.builder()
+          .append("\"")
+          .append(`require` value)
+          .append("\"")
+          .build()
+    } else {
+      return "empty"
     }
   }
 }
