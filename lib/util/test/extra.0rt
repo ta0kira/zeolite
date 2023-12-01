@@ -68,11 +68,13 @@ unittest withValue {
   ErrorOr<Int> value <- ErrorOr:value<Int>(10)
   \ value.isError() `Matches:with` CheckValue:equals(false)
   \ value.getValue() `Matches:with` CheckValue:equals(10)
+  \ value.tryValue() `Matches:with` CheckValue:equals(10)
 }
 
 unittest withError {
   ErrorOr<String> value <- ErrorOr:error("error message")
   \ value.isError() `Matches:with` CheckValue:equals(true)
+  \ value.tryValue() `Matches:with` CheckValue:equals(empty?String)
   \ value.getError().formatted() `Matches:with` CheckValue:equals("error message")
 }
 

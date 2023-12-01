@@ -96,6 +96,10 @@ define ErrorOr {
     }
   }
 
+  tryValue () {
+    return maybeValue
+  }
+
   getError () {
     return require(maybeError)
   }

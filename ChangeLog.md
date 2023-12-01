@@ -174,6 +174,8 @@
 * **[new]** Adds support for custom value matchers in tests to `lib/testing`,
   as well as `String`/`ErrorOr` matching in `lib/util`.
 
+* **[new]** Adds `tryValue` to `ErrorOr` in `lib/util`.
+
   Custom matchers support sequencing, recursion, and conditional failures.
 
 ### Compiler CLI

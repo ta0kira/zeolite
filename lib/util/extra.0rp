@@ -63,6 +63,8 @@ concrete ErrorOr<|#x> {
 
   // Get the contained value. Crashes if there is no value.
   @value getValue () -> (#x)
+  // Get the contained value. Returns empty if there is no value.
+  @value tryValue () -> (optional #x)
   // Get the error message. Crashes if there is no error.
   @value getError () -> (Formatted)
   // Convert the error to any other ErrorOr type. Crashes if there is no error.
