@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021-2022 Kevin P. Barry
+Copyright 2021-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "simple Thread test" {
-  success
+  success TestChecker
 }
 
 unittest test {
@@ -79,7 +79,7 @@ define CountLoop {
 
 
 testcase "ProcessThread mutex integration test" {
-  success
+  success TestChecker
 }
 
 unittest test {
@@ -143,7 +143,7 @@ define EvenOrOdd {
 
 
 testcase "Argv available in Thread" {
-  success
+  success TestChecker
   args "arg1"
 }
 
