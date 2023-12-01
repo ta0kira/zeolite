@@ -9,16 +9,33 @@ define TestData {
     return TestData{ name, description, boolean }
   }
 
-  getName () {
+  name () {
     return name
   }
 
-  getDescription () {
+  description () {
     return description
   }
 
-  getBoolean () {
+  boolean () {
     return boolean
+  }
+
+  // From TestCompare<TestData>.
+  testCompare (actual,report) {
+    \ MultiChecker.new(report)
+        .tryCheck(
+            title: "name",
+            actual.name(),
+            CheckValue:equals(name))
+        .tryCheck(
+            title: "description",
+            actual.description(),
+            CheckValue:equals(description))
+        .tryCheck(
+            title: "boolean",
+            actual.boolean(),
+            CheckValue:equals(boolean))
   }
 }
 
@@ -75,9 +92,11 @@ define TestDataParser {
       return context.convertError()
     } else {
       return context.setValue(
-        ErrorOr:value(TestData.create(name.getValue(),
-                                         description.getValue(),
-                                         boolean.getValue())))
+        // Since TestData.create specifies labels, we _must_ use them here.
+        ErrorOr:value(TestData.create(
+            name:        name.getValue(),
+            description: description.getValue(),
+            boolean:     boolean.getValue())))
     }
   }
 

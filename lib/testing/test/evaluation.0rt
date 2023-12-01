@@ -95,6 +95,16 @@ unittest test {
 }
 
 
+testcase "Matches:value failure with empty" {
+  failure TestChecker
+  require "empty"
+}
+
+unittest test {
+  \ empty?TestValue `Matches:value` TestValue.new(123,"message1",empty)
+}
+
+
 testcase "Matches:tryValue fails later" {
   failure TestChecker
   require "message1"
@@ -106,6 +116,16 @@ testcase "Matches:tryValue fails later" {
 unittest test {
   \ TestValue.default() `Matches:tryValue` TestValue.new(123,"message1",empty)
   \ TestValue.default() `Matches:tryValue` TestValue.new(321,"message2",999)
+}
+
+
+testcase "Matches:tryValue failure with empty" {
+  failure TestChecker
+  require "empty"
+}
+
+unittest test {
+  \ empty?TestValue `Matches:tryValue` TestValue.new(123,"message1",empty)
 }
 
 

@@ -1,12 +1,23 @@
+// $TestsOnly$ means that categories in this file are only available in .0rt and
+// in other files that use $TestsOnly$.
 $TestsOnly$
 
 // A contrived object for test data.
 concrete TestData {
-  @type create (String,String,Bool) -> (TestData)
+  // This is used in tests. This allows fine-grained error information, vs. just
+  // comparing the entire object for equality. (Also see parser-test.0rt.)
+  refines TestCompare<TestData>
 
-  @value getName        () -> (String)
-  @value getDescription () -> (String)
-  @value getBoolean     () -> (Bool)
+  @value name        () -> (String)
+  @value description () -> (String)
+  @value boolean     () -> (Bool)
+
+  // This limits visibility of everything below. In this case, we don't want
+  // anyone besides TestDataParser (and unittest) to construct TestData.
+  visibility TestDataParser
+
+  // We can give arguments labels to require calls to be clearer.
+  @type create (String name:,String description:,Bool boolean:) -> (TestData)
 }
 
 

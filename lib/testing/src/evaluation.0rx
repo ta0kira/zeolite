@@ -72,14 +72,18 @@ define Matches {
 
   @category executeValue<#x>
     #x requires TestCompare<#x>
-  (#x,#x) -> (Bool)
+  (optional #x,#x) -> (Bool)
   executeValue (actual,expected) { $NoTrace$
     String title <- String.builder()
         .append("Matches ")
         .append(typename<#x>())
         .build()
     TestReport report <- TestChecker.newReport(title: title,context: $CallTrace$)
-    \ expected.testCompare(actual: actual,report)
+    if (! `present` actual) {
+      \ report.addError(message: "expected value but got empty")
+    } else {
+      \ expected.testCompare(actual: require(actual),report)
+    }
     return report.hasError()
   }
 }

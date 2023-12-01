@@ -33,12 +33,12 @@ concrete Matches {
   // Fails immediately if match fails.
   @category value<#x>
     #x requires TestCompare<#x>
-  (#x,#x) -> ()
+  (optional #x,#x) -> ()
 
   // Fails later if match fails.
   @category tryValue<#x>
     #x requires TestCompare<#x>
-  (#x,#x) -> ()
+  (optional #x,#x) -> ()
 
   // Predicate manipulation.
   @category not<#x> (ValueMatcher<#x>) -> (ValueMatcher<#x>)

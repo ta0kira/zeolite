@@ -1,13 +1,28 @@
 testcase "parse data from a file" {
-  success
+  // We need to specify TestChecker here in order to use lib/testing.
+  success TestChecker
 }
 
 unittest test {
   String raw <- FileTesting.forceReadFile($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
-  ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll` raw
-  TestData data <- errorOrData.getValue()
+  ErrorOr<TestData> actual <- TestDataParser.create() `ParseState:consumeAll` raw
 
-  \ data.getName() `Matches:with` CheckValue:equals("example data")
-  \ data.getDescription() `Matches:with` CheckValue:equals("THIS_IS_A_TOKEN")
-  \ data.getBoolean() `Matches:with` CheckValue:equals(false)
+  // Since TestData.create specifies labels, we _must_ use them here.
+  TestData expected <- TestData.create(
+      name:        "example data",
+      description: "THIS_IS_A_TOKEN",
+      boolean:     false)
+
+  // Since TestData refines TestCompare<TestData>, we use Matches:value.
+  \ actual.tryValue() `Matches:value` expected
+
+  // If we want to check the ErrorOr<TestData> itself, we need a
+  // ValueMatcher<TestData> to pass to CheckErrorOr:value. We can do this with
+  // CheckValue:using to create one from TestCompare<TestData>.
+  \ actual `Matches:with` CheckErrorOr:value(CheckValue:using(expected))
+
+  // Matches:with uses more general matchers such as CheckValue:equals.
+  \ actual.tryValue()&.name()        `Matches:with` CheckValue:equals("example data")
+  \ actual.tryValue()&.description() `Matches:with` CheckValue:equals("THIS_IS_A_TOKEN")
+  \ actual.tryValue()&.boolean()     `Matches:with` CheckValue:equals(false)
 }
