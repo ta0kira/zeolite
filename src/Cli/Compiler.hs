@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020-2022 Kevin P. Barry
+Copyright 2020-2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -316,16 +316,16 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath -> [FilePa
 createModuleTemplates resolver p d ds cm deps1 deps2 = do
   time <- errorFromIO getCurrentTime
   (ps,xs,_) <- findSourceFiles p (d:ds)
-  (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
+  (LanguageModule _ _ _ cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 _ _) <-
     fmap (createLanguageModule [] Map.empty . fst) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds2 <- mapCompilerM parseInternalSource xs'
   let ds3 = concat $ map (\(_,_,d2) -> d2) ds2
-  tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
-  let cs = filter isValueConcrete $ cs1++ps1++ts1
+  tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,tc0,tp0,tc1,tp1]
+  let cs = filter isValueConcrete $ cs1++ps1++tc1++tp1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds3
-  let testingCats = Set.fromList $ map getCategoryName ts1
+  let testingCats = Set.fromList $ (map getCategoryName tc1) ++ (map getCategoryName tp1)
   ts <- fmap concat $ mapCompilerM (\n -> generate (n `Set.member` testingCats) tm n) $ Set.toList ca'
   mapCompilerM_ (writeTemplate time) ts where
     generate testing tm n = do
@@ -376,15 +376,17 @@ createLanguageModule :: [CategoryName] -> ExprMap c ->
   [WithVisibility (AnyCategory c)] -> LanguageModule c
 createLanguageModule ss em cs = lm where
   lm = LanguageModule {
-      lmPublicNamespaces  = Set.fromList $ map wvData $ apply ns [with    FromDependency,without ModuleOnly],
-      lmPrivateNamespaces = Set.fromList $ map wvData $ apply ns [with    FromDependency,with    ModuleOnly],
-      lmLocalNamespaces   = Set.fromList $ map wvData $ apply ns [without FromDependency],
-      lmPublicDeps        = map wvData $ apply cs [with    FromDependency,without ModuleOnly,without TestsOnly],
-      lmPrivateDeps       = map wvData $ apply cs [with    FromDependency,with    ModuleOnly,without TestsOnly],
-      lmTestingDeps       = map wvData $ apply cs [with    FromDependency,with TestsOnly],
-      lmPublicLocal       = map wvData $ apply cs [without FromDependency,without ModuleOnly,without TestsOnly],
-      lmPrivateLocal      = map wvData $ apply cs [without FromDependency,with    ModuleOnly,without TestsOnly],
-      lmTestingLocal      = map wvData $ apply cs [without FromDependency,with TestsOnly],
+      lmPublicNamespaces    = Set.fromList $ map wvData $ apply ns [with    FromDependency,without ModuleOnly],
+      lmPrivateNamespaces   = Set.fromList $ map wvData $ apply ns [with    FromDependency,with    ModuleOnly],
+      lmLocalNamespaces     = Set.fromList $ map wvData $ apply ns [without FromDependency],
+      lmPublicDeps          = map wvData $ apply cs [with    FromDependency,without ModuleOnly,without TestsOnly],
+      lmPrivateDeps         = map wvData $ apply cs [with    FromDependency,with    ModuleOnly,without TestsOnly],
+      lmPublicTestingDeps   = map wvData $ apply cs [with    FromDependency,without ModuleOnly,with TestsOnly],
+      lmPrivateTestingDeps  = map wvData $ apply cs [with    FromDependency,with    ModuleOnly,with TestsOnly],
+      lmPublicLocal         = map wvData $ apply cs [without FromDependency,without ModuleOnly,without TestsOnly],
+      lmPrivateLocal        = map wvData $ apply cs [without FromDependency,with    ModuleOnly,without TestsOnly],
+      lmPublicTestingLocal  = map wvData $ apply cs [without FromDependency,without ModuleOnly,with TestsOnly],
+      lmPrivateTestingLocal = map wvData $ apply cs [without FromDependency,with    ModuleOnly,with TestsOnly],
       lmStreamlined = ss,
       lmExprMap  = em
     }

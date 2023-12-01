@@ -56,6 +56,10 @@
 
 * **[fix]** Fixes checking that a `@type` function isn't called on a `@value`.
 
+* **[fix]** Fixes cross-module visibility checks with `$TestsOnly$` in `.0rp`
+  without `$ModuleOnly$`. This is primarily to detect if there's usage of a
+  `$TestsOnly$` category from a `private_dep` in a `.0rp`.
+
 * **[fix]** Updates parsing of `empty` to allow explicit type conversion, e.g.,
   `empty?String`.
 

@@ -10,7 +10,7 @@ expression_map: [
     expression: \x1000
   }
 ]
-private_deps: [
+public_deps: [
   "lib/testing"
 ]
 extra_files: [

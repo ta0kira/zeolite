@@ -49,10 +49,12 @@ data LanguageModule c =
     lmLocalNamespaces :: Set.Set Namespace,
     lmPublicDeps :: [AnyCategory c],
     lmPrivateDeps :: [AnyCategory c],
-    lmTestingDeps :: [AnyCategory c],
+    lmPublicTestingDeps :: [AnyCategory c],
+    lmPrivateTestingDeps :: [AnyCategory c],
     lmPublicLocal :: [AnyCategory c],
     lmPrivateLocal :: [AnyCategory c],
-    lmTestingLocal :: [AnyCategory c],
+    lmPublicTestingLocal :: [AnyCategory c],
+    lmPrivateTestingLocal :: [AnyCategory c],
     lmStreamlined :: [CategoryName],
     lmExprMap :: ExprMap c
   }
@@ -68,19 +70,21 @@ data PrivateSource c =
 compileLanguageModule :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> Map.Map CategoryName (CategorySpec c) ->
   [PrivateSource c] -> m [CxxOutput]
-compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em) cm xa = do
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 ss em) cm xa = do
   let dm = mapDefByName $ concat $ map psDefine xa
-  checkDefined dm extensions allExternal $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+  checkDefined dm extensions allExternal $ filter isValueConcrete (cs1 ++ ps1 ++ tc1 ++ tp1)
   checkSupefluous $ Set.toList $ extensions `Set.difference` ca
-  tmPublic  <- foldM includeNewTypes defaultCategories [cs0,cs1]
-  tmPrivate <- foldM includeNewTypes tmPublic          [ps0,ps1]
-  tmTesting <- foldM includeNewTypes tmPrivate         [ts0,ts1]
+  tmPublic         <- foldM includeNewTypes defaultCategories [cs0,cs1]
+  tmPrivate        <- foldM includeNewTypes tmPublic          [ps0,ps1]
+  tmPublicTesting  <- foldM includeNewTypes tmPublic          [tc0,tc1]
+  tmPrivateTesting <- foldM includeNewTypes tmPublicTesting   [ps0,tp0,ps1,tp1]
   xxInterfaces <- fmap concat $ collectAllM $
     map (generateNativeInterface False nsPublic)  (onlyNativeInterfaces cs1) ++
     map (generateNativeInterface False nsPrivate) (onlyNativeInterfaces ps1) ++
-    map (generateNativeInterface True  nsPrivate) (onlyNativeInterfaces ts1)
-  xxPrivate <- fmap concat $ mapCompilerM (compilePrivate tmPrivate tmTesting) xa
-  xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmPrivate tmTesting) $ nub ss
+    map (generateNativeInterface True  nsPublic)  (onlyNativeInterfaces tc1) ++
+    map (generateNativeInterface True  nsPrivate) (onlyNativeInterfaces tp1)
+  xxPrivate <- fmap concat $ mapCompilerM (compilePrivate tmPrivate tmPrivateTesting) xa
+  xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmPrivate tmPrivateTesting) $ nub ss
   let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined
   noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
   return allFiles where
@@ -88,9 +92,9 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
     nsPrivate = ns1 `Set.union` nsPublic
     extensions = Set.fromList ss
     allExternal = Set.unions [extensions,Map.keysSet cm]
-    testingCats = Set.fromList $ map getCategoryName ts1
+    testingCats = Set.fromList $ (map getCategoryName tc1) ++ (map getCategoryName tp1)
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
-    localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ ts1
+    localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ tc1 ++ tp1
     streamlined tm0 tm2 n = do
       checkLocal localCats ([] :: [String]) n
       let testing = n `Set.member` testingCats
@@ -104,7 +108,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
                   then tmTesting
                   else tmPrivate
       let cs = Set.fromList $ map getCategoryName $ if testing
-                                                       then cs2 ++ cs1 ++ ps1 ++ ts1
+                                                       then cs2 ++ cs1 ++ ps1 ++ tc1 ++ tp1
                                                        else cs2 ++ cs1 ++ ps1
       tm' <- includeNewTypes tm cs2
       let ctx = FileContext testing tm' (ns3 `Set.insert` nsPrivate) em
@@ -123,7 +127,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       checkLocal cs (dcContext d) (dcName d)
       fmap snd $ getConcreteCategory tm (dcContext d,dcName d)
     mapDefByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
-    ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+    ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ tc1 ++ tp1)
     checkLocals ds tm = mapCompilerM_ (\d -> checkLocal tm (dcContext d) (dcName d)) ds
     checkLocal cs2 c n =
       when (not $ n `Set.member` cs2) $
@@ -186,17 +190,17 @@ compileTestsModule cm ns args t cs ds ts = do
 compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [String] -> Maybe ([c],TypeInstance) -> PrivateSource c -> [TestProcedure c] ->
   m (CxxOutput,[(FunctionName,[c])])
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) args t ts2 tests = do
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 _ em) args t ts2 tests = do
   tm' <- tm
   (CompiledData req traces main) <- generateTestFile tm' em args t tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req traces main
   let tests' = map (\t2 -> (tpName t2,tpContext t2)) tests
   return (output,tests') where
-  tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
+  tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,tc0,tp0,tc1,tp1,psCategory ts2]
 
 compileModuleMain :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ em) xa n f = do
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ _ cs1 ps1 _ _ _ em) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
   reconcile resolved
   tm' <- tm
