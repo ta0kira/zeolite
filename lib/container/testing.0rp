@@ -28,4 +28,8 @@ concrete CheckMap {
     #v requires Formatted
     #v defines Equals<#v>
   ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+
+  @category matches<#k,#v>
+    #k requires Formatted
+  ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
 }

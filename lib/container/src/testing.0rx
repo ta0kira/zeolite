@@ -69,6 +69,10 @@ define CheckMap {
   equals (expected) {
     return MapEquals<#k,#v>.new(expected)
   }
+
+  matches (expected) {
+    return MapMatches<#k,#v>.new(expected)
+  }
 }
 
 concrete MapEquals<#k,#v> {
@@ -126,5 +130,57 @@ define MapEquals {
 
   summary () {
     return "map equals"
+  }
+}
+
+concrete MapMatches<#k,#v> {
+  #k requires Formatted
+
+  @type new ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+}
+
+define MapMatches {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>
+
+  @value [SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>] expected
+
+  new (expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    traverse (expected.defaultOrder() -> KeyValue<#k,ValueMatcher<#v>> current) {
+      optional #v value <- actual&.get(current.getKey())
+      $Hidden[actual,expected]$
+      if (! `present` value) {
+        \ report.addError(message: String.builder()
+            .append("Key ")
+            .append(`Format:autoFormat` current.getKey())
+            .append(" is missing")
+            .build())
+      } else {
+        TestReport newReport <- report.newSection(title: String.builder()
+            .append("Key ")
+            .append(`Format:autoFormat` current.getKey())
+            .build())
+        $Hidden[report]$
+        \ require(value) `current.getValue().check` newReport
+      }
+    }
+    traverse (actual&.keyOrder() -> #k current) {
+      if (! `expected.member` current) {
+        \ report.addError(message: String.builder()
+            .append("Key ")
+            .append(`Format:autoFormat` current)
+            .append(" is unexpected")
+            .build())
+      }
+    }
+  }
+
+  summary () {
+    return "map matches"
   }
 }
