@@ -132,6 +132,10 @@
   Float value3 <- \b101.010
   ```
 
+* **[new]** Updates type inference to arbitrarily choose the lower bound when a
+  param is bounded above and below with different types. Previously, the
+  compiler would require specifying the param explicitly.
+
 ### Libraries
 
 * **[breaking]** Removes `Testing` from `lib/testing` entirely. Use the new

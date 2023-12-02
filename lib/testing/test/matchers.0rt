@@ -60,9 +60,9 @@ unittest test {
   TestReportTree report <- TestReportTree.new("title0",ValueList<Formatted>.new())
 
   \ MultiChecker.new(report)
-      .check<String>(title: "title1","foo",CheckAlways:match())
-      &.check<String>(title: "title2","foo",CheckAlways:error("message2"))
-      &.check<String>(title: "title3","foo",CheckAlways:error("message3"))
+      .check(title: "title1","foo",CheckAlways:match())
+      &.check(title: "title2","foo",CheckAlways:error("message2"))
+      &.check(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.writeTo(output)
@@ -109,7 +109,7 @@ unittest test {
 
   \ MultiChecker.new(report)
       .tryCheck<String>(title: "title1","foo",CheckAlways:error("message1"))
-      .check<String>(title: "title2","foo",CheckAlways:match())
+      .check(title: "title2","foo",CheckAlways:match())
       &.tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())

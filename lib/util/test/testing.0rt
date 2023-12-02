@@ -44,7 +44,7 @@ testcase "CheckString:contains failure empty" {
 }
 
 unittest test {
-  \ empty?String `Matches:with` CheckString:contains("567890")
+  \ empty `Matches:with` CheckString:contains("567890")
 }
 
 
@@ -90,7 +90,7 @@ testcase "CheckString:startsWith failure empty" {
 }
 
 unittest test {
-  \ empty?String `Matches:with` CheckString:startsWith("567890")
+  \ empty `Matches:with` CheckString:startsWith("567890")
 }
 
 
@@ -136,7 +136,7 @@ testcase "CheckString:endsWith failure empty" {
 }
 
 unittest test {
-  \ empty?String `Matches:with` CheckString:endsWith("567890")
+  \ empty `Matches:with` CheckString:endsWith("567890")
 }
 
 
@@ -171,7 +171,7 @@ unittest value {
 }
 
 unittest error {
-  \ ErrorOr:error("something")?ErrorOr<Int> `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
+  \ ErrorOr:error("something") `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
 }
 
 
@@ -193,7 +193,7 @@ testcase "CheckErrorOr:value failure with error" {
 }
 
 unittest test {
-  \ ErrorOr:error("something")?ErrorOr<Int> `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
+  \ ErrorOr:error("something") `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
 }
 
 
@@ -204,7 +204,7 @@ testcase "CheckErrorOr:value failure with empty" {
 }
 
 unittest test {
-  \ empty?ErrorOr<Int> `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
+  \ empty `Matches:with` CheckErrorOr:value(CheckValue:equals(123))
 }
 
 
@@ -226,7 +226,7 @@ testcase "CheckErrorOr:error failure with error" {
 }
 
 unittest test {
-  \ ErrorOr:error("message")?ErrorOr<Int> `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
+  \ ErrorOr:error("message") `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
 }
 
 
@@ -237,5 +237,5 @@ testcase "CheckErrorOr:error failure with empty" {
 }
 
 unittest test {
-  \ empty?ErrorOr<Int> `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
+  \ empty `Matches:with` CheckErrorOr:error<Int>(CheckValue:equals("something"))
 }

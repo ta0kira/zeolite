@@ -21,21 +21,21 @@ testcase "Matches no errors" {
 }
 
 unittest withOnce {
-  \ "foo" `Matches:with<String>` CheckAlways:match()
+  \ "foo" `Matches:with` CheckAlways:match()
 }
 
 unittest withMulti {
-  \ "foo" `Matches:with<String>` CheckAlways:match()
-  \ "foo" `Matches:with<String>` CheckAlways:match()
+  \ "foo" `Matches:with` CheckAlways:match()
+  \ "foo" `Matches:with` CheckAlways:match()
 }
 
 unittest tryWithOnce {
-  \ "foo" `Matches:tryWith<String>` CheckAlways:match()
+  \ "foo" `Matches:tryWith` CheckAlways:match()
 }
 
 unittest tryWithMulti {
-  \ "foo" `Matches:tryWith<String>` CheckAlways:match()
-  \ "foo" `Matches:tryWith<String>` CheckAlways:match()
+  \ "foo" `Matches:tryWith` CheckAlways:match()
+  \ "foo" `Matches:tryWith` CheckAlways:match()
 }
 
 unittest valueOnce {
@@ -64,8 +64,8 @@ testcase "Matches:with fails immediately" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` CheckAlways:error("message1")
-  \ "foo" `Matches:with<String>` CheckAlways:error("message2")
+  \ "foo" `Matches:with` CheckAlways:error("message1")
+  \ "foo" `Matches:with` CheckAlways:error("message2")
 }
 
 
@@ -76,8 +76,8 @@ testcase "Matches:tryWith fails later" {
 }
 
 unittest test {
-  \ "foo" `Matches:tryWith<String>` CheckAlways:error("message1")
-  \ "foo" `Matches:tryWith<String>` CheckAlways:error("message2")
+  \ "foo" `Matches:tryWith` CheckAlways:error("message1")
+  \ "foo" `Matches:tryWith` CheckAlways:error("message2")
 }
 
 
@@ -136,8 +136,8 @@ testcase "Matches:with doesn't evaluate pending errors" {
 }
 
 unittest test {
-  \ "foo" `Matches:tryWith<String>` CheckAlways:error("message1")
-  \ "foo" `Matches:with<String>` CheckAlways:match()
+  \ "foo" `Matches:tryWith` CheckAlways:error("message1")
+  \ "foo" `Matches:with` CheckAlways:match()
   fail("message2")
 }
 
@@ -160,7 +160,7 @@ testcase "Matches:not success" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` `Matches:not` CheckAlways:error("message")
+  \ "foo" `Matches:with` `Matches:not` CheckAlways:error("message")
 }
 
 
@@ -170,7 +170,7 @@ testcase "Matches:not failure" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` `Matches:not` CheckAlways:match()
+  \ "foo" `Matches:with` `Matches:not` CheckAlways:match()
 }
 
 
@@ -179,9 +179,9 @@ testcase "Matches:or success" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:or` CheckAlways:match())
-  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:or` CheckAlways:error("message"))
-  \ "foo" `Matches:with<String>` (CheckAlways:error("message") `Matches:or` CheckAlways:match())
+  \ "foo" `Matches:with` (CheckAlways:match() `Matches:or` CheckAlways:match())
+  \ "foo" `Matches:with` (CheckAlways:match() `Matches:or` CheckAlways:error("message"))
+  \ "foo" `Matches:with` (CheckAlways:error("message") `Matches:or` CheckAlways:match())
 }
 
 
@@ -192,7 +192,7 @@ testcase "Matches:or failure" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` (CheckAlways:error("message1") `Matches:or` CheckAlways:error("message2"))
+  \ "foo" `Matches:with` (CheckAlways:error("message1") `Matches:or` CheckAlways:error("message2"))
 }
 
 
@@ -201,7 +201,7 @@ testcase "Matches:and success" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:and` CheckAlways:match())
+  \ "foo" `Matches:with` (CheckAlways:match() `Matches:and` CheckAlways:match())
 }
 
 
@@ -212,7 +212,7 @@ testcase "Matches:and failure both" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` (CheckAlways:error("message1") `Matches:and` CheckAlways:error("message2"))
+  \ "foo" `Matches:with` (CheckAlways:error("message1") `Matches:and` CheckAlways:error("message2"))
 }
 
 
@@ -222,7 +222,7 @@ testcase "Matches:and failure one" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` (CheckAlways:match() `Matches:and` CheckAlways:error("message"))
+  \ "foo" `Matches:with` (CheckAlways:match() `Matches:and` CheckAlways:error("message"))
 }
 
 
@@ -231,14 +231,14 @@ testcase "Matches:anyOf success" {
 }
 
 unittest someMatching {
-  \ "foo" `Matches:with<String>` Matches:anyOf(ValueList<ValueMatcher<any>>.new()
+  \ "foo" `Matches:with` Matches:anyOf(ValueList<ValueMatcher<any>>.new()
       .append(CheckAlways:error("message"))
       .append(CheckAlways:match())
       .append(CheckAlways:die("message")))
 }
 
 unittest emptyList {
-  \ "foo" `Matches:with<String>` Matches:anyOf(ValueList<ValueMatcher<any>>.new())
+  \ "foo" `Matches:with` Matches:anyOf(ValueList<ValueMatcher<any>>.new())
 }
 
 
@@ -249,7 +249,7 @@ testcase "Matches:anyOf failure" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` Matches:anyOf(ValueList<ValueMatcher<any>>.new()
+  \ "foo" `Matches:with` Matches:anyOf(ValueList<ValueMatcher<any>>.new()
       .append(CheckAlways:error("message1"))
       .append(CheckAlways:error("message2")))
 }
@@ -260,13 +260,13 @@ testcase "Matches:allOf success" {
 }
 
 unittest allMatching {
-  \ "foo" `Matches:with<String>` Matches:allOf(ValueList<ValueMatcher<any>>.new()
+  \ "foo" `Matches:with` Matches:allOf(ValueList<ValueMatcher<any>>.new()
       .append(CheckAlways:match())
       .append(CheckAlways:match()))
 }
 
 unittest emptyList {
-  \ "foo" `Matches:with<String>` Matches:allOf(ValueList<ValueMatcher<any>>.new())
+  \ "foo" `Matches:with` Matches:allOf(ValueList<ValueMatcher<any>>.new())
 }
 
 
@@ -277,7 +277,7 @@ testcase "Matches:allOf failure" {
 }
 
 unittest test {
-  \ "foo" `Matches:with<String>` Matches:allOf(ValueList<ValueMatcher<any>>.new()
+  \ "foo" `Matches:with` Matches:allOf(ValueList<ValueMatcher<any>>.new()
       .append(CheckAlways:match())
       .append(CheckAlways:error("message1"))
       .append(CheckAlways:match())

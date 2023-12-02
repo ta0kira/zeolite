@@ -23,23 +23,23 @@ testcase "CheckSequence success" {
 unittest equals {
   Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
   Vector<Int> expected <- Vector<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 unittest equalsQuiet {
   Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
   Vector<Int> expected <- Vector<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
 unittest equalsWithEmpty {
   Vector<Int> expected <- Vector<Int>.new()
-  \ empty `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+  \ empty `Matches:with` CheckSequence:equals(expected)
 }
 
 unittest equalsQuietWithEmpty {
   Vector<Int> expected <- Vector<Int>.new()
-  \ empty `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+  \ empty `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
 
@@ -53,7 +53,7 @@ testcase "CheckSequence:equals different" {
 unittest test {
   Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
   Vector<Int> expected <- Vector<Int>.new().append(40).append(50).append(60)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 
@@ -68,7 +68,7 @@ testcase "CheckSequence:equals extra" {
 unittest test {
   Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
   Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 
@@ -83,7 +83,7 @@ testcase "CheckSequence:equals missing" {
 unittest test {
   Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
   Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 
@@ -97,7 +97,7 @@ testcase "CheckSequence:equalsQuiet different" {
 unittest test {
   Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
   Vector<Int> expected <- Vector<Int>.new().append(40).append(50).append(60)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
 
@@ -114,7 +114,7 @@ testcase "CheckSequence:equalsQuiet extra" {
 unittest test {
   Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
   Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
 
@@ -131,5 +131,5 @@ testcase "CheckSequence:equalsQuiet missing" {
 unittest test {
   Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
   Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }

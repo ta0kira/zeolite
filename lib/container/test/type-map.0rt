@@ -91,7 +91,7 @@ unittest keyEquals {
   TypeKey<Int>    key1 <- TypeKey<Int>.new()
   TypeKey<Int>    key2 <- TypeKey<Int>.new()
   TypeKey<String> key3 <- TypeKey<String>.new()
-  \ key1 `Matches:with` CheckValue:equals<TypeKey<Int>>(key1)
+  \ key1 `Matches:with` CheckValue:equals(key1)
   \ (key1 `TypeKey<any>.equals` key2) `Matches:with` CheckValue:equals(false)
   \ (key1 `TypeKey<any>.equals` key2) `Matches:with` CheckValue:equals(false)
   \ (key1 `TypeKey<any>.equals` key3) `Matches:with` CheckValue:equals(false)

@@ -1320,11 +1320,13 @@ mergeInferredTypes r f ff ps gs0 = do
       fmap nub $ collectAnyM is2
     extractSingle i (GuessRange (Just lo) Nothing) = return (i,lo)
     extractSingle i (GuessRange Nothing (Just hi)) = return (i,hi)
-    extractSingle i g@(GuessRange (Just lo) (Just hi)) = do
+    extractSingle i (GuessRange (Just lo) (Just hi)) = do
       p <- (Just hi) `convertsTo` (Just lo)
       if p
          then return (i,lo)
-         else compilerErrorM $ "Ambiguous guess for param " ++ show i ++ ": " ++ show g
+         else do
+           compilerBackgroundM $ "Arbitrarily using lower bound " ++ show lo ++ " for " ++ show i
+           return (i,lo)
     extractSingle i g@(GuessRange Nothing Nothing) =
       compilerErrorM $ "Ambiguous guess for param " ++ show i ++ ": " ++ show g
     checkSubFilters gs = "In validation of inference guess: " ++ describeGuess gs ??> do
