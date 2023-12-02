@@ -16,16 +16,10 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-concrete CheckSet {
-  @category equals<#k>
-    #k requires Formatted
-  ([SetReader<#k>&DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>)
-}
+$ModuleOnly$
 
-concrete CheckMap {
-  @category equals<#k,#v>
-    #k requires Formatted
-    #v requires Formatted
-    #v defines Equals<#v>
-  ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+concrete Format {
+  @category autoFormat<#x>
+    #x requires Formatted
+  (optional #x) -> (Formatted)
 }
