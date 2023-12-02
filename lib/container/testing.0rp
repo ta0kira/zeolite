@@ -16,26 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-concrete CheckSequence {
-  @category equals<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
-
-  @category equalsQuiet<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
-
-  @category matches<#x>
-    #x requires Formatted
-  (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
-
-  @category matchesQuiet<#x>
-    #x requires Formatted
-  (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
-}
-
 concrete CheckSet {
   @category equals<#k>
     #k requires Formatted

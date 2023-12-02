@@ -74,6 +74,34 @@ concrete CheckValue<#x|> {
   (#x,#x) -> (ValueMatcher<#x>)
 }
 
+// Simple sub-string checks.
+concrete CheckString {
+  @category contains (Formatted) -> (ValueMatcher<String>)
+  @category startsWith (Formatted) -> (ValueMatcher<String>)
+  @category endsWith (Formatted) -> (ValueMatcher<String>)
+}
+
+// Checks sequences of values.
+concrete CheckSequence {
+  @category equals<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+
+  @category equalsQuiet<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+  (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+
+  @category matches<#x>
+    #x requires Formatted
+  (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
+
+  @category matchesQuiet<#x>
+    #x requires Formatted
+  (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
+}
+
 // Interface used by predicate testers and matchers to report errors.
 @value interface TestReport {
   // Adds a new error message.
