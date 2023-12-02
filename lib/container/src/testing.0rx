@@ -1,0 +1,123 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define CheckSequence {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<DefaultOrder<#x>>
+
+  @value Bool quiet
+  @value DefaultOrder<#x> expected
+
+  equals (expected) {
+    return CheckSequence<#x>{ false, expected }
+  }
+
+  equalsQuiet (expected) {
+    return CheckSequence<#x>{ true, expected }
+  }
+
+  check (actual,report) {
+    if (quiet) {
+      \ delegate -> `executeQuiet`
+    } else {
+      \ delegate -> `execute`
+    }
+  }
+
+  summary () {
+    return "sequence has equal values"
+  }
+
+  @value execute (optional DefaultOrder<#x>,TestReport) -> ()
+  execute (actual,report) {
+    optional Order<#x> currentActual   <- actual&.defaultOrder()
+    optional Order<#x> currentExpected <- expected.defaultOrder()
+    Int index <- 0
+    $Hidden[actual,expected]$
+    while (`present` currentActual || `present` currentExpected) {
+      optional #x valueActual   <- currentActual&.get()
+      optional #x valueExpected <- currentExpected&.get()
+      TestReport error <- report.newSection(title: String.builder()
+          .append("Item #")
+          .append(index)
+          .build())
+      if (! `present` valueActual) {
+        \ error.addError(message: String.builder()
+            .append("\"")
+            .append(`require` valueExpected)
+            .append("\" is missing")
+            .build())
+      } elif (! `present` valueExpected) {
+        \ error.addError(message: String.builder()
+            .append("\"")
+            .append(`require` valueActual)
+            .append("\" is unexpected")
+            .build())
+      } elif (!(require(valueActual) `#x.equals` require(valueExpected))) {
+        \ error.addError(message: String.builder()
+            .append("\"")
+            .append(`require` valueActual)
+            .append("\" does not equal \"")
+            .append(`require` valueExpected)
+            .append("\"")
+            .build())
+      }
+    } update {
+      currentActual <- currentActual&.next()
+      currentExpected <- currentExpected&.next()
+      index <- index+1
+    }
+  }
+
+  @value executeQuiet (optional DefaultOrder<#x>,TestReport) -> ()
+  executeQuiet (actual,report) {
+    optional Order<#x> currentActual   <- actual&.defaultOrder()
+    optional Order<#x> currentExpected <- expected.defaultOrder()
+    Int index <- 0
+    $Hidden[actual,expected]$
+    while (`present` currentActual && `present` currentExpected) {
+      #x valueActual   <- require(currentActual&.get())
+      #x valueExpected <- require(currentExpected&.get())
+      if (!(valueActual `#x.equals` valueExpected)) {
+        TestReport error <- report.newSection(title: String.builder()
+            .append("Item #")
+            .append(index)
+            .build())
+        \ error.addError(message: String.builder()
+            .append("\"")
+            .append(valueActual)
+            .append("\" does not equal \"")
+            .append(valueExpected)
+            .append("\"")
+            .build())
+        break
+      }
+    } update {
+      currentActual <- currentActual&.next()
+      currentExpected <- currentExpected&.next()
+      index <- index+1
+    }
+    if (`present` currentActual) {
+      \ report.addError(message: "actual has extra items")
+    }
+    if (`present` currentExpected) {
+      \ report.addError(message: "actual has missing items")
+    }
+  }
+}

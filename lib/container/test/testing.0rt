@@ -1,0 +1,135 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "CheckSequence success" {
+  success TestChecker
+}
+
+unittest equals {
+  Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
+  Vector<Int> expected <- Vector<Int>.new().append(1).append(2).append(3)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+}
+
+unittest equalsQuiet {
+  Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
+  Vector<Int> expected <- Vector<Int>.new().append(1).append(2).append(3)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+}
+
+unittest equalsWithEmpty {
+  Vector<Int> expected <- Vector<Int>.new()
+  \ empty `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+}
+
+unittest equalsQuietWithEmpty {
+  Vector<Int> expected <- Vector<Int>.new()
+  \ empty `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+}
+
+
+testcase "CheckSequence:equals different" {
+  failure TestChecker
+  require "10.+40"
+  require "20.+50"
+  require "30.+60"
+}
+
+unittest test {
+  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
+  Vector<Int> expected <- Vector<Int>.new().append(40).append(50).append(60)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+}
+
+
+testcase "CheckSequence:equals extra" {
+  failure TestChecker
+  require "40"
+  exclude "10"
+  exclude "20"
+  exclude "30"
+}
+
+unittest test {
+  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
+  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+}
+
+
+testcase "CheckSequence:equals missing" {
+  failure TestChecker
+  require "40"
+  exclude "10"
+  exclude "20"
+  exclude "30"
+}
+
+unittest test {
+  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
+  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30).append(40)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equals(expected)
+}
+
+
+testcase "CheckSequence:equalsQuiet different" {
+  failure TestChecker
+  require "10.+40"
+  exclude "20.+50"
+  exclude "30.+60"
+}
+
+unittest test {
+  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
+  Vector<Int> expected <- Vector<Int>.new().append(40).append(50).append(60)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+}
+
+
+testcase "CheckSequence:equalsQuiet extra" {
+  failure TestChecker
+  require "extra"
+  exclude "missing"
+  exclude "10"
+  exclude "20"
+  exclude "30"
+  exclude "40"
+}
+
+unittest test {
+  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
+  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+}
+
+
+testcase "CheckSequence:equalsQuiet missing" {
+  failure TestChecker
+  require "missing"
+  exclude "extra"
+  exclude "10"
+  exclude "20"
+  exclude "30"
+  exclude "40"
+}
+
+unittest test {
+  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
+  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30).append(40)
+  \ actual `Matches:with<Vector<Int>>` CheckSequence:equalsQuiet(expected)
+}
