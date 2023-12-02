@@ -23,6 +23,10 @@ concrete CheckSet {
 }
 
 concrete CheckMap {
+  @category using<#k,#v>
+    #v requires TestCompare<#v>
+  ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>])
+
   @category equals<#k,#v>
     #k requires Formatted
     #v requires Formatted

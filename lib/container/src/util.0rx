@@ -29,3 +29,26 @@ define Format {
     }
   }
 }
+
+define TestValue {
+  @value String message
+
+  new (message) {
+    return delegate -> #self
+  }
+
+  testCompare (actual,report) {
+    if (actual.message() != message) {
+      \ report.addError(message: String.builder()
+          .append(`Format:autoFormat` actual.message())
+          .append(" does not equal ")
+          .append(`Format:autoFormat` message)
+          .build())
+    }
+  }
+
+  @value message () -> (String)
+  message () {
+    return message
+  }
+}

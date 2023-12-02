@@ -18,6 +18,10 @@ limitations under the License.
 
 // Checks sequences of values.
 concrete CheckSequence {
+  @category using<#x>
+    #x requires TestCompare<#x>
+  (DefaultOrder<#x>) -> (DefaultOrder<ValueMatcher<#x>>)
+
   @category equals<#x>
     #x requires Formatted
     #x defines Equals<#x>
@@ -28,19 +32,11 @@ concrete CheckSequence {
     #x defines Equals<#x>
   (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 
-  @category matches<#x>
-    #x requires Formatted
-  (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
+  @category matches<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
 
-  @category matchesQuiet<#x>
-    #x requires Formatted
-  (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
+  @category matchesQuiet<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
 
-  @category allMatch<#x>
-    #x requires Formatted
-  (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+  @category allMatch<#x> (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 
-  @category allMatchQuiet<#x>
-    #x requires Formatted
-  (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+  @category allMatchQuiet<#x> (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 }

@@ -224,3 +224,34 @@ unittest test {
       .set("three",CheckValue:equals(3))
   \ actual `Matches:with` CheckMap:matches(expected)
 }
+
+
+testcase "CheckMap:using success" {
+  success TestChecker
+}
+
+unittest test {
+  SortedMap<String,TestValue> actual <- SortedMap<String,TestValue>.new()
+      .set("one",TestValue.new("one"))
+      .set("two",TestValue.new("two"))
+  SortedMap<String,TestValue> expected <- SortedMap<String,TestValue>.new()
+      .set("one",TestValue.new("one"))
+      .set("two",TestValue.new("two"))
+  \ actual `Matches:with` CheckMap:matches(CheckMap:using(expected))
+}
+
+
+testcase "CheckMap:using failure" {
+  failure TestChecker
+  require "TWO.+two"
+}
+
+unittest test {
+  SortedMap<String,TestValue> actual <- SortedMap<String,TestValue>.new()
+      .set("one",TestValue.new("one"))
+      .set("two",TestValue.new("TWO"))
+  SortedMap<String,TestValue> expected <- SortedMap<String,TestValue>.new()
+      .set("one",TestValue.new("one"))
+      .set("two",TestValue.new("two"))
+  \ actual `Matches:with` CheckMap:matches(CheckMap:using(expected))
+}

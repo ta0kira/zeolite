@@ -247,7 +247,6 @@ unittest test {
 }
 
 
-
 testcase "CheckSequence:allMatchQuiet failure" {
   failure TestChecker
   require "10.+25"
@@ -258,4 +257,35 @@ testcase "CheckSequence:allMatchQuiet failure" {
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
   \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(25))
+}
+
+
+testcase "CheckSequence:using success" {
+  success TestChecker
+}
+
+unittest test {
+  ValueList<TestValue> actual <- ValueList<TestValue>.new()
+      .append(TestValue.default())
+      .append(TestValue.new(456,"something",empty))
+  ValueList<TestValue> expected <- ValueList<TestValue>.new()
+      .append(TestValue.default())
+      .append(TestValue.new(456,"something",empty))
+  \ actual `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
+}
+
+
+testcase "CheckSequence:using failure" {
+  failure TestChecker
+  require "456.+321"
+}
+
+unittest test {
+  ValueList<TestValue> actual <- ValueList<TestValue>.new()
+      .append(TestValue.default())
+      .append(TestValue.new(456,"something",empty))
+  ValueList<TestValue> expected <- ValueList<TestValue>.new()
+      .append(TestValue.default())
+      .append(TestValue.new(321,"something",empty))
+  \ actual `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
 }

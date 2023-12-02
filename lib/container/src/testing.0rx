@@ -22,6 +22,63 @@ define CheckSet {
   }
 }
 
+define CheckMap {
+  using (expected) {
+    return MapAdapter<#k,#v>.new(expected)
+  }
+
+  equals (expected) {
+    return MapEquals<#k,#v>.new(expected)
+  }
+
+  matches (expected) {
+    return MapMatches<#k,#v>.new(expected)
+  }
+}
+
+concrete MapAdapter<#k,#v> {
+  #v requires TestCompare<#v>
+
+  @type new ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>])
+}
+
+define MapAdapter {
+  $ReadOnlyExcept[current]$
+
+  refines SetReader<#k>
+  refines DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>
+  refines Order<KeyValue<#k,ValueMatcher<#v>>>
+
+  @value [SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>] original
+  @value optional Order<KeyValue<#k,#v>> current
+
+  new (original) {
+    return #self{ original, empty }
+  }
+
+  defaultOrder () {
+    return #self{ original, original.defaultOrder() }
+  }
+
+  get () {
+    scoped {
+      KeyValue<#k,#v> keyValue <- `require` current&.get()
+    } in return SimpleKeyValue:new(keyValue.getKey(),CheckValue:using(keyValue.getValue()))
+  }
+
+  next () {
+    if (`present` (current <- current&.next())) {
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  member (k) {
+    return delegate -> `original.member`
+  }
+}
+
 concrete SetEquals<#k> {
   #k requires Formatted
 
@@ -62,16 +119,6 @@ define SetEquals {
 
   summary () {
     return "set equals"
-  }
-}
-
-define CheckMap {
-  equals (expected) {
-    return MapEquals<#k,#v>.new(expected)
-  }
-
-  matches (expected) {
-    return MapMatches<#k,#v>.new(expected)
   }
 }
 

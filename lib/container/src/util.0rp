@@ -23,3 +23,10 @@ concrete Format {
     #x requires Formatted
   (optional #x) -> (Formatted)
 }
+
+concrete TestValue {
+  immutable
+  refines TestCompare<TestValue>
+
+  @type new (String) -> (TestValue)
+}

@@ -17,6 +17,10 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define CheckSequence {
+  using (expected) {
+    return SequenceAdapter<#x>.new(expected)
+  }
+
   equals (expected) {
     return SequenceEquals<#x>.new(false,expected)
   }
@@ -39,6 +43,42 @@ define CheckSequence {
 
   allMatchQuiet (expected) {
     return SequenceAllMatch<#x>.new(true,expected)
+  }
+}
+
+concrete SequenceAdapter<#x> {
+  #x requires TestCompare<#x>
+
+  @type new (DefaultOrder<#x>) -> (DefaultOrder<ValueMatcher<#x>>)
+}
+
+define SequenceAdapter {
+  $ReadOnlyExcept[current]$
+
+  refines DefaultOrder<ValueMatcher<#x>>
+  refines Order<ValueMatcher<#x>>
+
+  @value DefaultOrder<#x> original
+  @value optional Order<#x> current
+
+  new (original) {
+    return #self{ original, empty }
+  }
+
+  defaultOrder () {
+    return #self{ original, original.defaultOrder() }
+  }
+
+  get () {
+    return CheckValue:using(`require` current&.get())
+  }
+
+  next () {
+    if (`present` (current <- current&.next())) {
+      return self
+    } else {
+      return empty
+    }
   }
 }
 
@@ -148,8 +188,6 @@ define SequenceEquals {
 }
 
 concrete SequenceMatches<#x> {
-  #x requires Formatted
-
   @type new (Bool,DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
 }
 
@@ -193,12 +231,14 @@ define SequenceMatches {
       $Hidden[report]$
       if (! `present` valueActual) {
         \ newReport.addError(message: String.builder()
-            .append(`Format:autoFormat` valueExpected&.summary())
+            .append("Item #")
+            .append(index)
             .append(" is missing")
             .build())
       } elif (! `present` valueExpected) {
         \ newReport.addError(message: String.builder()
-            .append(`Format:autoFormat` valueActual)
+            .append("Item #")
+            .append(index)
             .append(" is unexpected")
             .build())
       } else {
@@ -244,8 +284,6 @@ define SequenceMatches {
 }
 
 concrete SequenceAllMatch<#x> {
-  #x requires Formatted
-
   @type new (Bool,ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 }
 
