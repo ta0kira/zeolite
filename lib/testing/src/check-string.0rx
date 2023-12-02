@@ -1,0 +1,96 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define CheckString {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<String>
+
+  @value String expected
+  @value Bool fromStart
+  @value Bool toEnd
+
+  contains (expected) {
+    return CheckString{ expected.formatted(), false, false }
+  }
+
+  startsWith (expected) {
+    return CheckString{ expected.formatted(), true, false }
+  }
+
+  endsWith (expected) {
+    return CheckString{ expected.formatted(), false, true }
+  }
+
+  check (actual,report) {
+    if (! `present` actual) {
+      \ report.addError(message: appendErrorAndBuild(String.builder().append("empty")))
+      return _
+    }
+    String value <- require(actual)
+    $Hidden[actual]$
+    Int startIndex <- 0
+    if (toEnd) {
+      startIndex <- value.size()-expected.size()
+    }
+    while (startIndex >= 0 && startIndex+expected.size() <= value.size()) {
+      Bool matches <- true
+      scoped {
+        Int index <- startIndex
+        $Hidden[startIndex]$
+      } in traverse (expected.defaultOrder() -> Char char) {
+        $Hidden[expected]$
+        if (value.readAt(index) != char) {
+          matches <- false
+          break
+        }
+      } update {
+        index <- index+1
+      }
+      if (matches) {
+        return _
+      } elif (fromStart || toEnd) {
+        break
+      }
+    } update {
+      startIndex <- startIndex+1
+    }
+    \ report.addError(message: appendErrorAndBuild(String.builder().append(`Format:autoFormat` value)))
+  }
+
+  summary () {
+    if (fromStart) {
+      return "String starts with"
+    } elif (toEnd) {
+      return "String ends with"
+    } else {
+      return "String contains"
+    }
+  }
+
+  @value appendErrorAndBuild ([Append<Formatted>&Build<String>]) -> (String)
+  appendErrorAndBuild (output) {
+    if (fromStart) {
+      return output.append(" does not start with ").append(`Format:autoFormat` expected).build()
+    } elif (toEnd) {
+      return output.append(" does not end with ").append(`Format:autoFormat` expected).build()
+    } else {
+      return output.append(" does not contain ").append(`Format:autoFormat` expected).build()
+    }
+  }
+}

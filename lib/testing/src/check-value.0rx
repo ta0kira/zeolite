@@ -1,0 +1,269 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define CheckValue {
+  using (expected) {
+    return ValueTester<#x>.new(expected)
+  }
+
+  equals (expected) {
+    return ValueEquals<#x>.new(false,expected)
+  }
+
+  notEquals (expected) {
+    return ValueEquals<#x>.new(true,expected)
+  }
+
+  is (expected) {
+    return ValueIdentifier<#x>.new(expected)
+  }
+
+  lessThanNotEqual (upper) {
+    return ValueBounds<#x>.new(false,empty,upper)
+  }
+
+  greaterThanNotEqual (lower) {
+    return ValueBounds<#x>.new(false,lower,empty)
+  }
+
+  betweenNotEqual (lower,upper) {
+    return ValueBounds<#x>.new(false,lower,upper)
+  }
+
+  lessThanEqual (upper) {
+    return ValueBounds<#x>.new(true,empty,upper)
+  }
+
+  greaterThanEqual (lower) {
+    return ValueBounds<#x>.new(true,lower,empty)
+  }
+
+  betweenEqual (lower,upper) {
+    return ValueBounds<#x>.new(true,lower,upper)
+  }
+}
+
+concrete ValueTester<#x> {
+  #x requires TestCompare<#x>
+
+  @type new (#x) -> (ValueMatcher<#x>)
+}
+
+define ValueTester {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  @value #x expected
+
+  new (expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    if (! `present` actual) {
+      \ report.addError(message: "expected value but got empty")
+    } else {
+      \ expected.testCompare(actual: require(actual),report)
+    }
+  }
+
+  summary () {
+    return String.builder()
+        .append("matches ")
+        .append(typename<#x>())
+        .build()
+  }
+}
+
+concrete ValueEquals<#x> {
+  #x requires Formatted
+  #x defines Equals<#x>
+
+  @type new (Bool,optional #x) -> (ValueMatcher<#x>)
+}
+
+define ValueEquals {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  @value Bool invert
+  @value optional #x expected
+
+  new (invert,expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    Bool match <- defer
+    if (`present` actual && `present` expected) {
+      match <- require(actual) `#x.equals` require(expected)
+    } else {
+      match <- ! `present` actual && ! `present` expected
+    }
+    if (invert && match) {
+      \ report.addError(message: String.builder()
+          .append(`Format:autoFormat` actual)
+          .append(" equals ")
+          .append(`Format:autoFormat` expected)
+          .build())
+    } elif (!invert && !match) {
+      \ report.addError(message: String.builder()
+          .append(`Format:autoFormat` actual)
+          .append(" does not equal ")
+          .append(`Format:autoFormat` expected)
+          .build())
+    }
+  }
+
+  summary () {
+    if (invert) {
+      return "value not equals"
+    } else {
+      return "value equals"
+    }
+  }
+}
+
+concrete ValueIdentifier<#x> {
+  @type new (optional #x) -> (ValueMatcher<#x>)
+}
+
+define ValueIdentifier {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  // NOTE: Don't use #x here so that it doesn't create a reference.
+  @value Identifier<#x> expected
+
+  new (expected) {
+    return #self{ `identify` expected }
+  }
+
+  check (actual,report) {
+    if (`identify` actual != expected) {
+      \ report.addError(message: String.builder()
+          .append(`format` `identify` actual)
+          .append(" does not equal ")
+          .append(`format` expected)
+          .build())
+    }
+  }
+
+  summary () {
+    return "value is same instance as"
+  }
+
+  @type format (Identifier<#x>) -> (Formatted)
+  format (id) {
+    return String.builder()
+        .append(typename<#x>())
+        .append("@")
+        .append(id)
+        .build()
+  }
+}
+
+concrete ValueBounds<#x> {
+  #x requires Formatted
+  #x defines LessThan<#x>
+
+  @type new (Bool,optional #x,optional #x) -> (ValueMatcher<#x>)
+}
+
+define ValueBounds {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  @value Bool inclusive
+  @value optional #x lower
+  @value optional #x upper
+
+  new (inclusive,lower,upper) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    Bool match <- `present` actual
+    if (match && `present` lower) {
+      match <- require(lower) `compare` require(actual)
+    }
+    if (match && `present` upper) {
+      match <- require(actual) `compare` require(upper)
+    }
+    if (!match) {
+      if (`present` lower && `present` upper) {
+        \ report.addError(message: String.builder()
+            .append(`Format:autoFormat` actual)
+            .append(" is not between ")
+            .append(`Format:autoFormat` lower)
+            .append(" and ")
+            .append(`Format:autoFormat` upper)
+            .build())
+      } elif (`present` lower) {
+        \ report.addError(message: String.builder()
+            .append(`Format:autoFormat` actual)
+            .append(" is not greater than ")
+            .append(`Format:autoFormat` lower)
+            .build())
+      } elif (`present` upper) {
+        \ report.addError(message: String.builder()
+            .append(`Format:autoFormat` actual)
+            .append(" is not less than ")
+            .append(`Format:autoFormat` upper)
+            .build())
+      }
+    }
+  }
+
+  summary () {
+    if (inclusive) {
+      if (`present` lower && `present` upper) {
+        return "value is between or equal"
+      } elif (`present` lower) {
+        return "value is greater than or equal"
+      } elif (`present` upper) {
+        return "value is less than or equal"
+      } else {
+        return "value is present"
+      }
+    } else {
+      if (`present` lower && `present` upper) {
+        return "value is between but not equal"
+      } elif (`present` lower) {
+        return "value is greater than but not equal"
+      } elif (`present` upper) {
+        return "value is less than but not equal"
+      } else {
+        return "value is present"
+      }
+    }
+  }
+
+  @value compare (#x,#x) -> (Bool)
+  compare (x,y) {
+    if (inclusive) {
+      return !(y `#x.lessThan` x)
+    } else {
+      return x `#x.lessThan` y
+    }
+  }
+}

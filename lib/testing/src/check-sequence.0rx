@@ -1,0 +1,283 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define CheckSequence {
+  equals (expected) {
+    return SequenceEquals<#x>.new(false,expected)
+  }
+
+  equalsQuiet (expected) {
+    return SequenceEquals<#x>.new(true,expected)
+  }
+
+  matches (expected) {
+    return SequenceMatches<#x>.new(false,expected)
+  }
+
+  matchesQuiet (expected) {
+    return SequenceMatches<#x>.new(true,expected)
+  }
+
+  allMatch (expected) {
+    return SequenceAllMatch<#x>.new(false,expected)
+  }
+
+  allMatchQuiet (expected) {
+    return SequenceAllMatch<#x>.new(true,expected)
+  }
+}
+
+concrete SequenceEquals<#x> {
+  #x requires Formatted
+  #x defines Equals<#x>
+
+  @type new (Bool,DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+}
+
+define SequenceEquals {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<DefaultOrder<#x>>
+
+  @value Bool quiet
+  @value DefaultOrder<#x> expected
+
+  new (quiet,expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    if (quiet) {
+      \ delegate -> `executeQuiet`
+    } else {
+      \ delegate -> `execute`
+    }
+  }
+
+  summary () {
+    return "sequence has equal values"
+  }
+
+  @value execute (optional DefaultOrder<#x>,TestReport) -> ()
+  execute (actual,report) {
+    optional Order<#x> currentActual   <- actual&.defaultOrder()
+    optional Order<#x> currentExpected <- expected.defaultOrder()
+    Int index <- 0
+    $Hidden[actual,expected]$
+    while (`present` currentActual || `present` currentExpected) {
+      optional #x valueActual   <- currentActual&.get()
+      optional #x valueExpected <- currentExpected&.get()
+      TestReport newReport <- report.newSection(title: String.builder()
+          .append("Item #")
+          .append(index)
+          .build())
+      $Hidden[report]$
+      if (! `present` valueActual) {
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueExpected)
+            .append(" is missing")
+            .build())
+      } elif (! `present` valueExpected) {
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" is unexpected")
+            .build())
+      } elif (!(require(valueActual) `#x.equals` require(valueExpected))) {
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" does not equal ")
+            .append(`Format:autoFormat` valueExpected)
+            .build())
+      }
+    } update {
+      currentActual <- currentActual&.next()
+      currentExpected <- currentExpected&.next()
+      index <- index+1
+    }
+  }
+
+  @value executeQuiet (optional DefaultOrder<#x>,TestReport) -> ()
+  executeQuiet (actual,report) {
+    optional Order<#x> currentActual   <- actual&.defaultOrder()
+    optional Order<#x> currentExpected <- expected.defaultOrder()
+    Int index <- 0
+    $Hidden[actual,expected]$
+    while (`present` currentActual && `present` currentExpected) {
+      #x valueActual   <- require(currentActual&.get())
+      #x valueExpected <- require(currentExpected&.get())
+      if (!(valueActual `#x.equals` valueExpected)) {
+        TestReport newReport <- report.newSection(title: String.builder()
+            .append("Item #")
+            .append(index)
+            .build())
+        $Hidden[report]$
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" does not equal ")
+            .append(`Format:autoFormat` valueExpected)
+            .build())
+        break
+      }
+    } update {
+      currentActual <- currentActual&.next()
+      currentExpected <- currentExpected&.next()
+      index <- index+1
+    }
+    if (`present` currentActual) {
+      \ report.addError(message: "actual has extra items")
+    }
+    if (`present` currentExpected) {
+      \ report.addError(message: "actual has missing items")
+    }
+  }
+}
+
+concrete SequenceMatches<#x> {
+  #x requires Formatted
+
+  @type new (Bool,DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
+}
+
+define SequenceMatches {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<DefaultOrder<#x>>
+
+  @value Bool quiet
+  @value DefaultOrder<ValueMatcher<#x>> expected
+
+  new (quiet,expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    if (quiet) {
+      \ delegate -> `executeQuiet`
+    } else {
+      \ delegate -> `execute`
+    }
+  }
+
+  summary () {
+    return "sequence values separately match"
+  }
+
+  @value execute (optional DefaultOrder<#x>,TestReport) -> ()
+  execute (actual,report) {
+    optional Order<#x> currentActual <- actual&.defaultOrder()
+    optional Order<ValueMatcher<#x>> currentExpected <- expected.defaultOrder()
+    Int index <- 0
+    $Hidden[actual,expected]$
+    while (`present` currentActual || `present` currentExpected) {
+      optional #x valueActual <- currentActual&.get()
+      optional ValueMatcher<#x> valueExpected <- currentExpected&.get()
+      TestReport newReport <- report.newSection(title: String.builder()
+          .append("Item #")
+          .append(index)
+          .build())
+      $Hidden[report]$
+      if (! `present` valueActual) {
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueExpected&.summary())
+            .append(" is missing")
+            .build())
+      } elif (! `present` valueExpected) {
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" is unexpected")
+            .build())
+      } else {
+        \ valueActual `require(valueExpected).check` newReport
+      }
+    } update {
+      currentActual <- currentActual&.next()
+      currentExpected <- currentExpected&.next()
+      index <- index+1
+    }
+  }
+
+  @value executeQuiet (optional DefaultOrder<#x>,TestReport) -> ()
+  executeQuiet (actual,report) {
+    optional Order<#x> currentActual <- actual&.defaultOrder()
+    optional Order<ValueMatcher<#x>> currentExpected <- expected.defaultOrder()
+    Int index <- 0
+    $Hidden[actual,expected]$
+    while (`present` currentActual && `present` currentExpected) {
+      #x valueActual <- require(currentActual&.get())
+      ValueMatcher<#x> valueExpected <- require(currentExpected&.get())
+      TestReport newReport <- report.newSection(title: String.builder()
+          .append("Item #")
+          .append(index)
+          .build())
+      $Hidden[report]$
+      \ valueActual `require(valueExpected).check` newReport
+      if (newReport.hasError()) {
+        break
+      }
+    } update {
+      currentActual <- currentActual&.next()
+      currentExpected <- currentExpected&.next()
+      index <- index+1
+    }
+    if (`present` currentActual) {
+      \ report.addError(message: "actual has extra items")
+    }
+    if (`present` currentExpected) {
+      \ report.addError(message: "actual has missing items")
+    }
+  }
+}
+
+concrete SequenceAllMatch<#x> {
+  #x requires Formatted
+
+  @type new (Bool,ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+}
+
+define SequenceAllMatch {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<DefaultOrder<#x>>
+
+  @value Bool quiet
+  @value ValueMatcher<#x> expected
+
+  new (quiet,expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    scoped {
+      Int index <- 0
+    } in traverse (actual&.defaultOrder() -> #x value) {
+      TestReport newReport <- report.newSection(title: String.builder()
+          .append("Item #")
+          .append(index)
+          .build())
+      $Hidden[report]$
+      \ value `expected.check` newReport
+      if (quiet && newReport.hasError()) {
+        break
+      }
+    }
+  }
+
+  summary () {
+    return "sequence values all match"
+  }
+}

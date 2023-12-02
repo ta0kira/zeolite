@@ -1,0 +1,55 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// Supports test comparisons.
+// NOTE: This should be refined in #x.
+@value interface TestCompare<#x|> {
+  testCompare (#x actual:,TestReport) -> ()
+}
+
+// Base interface for custom value matchers.
+@value interface ValueMatcher<#x|> {
+  check (optional #x,TestReport) -> ()
+  summary () -> (Formatted)
+}
+
+// Interface used by predicate testers and matchers to report errors.
+@value interface TestReport {
+  // Adds a new error message.
+  addError (Formatted message:) -> (#self)
+
+  // Adds a child section without changing the error status.
+  newSection (Formatted title:) -> (#self)
+
+  // Discards error messages and child sections.
+  discardReport () -> (#self)
+
+  // Returns true if there are error messages, or if a child has an error.
+  hasError () -> (Bool)
+}
+
+// Helper to check multiple members of a single object.
+concrete MultiChecker {
+  @value check<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (optional #self)
+  @value tryCheck<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (#self)
+
+  // Can only be constructed by value checkers.
+  visibility ValueMatcher<all>, TestCompare<all>
+
+  @type new (TestReport) -> (#self)
+}

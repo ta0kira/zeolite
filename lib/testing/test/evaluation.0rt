@@ -283,3 +283,33 @@ unittest test {
       .append(CheckAlways:match())
       .append(CheckAlways:error("message2")))
 }
+
+
+testcase "CheckAlways" {
+  success
+}
+
+unittest match {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.addError(message: "message")
+  \ CheckAlways:match().check(123,report)
+  \ Testing.checkEquals(report.hasError(),false)
+}
+
+unittest fromWithoutError {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ CheckAlways:error("message").check(123,report)
+  \ Testing.checkEquals(report.hasError(),true)
+}
+
+
+testcase "CheckAlways:die" {
+  failure
+  require "something"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.addError(message: "message")
+  \ CheckAlways:die("something").check(123,report)
+}

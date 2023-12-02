@@ -1,0 +1,409 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "CheckValue:equals success" {
+  success TestChecker
+}
+
+unittest nonEmpty {
+  \ "foo" `Matches:with` CheckValue:equals("foo")
+}
+
+unittest bothEmpty {
+  \ empty?String `Matches:with` CheckValue:equals(empty?String)
+}
+
+
+testcase "CheckValue:equals failure not equal" {
+  failure TestChecker
+  require "foo"
+  require "bar"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:equals("bar")
+}
+
+
+testcase "CheckValue:equals failure left empty" {
+  failure TestChecker
+  require "empty"
+  require "bar"
+}
+
+unittest test {
+  \ empty?String `Matches:with` CheckValue:equals("bar")
+}
+
+
+testcase "CheckValue:equals failure right empty" {
+  failure TestChecker
+  require "foo"
+  require "empty"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:equals(empty?String)
+}
+
+
+testcase "CheckValue:notEquals success" {
+  success TestChecker
+}
+
+unittest nonEmpty {
+  \ "foo" `Matches:with` CheckValue:notEquals("bar")
+}
+
+unittest leftEmpty {
+  \ empty?String `Matches:with` CheckValue:notEquals("bar")
+}
+
+unittest rightEmpty {
+  \ "foo" `Matches:with` CheckValue:notEquals(empty?String)
+}
+
+
+testcase "CheckValue:notEquals failure non-empty" {
+  failure TestChecker
+  require "foo"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:notEquals("foo")
+}
+
+
+testcase "CheckValue:notEquals failure empty" {
+  failure TestChecker
+  require "empty"
+}
+
+unittest test {
+  \ empty?String `Matches:with` CheckValue:notEquals(empty?String)
+}
+
+
+testcase "CheckValue:is success" {
+  success TestChecker
+}
+
+unittest test {
+  String value <- "foo"
+  \ value `Matches:with` CheckValue:is(value)
+}
+
+
+testcase "CheckValue:is failure same value" {
+  failure TestChecker
+  require "String@[a-f0-9]+"
+  exclude "foo"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:is("foo")
+}
+
+
+testcase "CheckValue:using success" {
+  success TestChecker
+}
+
+unittest test {
+  \ TestValue.default() `Matches:with` `CheckValue:using` TestValue.default()
+}
+
+
+testcase "CheckValue:using failure not equal" {
+  failure TestChecker
+  require "message1"
+}
+
+unittest test {
+  \ TestValue.default() `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
+}
+
+
+testcase "CheckValue:using failure left empty" {
+  failure TestChecker
+  require "empty"
+}
+
+unittest test {
+  \ empty?TestValue `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
+}
+
+
+testcase "CheckValue:lessThanNotEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 0 `Matches:with` CheckValue:lessThanNotEqual(1)
+}
+
+
+testcase "CheckValue:lessThanNotEqual failure non-empty" {
+  failure TestChecker
+  require "100"
+  require "20"
+}
+
+unittest test {
+  \ 100 `Matches:with` CheckValue:lessThanNotEqual(20)
+}
+
+
+testcase "CheckValue:lessThanNotEqual failure endpoint" {
+  failure TestChecker
+  require "100"
+}
+
+unittest test {
+  \ 100 `Matches:with` CheckValue:lessThanNotEqual(100)
+}
+
+
+testcase "CheckValue:lessThanNotEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:lessThanNotEqual(20)
+}
+
+
+testcase "CheckValue:greaterThanNotEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:greaterThanNotEqual(0)
+}
+
+
+testcase "CheckValue:greaterThanNotEqual failure non-empty" {
+  failure TestChecker
+  require "10"
+  require "200"
+}
+
+unittest test {
+  \ 10 `Matches:with` CheckValue:greaterThanNotEqual(200)
+}
+
+
+testcase "CheckValue:greaterThanNotEqual failure endpoint" {
+  failure TestChecker
+  require "10"
+}
+
+unittest test {
+  \ 10 `Matches:with` CheckValue:greaterThanNotEqual(10)
+}
+
+
+testcase "CheckValue:greaterThanNotEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:greaterThanNotEqual(20)
+}
+
+
+testcase "CheckValue:betweenNotEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:betweenNotEqual(0,3)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure below" {
+  failure TestChecker
+  require "3"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 3 `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure above" {
+  failure TestChecker
+  require "300"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 300 `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure endpoint low" {
+  failure TestChecker
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 5 `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure endpoint high" {
+  failure TestChecker
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 200 `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:lessThanEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 0 `Matches:with` CheckValue:lessThanEqual(1)
+  \ 0 `Matches:with` CheckValue:lessThanEqual(0)
+}
+
+
+testcase "CheckValue:lessThanEqual failure non-empty" {
+  failure TestChecker
+  require "100"
+  require "20"
+}
+
+unittest test {
+  \ 100 `Matches:with` CheckValue:lessThanEqual(20)
+}
+
+
+testcase "CheckValue:lessThanEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:lessThanEqual(20)
+}
+
+
+testcase "CheckValue:greaterThanEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:greaterThanEqual(0)
+  \ 1 `Matches:with` CheckValue:greaterThanEqual(1)
+}
+
+
+testcase "CheckValue:greaterThanEqual failure non-empty" {
+  failure TestChecker
+  require "10"
+  require "200"
+}
+
+unittest test {
+  \ 10 `Matches:with` CheckValue:greaterThanEqual(200)
+}
+
+
+testcase "CheckValue:greaterThanEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:greaterThanEqual(20)
+}
+
+
+testcase "CheckValue:betweenEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:betweenEqual(0,3)
+  \ 0 `Matches:with` CheckValue:betweenEqual(0,3)
+  \ 3 `Matches:with` CheckValue:betweenEqual(0,3)
+}
+
+
+testcase "CheckValue:betweenEqual failure below" {
+  failure TestChecker
+  require "3"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 3 `Matches:with` CheckValue:betweenEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenEqual failure above" {
+  failure TestChecker
+  require "300"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 300 `Matches:with` CheckValue:betweenEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:betweenEqual(5,200)
+}
