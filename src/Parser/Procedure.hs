@@ -484,7 +484,7 @@ instance ParseFromSource (Expression SourceContext) where
       expression = labeled "expression" $ do
         c <- getSourceContext
         s <- sourceParser
-        vs <- many sourceParser
+        vs <- many (try sourceParser)
         return $ Expression [c] s vs
 
 instance ParseFromSource (FunctionQualifier SourceContext) where
@@ -726,7 +726,7 @@ instance ParseFromSource (ValueLiteral SourceContext) where
       return $ IntegerLiteral [c] unsigned d
 
 instance ParseFromSource (ValueOperation SourceContext) where
-  sourceParser = try valueCall <|> try conversion <|> selectReturn where
+  sourceParser = valueCall <|> conversion <|> selectReturn where
     valueCall = labeled "function call" $ do
       c <- getSourceContext
       o <- (valueSymbolGet >> return AlwaysCall) <|> (valueSymbolMaybeGet >> return CallUnlessEmpty)
