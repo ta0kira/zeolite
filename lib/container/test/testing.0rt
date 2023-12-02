@@ -16,76 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "CheckSequence equality success" {
-  success TestChecker
-}
-
-unittest equals {
-  Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
-  Vector<Int> expected <- Vector<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:equals(expected)
-}
-
-unittest equalsQuiet {
-  Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
-  Vector<Int> expected <- Vector<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
-}
-
-unittest equalsWithEmpty {
-  Vector<Int> expected <- Vector<Int>.new()
-  \ empty `Matches:with` CheckSequence:equals(expected)
-}
-
-unittest equalsQuietWithEmpty {
-  Vector<Int> expected <- Vector<Int>.new()
-  \ empty `Matches:with` CheckSequence:equalsQuiet(expected)
-}
-
-
-testcase "CheckSequence:equals different" {
-  failure TestChecker
-  require "10.+40"
-  require "20.+50"
-  require "30.+60"
-}
-
-unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<Int> expected <- Vector<Int>.new().append(40).append(50).append(60)
-  \ actual `Matches:with` CheckSequence:equals(expected)
-}
-
-
-testcase "CheckSequence:equals extra" {
-  failure TestChecker
-  require "unexpected"
-  exclude "[Ii]tem #0"
-  exclude "[Ii]tem #1"
-  exclude "[Ii]tem #2"
-}
-
-unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:equals(expected)
-}
-
-
-testcase "CheckSequence:equals missing" {
-  failure TestChecker
-  require "missing"
-  exclude "[Ii]tem #0"
-  exclude "[Ii]tem #1"
-  exclude "[Ii]tem #2"
-}
-
-unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  \ actual `Matches:with` CheckSequence:equals(expected)
-}
-
 
 testcase "CheckSequence:equalsQuiet different" {
   failure TestChecker
@@ -279,4 +209,62 @@ unittest test {
       .append(`CheckValue:equals` 30)
       .append(`CheckValue:equals` 40)
   \ actual `Matches:with` CheckSequence:matchesQuiet(expected)
+}
+
+
+testcase "CheckSet equality success" {
+  success TestChecker
+}
+
+unittest equals {
+  SortedSet<Int> actual <- SortedSet<Int>.new().append(1).append(2).append(3)
+  SortedSet<Int> expected <- SortedSet<Int>.new().append(1).append(2).append(3)
+  \ actual `Matches:with` CheckSet:equals(expected)
+}
+
+
+testcase "CheckSet:equals different" {
+  failure TestChecker
+  require "\"10\""
+  require "\"20\""
+  require "\"30\""
+  require "\"40\""
+  require "\"50\""
+  require "\"60\""
+}
+
+unittest test {
+  SortedSet<Int> actual <- SortedSet<Int>.new().append(10).append(20).append(30)
+  SortedSet<Int> expected <- SortedSet<Int>.new().append(40).append(50).append(60)
+  \ actual `Matches:with` CheckSet:equals(expected)
+}
+
+
+testcase "CheckSet:equals extra" {
+  failure TestChecker
+  require "\"40\""
+  exclude "\"10\""
+  exclude "\"20\""
+  exclude "\"30\""
+}
+
+unittest test {
+  SortedSet<Int> actual <- SortedSet<Int>.new().append(10).append(20).append(30).append(40)
+  SortedSet<Int> expected <- SortedSet<Int>.new().append(10).append(20).append(30)
+  \ actual `Matches:with` CheckSet:equals(expected)
+}
+
+
+testcase "CheckSet:equals missing" {
+  failure TestChecker
+  require "\"40\""
+  exclude "\"10\""
+  exclude "\"20\""
+  exclude "\"30\""
+}
+
+unittest test {
+  SortedSet<Int> actual <- SortedSet<Int>.new().append(10).append(20).append(30)
+  SortedSet<Int> expected <- SortedSet<Int>.new().append(10).append(20).append(30).append(40)
+  \ actual `Matches:with` CheckSet:equals(expected)
 }

@@ -1314,8 +1314,7 @@ mergeInferredTypes r f ff ps gs0 = do
       let gs2 = map filterGuess mult
       collectFirstM_ gs2 <!! genericError
       collectAnyM gs2
-    genericError = "No guesses available params " ++ intercalate ", " (map show $ Map.keys ff)
-    filterGuess [] = emptyErrorM
+    genericError = "No guesses available for params " ++ intercalate ", " (map show $ Map.keys ff)
     filterGuess gs = checkSubFilters gs >> return gs
     extractGuesses (i,is) = do
       let is2 = map (extractSingle i) is

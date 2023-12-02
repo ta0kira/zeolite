@@ -34,6 +34,12 @@ define CheckSequence {
   }
 }
 
+define CheckSet {
+  equals (expected) {
+    return SetEquals<#k>.new(expected)
+  }
+}
+
 concrete SequenceEquals<#x> {
   #x requires Formatted
   #x defines Equals<#x>
@@ -236,5 +242,48 @@ define SequenceMatches {
     if (`present` currentExpected) {
       \ report.addError(message: "actual has missing items")
     }
+  }
+}
+
+concrete SetEquals<#k> {
+  #k requires Formatted
+
+  @type new ([SetReader<#k>&DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>)
+}
+
+define SetEquals {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>
+
+  @value [SetReader<#k>&DefaultOrder<#k>] expected
+
+  new (expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    traverse (expected.defaultOrder() -> #k currentExpected) {
+      if (`present` actual && ! `require(actual).member` currentExpected) {
+        \ report.addError(message: String.builder()
+            .append("\"")
+            .append(currentExpected)
+            .append("\" is missing")
+            .build())
+      }
+    }
+    traverse (actual&.defaultOrder() -> #k currentActual) {
+      if (! `expected.member` currentActual) {
+        \ report.addError(message: String.builder()
+            .append("\"")
+            .append(currentActual)
+            .append("\" is unexpected")
+            .build())
+      }
+    }
+  }
+
+  summary () {
+    return "set equals"
   }
 }

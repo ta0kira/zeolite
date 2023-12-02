@@ -35,3 +35,9 @@ concrete CheckSequence {
     #x requires Formatted
   (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
 }
+
+concrete CheckSet {
+  @category equals<#k>
+    #k requires Formatted
+  ([SetReader<#k>&DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>)
+}
