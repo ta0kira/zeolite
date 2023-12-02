@@ -19,7 +19,7 @@ limitations under the License.
 define CheckString {
   $ReadOnlyExcept[]$
 
-  refines ValueMatcher<String>
+  refines ValueMatcher<Formatted>
 
   @value String expected
   @value Bool fromStart
@@ -42,7 +42,7 @@ define CheckString {
       \ report.addError(message: appendErrorAndBuild(String.builder().append("empty")))
       return _
     }
-    String value <- require(actual)
+    String value <- require(actual).formatted()
     $Hidden[actual]$
     Int startIndex <- 0
     if (toEnd) {

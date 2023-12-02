@@ -18,7 +18,7 @@ limitations under the License.
 
 // Simple sub-string checks.
 concrete CheckString {
-  @category contains (Formatted) -> (ValueMatcher<String>)
-  @category startsWith (Formatted) -> (ValueMatcher<String>)
-  @category endsWith (Formatted) -> (ValueMatcher<String>)
+  @category contains (Formatted) -> (ValueMatcher<Formatted>)
+  @category startsWith (Formatted) -> (ValueMatcher<Formatted>)
+  @category endsWith (Formatted) -> (ValueMatcher<Formatted>)
 }
