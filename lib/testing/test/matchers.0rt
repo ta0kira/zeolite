@@ -201,6 +201,27 @@ unittest test {
 }
 
 
+testcase "CheckValue:is success" {
+  success TestChecker
+}
+
+unittest test {
+  String value <- "foo"
+  \ value `Matches:with` CheckValue:is(value)
+}
+
+
+testcase "CheckValue:is failure same value" {
+  failure TestChecker
+  require "String@[a-f0-9]+"
+  exclude "foo"
+}
+
+unittest test {
+  \ "foo" `Matches:with` CheckValue:is("foo")
+}
+
+
 testcase "CheckValue:using success" {
   success TestChecker
 }

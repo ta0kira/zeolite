@@ -55,6 +55,9 @@ concrete CheckValue<#x|> {
     #x defines Equals<#x>
   (optional #x) -> (ValueMatcher<#x>)
 
+  // Value has the same Identifier.
+  @category is<#x> (optional #x) -> (ValueMatcher<#x>)
+
   @category lessThan<#x>
     #x requires Formatted
     #x defines LessThan<#x>

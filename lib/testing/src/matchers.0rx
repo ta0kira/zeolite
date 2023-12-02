@@ -64,6 +64,10 @@ define CheckValue {
     return ValueEquals<#x>.new(true,expected)
   }
 
+  is (expected) {
+    return ValueIdentifier<#x>.new(expected)
+  }
+
   lessThan (upper) {
     return ValueBounds<#x>.new(empty,upper)
   }
@@ -157,6 +161,46 @@ define ValueEquals {
     } else {
       return "value equals"
     }
+  }
+}
+
+concrete ValueIdentifier<#x> {
+  @type new (optional #x) -> (ValueMatcher<#x>)
+}
+
+define ValueIdentifier {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<#x>
+
+  // NOTE: Don't use #x here so that it doesn't create a reference.
+  @value Identifier<#x> expected
+
+  new (expected) {
+    return #self{ `identify` expected }
+  }
+
+  check (actual,report) {
+    if (`identify` actual != expected) {
+      \ report.addError(message: String.builder()
+          .append(`format` `identify` actual)
+          .append(" does not equal ")
+          .append(`format` expected)
+          .build())
+    }
+  }
+
+  summary () {
+    return "value is same instance as"
+  }
+
+  @type format (Identifier<#x>) -> (Formatted)
+  format (id) {
+    return String.builder()
+        .append(typename<#x>())
+        .append("@")
+        .append(id)
+        .build()
   }
 }
 
