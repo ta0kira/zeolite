@@ -341,7 +341,7 @@ define ValueSource {
   }
 
   readAt (i) {
-    \ i `Matches:with` CheckValue:between(0,size-1)
+    \ i `Matches:with` CheckValue:betweenEquals(0,size-1)
     return Value.new(original,i)
   }
 }

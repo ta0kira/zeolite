@@ -21,59 +21,59 @@ testcase "ParseChars tests" {
 }
 
 unittest floatNoDecimal {
-  \ ParseChars.float("123") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9,123.1))
+  \ ParseChars.float("123") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9,123.1))
 }
 
 unittest floatDecimalLeft {
-  \ ParseChars.float(".123") `Matches:with` CheckErrorOr:value(CheckValue:between(0.1229,0.1231))
+  \ ParseChars.float(".123") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(0.1229,0.1231))
 }
 
 unittest floatDecimalRight {
-  \ ParseChars.float("123.") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9,123.1))
+  \ ParseChars.float("123.") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9,123.1))
 }
 
 unittest floatDecimalMiddle {
-  \ ParseChars.float("123.456") `Matches:with` CheckErrorOr:value(CheckValue:between(123.4559,123.4561))
+  \ ParseChars.float("123.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559,123.4561))
 }
 
 unittest floatLeadingTrailingZeros {
-  \ ParseChars.float("000123.456000") `Matches:with` CheckErrorOr:value(CheckValue:between(123.4559,123.4561))
+  \ ParseChars.float("000123.456000") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559,123.4561))
 }
 
 unittest floatNegative {
-  \ ParseChars.float("-123.456") `Matches:with` CheckErrorOr:value(CheckValue:between(-123.4561,-123.4559))
+  \ ParseChars.float("-123.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(-123.4561,-123.4559))
 }
 
 unittest floatPositive {
-  \ ParseChars.float("+123.456") `Matches:with` CheckErrorOr:value(CheckValue:between(123.4559,123.4561))
+  \ ParseChars.float("+123.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559,123.4561))
 }
 
 unittest floatNegativeDecimalLeft {
-  \ ParseChars.float("-.456") `Matches:with` CheckErrorOr:value(CheckValue:between(-0.4561,-0.4559))
+  \ ParseChars.float("-.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(-0.4561,-0.4559))
 }
 
 unittest floatExponentNoDecimal {
-  \ ParseChars.float("123E5") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9E5,123.1E5))
+  \ ParseChars.float("123E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E5,123.1E5))
 }
 
 unittest floatNegativeExponent {
-  \ ParseChars.float("123E-5") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9E-5,123.1E-5))
+  \ ParseChars.float("123E-5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E-5,123.1E-5))
 }
 
 unittest floatPositiveExponent {
-  \ ParseChars.float("123E+5") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9E5,123.1E5))
+  \ ParseChars.float("123E+5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E5,123.1E5))
 }
 
 unittest floatExponentDecimalRight {
-  \ ParseChars.float("123.E5") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9E5,123.1E5))
+  \ ParseChars.float("123.E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E5,123.1E5))
 }
 
 unittest floatExponentDecimalLeft {
-  \ ParseChars.float(".123E5") `Matches:with` CheckErrorOr:value(CheckValue:between(122.9E2,123.1E2))
+  \ ParseChars.float(".123E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E2,123.1E2))
 }
 
 unittest floatExponentDecimalMiddle {
-  \ ParseChars.float("123.456E5") `Matches:with` CheckErrorOr:value(CheckValue:between(123.4559E5,123.4561E5))
+  \ ParseChars.float("123.456E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559E5,123.4561E5))
 }
 
 unittest floatEmpty {

@@ -122,7 +122,7 @@ unittest exponential { $DisableCoverage$
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:between(0.9/lambda,1.1/lambda)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(0.9/lambda,1.1/lambda)
 }
 
 unittest gaussian { $DisableCoverage$
@@ -138,7 +138,7 @@ unittest gaussian { $DisableCoverage$
     sum <- sum+random.generate()
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:between(mean-0.1*sd,mean+0.1*sd)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(mean-0.1*sd,mean+0.1*sd)
 }
 
 unittest uniform { $DisableCoverage$
@@ -152,11 +152,11 @@ unittest uniform { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:between(min,max)
+    \ value `Matches:with` CheckValue:betweenEquals(min,max)
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:between((min+max)/2.0-0.1*(max-min),(min+max)/2.0+0.1*(max-min))
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals((min+max)/2.0-0.1*(max-min),(min+max)/2.0+0.1*(max-min))
 }
 
 unittest probability { $DisableCoverage$
@@ -168,11 +168,11 @@ unittest probability { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:between(0.0,1.0)
+    \ value `Matches:with` CheckValue:betweenEquals(0.0,1.0)
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:between(0.4,0.6)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(0.4,0.6)
 }
 
 unittest constant { $DisableCoverage$
@@ -203,11 +203,11 @@ unittest categorical { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:between(0.0,4.0)
+    \ value `Matches:with` CheckValue:betweenEquals(0.0,4.0)
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:between(1.9,2.1)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(1.9,2.1)
 }
 
 
