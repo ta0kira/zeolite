@@ -58,17 +58,32 @@ concrete CheckValue<#x|> {
   // Value has the same Identifier.
   @category is<#x> (optional #x) -> (ValueMatcher<#x>)
 
-  @category lessThan<#x>
+  @category lessThanNotEqual<#x>
     #x requires Formatted
     #x defines LessThan<#x>
   (#x) -> (ValueMatcher<#x>)
 
-  @category greaterThan<#x>
+  @category greaterThanNotEqual<#x>
     #x requires Formatted
     #x defines LessThan<#x>
   (#x) -> (ValueMatcher<#x>)
 
-  @category between<#x>
+  @category betweenNotEqual<#x>
+    #x requires Formatted
+    #x defines LessThan<#x>
+  (#x,#x) -> (ValueMatcher<#x>)
+
+  @category lessThanEqual<#x>
+    #x requires Formatted
+    #x defines LessThan<#x>
+  (#x) -> (ValueMatcher<#x>)
+
+  @category greaterThanEqual<#x>
+    #x requires Formatted
+    #x defines LessThan<#x>
+  (#x) -> (ValueMatcher<#x>)
+
+  @category betweenEqual<#x>
     #x requires Formatted
     #x defines LessThan<#x>
   (#x,#x) -> (ValueMatcher<#x>)

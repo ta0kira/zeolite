@@ -69,16 +69,28 @@ define CheckValue {
     return ValueIdentifier<#x>.new(expected)
   }
 
-  lessThan (upper) {
-    return ValueBounds<#x>.new(empty,upper)
+  lessThanNotEqual (upper) {
+    return ValueBounds<#x>.new(false,empty,upper)
   }
 
-  greaterThan (lower) {
-    return ValueBounds<#x>.new(lower,empty)
+  greaterThanNotEqual (lower) {
+    return ValueBounds<#x>.new(false,lower,empty)
   }
 
-  between (lower,upper) {
-    return ValueBounds<#x>.new(lower,upper)
+  betweenNotEqual (lower,upper) {
+    return ValueBounds<#x>.new(false,lower,upper)
+  }
+
+  lessThanEqual (upper) {
+    return ValueBounds<#x>.new(true,empty,upper)
+  }
+
+  greaterThanEqual (lower) {
+    return ValueBounds<#x>.new(true,lower,empty)
+  }
+
+  betweenEqual (lower,upper) {
+    return ValueBounds<#x>.new(true,lower,upper)
   }
 }
 
@@ -314,7 +326,7 @@ concrete ValueBounds<#x> {
   #x requires Formatted
   #x defines LessThan<#x>
 
-  @type new (optional #x,optional #x) -> (ValueMatcher<#x>)
+  @type new (Bool,optional #x,optional #x) -> (ValueMatcher<#x>)
 }
 
 define ValueBounds {
@@ -322,55 +334,77 @@ define ValueBounds {
 
   refines ValueMatcher<#x>
 
+  @value Bool inclusive
   @value optional #x lower
   @value optional #x upper
 
-  new (lower,upper) {
+  new (inclusive,lower,upper) {
     return delegate -> #self
   }
 
   check (actual,report) {
     Bool match <- `present` actual
     if (match && `present` lower) {
-      match <- !(`require` actual `#x.lessThan` `require` lower)
+      match <- require(lower) `compare` require(actual)
     }
     if (match && `present` upper) {
-      match <- !(`require` upper `#x.lessThan` `require` actual)
+      match <- require(actual) `compare` require(upper)
     }
     if (!match) {
       if (`present` lower && `present` upper) {
         \ report.addError(message: String.builder()
             .append(`Format:autoFormat` actual)
             .append(" is not between ")
-            .append(`require` lower)
+            .append(`Format:autoFormat` lower)
             .append(" and ")
-            .append(`require` upper)
+            .append(`Format:autoFormat` upper)
             .build())
       } elif (`present` lower) {
         \ report.addError(message: String.builder()
             .append(`Format:autoFormat` actual)
             .append(" is not greater than ")
-            .append(`require` lower)
+            .append(`Format:autoFormat` lower)
             .build())
       } elif (`present` upper) {
         \ report.addError(message: String.builder()
             .append(`Format:autoFormat` actual)
             .append(" is not less than ")
-            .append(`require` upper)
+            .append(`Format:autoFormat` upper)
             .build())
       }
     }
   }
 
   summary () {
-    if (`present` lower && `present` upper) {
-      return "value is between"
-    } elif (`present` lower) {
-      return "value is greater than"
-    } elif (`present` upper) {
-      return "value is less than"
+    if (inclusive) {
+      if (`present` lower && `present` upper) {
+        return "value is between or equal"
+      } elif (`present` lower) {
+        return "value is greater than or equal"
+      } elif (`present` upper) {
+        return "value is less than or equal"
+      } else {
+        return "value is present"
+      }
     } else {
-      return "value is"
+      if (`present` lower && `present` upper) {
+        return "value is between but not equal"
+      } elif (`present` lower) {
+        return "value is greater than but not equal"
+      } elif (`present` upper) {
+        return "value is less than but not equal"
+      } else {
+        return "value is present"
+      }
+    }
+  }
+
+  @value compare (#x,#x) -> (Bool)
+  compare (x,y) {
+    if (inclusive) {
+      return !(y `#x.lessThan` x)
+    } else {
+      return x `#x.lessThan` y
     }
   }
 }

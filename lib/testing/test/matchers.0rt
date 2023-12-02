@@ -251,78 +251,98 @@ unittest test {
 }
 
 
-testcase "CheckValue:lessThan success" {
+testcase "CheckValue:lessThanNotEqual success" {
   success TestChecker
 }
 
 unittest test {
-  \ 0 `Matches:with` CheckValue:lessThan(1)
+  \ 0 `Matches:with` CheckValue:lessThanNotEqual(1)
 }
 
 
-testcase "CheckValue:lessThan failure non-empty" {
+testcase "CheckValue:lessThanNotEqual failure non-empty" {
   failure TestChecker
   require "100"
   require "20"
 }
 
 unittest test {
-  \ 100 `Matches:with` CheckValue:lessThan(20)
+  \ 100 `Matches:with` CheckValue:lessThanNotEqual(20)
 }
 
 
-testcase "CheckValue:lessThan failure empty" {
+testcase "CheckValue:lessThanNotEqual failure endpoint" {
+  failure TestChecker
+  require "100"
+}
+
+unittest test {
+  \ 100 `Matches:with` CheckValue:lessThanNotEqual(100)
+}
+
+
+testcase "CheckValue:lessThanNotEqual failure empty" {
   failure TestChecker
   require "empty"
   require "20"
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:lessThan(20)
+  \ empty?Int `Matches:with` CheckValue:lessThanNotEqual(20)
 }
 
 
-testcase "CheckValue:greaterThan success" {
+testcase "CheckValue:greaterThanNotEqual success" {
   success TestChecker
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:greaterThan(0)
+  \ 1 `Matches:with` CheckValue:greaterThanNotEqual(0)
 }
 
 
-testcase "CheckValue:greaterThan failure non-empty" {
+testcase "CheckValue:greaterThanNotEqual failure non-empty" {
   failure TestChecker
   require "10"
   require "200"
 }
 
 unittest test {
-  \ 10 `Matches:with` CheckValue:greaterThan(200)
+  \ 10 `Matches:with` CheckValue:greaterThanNotEqual(200)
 }
 
 
-testcase "CheckValue:greaterThan failure empty" {
+testcase "CheckValue:greaterThanNotEqual failure endpoint" {
+  failure TestChecker
+  require "10"
+}
+
+unittest test {
+  \ 10 `Matches:with` CheckValue:greaterThanNotEqual(10)
+}
+
+
+testcase "CheckValue:greaterThanNotEqual failure empty" {
   failure TestChecker
   require "empty"
   require "20"
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:greaterThan(20)
+  \ empty?Int `Matches:with` CheckValue:greaterThanNotEqual(20)
 }
 
 
-testcase "CheckValue:between success" {
+testcase "CheckValue:betweenNotEqual success" {
   success TestChecker
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:between(0,3)
+  \ 1 `Matches:with` CheckValue:betweenNotEqual(0,3)
 }
 
 
-testcase "CheckValue:between failure below" {
+testcase "CheckValue:betweenNotEqual failure below" {
   failure TestChecker
   require "3"
   require "5"
@@ -330,11 +350,11 @@ testcase "CheckValue:between failure below" {
 }
 
 unittest test {
-  \ 3 `Matches:with` CheckValue:between(5,200)
+  \ 3 `Matches:with` CheckValue:betweenNotEqual(5,200)
 }
 
 
-testcase "CheckValue:between failure above" {
+testcase "CheckValue:betweenNotEqual failure above" {
   failure TestChecker
   require "300"
   require "5"
@@ -342,11 +362,33 @@ testcase "CheckValue:between failure above" {
 }
 
 unittest test {
-  \ 300 `Matches:with` CheckValue:between(5,200)
+  \ 300 `Matches:with` CheckValue:betweenNotEqual(5,200)
 }
 
 
-testcase "CheckValue:between failure empty" {
+testcase "CheckValue:betweenNotEqual failure endpoint low" {
+  failure TestChecker
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 5 `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure endpoint high" {
+  failure TestChecker
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 200 `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenNotEqual failure empty" {
   failure TestChecker
   require "empty"
   require "5"
@@ -354,7 +396,118 @@ testcase "CheckValue:between failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:between(5,200)
+  \ empty?Int `Matches:with` CheckValue:betweenNotEqual(5,200)
+}
+
+
+testcase "CheckValue:lessThanEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 0 `Matches:with` CheckValue:lessThanEqual(1)
+  \ 0 `Matches:with` CheckValue:lessThanEqual(0)
+}
+
+
+testcase "CheckValue:lessThanEqual failure non-empty" {
+  failure TestChecker
+  require "100"
+  require "20"
+}
+
+unittest test {
+  \ 100 `Matches:with` CheckValue:lessThanEqual(20)
+}
+
+
+testcase "CheckValue:lessThanEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:lessThanEqual(20)
+}
+
+
+testcase "CheckValue:greaterThanEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:greaterThanEqual(0)
+  \ 1 `Matches:with` CheckValue:greaterThanEqual(1)
+}
+
+
+testcase "CheckValue:greaterThanEqual failure non-empty" {
+  failure TestChecker
+  require "10"
+  require "200"
+}
+
+unittest test {
+  \ 10 `Matches:with` CheckValue:greaterThanEqual(200)
+}
+
+
+testcase "CheckValue:greaterThanEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "20"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:greaterThanEqual(20)
+}
+
+
+testcase "CheckValue:betweenEqual success" {
+  success TestChecker
+}
+
+unittest test {
+  \ 1 `Matches:with` CheckValue:betweenEqual(0,3)
+  \ 0 `Matches:with` CheckValue:betweenEqual(0,3)
+  \ 3 `Matches:with` CheckValue:betweenEqual(0,3)
+}
+
+
+testcase "CheckValue:betweenEqual failure below" {
+  failure TestChecker
+  require "3"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 3 `Matches:with` CheckValue:betweenEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenEqual failure above" {
+  failure TestChecker
+  require "300"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ 300 `Matches:with` CheckValue:betweenEqual(5,200)
+}
+
+
+testcase "CheckValue:betweenEqual failure empty" {
+  failure TestChecker
+  require "empty"
+  require "5"
+  require "200"
+}
+
+unittest test {
+  \ empty?Int `Matches:with` CheckValue:betweenEqual(5,200)
 }
 
 
@@ -705,20 +858,20 @@ testcase "CheckSequence all-match success" {
 
 unittest allMatch {
   ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThan(0))
+  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEqual(0))
 }
 
 unittest allMatchQuiet {
   ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThan(0))
+  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(0))
 }
 
 unittest allMatchWithEmpty {
-  \ empty `Matches:with` CheckSequence:allMatch(CheckValue:greaterThan(0))
+  \ empty `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEqual(0))
 }
 
 unittest allMatchQuietWithEmpty {
-  \ empty `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThan(0))
+  \ empty `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(0))
 }
 
 
@@ -731,7 +884,7 @@ testcase "CheckSequence:allMatch failure" {
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThan(25))
+  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEqual(25))
 }
 
 
@@ -745,5 +898,5 @@ testcase "CheckSequence:allMatchQuiet failure" {
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThan(25))
+  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(25))
 }
