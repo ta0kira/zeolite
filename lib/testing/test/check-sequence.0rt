@@ -217,20 +217,20 @@ testcase "CheckSequence all-match success" {
 
 unittest allMatch {
   ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEqual(0))
+  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEquals(0))
 }
 
 unittest allMatchQuiet {
   ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(0))
+  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEquals(0))
 }
 
 unittest allMatchWithEmpty {
-  \ empty `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEqual(0))
+  \ empty `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEquals(0))
 }
 
 unittest allMatchQuietWithEmpty {
-  \ empty `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(0))
+  \ empty `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEquals(0))
 }
 
 
@@ -243,7 +243,7 @@ testcase "CheckSequence:allMatch failure" {
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEqual(25))
+  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEquals(25))
 }
 
 
@@ -256,7 +256,7 @@ testcase "CheckSequence:allMatchQuiet failure" {
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEqual(25))
+  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEquals(25))
 }
 
 

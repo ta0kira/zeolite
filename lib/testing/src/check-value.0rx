@@ -33,27 +33,27 @@ define CheckValue {
     return ValueIdentifier<#x>.new(expected)
   }
 
-  lessThanNotEqual (upper) {
+  lessThanNotEquals (upper) {
     return ValueBounds<#x>.new(false,empty,upper)
   }
 
-  greaterThanNotEqual (lower) {
+  greaterThanNotEquals (lower) {
     return ValueBounds<#x>.new(false,lower,empty)
   }
 
-  betweenNotEqual (lower,upper) {
+  betweenNotEquals (lower,upper) {
     return ValueBounds<#x>.new(false,lower,upper)
   }
 
-  lessThanEqual (upper) {
+  lessThanEquals (upper) {
     return ValueBounds<#x>.new(true,empty,upper)
   }
 
-  greaterThanEqual (lower) {
+  greaterThanEquals (lower) {
     return ValueBounds<#x>.new(true,lower,empty)
   }
 
-  betweenEqual (lower,upper) {
+  betweenEquals (lower,upper) {
     return ValueBounds<#x>.new(true,lower,upper)
   }
 }

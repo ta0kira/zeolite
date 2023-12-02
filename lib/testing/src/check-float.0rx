@@ -24,7 +24,7 @@ define CheckFloat {
   @value optional Float epsilon
   @value Float expected
 
-  almostEqual (expected) {
+  almostEquals (expected) {
     return CheckFloat{ empty, expected.asFloat() }
   }
 

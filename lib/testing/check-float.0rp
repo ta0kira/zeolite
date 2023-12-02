@@ -21,7 +21,7 @@ concrete CheckFloat {
   // Uses relative threshold of $ExprLookup[FLOAT_RELATIVE_THRESHOLD]$ times the
   // max absolute value of the values being compared.
   // NOTE: This will never match 0 unless exactly 0 is expected.
-  @category almostEqual (AsFloat) -> (ValueMatcher<[AsFloat&Formatted]>)
+  @category almostEquals (AsFloat) -> (ValueMatcher<[AsFloat&Formatted]>)
 
   // Uses absolute threshold.
   @category closeTo (AsFloat,Float epsilon:) -> (ValueMatcher<[AsFloat&Formatted]>)

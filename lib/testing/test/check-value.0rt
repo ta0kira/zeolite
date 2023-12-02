@@ -154,7 +154,7 @@ testcase "CheckValue:lessThanNotEqual success" {
 }
 
 unittest test {
-  \ 0 `Matches:with` CheckValue:lessThanNotEqual(1)
+  \ 0 `Matches:with` CheckValue:lessThanNotEquals(1)
 }
 
 
@@ -165,7 +165,7 @@ testcase "CheckValue:lessThanNotEqual failure non-empty" {
 }
 
 unittest test {
-  \ 100 `Matches:with` CheckValue:lessThanNotEqual(20)
+  \ 100 `Matches:with` CheckValue:lessThanNotEquals(20)
 }
 
 
@@ -175,7 +175,7 @@ testcase "CheckValue:lessThanNotEqual failure endpoint" {
 }
 
 unittest test {
-  \ 100 `Matches:with` CheckValue:lessThanNotEqual(100)
+  \ 100 `Matches:with` CheckValue:lessThanNotEquals(100)
 }
 
 
@@ -186,7 +186,7 @@ testcase "CheckValue:lessThanNotEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:lessThanNotEqual(20)
+  \ empty?Int `Matches:with` CheckValue:lessThanNotEquals(20)
 }
 
 
@@ -195,7 +195,7 @@ testcase "CheckValue:greaterThanNotEqual success" {
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:greaterThanNotEqual(0)
+  \ 1 `Matches:with` CheckValue:greaterThanNotEquals(0)
 }
 
 
@@ -206,7 +206,7 @@ testcase "CheckValue:greaterThanNotEqual failure non-empty" {
 }
 
 unittest test {
-  \ 10 `Matches:with` CheckValue:greaterThanNotEqual(200)
+  \ 10 `Matches:with` CheckValue:greaterThanNotEquals(200)
 }
 
 
@@ -216,7 +216,7 @@ testcase "CheckValue:greaterThanNotEqual failure endpoint" {
 }
 
 unittest test {
-  \ 10 `Matches:with` CheckValue:greaterThanNotEqual(10)
+  \ 10 `Matches:with` CheckValue:greaterThanNotEquals(10)
 }
 
 
@@ -227,7 +227,7 @@ testcase "CheckValue:greaterThanNotEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:greaterThanNotEqual(20)
+  \ empty?Int `Matches:with` CheckValue:greaterThanNotEquals(20)
 }
 
 
@@ -236,7 +236,7 @@ testcase "CheckValue:betweenNotEqual success" {
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:betweenNotEqual(0,3)
+  \ 1 `Matches:with` CheckValue:betweenNotEquals(0,3)
 }
 
 
@@ -248,7 +248,7 @@ testcase "CheckValue:betweenNotEqual failure below" {
 }
 
 unittest test {
-  \ 3 `Matches:with` CheckValue:betweenNotEqual(5,200)
+  \ 3 `Matches:with` CheckValue:betweenNotEquals(5,200)
 }
 
 
@@ -260,7 +260,7 @@ testcase "CheckValue:betweenNotEqual failure above" {
 }
 
 unittest test {
-  \ 300 `Matches:with` CheckValue:betweenNotEqual(5,200)
+  \ 300 `Matches:with` CheckValue:betweenNotEquals(5,200)
 }
 
 
@@ -271,7 +271,7 @@ testcase "CheckValue:betweenNotEqual failure endpoint low" {
 }
 
 unittest test {
-  \ 5 `Matches:with` CheckValue:betweenNotEqual(5,200)
+  \ 5 `Matches:with` CheckValue:betweenNotEquals(5,200)
 }
 
 
@@ -282,7 +282,7 @@ testcase "CheckValue:betweenNotEqual failure endpoint high" {
 }
 
 unittest test {
-  \ 200 `Matches:with` CheckValue:betweenNotEqual(5,200)
+  \ 200 `Matches:with` CheckValue:betweenNotEquals(5,200)
 }
 
 
@@ -294,7 +294,7 @@ testcase "CheckValue:betweenNotEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:betweenNotEqual(5,200)
+  \ empty?Int `Matches:with` CheckValue:betweenNotEquals(5,200)
 }
 
 
@@ -303,8 +303,8 @@ testcase "CheckValue:lessThanEqual success" {
 }
 
 unittest test {
-  \ 0 `Matches:with` CheckValue:lessThanEqual(1)
-  \ 0 `Matches:with` CheckValue:lessThanEqual(0)
+  \ 0 `Matches:with` CheckValue:lessThanEquals(1)
+  \ 0 `Matches:with` CheckValue:lessThanEquals(0)
 }
 
 
@@ -315,7 +315,7 @@ testcase "CheckValue:lessThanEqual failure non-empty" {
 }
 
 unittest test {
-  \ 100 `Matches:with` CheckValue:lessThanEqual(20)
+  \ 100 `Matches:with` CheckValue:lessThanEquals(20)
 }
 
 
@@ -326,7 +326,7 @@ testcase "CheckValue:lessThanEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:lessThanEqual(20)
+  \ empty?Int `Matches:with` CheckValue:lessThanEquals(20)
 }
 
 
@@ -335,8 +335,8 @@ testcase "CheckValue:greaterThanEqual success" {
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:greaterThanEqual(0)
-  \ 1 `Matches:with` CheckValue:greaterThanEqual(1)
+  \ 1 `Matches:with` CheckValue:greaterThanEquals(0)
+  \ 1 `Matches:with` CheckValue:greaterThanEquals(1)
 }
 
 
@@ -347,7 +347,7 @@ testcase "CheckValue:greaterThanEqual failure non-empty" {
 }
 
 unittest test {
-  \ 10 `Matches:with` CheckValue:greaterThanEqual(200)
+  \ 10 `Matches:with` CheckValue:greaterThanEquals(200)
 }
 
 
@@ -358,7 +358,7 @@ testcase "CheckValue:greaterThanEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:greaterThanEqual(20)
+  \ empty?Int `Matches:with` CheckValue:greaterThanEquals(20)
 }
 
 
@@ -367,9 +367,9 @@ testcase "CheckValue:betweenEqual success" {
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:betweenEqual(0,3)
-  \ 0 `Matches:with` CheckValue:betweenEqual(0,3)
-  \ 3 `Matches:with` CheckValue:betweenEqual(0,3)
+  \ 1 `Matches:with` CheckValue:betweenEquals(0,3)
+  \ 0 `Matches:with` CheckValue:betweenEquals(0,3)
+  \ 3 `Matches:with` CheckValue:betweenEquals(0,3)
 }
 
 
@@ -381,7 +381,7 @@ testcase "CheckValue:betweenEqual failure below" {
 }
 
 unittest test {
-  \ 3 `Matches:with` CheckValue:betweenEqual(5,200)
+  \ 3 `Matches:with` CheckValue:betweenEquals(5,200)
 }
 
 
@@ -393,7 +393,7 @@ testcase "CheckValue:betweenEqual failure above" {
 }
 
 unittest test {
-  \ 300 `Matches:with` CheckValue:betweenEqual(5,200)
+  \ 300 `Matches:with` CheckValue:betweenEquals(5,200)
 }
 
 
@@ -405,5 +405,5 @@ testcase "CheckValue:betweenEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:betweenEqual(5,200)
+  \ empty?Int `Matches:with` CheckValue:betweenEquals(5,200)
 }
