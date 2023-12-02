@@ -1211,7 +1211,10 @@ guessParamsFromArgs r fa f ps ts = do
   fmap Positional $ mapCompilerM (subPosition pa3) (pValues $ sfParams f) where
     subPosition pa2 p =
       case (vpParam p) `Map.lookup` pa2 of
-           Just t  -> return t
+           Just t  -> if not (hasInferredParams t)
+                         then return t
+                         else compilerErrorM $ "Could not infer param " ++
+                              show (vpParam p) ++ formatFullContextBrace (vpContext p)
            Nothing -> compilerErrorM $ "Something went wrong inferring " ++
                       show (vpParam p) ++ formatFullContextBrace (vpContext p)
     toInstance p1 (AssignedInstance _ t) = return (p1,t)

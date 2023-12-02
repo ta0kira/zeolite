@@ -1200,10 +1200,10 @@ data GuessRange a =
   deriving (Eq,Ord)
 
 instance Show a => Show (GuessRange a) where
-  show (GuessRange Nothing   Nothing)   = "Literally anything is possible"
-  show (GuessRange Nothing   (Just hi)) = "Something at or below " ++ show hi
-  show (GuessRange (Just lo) Nothing)   = "Something at or above " ++ show lo
-  show (GuessRange (Just lo) (Just hi)) = "Something between " ++ show lo ++ " and " ++ show hi
+  show (GuessRange Nothing   Nothing)   = "literally anything is possible"
+  show (GuessRange Nothing   (Just hi)) = "something at or below " ++ show hi
+  show (GuessRange (Just lo) Nothing)   = "something at or above " ++ show lo
+  show (GuessRange (Just lo) (Just hi)) = "something between " ++ show lo ++ " and " ++ show hi
 
 data GuessUnion =
   GuessUnion {
@@ -1232,6 +1232,7 @@ guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilte
 
 mergeInferredTypes :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess -> m ParamValues
+mergeInferredTypes _ _ ff _ _ | null (Map.toList ff) = return Map.empty
 mergeInferredTypes r f ff ps gs0 = do
   let gs0' = mapTypeGuesses gs0
   gs1 <- mapCompilerM (\(i,is) -> fmap ((,) i) $ (reduce >=> simplifyUnion) is) $ Map.toList gs0'
@@ -1301,7 +1302,7 @@ mergeInferredTypes r f ff ps gs0 = do
            _                 -> tryRangeUnion (ms ++ [g2]) g1 gs
     tryRangeUnion _ _ _ = return Nothing
     takeBest [gs] = return $ Map.fromList gs
-    takeBest [] = compilerErrorM "No feasible param guesses found"
+    takeBest [] = compilerErrorM genericError
     takeBest gs = "Unable to merge alternative param guesses" !!> do
       mapCompilerM_ showAmbiguous (zip ([1..] :: [Int]) gs)
       emptyErrorM
@@ -1311,21 +1312,25 @@ mergeInferredTypes r f ff ps gs0 = do
       gs' <- mapCompilerM extractGuesses gs
       let mult = foldM (\xs ys -> [xs++[y] | y <- ys]) [] gs'
       let gs2 = map filterGuess mult
-      collectFirstM_ gs2 <!! "No feasible param guesses found"
+      collectFirstM_ gs2 <!! genericError
       collectAnyM gs2
+    genericError = "No guesses available params " ++ intercalate ", " (map show $ Map.keys ff)
+    filterGuess [] = emptyErrorM
     filterGuess gs = checkSubFilters gs >> return gs
     extractGuesses (i,is) = do
       let is2 = map (extractSingle i) is
-      collectFirstM_ is2 <!! "No feasible guesses for param " ++ show i
+      -- resetBackgroundM prevents duplicate messages.
+      resetBackgroundM $ collectFirstM_ is2 <!! "No feasible guesses for param " ++ show i
       fmap nub $ collectAnyM is2
     extractSingle i (GuessRange (Just lo) Nothing) = return (i,lo)
     extractSingle i (GuessRange Nothing (Just hi)) = return (i,hi)
-    extractSingle i (GuessRange (Just lo) (Just hi)) = do
+    extractSingle i g@(GuessRange (Just lo) (Just hi)) = do
       p <- (Just hi) `convertsTo` (Just lo)
       if p
          then return (i,lo)
          else do
-           compilerBackgroundM $ "Arbitrarily using lower bound " ++ show lo ++ " for " ++ show i
+           compilerBackgroundM $ "Arbitrarily using lower bound " ++ show lo ++
+                                 " for " ++ show i ++ " (" ++ show g ++ ")"
            return (i,lo)
     extractSingle i g@(GuessRange Nothing Nothing) =
       compilerErrorM $ "Ambiguous guess for param " ++ show i ++ ": " ++ show g
