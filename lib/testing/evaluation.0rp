@@ -39,13 +39,6 @@ concrete Matches {
   @category tryValue<#x>
     #x requires TestCompare<#x>
   (optional #x,#x) -> ()
-
-  // Predicate manipulation.
-  @category not<#x> (ValueMatcher<#x>) -> (ValueMatcher<#x>)
-  @category or<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
-  @category and<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
-  @category anyOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
-  @category allOf<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<#x>)
 }
 
 // Unconditional outcomes regardless of the actual value.

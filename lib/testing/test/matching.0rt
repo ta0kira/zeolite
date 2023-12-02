@@ -86,3 +86,133 @@ unittest test {
   \ report.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())
 }
+
+
+testcase "MatcherCompose:not success" {
+  success TestChecker
+}
+
+unittest test {
+  \ "foo" `Matches:with` `MatcherCompose:not` CheckAlways:error("message")
+}
+
+
+testcase "MatcherCompose:not failure" {
+  failure TestChecker
+  require "expected failure"
+}
+
+unittest test {
+  \ "foo" `Matches:with` `MatcherCompose:not` CheckAlways:match()
+}
+
+
+testcase "MatcherCompose:or success" {
+  success TestChecker
+}
+
+unittest test {
+  \ "foo" `Matches:with` (CheckAlways:match() `MatcherCompose:or` CheckAlways:match())
+  \ "foo" `Matches:with` (CheckAlways:match() `MatcherCompose:or` CheckAlways:error("message"))
+  \ "foo" `Matches:with` (CheckAlways:error("message") `MatcherCompose:or` CheckAlways:match())
+}
+
+
+testcase "MatcherCompose:or failure" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with` (CheckAlways:error("message1") `MatcherCompose:or` CheckAlways:error("message2"))
+}
+
+
+testcase "MatcherCompose:and success" {
+  success TestChecker
+}
+
+unittest test {
+  \ "foo" `Matches:with` (CheckAlways:match() `MatcherCompose:and` CheckAlways:match())
+}
+
+
+testcase "MatcherCompose:and failure both" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with` (CheckAlways:error("message1") `MatcherCompose:and` CheckAlways:error("message2"))
+}
+
+
+testcase "MatcherCompose:and failure one" {
+  failure TestChecker
+  require "message"
+}
+
+unittest test {
+  \ "foo" `Matches:with` (CheckAlways:match() `MatcherCompose:and` CheckAlways:error("message"))
+}
+
+
+testcase "MatcherCompose:anyOf success" {
+  success TestChecker
+}
+
+unittest someMatching {
+  \ "foo" `Matches:with` MatcherCompose:anyOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:error("message"))
+      .append(CheckAlways:match())
+      .append(CheckAlways:die("message")))
+}
+
+unittest emptyList {
+  \ "foo" `Matches:with` MatcherCompose:anyOf(ValueList<ValueMatcher<any>>.new())
+}
+
+
+testcase "MatcherCompose:anyOf failure" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with` MatcherCompose:anyOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:error("message1"))
+      .append(CheckAlways:error("message2")))
+}
+
+
+testcase "MatcherCompose:allOf success" {
+  success TestChecker
+}
+
+unittest allMatching {
+  \ "foo" `Matches:with` MatcherCompose:allOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:match())
+      .append(CheckAlways:match()))
+}
+
+unittest emptyList {
+  \ "foo" `Matches:with` MatcherCompose:allOf(ValueList<ValueMatcher<any>>.new())
+}
+
+
+testcase "MatcherCompose:allOf failure" {
+  failure TestChecker
+  require "message1"
+  require "message2"
+}
+
+unittest test {
+  \ "foo" `Matches:with` MatcherCompose:allOf(ValueList<ValueMatcher<any>>.new()
+      .append(CheckAlways:match())
+      .append(CheckAlways:error("message1"))
+      .append(CheckAlways:match())
+      .append(CheckAlways:error("message2")))
+}
