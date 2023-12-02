@@ -100,6 +100,14 @@ concrete CheckSequence {
   @category matchesQuiet<#x>
     #x requires Formatted
   (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
+
+  @category allMatch<#x>
+    #x requires Formatted
+  (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+
+  @category allMatchQuiet<#x>
+    #x requires Formatted
+  (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 }
 
 // Interface used by predicate testers and matchers to report errors.

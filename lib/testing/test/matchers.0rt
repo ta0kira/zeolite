@@ -512,8 +512,8 @@ testcase "CheckSequence:equalsQuiet different" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<Int> expected <- Vector<Int>.new().append(40).append(50).append(60)
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<Int> expected <- ValueList<Int>.new().append(40).append(50).append(60)
   \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
@@ -529,8 +529,8 @@ testcase "CheckSequence:equalsQuiet extra" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30)
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
+  ValueList<Int> expected <- ValueList<Int>.new().append(10).append(20).append(30)
   \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
@@ -546,8 +546,8 @@ testcase "CheckSequence:equalsQuiet missing" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<Int> expected <- Vector<Int>.new().append(10).append(20).append(30).append(40)
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<Int> expected <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
   \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
 }
 
@@ -557,8 +557,8 @@ testcase "CheckSequence matching success" {
 }
 
 unittest matches {
-  Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 1)
       .append(`CheckValue:equals` 2)
       .append(`CheckValue:equals` 3)
@@ -566,8 +566,8 @@ unittest matches {
 }
 
 unittest matchesQuiet {
-  Vector<Int> actual <- Vector<Int>.new().append(1).append(2).append(3)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 1)
       .append(`CheckValue:equals` 2)
       .append(`CheckValue:equals` 3)
@@ -575,12 +575,12 @@ unittest matchesQuiet {
 }
 
 unittest matchesWithEmpty {
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
   \ empty `Matches:with` CheckSequence:matches(expected)
 }
 
 unittest matchesQuietWithEmpty {
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
   \ empty `Matches:with` CheckSequence:matchesQuiet(expected)
 }
 
@@ -593,8 +593,8 @@ testcase "CheckSequence:matches different" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 40)
       .append(`CheckValue:equals` 50)
       .append(`CheckValue:equals` 60)
@@ -612,8 +612,8 @@ testcase "CheckSequence:matches extra" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 10)
       .append(`CheckValue:equals` 20)
       .append(`CheckValue:equals` 30)
@@ -631,8 +631,8 @@ testcase "CheckSequence:matches missing" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 10)
       .append(`CheckValue:equals` 20)
       .append(`CheckValue:equals` 30)
@@ -649,8 +649,8 @@ testcase "CheckSequence:matchesQuiet different" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 40)
       .append(`CheckValue:equals` 50)
       .append(`CheckValue:equals` 60)
@@ -669,8 +669,8 @@ testcase "CheckSequence:matchesQuiet extra" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30).append(40)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 10)
       .append(`CheckValue:equals` 20)
       .append(`CheckValue:equals` 30)
@@ -689,8 +689,8 @@ testcase "CheckSequence:matchesQuiet missing" {
 }
 
 unittest test {
-  Vector<Int> actual <- Vector<Int>.new().append(10).append(20).append(30)
-  Vector<ValueMatcher<Int>> expected <- Vector<ValueMatcher<Int>>.new()
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
       .append(`CheckValue:equals` 10)
       .append(`CheckValue:equals` 20)
       .append(`CheckValue:equals` 30)
@@ -698,3 +698,52 @@ unittest test {
   \ actual `Matches:with` CheckSequence:matchesQuiet(expected)
 }
 
+
+testcase "CheckSequence all-match success" {
+  success TestChecker
+}
+
+unittest allMatch {
+  ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
+  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThan(0))
+}
+
+unittest allMatchQuiet {
+  ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
+  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThan(0))
+}
+
+unittest allMatchWithEmpty {
+  \ empty `Matches:with` CheckSequence:allMatch(CheckValue:greaterThan(0))
+}
+
+unittest allMatchQuietWithEmpty {
+  \ empty `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThan(0))
+}
+
+
+testcase "CheckSequence:allMatch failure" {
+  failure TestChecker
+  require "10.+25"
+  require "20.+25"
+  exclude "30.+25"
+}
+
+unittest test {
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThan(25))
+}
+
+
+
+testcase "CheckSequence:allMatchQuiet failure" {
+  failure TestChecker
+  require "10.+25"
+  exclude "20.+25"
+  exclude "30.+25"
+}
+
+unittest test {
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThan(25))
+}

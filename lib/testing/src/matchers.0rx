@@ -46,6 +46,7 @@ define MultiChecker {
         .append(matcher.summary())
         .build()
     TestReport newReport <- report.newSection(title: fullTitle)
+    $Hidden[report]$
     \ value `matcher.check` newReport
     return newReport.hasError()
   }
@@ -135,7 +136,7 @@ define CheckString {
     } update {
       startIndex <- startIndex+1
     }
-    \ report.addError(message: appendErrorAndBuild(String.builder().append("\"").append(value).append("\"")))
+    \ report.addError(message: appendErrorAndBuild(String.builder().append(`Format:autoFormat` value)))
   }
 
   summary () {
@@ -151,11 +152,11 @@ define CheckString {
   @value appendErrorAndBuild ([Append<Formatted>&Build<String>]) -> (String)
   appendErrorAndBuild (output) {
     if (fromStart) {
-      return output.append(" does not start with \"").append(expected).append("\"").build()
+      return output.append(" does not start with ").append(`Format:autoFormat` expected).build()
     } elif (toEnd) {
-      return output.append(" does not end with \"").append(expected).append("\"").build()
+      return output.append(" does not end with ").append(`Format:autoFormat` expected).build()
     } else {
-      return output.append(" does not contain \"").append(expected).append("\"").build()
+      return output.append(" does not contain ").append(`Format:autoFormat` expected).build()
     }
   }
 }
@@ -175,6 +176,14 @@ define CheckSequence {
 
   matchesQuiet (expected) {
     return SequenceMatches<#x>.new(true,expected)
+  }
+
+  allMatch (expected) {
+    return SequenceAllMatch<#x>.new(false,expected)
+  }
+
+  allMatchQuiet (expected) {
+    return SequenceAllMatch<#x>.new(true,expected)
   }
 }
 
@@ -406,29 +415,26 @@ define SequenceEquals {
     while (`present` currentActual || `present` currentExpected) {
       optional #x valueActual   <- currentActual&.get()
       optional #x valueExpected <- currentExpected&.get()
-      TestReport error <- report.newSection(title: String.builder()
+      TestReport newReport <- report.newSection(title: String.builder()
           .append("Item #")
           .append(index)
           .build())
+      $Hidden[report]$
       if (! `present` valueActual) {
-        \ error.addError(message: String.builder()
-            .append("\"")
-            .append(`require` valueExpected)
-            .append("\" is missing")
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueExpected)
+            .append(" is missing")
             .build())
       } elif (! `present` valueExpected) {
-        \ error.addError(message: String.builder()
-            .append("\"")
-            .append(`require` valueActual)
-            .append("\" is unexpected")
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" is unexpected")
             .build())
       } elif (!(require(valueActual) `#x.equals` require(valueExpected))) {
-        \ error.addError(message: String.builder()
-            .append("\"")
-            .append(`require` valueActual)
-            .append("\" does not equal \"")
-            .append(`require` valueExpected)
-            .append("\"")
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" does not equal ")
+            .append(`Format:autoFormat` valueExpected)
             .build())
       }
     } update {
@@ -448,16 +454,15 @@ define SequenceEquals {
       #x valueActual   <- require(currentActual&.get())
       #x valueExpected <- require(currentExpected&.get())
       if (!(valueActual `#x.equals` valueExpected)) {
-        TestReport error <- report.newSection(title: String.builder()
+        TestReport newReport <- report.newSection(title: String.builder()
             .append("Item #")
             .append(index)
             .build())
-        \ error.addError(message: String.builder()
-            .append("\"")
-            .append(valueActual)
-            .append("\" does not equal \"")
-            .append(valueExpected)
-            .append("\"")
+        $Hidden[report]$
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" does not equal ")
+            .append(`Format:autoFormat` valueExpected)
             .build())
         break
       }
@@ -502,7 +507,7 @@ define SequenceMatches {
   }
 
   summary () {
-    return "sequence has equal values"
+    return "sequence values separately match"
   }
 
   @value execute (optional DefaultOrder<#x>,TestReport) -> ()
@@ -514,24 +519,23 @@ define SequenceMatches {
     while (`present` currentActual || `present` currentExpected) {
       optional #x valueActual <- currentActual&.get()
       optional ValueMatcher<#x> valueExpected <- currentExpected&.get()
-      TestReport error <- report.newSection(title: String.builder()
+      TestReport newReport <- report.newSection(title: String.builder()
           .append("Item #")
           .append(index)
           .build())
+      $Hidden[report]$
       if (! `present` valueActual) {
-        \ error.addError(message: String.builder()
-            .append("\"")
-            .append(`require` valueExpected&.summary())
-            .append("\" is missing")
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueExpected&.summary())
+            .append(" is missing")
             .build())
       } elif (! `present` valueExpected) {
-        \ error.addError(message: String.builder()
-            .append("\"")
-            .append(`require` valueActual)
-            .append("\" is unexpected")
+        \ newReport.addError(message: String.builder()
+            .append(`Format:autoFormat` valueActual)
+            .append(" is unexpected")
             .build())
       } else {
-        \ require(valueExpected).check(valueActual,error)
+        \ valueActual `require(valueExpected).check` newReport
       }
     } update {
       currentActual <- currentActual&.next()
@@ -549,12 +553,13 @@ define SequenceMatches {
     while (`present` currentActual && `present` currentExpected) {
       #x valueActual <- require(currentActual&.get())
       ValueMatcher<#x> valueExpected <- require(currentExpected&.get())
-      TestReport error <- report.newSection(title: String.builder()
+      TestReport newReport <- report.newSection(title: String.builder()
           .append("Item #")
           .append(index)
           .build())
-      \ require(valueExpected).check(valueActual,error)
-      if (error.hasError()) {
+      $Hidden[report]$
+      \ valueActual `require(valueExpected).check` newReport
+      if (newReport.hasError()) {
         break
       }
     } update {
@@ -568,5 +573,44 @@ define SequenceMatches {
     if (`present` currentExpected) {
       \ report.addError(message: "actual has missing items")
     }
+  }
+}
+
+concrete SequenceAllMatch<#x> {
+  #x requires Formatted
+
+  @type new (Bool,ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
+}
+
+define SequenceAllMatch {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<DefaultOrder<#x>>
+
+  @value Bool quiet
+  @value ValueMatcher<#x> expected
+
+  new (quiet,expected) {
+    return delegate -> #self
+  }
+
+  check (actual,report) {
+    scoped {
+      Int index <- 0
+    } in traverse (actual&.defaultOrder() -> #x value) {
+      TestReport newReport <- report.newSection(title: String.builder()
+          .append("Item #")
+          .append(index)
+          .build())
+      $Hidden[report]$
+      \ value `expected.check` newReport
+      if (quiet && newReport.hasError()) {
+        break
+      }
+    }
+  }
+
+  summary () {
+    return "sequence values all match"
   }
 }
