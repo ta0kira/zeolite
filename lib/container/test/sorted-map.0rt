@@ -310,6 +310,15 @@ unittest weakSetMissing {
   \ map.get(7) `Matches:with` CheckValue:equals(Value.new(10))
 }
 
+unittest setMember {
+  SortedMap<Int,Value> map <- SortedMap<Int,Value>.default()
+      .set(1,Value.new(1))
+      .set(2,Value.new(2))
+      .set(3,Value.new(3))
+  \ map.member(1) `Matches:with` CheckValue:equals(true)
+  \ map.member(5) `Matches:with` CheckValue:equals(false)
+}
+
 concrete Value {
   defines Equals<Value>
   refines Formatted

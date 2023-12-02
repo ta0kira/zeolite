@@ -36,6 +36,10 @@ define HashedMap {
     return itemCount
   }
 
+  member (k) {
+    return `present` delegate -> `get`
+  }
+
   get (k) {
     return table.readAt(getBin(k.hashed())).find(k)
   }

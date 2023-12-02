@@ -172,11 +172,13 @@
   `lib/testing` to help support custom matchers.
 
 * **[new]** Adds support for custom value matchers in tests to `lib/testing`,
-  as well as `String`/`ErrorOr` matching in `lib/util`.
+  as well as `String`/`ErrorOr` matching in `lib/util`. Custom matchers support
+  sequencing, recursion, and conditional failures.
+
+* **[new]** Implements `SetReader<#k>` for `HashedMap<#k,#v>` and
+  `SortedMap<#k,#v>` in `lib/container`.
 
 * **[new]** Adds `tryValue` to `ErrorOr` in `lib/util`.
-
-  Custom matchers support sequencing, recursion, and conditional failures.
 
 ### Compiler CLI
 
