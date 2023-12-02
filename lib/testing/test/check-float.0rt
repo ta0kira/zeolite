@@ -1,0 +1,106 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "CheckFloat success" {
+  success TestChecker
+}
+
+unittest almostEqual {
+  \ 1.230000000001 `Matches:with` CheckFloat:almostEqual(1.23)
+  \ 1.229999999999 `Matches:with` CheckFloat:almostEqual(1.23)
+  \ -1.230000000001 `Matches:with` CheckFloat:almostEqual(-1.23)
+  \ -1.229999999999 `Matches:with` CheckFloat:almostEqual(-1.23)
+  \ 1000000001.0 `Matches:with` CheckFloat:almostEqual(1000000002.0)
+}
+
+unittest closeTo {
+  \ 1.24 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.011)
+  \ 1.22 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.011)
+  \ -1.24 `Matches:with` CheckFloat:closeTo(-1.23,epsilon: 0.011)
+  \ -1.22 `Matches:with` CheckFloat:closeTo(-1.23,epsilon: 0.011)
+}
+
+
+testcase "CheckFloat:almostEqual failure empty" {
+  failure TestChecker
+  require "empty .+1.23"
+}
+
+unittest test {
+  \ empty `Matches:with` CheckFloat:almostEqual(1.23)
+}
+
+
+testcase "CheckFloat:almostEqual failure above" {
+  failure TestChecker
+  require "1.24.+ 1.23"
+}
+
+unittest test {
+  \ 1.24 `Matches:with` CheckFloat:almostEqual(1.23)
+}
+
+
+testcase "CheckFloat:almostEqual failure expect 0" {
+  failure TestChecker
+  require "not within"
+}
+
+unittest test {
+  \ 0.000000001 `Matches:with` CheckFloat:almostEqual(0.0)
+}
+
+
+testcase "CheckFloat:almostEqual failure below" {
+  failure TestChecker
+  require "1.22.+ 1.23"
+}
+
+unittest test {
+  \ 1.22 `Matches:with` CheckFloat:almostEqual(1.23)
+}
+
+
+testcase "CheckFloat:closeTo failure empty" {
+  failure TestChecker
+  require "empty .+0.001 .+1.23"
+}
+
+unittest test {
+  \ empty `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.001)
+}
+
+
+testcase "CheckFloat:closeTo failure above" {
+  failure TestChecker
+  require "1.24.+ 0.001.+ 1.23"
+}
+
+unittest test {
+  \ 1.24 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.001)
+}
+
+
+testcase "CheckFloat:closeTo failure below" {
+  failure TestChecker
+  require "1.22.+ 0.001.+ 1.23"
+}
+
+unittest test {
+  \ 1.22 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.001)
+}

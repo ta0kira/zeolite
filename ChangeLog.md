@@ -175,9 +175,11 @@
 * **[new]** Adds the `TestChecker` `testcase` checker (see previous section) to
   `lib/testing` to help support custom matchers.
 
-* **[new]** Adds support for custom value matchers in tests to `lib/testing`,
-  as well as `String`/`ErrorOr` matching in `lib/util`. Custom matchers support
-  sequencing, recursion, and conditional failures.
+* **[new]** Adds support for custom value matchers in tests to `lib/testing`, as
+  well as matchers for value comparisons, substring checks, floating-point
+  epsilon, and container comparisons in `lib/testing`, `lib/util`, and
+  `lib/container`. User-defined matchers can compose other matchers to
+  customize matching of more complex value types.
 
 * **[new]** Implements `SetReader<#k>` for `HashedMap<#k,#v>` and
   `SortedMap<#k,#v>` in `lib/container`.

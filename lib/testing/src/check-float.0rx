@@ -1,0 +1,92 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define CheckFloat {
+  $ReadOnlyExcept[]$
+
+  refines ValueMatcher<[AsFloat&Formatted]>
+
+  @value optional Float epsilon
+  @value Float expected
+
+  almostEqual (expected) {
+    return CheckFloat{ empty, expected.asFloat() }
+  }
+
+  closeTo (expected,epsilon) {
+    return CheckFloat{ epsilon, expected.asFloat() }
+  }
+
+  check (actual,report) {
+    optional Float threshold <- epsilon
+    if (`present` actual) {
+      Float value <- require(actual).asFloat()
+      $Hidden[actual]$
+      if (`present` epsilon) {
+        threshold <- `require` epsilon
+      } else {
+        threshold <- $ExprLookup[FLOAT_RELATIVE_THRESHOLD]$ * getMaxAbs(value,expected)
+      }
+      $Hidden[epsilon]$
+      if (abs(value - expected) <= `require` threshold) {
+        return _
+      }
+    }
+    $Hidden[epsilon]$
+    if (`present` threshold) {
+      \ report.addError(message: String.builder()
+          .append(`Format:autoFormat` actual)
+          .append(" is not within ")
+          .append(`require` threshold)
+          .append(" of ")
+          .append(expected)
+          .build())
+    } else {
+      \ report.addError(message: String.builder()
+          .append(`Format:autoFormat` actual)
+          .append(" is not close to ")
+          .append(expected)
+          .build())
+    }
+  }
+
+  summary () {
+    if (`present` epsilon) {
+      return "value is close to"
+    } else {
+      return "value is almost equal to"
+    }
+  }
+
+  @type abs (Float) -> (Float)
+  abs (x) {
+    if (x < 0.0) {
+      return -x
+    } else {
+      return x
+    }
+  }
+
+  @type getMaxAbs (Float,Float) -> (Float)
+  getMaxAbs (x,y) (max) {
+    max <- abs(x)
+    if (abs(y) > max) {
+      max <- abs(y)
+    }
+  }
+}

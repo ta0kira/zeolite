@@ -1,5 +1,11 @@
 root: "../.."
 path: "lib/testing"
+expression_map: [
+  expression_macro {
+    name: FLOAT_RELATIVE_THRESHOLD
+    expression: 1.0E-7
+  }
+]
 extra_paths: [
   "lib/testing/src"
   "lib/testing/test"
