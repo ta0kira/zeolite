@@ -161,7 +161,6 @@ testcase "CheckAlways" {
 
 unittest match {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
-  \ report.addError(message: "message")
   \ CheckAlways:match().check(123,report)
   \ Testing.checkEquals(report.hasError(),false)
 }
