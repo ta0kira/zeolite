@@ -16,55 +16,61 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "CheckSequence:equalsQuiet different" {
+testcase "CheckSequence:equals success" {
+  success TestChecker
+}
+
+unittest equals {
+  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
+  ValueList<Int> expected <- ValueList<Int>.new().append(10).append(20).append(30)
+  \ actual `Matches:with` CheckSequence:equals(expected)
+}
+
+unittest equalsWithEmpty {
+  ValueList<Int> expected <- ValueList<Int>.new()
+  \ empty `Matches:with` CheckSequence:equals(expected)
+}
+
+
+testcase "CheckSequence:equals different" {
   failure TestChecker
   require "10.+40"
-  exclude "20.+50"
-  exclude "30.+60"
+  require "20.+50"
+  require "30.+60"
 }
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
   ValueList<Int> expected <- ValueList<Int>.new().append(40).append(50).append(60)
-  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 
-testcase "CheckSequence:equalsQuiet extra" {
+testcase "CheckSequence:equals extra" {
   failure TestChecker
-  require "extra"
-  exclude "missing"
-  exclude "[Ii]tem #0"
-  exclude "[Ii]tem #1"
-  exclude "[Ii]tem #2"
-  exclude "[Ii]tem #3"
+  require "40.+unexpected"
 }
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
   ValueList<Int> expected <- ValueList<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 
-testcase "CheckSequence:equalsQuiet missing" {
+testcase "CheckSequence:equals missing" {
   failure TestChecker
-  require "missing"
-  exclude "extra"
-  exclude "[Ii]tem #0"
-  exclude "[Ii]tem #1"
-  exclude "[Ii]tem #2"
-  exclude "[Ii]tem #3"
+  require "40.+missing"
 }
 
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
   ValueList<Int> expected <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
-  \ actual `Matches:with` CheckSequence:equalsQuiet(expected)
+  \ actual `Matches:with` CheckSequence:equals(expected)
 }
 
 
-testcase "CheckSequence matching success" {
+testcase "CheckSequence:matches success" {
   success TestChecker
 }
 
@@ -77,23 +83,9 @@ unittest matches {
   \ actual `Matches:with` CheckSequence:matches(expected)
 }
 
-unittest matchesQuiet {
-  ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
-  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
-      .append(`CheckValue:equals` 1)
-      .append(`CheckValue:equals` 2)
-      .append(`CheckValue:equals` 3)
-  \ actual `Matches:with` CheckSequence:matchesQuiet(expected)
-}
-
 unittest matchesWithEmpty {
   ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
   \ empty `Matches:with` CheckSequence:matches(expected)
-}
-
-unittest matchesQuietWithEmpty {
-  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
-  \ empty `Matches:with` CheckSequence:matchesQuiet(expected)
 }
 
 
@@ -153,65 +145,7 @@ unittest test {
 }
 
 
-testcase "CheckSequence:matchesQuiet different" {
-  failure TestChecker
-  require "10.+40"
-  exclude "20.+50"
-  exclude "30.+60"
-}
-
-unittest test {
-  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
-      .append(`CheckValue:equals` 40)
-      .append(`CheckValue:equals` 50)
-      .append(`CheckValue:equals` 60)
-  \ actual `Matches:with` CheckSequence:matchesQuiet(expected)
-}
-
-
-testcase "CheckSequence:matchesQuiet extra" {
-  failure TestChecker
-  require "extra"
-  exclude "missing"
-  exclude "[Ii]tem #0"
-  exclude "[Ii]tem #1"
-  exclude "[Ii]tem #2"
-  exclude "[Ii]tem #3"
-}
-
-unittest test {
-  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30).append(40)
-  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
-      .append(`CheckValue:equals` 10)
-      .append(`CheckValue:equals` 20)
-      .append(`CheckValue:equals` 30)
-  \ actual `Matches:with` CheckSequence:matchesQuiet(expected)
-}
-
-
-testcase "CheckSequence:matchesQuiet missing" {
-  failure TestChecker
-  require "missing"
-  exclude "extra"
-  exclude "[Ii]tem #0"
-  exclude "[Ii]tem #1"
-  exclude "[Ii]tem #2"
-  exclude "[Ii]tem #3"
-}
-
-unittest test {
-  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  ValueList<ValueMatcher<Int>> expected <- ValueList<ValueMatcher<Int>>.new()
-      .append(`CheckValue:equals` 10)
-      .append(`CheckValue:equals` 20)
-      .append(`CheckValue:equals` 30)
-      .append(`CheckValue:equals` 40)
-  \ actual `Matches:with` CheckSequence:matchesQuiet(expected)
-}
-
-
-testcase "CheckSequence all-match success" {
+testcase "CheckSequence:allMatch success" {
   success TestChecker
 }
 
@@ -220,17 +154,8 @@ unittest allMatch {
   \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEquals(0))
 }
 
-unittest allMatchQuiet {
-  ValueList<Int> actual <- ValueList<Int>.new().append(1).append(2).append(3)
-  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEquals(0))
-}
-
 unittest allMatchWithEmpty {
   \ empty `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEquals(0))
-}
-
-unittest allMatchQuietWithEmpty {
-  \ empty `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEquals(0))
 }
 
 
@@ -244,19 +169,6 @@ testcase "CheckSequence:allMatch failure" {
 unittest test {
   ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
   \ actual `Matches:with` CheckSequence:allMatch(CheckValue:greaterThanEquals(25))
-}
-
-
-testcase "CheckSequence:allMatchQuiet failure" {
-  failure TestChecker
-  require "10.+25"
-  exclude "20.+25"
-  exclude "30.+25"
-}
-
-unittest test {
-  ValueList<Int> actual <- ValueList<Int>.new().append(10).append(20).append(30)
-  \ actual `Matches:with` CheckSequence:allMatchQuiet(CheckValue:greaterThanEquals(25))
 }
 
 

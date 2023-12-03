@@ -27,16 +27,7 @@ concrete CheckSequence {
     #x defines Equals<#x>
   (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 
-  @category equalsQuiet<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (DefaultOrder<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
-
   @category matches<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
 
-  @category matchesQuiet<#x> (DefaultOrder<ValueMatcher<#x>>) -> (ValueMatcher<DefaultOrder<#x>>)
-
   @category allMatch<#x> (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
-
-  @category allMatchQuiet<#x> (ValueMatcher<#x>) -> (ValueMatcher<DefaultOrder<#x>>)
 }

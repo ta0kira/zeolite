@@ -90,7 +90,6 @@ define CheckAlways {
 
   check (_,report) {
     if (! `present` message) {
-      \ report.discardReport()
     } elif (die) {
       fail(`require` message)
     } else {
