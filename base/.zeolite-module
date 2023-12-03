@@ -2,36 +2,36 @@ root: ".."
 path: "base"
 extra_files: [
   category_source {
-    source: "base/src/Extension_Bool.cpp"
+    source: "base/src/Builtin_Bool.cpp"
     categories: [Bool]
   }
   category_source {
-    source: "base/src/Extension_Char.cpp"
+    source: "base/src/Builtin_Char.cpp"
     categories: [Char]
   }
   category_source {
-    source: "base/src/Extension_CharBuffer.cpp"
+    source: "base/src/Builtin_CharBuffer.cpp"
     categories: [CharBuffer]
   }
   category_source {
-    source: "base/src/Extension_Float.cpp"
+    source: "base/src/Builtin_Float.cpp"
     categories: [Float]
   }
   category_source {
-    source: "base/src/Extension_Int.cpp"
+    source: "base/src/Builtin_Identifier.cpp"
+    categories: [Identifier]
+  }
+  category_source {
+    source: "base/src/Builtin_Int.cpp"
     categories: [Int]
   }
   category_source {
-    source: "base/src/Extension_String.cpp"
+    source: "base/src/Builtin_String.cpp"
     categories: [String]
   }
   category_source {
-    source: "base/src/Extension_Pointer.cpp"
+    source: "base/src/Builtin_Pointer.cpp"
     categories: [Pointer]
-  }
-  category_source {
-    source: "base/src/Extension_Identifier.cpp"
-    categories: [Identifier]
   }
   "base/boxed.hpp"
   "base/category-header.hpp"
