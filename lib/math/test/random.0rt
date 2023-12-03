@@ -118,7 +118,7 @@ unittest exponential { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:greaterThan(0.0)
+    \ value `Matches:with` CheckValue:greaterThanNotEquals(0.0)
     sum <- sum+value
   }
 
