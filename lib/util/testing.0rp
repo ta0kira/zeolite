@@ -19,5 +19,5 @@ limitations under the License.
 // Checks the contents of an ErrorOr.
 concrete CheckErrorOr<#x> {
   @category value<#x> (ValueMatcher<#x>) -> (ValueMatcher<ErrorOr<#x>>)
-  @category error<#x> (ValueMatcher<String>) -> (ValueMatcher<ErrorOr<#x>>)
+  @category error (ValueMatcher<String>) -> (ValueMatcher<ErrorOr<Formatted>>)
 }

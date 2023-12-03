@@ -21,99 +21,99 @@ testcase "ParseChars tests" {
 }
 
 unittest floatNoDecimal {
-  \ ParseChars.float("123") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9,123.1))
+  \ ParseChars.float("123") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0))
 }
 
 unittest floatDecimalLeft {
-  \ ParseChars.float(".123") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(0.1229,0.1231))
+  \ ParseChars.float(".123") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(0.123))
 }
 
 unittest floatDecimalRight {
-  \ ParseChars.float("123.") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9,123.1))
+  \ ParseChars.float("123.") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0))
 }
 
 unittest floatDecimalMiddle {
-  \ ParseChars.float("123.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559,123.4561))
+  \ ParseChars.float("123.456") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.456))
 }
 
 unittest floatLeadingTrailingZeros {
-  \ ParseChars.float("000123.456000") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559,123.4561))
+  \ ParseChars.float("000123.456000") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.456))
 }
 
 unittest floatNegative {
-  \ ParseChars.float("-123.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(-123.4561,-123.4559))
+  \ ParseChars.float("-123.456") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(-123.456))
 }
 
 unittest floatPositive {
-  \ ParseChars.float("+123.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559,123.4561))
+  \ ParseChars.float("+123.456") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.456))
 }
 
 unittest floatNegativeDecimalLeft {
-  \ ParseChars.float("-.456") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(-0.4561,-0.4559))
+  \ ParseChars.float("-.456") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(-0.456))
 }
 
 unittest floatExponentNoDecimal {
-  \ ParseChars.float("123E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E5,123.1E5))
+  \ ParseChars.float("123E5") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0E5))
 }
 
 unittest floatNegativeExponent {
-  \ ParseChars.float("123E-5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E-5,123.1E-5))
+  \ ParseChars.float("123E-5") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0E-5))
 }
 
 unittest floatPositiveExponent {
-  \ ParseChars.float("123E+5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E5,123.1E5))
+  \ ParseChars.float("123E+5") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0E5))
 }
 
 unittest floatExponentDecimalRight {
-  \ ParseChars.float("123.E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E5,123.1E5))
+  \ ParseChars.float("123.E5") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0E5))
 }
 
 unittest floatExponentDecimalLeft {
-  \ ParseChars.float(".123E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(122.9E2,123.1E2))
+  \ ParseChars.float(".123E5") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.0E2))
 }
 
 unittest floatExponentDecimalMiddle {
-  \ ParseChars.float("123.456E5") `Matches:with` CheckErrorOr:value(CheckValue:betweenEquals(123.4559E5,123.4561E5))
+  \ ParseChars.float("123.456E5") `Matches:with` CheckErrorOr:value(CheckFloat:almostEquals(123.456E5))
 }
 
 unittest floatEmpty {
-  \ ParseChars.float("") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest floatNoDigits {
-  \ ParseChars.float(".") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float(".") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest floatTwoDecimals {
-  \ ParseChars.float("1.1.") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("1.1.") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }
 
 unittest floatExponentNoDigitsNoDecimal {
-  \ ParseChars.float("E5") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("E5") `Matches:with` CheckErrorOr:error(CheckString:contains("E"))
 }
 
 unittest floatExponentNoDigitsDecimal {
-  \ ParseChars.float(".E5") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float(".E5") `Matches:with` CheckErrorOr:error(CheckString:contains("E"))
 }
 
 unittest floatExponentNoDigitsSign {
-  \ ParseChars.float("-E5") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("-E5") `Matches:with` CheckErrorOr:error(CheckString:contains("E"))
 }
 
 unittest floatDecimalAfterExponent {
-  \ ParseChars.float("1E.5") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("1E.5") `Matches:with` CheckErrorOr:error(CheckString:contains("."))
 }
 
 unittest floatExponentExcessData {
-  \ ParseChars.float("123E5Q") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("123E5Q") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }
 
 unittest floatBadCharAfterDigit {
-  \ ParseChars.float("123X") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("123X") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }
 
 unittest floatMissingExponentDigits {
-  \ ParseChars.float("123E") `Matches:with` CheckErrorOr:error<Float>(CheckString:contains(""))
+  \ ParseChars.float("123E") `Matches:with` CheckErrorOr:error(CheckString:contains("exponent"))
 }
 
 unittest int {
@@ -133,15 +133,15 @@ unittest intLeadingZeros {
 }
 
 unittest intEmpty {
-  \ ParseChars.int("") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.int("") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest intJustSign {
-  \ ParseChars.int("-") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.int("-") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest intBadDigit {
-  \ ParseChars.int("12A") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.int("12A") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }
 
 unittest hexInt {
@@ -161,15 +161,15 @@ unittest hexIntLeadingZeros {
 }
 
 unittest hexIntEmpty {
-  \ ParseChars.hexInt("") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.hexInt("") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest hexIntJustSign {
-  \ ParseChars.hexInt("-") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.hexInt("-") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest hexIntBadDigit {
-  \ ParseChars.hexInt("12Q") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.hexInt("12Q") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }
 
 unittest octInt {
@@ -189,15 +189,15 @@ unittest octIntLeadingZeros {
 }
 
 unittest octIntEmpty {
-  \ ParseChars.octInt("") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.octInt("") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest octIntJustSign {
-  \ ParseChars.octInt("-") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.octInt("-") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest octIntBadDigit {
-  \ ParseChars.octInt("19") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.octInt("19") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }
 
 unittest binInt {
@@ -217,13 +217,13 @@ unittest binIntLeadingZeros {
 }
 
 unittest binIntEmpty {
-  \ ParseChars.binInt("") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.binInt("") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest binIntJustSign {
-  \ ParseChars.binInt("-") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.binInt("-") `Matches:with` CheckErrorOr:error(CheckString:contains("missing digits"))
 }
 
 unittest binIntBadDigit {
-  \ ParseChars.binInt("12") `Matches:with` CheckErrorOr:error<Int>(CheckString:contains(""))
+  \ ParseChars.binInt("12") `Matches:with` CheckErrorOr:error(CheckString:contains("failed"))
 }

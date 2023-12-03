@@ -29,7 +29,7 @@ define CheckErrorOr {
   }
 
   error (errorMatcher) {
-    return CheckErrorOr<#x>{ empty, errorMatcher }
+    return CheckErrorOr<Formatted>{ empty, errorMatcher }
   }
 
   check (actual,report) {
