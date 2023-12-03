@@ -1134,9 +1134,10 @@ compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
       return $ AssignedInstance c2 t'
     replaceSelfParam _ t = return t
     message = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
-    backgroundMessage (n,(InferredInstance c2),t) =
-      compilerBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
-        show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
+    backgroundMessage (n,(InferredInstance c2),t) = do
+      let funcName = functionDebugName (sfType f) f
+      compilerBackgroundM $ "Parameter " ++ show n ++ " (from " ++ funcName ++
+        ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
     getParamsArgs ps2 paramEs argEs = do
       psNames <- lift $ collectParamNames ps2
