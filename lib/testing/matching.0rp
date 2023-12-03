@@ -24,7 +24,10 @@ limitations under the License.
 
 // Base interface for custom value matchers.
 @value interface ValueMatcher<#x|> {
-  check (optional #x,TestReport) -> ()
+  check<#y>
+    #y requires #x
+  (optional #y,TestReport) -> ()
+
   summary () -> (Formatted)
 }
 

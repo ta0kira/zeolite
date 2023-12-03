@@ -29,7 +29,7 @@ define CheckErrorOr {
   }
 
   error (errorMatcher) {
-    return CheckErrorOr<Formatted>{ empty, errorMatcher }
+    return CheckErrorOr<any>{ empty, errorMatcher }
   }
 
   check (actual,report) {
@@ -45,12 +45,21 @@ define CheckErrorOr {
     if (`present` valueMatcher) {
       \ checker.tryCheck(title: "value",value,require(valueMatcher))
     } elif (`present` value) {
+      optional Formatted formattedValue <- reduce<#y,ErrorOr<Formatted>>(actual)&.getValue()
+      if (`present` formattedValue) {
       \ report.newSection(title: "value")
           .addError(message: String.builder()
               .append("expected empty but got \"")
-              .append(`FormattedH:try` require(value))
+              .append(`require` formattedValue)
               .append("\"")
               .build())
+      } else {
+      \ report.newSection(title: "value")
+          .addError(message: String.builder()
+              .append("expected empty but got ")
+              .append(typename<#y>())
+              .build())
+      }
     }
     if (`present` errorMatcher) {
       \ checker.tryCheck(title: "error",error,require(errorMatcher))

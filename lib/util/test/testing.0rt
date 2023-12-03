@@ -93,3 +93,14 @@ testcase "CheckErrorOr:error failure with empty" {
 unittest test {
   \ empty `Matches:with` CheckErrorOr:error(CheckValue:equals("something"))
 }
+
+
+testcase "CheckErrorOr:error failure with non-Formatted" {
+  failure TestChecker
+  require "CharBuffer"
+  require "something"
+}
+
+unittest test {
+  \ ErrorOr:value(CharBuffer.new(0)) `Matches:with` CheckErrorOr:error(CheckValue:equals("something"))
+}
