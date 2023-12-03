@@ -174,6 +174,8 @@ initLibraries pn (resolver,backend) = do
       _coForce = ForceAll,
       _coParallel = pn
     }
-  runCompiler resolver backend options
+  -- The 2 lines below suppress warnings if there were no errors.
+  result <- lift $ toTrackedErrors $ runCompiler resolver backend options
+  when (isCompilerError result) (fromTrackedErrors result)
   mapM_ optionalWarning optionalLibraries where
   optionalWarning library = compilerWarningM $ "Optional library " ++ library ++ " must be built manually if needed"
