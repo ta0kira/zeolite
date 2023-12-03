@@ -129,7 +129,8 @@ testcase "TestReportTree success" {
 unittest nothingAdded {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
   IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
+  \ Testing.checkEquals(report.hasError(),false)
+  \ report.prune()&.writeTo(output)
   \ Testing.checkEquals(output.build().formatted(),"")
 }
 
@@ -137,13 +138,14 @@ unittest nonFailingSections {
   TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
   \ report.newSection(title: "child1")
   \ report.newSection(title: "child2")
+  \ Testing.checkEquals(report.hasError(),false)
   IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
+  \ report.prune()&.writeTo(output)
   \ Testing.checkEquals(output.build().formatted(),"")
 }
 
 
-testcase "TestReportTree doesn't include non-failing sections" {
+testcase "TestReportTree prune doesn't include non-failing sections" {
   failure
   require "title"
   require "child2"
@@ -151,6 +153,7 @@ testcase "TestReportTree doesn't include non-failing sections" {
   require "child4"
   require "message4"
   exclude "child1"
+  exclude "child5"
 }
 
 unittest test {
@@ -159,6 +162,33 @@ unittest test {
   \ report.newSection(title: "child2").addError(message: "message2")
   \ report.newSection(title: "child3").addError(message: "message3").discardReport()
   \ report.newSection(title: "child4").addError(message: "message4")
+  \ report.newSection(title: "child5")
+  \ Testing.checkEquals(report.hasError(),true)
+  IndentAppend output <- IndentAppend.new(String.builder())
+  \ report.prune()&.writeTo(output)
+  \ TestHandler:failAndExit(output.build().formatted())
+}
+
+
+testcase "TestReportTree unpruned preserves non-failing sections" {
+  failure
+  require "title"
+  require "child1"
+  require "child2"
+  require "message2"
+  require "child4"
+  require "message4"
+  require "child5"
+}
+
+unittest test {
+  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  \ report.newSection(title: "child1")
+  \ report.newSection(title: "child2").addError(message: "message2")
+  \ report.newSection(title: "child3").addError(message: "message3").discardReport()
+  \ report.newSection(title: "child4").addError(message: "message4")
+  \ report.newSection(title: "child5")
+  \ Testing.checkEquals(report.hasError(),true)
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())

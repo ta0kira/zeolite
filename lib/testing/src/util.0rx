@@ -131,9 +131,6 @@ define TestReportTree {
   }
 
   writeTo (output) {
-    if (!hasError()) {
-      return _
-    }
     \ output.append(title)
     scoped {
       \ output.pushIndent()
@@ -144,6 +141,7 @@ define TestReportTree {
       \ writeContextTo(output)
       \ writeChildrenTo(output)
     }
+    return output
   }
 
   addError (message) {
@@ -164,7 +162,6 @@ define TestReportTree {
   }
 
   hasError () {
-    // TODO: This is very inefficient. Maybe pruning should happen first?
     if (!messages.isEmpty()) {
       return true
     }
@@ -174,6 +171,25 @@ define TestReportTree {
       }
     }
     return false
+  }
+
+  prune () {
+    optional ValueList<TestReportTree> newChildren <- empty
+    traverse (children.defaultOrder() -> TestReportTree child) {
+      $Hidden[children]$
+      optional TestReportTree newChild <- child.prune()
+      $Hidden[child]$
+      if (`present` newChild) {
+        \ (newChildren <-| ValueList<TestReportTree>.new()).append(`require` newChild)
+      }
+    }
+    if (! `present` newChildren && messages.isEmpty()) {
+      children <- ValueList<TestReportTree>.new()
+      return empty
+    } else {
+      children <- (newChildren <-| ValueList<TestReportTree>.new())
+      return self
+    }
   }
 
   @value writeContextTo (IndentAppend) -> ()
@@ -202,9 +218,7 @@ define TestReportTree {
   writeChildrenTo (output) {
     $Hidden[messages,context]$
     traverse (children.defaultOrder() -> TestReportTree child) {
-      if (child.hasError()) {
-        \ output.append("---")
-      }
+      \ output.append("---")
       \ child.writeTo(output)
     }
   }

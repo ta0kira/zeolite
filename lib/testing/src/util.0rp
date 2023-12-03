@@ -47,7 +47,9 @@ concrete TestReportTree {
 
   @type new (Formatted,ValueList<Formatted>) -> (#self)
 
-  @value writeTo (IndentAppend) -> ()
+  // NOTE: This will write passing sections unless you prune() first.
+  @value writeTo (IndentAppend) -> (IndentAppend)
+  @value prune () -> (optional #self)
 }
 
 concrete Format {

@@ -35,7 +35,7 @@ unittest test {
       &.check(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
+  \ report.prune()&.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())
 }
 
@@ -59,7 +59,7 @@ unittest test {
       .tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
+  \ report.prune()&.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())
 }
 
@@ -83,7 +83,7 @@ unittest test {
       &.tryCheck<String>(title: "title3","foo",CheckAlways:error("message3"))
 
   IndentAppend output <- IndentAppend.new(String.builder())
-  \ report.writeTo(output)
+  \ report.prune()&.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())
 }
 

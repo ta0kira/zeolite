@@ -24,7 +24,7 @@ define TestChecker {
   @category Int testCount <- 0
   @category ValueList<TestReportTree> reports <- ValueList<TestReportTree>.new()
 
-  start () {
+  start () { $NoTrace$
     if (started) {
       fail("Testcase already started.")
     }
@@ -40,7 +40,7 @@ define TestChecker {
     }
   }
 
-  isFailing () {
+  isFailing () { $NoTrace$
     \ checkTestingStarted()
     traverse (reports.defaultOrder() -> TestReportTree report) {
       if (report.hasError()) {
@@ -57,7 +57,7 @@ define TestChecker {
     }
   }
 
-  newReport (title,context) {
+  newReport (title,context) { $NoTrace$
     \ checkTestingAllowed()
     ValueList<Formatted> contextList <- ValueList<Formatted>.new()
     traverse (context -> Formatted item) {
@@ -89,8 +89,7 @@ define TestChecker {
     } cleanup {
       \ output.popIndent()
     } in traverse (reports.defaultOrder() -> TestReportTree report) {
-      \ report.writeTo(output)
-      \ output.addNewline()
+      \ report.prune()&.writeTo(output)&.addNewline()
     }
     return output.build()
   }
