@@ -10,4 +10,4 @@ extra_files: [
     categories: [Type3]
   }
 ]
-mode: incremental {}
+mode: incremental { }

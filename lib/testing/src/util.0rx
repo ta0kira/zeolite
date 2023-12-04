@@ -19,7 +19,7 @@ limitations under the License.
 define IndentAppend {
   $ReadOnlyExcept[indentCount]$
 
-  @value [Append<Formatted>&Build<Formatted>] output
+  @value [Append<Formatted> & Build<Formatted>] output
   @value Int indentCount
 
   new (output) {
@@ -119,14 +119,14 @@ define ValueList {
 }
 
 define TestReportTree {
-  $ReadOnlyExcept[messages,children]$
+  $ReadOnlyExcept[messages, children]$
 
   @value Formatted title
   @value ValueList<Formatted> context
   @value ValueList<Formatted> messages
   @value ValueList<TestReportTree> children
 
-  new (title,context) {
+  new (title, context) {
     return #self{ title, context, ValueList<Formatted>.new(), ValueList<TestReportTree>.new() }
   }
 
@@ -150,7 +150,7 @@ define TestReportTree {
   }
 
   newSection (newTitle) {
-    #self new <- new(newTitle,ValueList<Formatted>.new())
+    #self new <- new(newTitle, ValueList<Formatted>.new())
     \ children.append(new)
     return new
   }
@@ -194,7 +194,7 @@ define TestReportTree {
 
   @value writeContextTo (IndentAppend) -> ()
   writeContextTo (output) {
-    $Hidden[messages,children]$
+    $Hidden[messages, children]$
       scoped {
       \ output.pushIndent()
     } cleanup {
@@ -206,7 +206,7 @@ define TestReportTree {
 
   @value writeMessagesTo (IndentAppend) -> ()
   writeMessagesTo (output) {
-    $Hidden[context,children]$
+    $Hidden[context, children]$
     if (!messages.isEmpty()) {
       traverse (messages.defaultOrder() -> Formatted line) {
         \ output.append(line)
@@ -216,7 +216,7 @@ define TestReportTree {
 
   @value writeChildrenTo (IndentAppend) -> ()
   writeChildrenTo (output) {
-    $Hidden[messages,context]$
+    $Hidden[messages, context]$
     traverse (children.defaultOrder() -> TestReportTree child) {
       \ output.append("---")
       \ child.writeTo(output)

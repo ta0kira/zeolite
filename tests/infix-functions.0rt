@@ -28,11 +28,11 @@ unittest test {
 }
 
 concrete Test {
-  @category add (Int,Int) -> (Int)
+  @category add (Int, Int) -> (Int)
 }
 
 define Test {
-  add (x,y) {
+  add (x, y) {
     return x + y
   }
 }
@@ -50,11 +50,11 @@ unittest test {
 }
 
 concrete Test {
-  @type add (Int,Int) -> (Int)
+  @type add (Int, Int) -> (Int)
 }
 
 define Test {
-  add (x,y) {
+  add (x, y) {
     return x + y
   }
 }
@@ -73,7 +73,7 @@ unittest test {
 
 concrete Arithmetic {
   @type create () -> (Arithmetic)
-  @value add (Int,Int) -> (Int)
+  @value add (Int, Int) -> (Int)
 }
 
 define Arithmetic {
@@ -81,7 +81,7 @@ define Arithmetic {
     return Arithmetic{ }
   }
 
-  add (x,y) {
+  add (x, y) {
     return x + y
   }
 }
@@ -96,8 +96,8 @@ unittest test {
 }
 
 define Test {
-  @type add (Int,Int) -> (Int)
-  add (x,y) {
+  @type add (Int, Int) -> (Int)
+  add (x, y) {
     return x + y
   }
 
@@ -126,11 +126,11 @@ unittest test {
 }
 
 concrete Test {
-  @category add (Int,Int) -> (Int)
+  @category add (Int, Int) -> (Int)
 }
 
 define Test {
-  add (x,y) {
+  add (x, y) {
     return x + y
   }
 }
@@ -148,11 +148,11 @@ unittest test {
 }
 
 concrete Test {
-  @category add (Int,Int) -> (Int)
+  @category add (Int, Int) -> (Int)
 }
 
 define Test {
-  add (x,y) {
+  add (x, y) {
     return x + y
   }
 }
@@ -172,20 +172,20 @@ concrete Test {
 
 define Test {
   check () {
-    \ Testing.checkEquals(1 `one` 2 `two` 4,5)
+    \ Testing.checkEquals(1 `one` 2 `two` 4, 5)
   }
 
-  @type one (Int,Int) -> (Int)
-  one (x,y) {
-    \ Testing.checkEquals(x,1)
-    \ Testing.checkEquals(y,2)
+  @type one (Int, Int) -> (Int)
+  one (x, y) {
+    \ Testing.checkEquals(x, 1)
+    \ Testing.checkEquals(y, 2)
     return 3
   }
 
-  @type two (Int,Int) -> (Int)
-  two (x,y) {
-    \ Testing.checkEquals(x,3)
-    \ Testing.checkEquals(y,4)
+  @type two (Int, Int) -> (Int)
+  two (x, y) {
+    \ Testing.checkEquals(x, 3)
+    \ Testing.checkEquals(y, 4)
     return 5
   }
 }

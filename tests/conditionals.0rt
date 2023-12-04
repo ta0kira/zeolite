@@ -33,7 +33,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "return if/elif/else" {
@@ -53,7 +53,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "assign if/elif condition" {
@@ -71,7 +71,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "different in if and else" {
@@ -81,8 +81,8 @@ testcase "different in if and else" {
 }
 
 define Value {
-  @value process () -> (optional Value,optional Value)
-  process () (value1,value2) {
+  @value process () -> (optional Value, optional Value)
+  process () (value1, value2) {
     if (false) {
       value1 <- empty
     } else {
@@ -91,7 +91,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "missing in if" {
@@ -111,7 +111,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "missing in elif" {
@@ -131,7 +131,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "missing in else" {
@@ -152,7 +152,7 @@ define Value {
 }
 
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "missing in implicit else" {
@@ -171,7 +171,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "return set in predicate for subsequent blocks" {
@@ -190,7 +190,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 
@@ -212,14 +212,14 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "branch jump skips validation of named return" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Bool)
@@ -270,8 +270,8 @@ testcase "multi assign if/elif/else" {
 }
 
 define Value {
-  @value process () -> (optional Value,optional Value)
-  process () (value1,value2) {
+  @value process () -> (optional Value, optional Value)
+  process () (value1, value2) {
     if (false) {
       value1 <- empty
       value2 <- empty
@@ -285,7 +285,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "multi missing in if" {
@@ -294,8 +294,8 @@ testcase "multi missing in if" {
 }
 
 define Value {
-  @value process () -> (optional Value,optional Value)
-  process () (value1,value2) {
+  @value process () -> (optional Value, optional Value)
+  process () (value1, value2) {
     if (false) {
       value1 <- empty
     } elif (false) {
@@ -308,7 +308,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "multi missing in elif" {
@@ -317,8 +317,8 @@ testcase "multi missing in elif" {
 }
 
 define Value {
-  @value process () -> (optional Value,optional Value)
-  process () (value1,value2) {
+  @value process () -> (optional Value, optional Value)
+  process () (value1, value2) {
     if (false) {
       value1 <- empty
       value2 <- empty
@@ -331,7 +331,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "multi missing in else" {
@@ -340,8 +340,8 @@ testcase "multi missing in else" {
 }
 
 define Value {
-  @value process () -> (optional Value,optional Value)
-  process () (value1,value2) {
+  @value process () -> (optional Value, optional Value)
+  process () (value1, value2) {
     if (false) {
       value1 <- empty
       value2 <- empty
@@ -354,7 +354,7 @@ define Value {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 
 testcase "cleanup before return in if" {

@@ -17,11 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define LockRef {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     if (state.tryLock()) {
       return empty
@@ -32,22 +32,22 @@ define LockRef {
 }
 
 define DecrRefIsZero {
-  refines StatePredicate<String,ReferenceState>
+  refines StatePredicate<String, ReferenceState>
 
   new () { return #self{ } }
 
-  test (name,state) {
+  test (name, state) {
     \ state.addOperation<#self>(name)
     return state.remStrong() == 0
   }
 }
 
 define UnlockRef {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.remLock()
     return empty
@@ -55,11 +55,11 @@ define UnlockRef {
 }
 
 define FreeObject {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.kill()
     return empty
@@ -67,22 +67,22 @@ define FreeObject {
 }
 
 define DecrWeakIsZero {
-  refines StatePredicate<String,ReferenceState>
+  refines StatePredicate<String, ReferenceState>
 
   new () { return #self{ } }
 
-  test (name,state) {
+  test (name, state) {
     \ state.addOperation<#self>(name)
     return state.remWeak() == 0
   }
 }
 
 define FreeRef {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.freeData()
     return empty
@@ -90,22 +90,22 @@ define FreeRef {
 }
 
 define IncrRefIsOne {
-  refines StatePredicate<String,ReferenceState>
+  refines StatePredicate<String, ReferenceState>
 
   new () { return #self{ } }
 
-  test (name,state) {
+  test (name, state) {
     \ state.addOperation<#self>(name)
     return state.addStrong() == 1
   }
 }
 
 define DecrRef {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.remStrong()
     return empty
@@ -113,11 +113,11 @@ define DecrRef {
 }
 
 define DecrWeak {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.remWeak()
     return empty
@@ -125,22 +125,22 @@ define DecrWeak {
 }
 
 define PlusLockModLockZero {
-  refines StatePredicate<String,ReferenceState>
+  refines StatePredicate<String, ReferenceState>
 
   new () { return #self{ } }
 
-  test (name,state) {
+  test (name, state) {
     \ state.addOperation<#self>(name)
     return state.plusStrong($ExprLookup[LOCK_VAL]$) % $ExprLookup[LOCK_VAL]$ == 0
   }
 }
 
 define MinusLockPlusOne {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.minusStrong($ExprLookup[LOCK_VAL]$-1)
     return empty
@@ -148,11 +148,11 @@ define MinusLockPlusOne {
 }
 
 define MinusLock {
-  refines StateTransition<String,ReferenceState>
+  refines StateTransition<String, ReferenceState>
 
   new () { return #self{ } }
 
-  runWith (name,state) {
+  runWith (name, state) {
     \ state.addOperation<#self>(name)
     \ state.minusStrong($ExprLookup[LOCK_VAL]$)
     return empty

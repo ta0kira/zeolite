@@ -95,7 +95,7 @@ define ParseChars {
     }
 
     total <- sign*total
-    $Hidden[sign,hasDigit]$
+    $Hidden[sign, hasDigit]$
 
     Int expSign <- 0
     Int exp <- 0
@@ -107,7 +107,7 @@ define ParseChars {
         Char c <- require(curr).get()
         curr <- require(curr).next()
         $ReadOnly[c]$
-        $Hidden[curr,total]$
+        $Hidden[curr, total]$
         if (expSign == 0) {
           if (c == '-') {
             expSign <- -1

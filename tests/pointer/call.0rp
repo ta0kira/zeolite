@@ -45,6 +45,6 @@ concrete Response {
 }
 
 concrete Service {
-  @type send (Pointer<Request>,Pointer<Response>) -> ()
-  @type send2 (Pointer<Message>,Pointer<Response>) -> ()
+  @type send (Pointer<Request>, Pointer<Response>) -> ()
+  @type send2 (Pointer<Message>, Pointer<Response>) -> ()
 }

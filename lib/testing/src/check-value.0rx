@@ -22,11 +22,11 @@ define CheckValue {
   }
 
   equals (expected) {
-    return ValueEquals<#x>.new(false,expected)
+    return ValueEquals<#x>.new(false, expected)
   }
 
   notEquals (expected) {
-    return ValueEquals<#x>.new(true,expected)
+    return ValueEquals<#x>.new(true, expected)
   }
 
   is (expected) {
@@ -34,27 +34,27 @@ define CheckValue {
   }
 
   lessThanNotEquals (upper) {
-    return ValueBounds<#x>.new(false,empty,upper)
+    return ValueBounds<#x>.new(false, empty, upper)
   }
 
   greaterThanNotEquals (lower) {
-    return ValueBounds<#x>.new(false,lower,empty)
+    return ValueBounds<#x>.new(false, lower, empty)
   }
 
-  betweenNotEquals (lower,upper) {
-    return ValueBounds<#x>.new(false,lower,upper)
+  betweenNotEquals (lower, upper) {
+    return ValueBounds<#x>.new(false, lower, upper)
   }
 
   lessThanEquals (upper) {
-    return ValueBounds<#x>.new(true,empty,upper)
+    return ValueBounds<#x>.new(true, empty, upper)
   }
 
   greaterThanEquals (lower) {
-    return ValueBounds<#x>.new(true,lower,empty)
+    return ValueBounds<#x>.new(true, lower, empty)
   }
 
-  betweenEquals (lower,upper) {
-    return ValueBounds<#x>.new(true,lower,upper)
+  betweenEquals (lower, upper) {
+    return ValueBounds<#x>.new(true, lower, upper)
   }
 }
 
@@ -75,11 +75,11 @@ define ValueTester {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     if (! `present` actual) {
       \ report.addError(message: "expected value but got empty")
     } else {
-      \ expected.testCompare(actual: require(actual),report)
+      \ expected.testCompare(actual: require(actual), report)
     }
   }
 
@@ -95,7 +95,7 @@ concrete ValueEquals<#x> {
   #x requires Formatted
   #x defines Equals<#x>
 
-  @type new (Bool,optional #x) -> (ValueMatcher<#x>)
+  @type new (Bool, optional #x) -> (ValueMatcher<#x>)
 }
 
 define ValueEquals {
@@ -106,11 +106,11 @@ define ValueEquals {
   @value Bool invert
   @value optional #x expected
 
-  new (invert,expected) {
+  new (invert, expected) {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     Bool match <- defer
     if (`present` actual && `present` expected) {
       match <- require(actual) `#x.equals` require(expected)
@@ -157,7 +157,7 @@ define ValueIdentifier {
     return #self{ `identify` expected }
   }
 
-  check (actual,report) {
+  check (actual, report) {
     if (`identify` actual != expected) {
       \ report.addError(message: String.builder()
           .append(`format` `identify` actual)
@@ -185,7 +185,7 @@ concrete ValueBounds<#x> {
   #x requires Formatted
   #x defines LessThan<#x>
 
-  @type new (Bool,optional #x,optional #x) -> (ValueMatcher<#x>)
+  @type new (Bool, optional #x, optional #x) -> (ValueMatcher<#x>)
 }
 
 define ValueBounds {
@@ -197,11 +197,11 @@ define ValueBounds {
   @value optional #x lower
   @value optional #x upper
 
-  new (inclusive,lower,upper) {
+  new (inclusive, lower, upper) {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     Bool match <- `present` actual
     if (match && `present` lower) {
       match <- require(lower) `compare` require(actual)
@@ -258,8 +258,8 @@ define ValueBounds {
     }
   }
 
-  @value compare (#x,#x) -> (Bool)
-  compare (x,y) {
+  @value compare (#x, #x) -> (Bool)
+  compare (x, y) {
     if (inclusive) {
       return !(y `#x.lessThan` x)
     } else {

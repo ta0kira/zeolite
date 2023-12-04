@@ -146,7 +146,7 @@ This helps solve a few separate problems:
   *left* object, which could lead to inconsistent results if the objects are
   swapped: `foo.equals(bar)` is not the same as `bar.equals(foo)`. This
   dispatching asymmetry can be eliminated by making `equals` a type function
-  (e.g., `MyType.equals(foo,bar)`), and further creating an interface that
+  (e.g., `MyType.equals(foo, bar)`), and further creating an interface that
   requires implementations to support such calls.
 
 - Factory patterns can be abstracted out into interfaces. For example, you could
@@ -372,7 +372,7 @@ digits.
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#898887;'>// @value indicates that this function requires a value of type MyCategory.</span>
   <span style='color:#898887;'>// This function takes 2x Int and returns 2x Int.</span>
-  <span style='color:#644a9b;'>@value</span> minMax (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@value</span> minMax (<i><span style='color:#0057ae;'>Int</span></i>, <i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>, <i><span style='color:#0057ae;'>Int</span></i>)
 
   <span style='color:#898887;'>// @type indicates that this function operates on MyCategory itself. This is</span>
   <span style='color:#898887;'>// like a static function in C++.</span>
@@ -401,7 +401,7 @@ function is arbitrary, but there are pros and cons of each:
      parameters](#type-inference). For example, `Vector:duplicateSize`
      ([`lib/container`][lib/container]) takes a single `#y`. Since `#y` is a
      function param, it can be inferred from the argument that gets passed,
-     e.g., `Vector:duplicateSize(0,25)`.
+     e.g., `Vector:duplicateSize(0, 25)`.
 
   If neither of these situations apply, a `@type` function might be better.
 
@@ -428,13 +428,13 @@ visible externally.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-  <span style='color:#644a9b;'>@type</span> minMax (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> minMax (<i><span style='color:#0057ae;'>Int</span></i>, <i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>, <i><span style='color:#0057ae;'>Int</span></i>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#898887;'>// minMax is defined here.</span>
-  minMax (x,y) {
-    <b>if</b> (superfluousCheck(x,y)) {
+  minMax (x, y) {
+    <b>if</b> (superfluousCheck(x, y)) {
       <b>return</b> x, y
     } <b>else</b> {
       <b>return</b> y, x
@@ -442,8 +442,8 @@ visible externally.
   }
 
   <span style='color:#898887;'>// superfluousCheck is only available inside of MyCategory.</span>
-  <span style='color:#644a9b;'>@type</span> superfluousCheck (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
-  superfluousCheck (x,y) {
+  <span style='color:#644a9b;'>@type</span> superfluousCheck (<i><span style='color:#0057ae;'>Int</span></i>, <i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+  superfluousCheck (x, y) {
     <b>return</b> x &lt; y
   }
 }</pre>
@@ -558,7 +558,7 @@ strictly before all infix operators.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Math</span></b> {
-  <span style='color:#644a9b;'>@type</span> plus (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> plus (<i><span style='color:#0057ae;'>Int</span></i>, <i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
   <span style='color:#644a9b;'>@type</span> neg (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
 }
 
@@ -789,7 +789,7 @@ were enclosed in  `{}`, e.g., `return { x, y }`.)
 
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
    <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-     minMax (x,y) {
+     minMax (x, y) {
        <b>if</b> (x &lt; y) {
          <b>return</b> x, y
        } <b>else</b> {
@@ -806,7 +806,7 @@ were enclosed in  `{}`, e.g., `return { x, y }`.)
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
    <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
      <span style='color:#898887;'>// Returns are named on the first line.</span>
-     minMax (x,y) (min,max) {
+     minMax (x, y) (min, max) {
        <span style='color:#898887;'>// Returns are optionally initialized up front.</span>
        min &lt;- y
        max &lt;- x
@@ -830,14 +830,14 @@ The caller of a function with multiple returns also has a few options:
    assignments were enclosed in `{}`, e.g., `{ Int min, _ } <- minMax(4,3)`.)
 
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-   <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
+   <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>, <span style='color:#b08000;'>3</span>)</pre>
 
 2. Pass them directly to a function that requires the same number of
    compatible arguments. (Note that you *cannot* concatenate the returns of
    multiple functions.)
 
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-   <i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>))</pre>
+   <i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>, <span style='color:#b08000;'>3</span>))</pre>
 
 3. If you need to immediately perform an operation on just one of the returned
    values while ignoring the others, you can select just that return inline. (As
@@ -845,7 +845,7 @@ The caller of a function with multiple returns also has a few options:
 
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
    <span style='color:#898887;'>// Select return 0 from minMax.</span>
-   <b>return</b> minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>){<span style='color:#b08000;'>0</span>}</pre>
+   <b>return</b> minMax(<span style='color:#b08000;'>4</span>, <span style='color:#b08000;'>3</span>){<span style='color:#b08000;'>0</span>}</pre>
 
    Note that the position *must* be an integer literal so that the compiler can
    validate both the position and the return type.
@@ -1036,9 +1036,9 @@ new (value1,value2) {
 forwarded call.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>name:</span>,<i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+<span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>name:</span>, <i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
 new (value1,value2) {
-  <span style='color:#898887;'>// Same as foo(name:value1,value2).</span>
+  <span style='color:#898887;'>// Same as foo(name: value1, value2).</span>
   <b>return</b> <b>delegate</b> <b><span style='color:#006e28;'>-&gt;</span></b> <b><span style='color:#c02040;'>`</span></b>foo<b><span style='color:#c02040;'>`</span></b>
 }</pre>
 
@@ -1084,8 +1084,8 @@ and end with `:`.
 
   When defining a function, the name you give to an argument _should_ match the
   label, but that isn't a requirement. Also note that labels _can_ be reused,
-  e.g., `@value swapRows (Int row:,Int row:) -> ()`. This allows the label to be
-  descriptive rather than just an identifier.
+  e.g., `@value swapRows (Int row:, Int row:) -> ()`. This allows the label to
+  be descriptive rather than just an identifier.
 
 ### Using Parameters
 
@@ -1126,8 +1126,8 @@ so would just create more opportunity for unnecessary compile-time errors.)
 }
 
 <span style='color:#898887;'>// Use , to separate multiple parameters that have the same variance.</span>
-<b>concrete</b> <b><span style='color:#0057ae;'>KeyValue</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i>) -&gt; (<b>#self</b>)
+<b>concrete</b> <b><span style='color:#0057ae;'>KeyValue</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>, <i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@type</span> new (<i><span style='color:#0057ae;'>#k</span></i>, <i><span style='color:#0057ae;'>#v</span></i>) -&gt; (<b>#self</b>)
   <span style='color:#644a9b;'>@value</span> key   () -&gt; (<i><span style='color:#0057ae;'>#k</span></i>)
   <span style='color:#644a9b;'>@value</span> value () -&gt; (<i><span style='color:#0057ae;'>#v</span></i>)
 }</pre>
@@ -1268,8 +1268,8 @@ has `@type interface`s that declare `@type` functions that must be defined.
     }
 
     <span style='color:#898887;'>// Define Diffable.diff like any other MyValue function.</span>
-    diff (x,y) {
-      <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ x<span style='color:#644a9b;'>.</span>get()-y<span style='color:#644a9b;'>.</span>get() }
+    diff (x, y) {
+      <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ x<span style='color:#644a9b;'>.</span>get() - y<span style='color:#644a9b;'>.</span>get() }
     }
 
     <span style='color:#898887;'>// A getter is needed to access the value outside of the object that owns it.</span>
@@ -1518,21 +1518,21 @@ This section discusses language features that are less frequently used.
 Zeolite provides two **meta types** that allow unnamed combinations of other
 types.
 
-- A value with an **intersection type** `[A&B]` can be assigned from something
+- A value with an **intersection type** `[A & B]` can be assigned from something
   that is *both* `A` and `B`, and can be assigned to *either* an `A` or `B`.
   There is a special empty intersection named **`any`** that can be assigned
   from any value but cannot be assigned to any other type.
 
   Intersections can be useful for requiring multiple interfaces without creating
   a new category that refines all of those interfaces. An intersection
-  `[Foo&Bar]` in Zeolite is semantically similar to the existential type
+  `[Foo & Bar]` in Zeolite is semantically similar to the existential type
   `forall a. (Foo a, Bar a) => a` in Haskell and `? extends Foo & Bar` in Java,
-  except that in Zeolite `[Foo&Bar]` can be used as a first-class type.
+  except that in Zeolite `[Foo & Bar]` can be used as a first-class type.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> { }
 
-  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> { }
 
   <b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
     <b>refines</b> <span style='color:#0057ae;'>Reader</span>
@@ -1542,11 +1542,11 @@ types.
 
   <span style='color:#898887;'>// ...</span>
 
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>.</span>new()
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span> <span style='color:#006e28;'>&amp;</span> <span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>.</span>new()
   <span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
   <span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
-- A value with a **union type** `[A|B]` can be assigned from *either* `A` or
+- A value with a **union type** `[A | B]` can be assigned from *either* `A` or
   `B`, but can only be assigned to something that *both* `A` and `B` can be
   assigned to. There is a special empty union named **`all`** that cannot ever
   be assigned a value but that can be assigned to everything. (`empty` is
@@ -1563,7 +1563,7 @@ types.
     <b>concrete</b> <b><span style='color:#0057ae;'>Helper</span></b> {
       <span style='color:#644a9b;'>@type</span> describe&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
         <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
-        <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>String</span></i><span style='color:#006e28;'>|</span><i><span style='color:#0057ae;'>Int</span></i><b><span style='color:#006e28;'>]</span></b>  <span style='color:#898887;'>// &lt;- limits allowed types</span>
+        <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>|</span> <i><span style='color:#0057ae;'>Int</span></i><b><span style='color:#006e28;'>]</span></b>  <span style='color:#898887;'>// &lt;- limits allowed types</span>
       (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
     }
 
@@ -1587,7 +1587,7 @@ types.
     convert to a common parent type.
 
     <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-    <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>String</span></i><span style='color:#006e28;'>|</span><i><span style='color:#0057ae;'>Int</span></i><b><span style='color:#006e28;'>]</span></b> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>123</span>
+    <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>String</span></i> <span style='color:#006e28;'>|</span> <i><span style='color:#0057ae;'>Int</span></i><b><span style='color:#006e28;'>]</span></b> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>123</span>
     <span style='color:#898887;'>// You can only convert to types that _all_ constituent types convert to.</span>
     <i><span style='color:#0057ae;'>Formatted</span></i> formatted <b><span style='color:#006e28;'>&lt;-</span></b> value  <span style='color:#898887;'>// Fine.</span>
     <i><span style='color:#0057ae;'>Int</span></i> number <b><span style='color:#006e28;'>&lt;-</span></b> value           <span style='color:#898887;'>// Error!</span></pre>
@@ -1608,16 +1608,16 @@ Intersection and union types also come up in [type inference](#type-inference).
 
 <b>concrete</b> <b><span style='color:#0057ae;'>Helper</span></b> {
   <span style='color:#898887;'>// #x is only used for input to the function.</span>
-  <span style='color:#644a9b;'>@type</span> inferInput&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+  <span style='color:#644a9b;'>@type</span> inferInput&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>, <i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
 
   <span style='color:#898887;'>// #x is only used for output from the function.</span>
   <span style='color:#898887;'>// (This is due to contravariance of #x in Writer.)</span>
-  <span style='color:#644a9b;'>@type</span> inferOutput&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+  <span style='color:#644a9b;'>@type</span> inferOutput&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>, <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Helper</span></b> {
-  inferInput (<b>_</b>,<b>_</b>) { <b>return</b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()<span style='color:#644a9b;'>.</span>formatted() }
-  inferOutput (<b>_</b>,<b>_</b>) { <b>return</b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()<span style='color:#644a9b;'>.</span>formatted() }
+  inferInput (<b>_</b>, <b>_</b>) { <b>return</b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()<span style='color:#644a9b;'>.</span>formatted() }
+  inferOutput (<b>_</b>, <b>_</b>) { <b>return</b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()<span style='color:#644a9b;'>.</span>formatted() }
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Writer</span></b> {
@@ -1626,11 +1626,11 @@ Intersection and union types also come up in [type inference](#type-inference).
 
 <span style='color:#898887;'>// ...</span>
 
-<span style='color:#898887;'>// Returns &quot;[Int|String]&quot;.</span>
-<span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferInput(<span style='color:#b08000;'>123</span>,<span style='color:#bf0303;'>&quot;message&quot;</span>)
+<span style='color:#898887;'>// Returns &quot;[Int | String]&quot;.</span>
+<span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferInput(<span style='color:#b08000;'>123</span>, <span style='color:#bf0303;'>&quot;message&quot;</span>)
 
-<span style='color:#898887;'>// Returns &quot;[Int&amp;String]&quot;.</span>
-<span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferOutput(<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new(),<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new())</pre>
+<span style='color:#898887;'>// Returns &quot;[Int &amp; String]&quot;.</span>
+<span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>Helper</span><span style='color:#644a9b;'>.</span>inferOutput(<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new(), <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new())</pre>
 
 In this context, unions/intersections are the _most restrictive_ valid types
 that will work for the substution. (They are respectively the
@@ -1644,7 +1644,7 @@ In some situations, you might want to peform an explicit type conversion on a
 *`value`* is any `@value` and *`Type`* is any type, including params and
 [meta types](#meta-types).
 
-- With values that have a [union type](#meta-types) (e.g., `[A|B]`), you might
+- With values that have a [union type](#meta-types) (e.g., `[A | B]`), you might
   need an explicit type conversion when making a function call.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
@@ -1664,7 +1664,7 @@ In some situations, you might want to peform an explicit type conversion on a
 
   <span style='color:#898887;'>// ...</span>
 
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>IntObject</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>StringObject</span><b><span style='color:#006e28;'>]</span></b> value &lt;- <span style='color:#0057ae;'>StringObject</span><span style='color:#644a9b;'>.</span>new(<span style='color:#bf0303;'>&quot;message&quot;</span>)
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>IntObject</span> <span style='color:#006e28;'>|</span> <span style='color:#0057ae;'>StringObject</span><b><span style='color:#006e28;'>]</span></b> value &lt;- <span style='color:#0057ae;'>StringObject</span><span style='color:#644a9b;'>.</span>new(<span style='color:#bf0303;'>&quot;message&quot;</span>)
 
   <span style='color:#898887;'>// Convert to Object&lt;Formatted&gt; before calling get().</span>
   <i><span style='color:#0057ae;'>Formatted</span></i> formatted &lt;- value<b>?</b><span style='color:#0057ae;'>Object</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>get()
@@ -1704,11 +1704,11 @@ In some situations, you might want to peform an explicit type conversion on a
 The **`reduce`** builtin function enables very limited runtime reasoning about
 type conversion.
 
-- The call `reduce<Foo,Bar>(value)` will return `value` with type `optional Bar`
-  iff `Foo` can be converted to `Bar`. Note that `value` must itself be
-  convertible to `optional Foo`.
+- The call `reduce<Foo, Bar>(value)` will return `value` with type
+  `optional Bar` iff `Foo` can be converted to `Bar`. Note that `value` must
+  itself be convertible to `optional Foo`.
 - When type params are used, the types that are assigned at the point of
-  execution are checked. For example, the result of `reduce<#x,#y>(value)` will
+  execution are checked. For example, the result of `reduce<#x, #y>(value)` will
   depend on the *specific* types assigned to `#x` and `#y` upon execution.
 
 Here are a few motivating use-cases:
@@ -1720,7 +1720,7 @@ Here are a few motivating use-cases:
 
 - Enabling optional functionality for a parameter without using a filter. For
   example, printing info about `value` if available using
-  `reduce<#x,Formatted>(value)` during debugging.
+  `reduce<#x, Formatted>(value)` during debugging.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>AnyObject</span></b> {
@@ -1737,7 +1737,7 @@ Here are a few motivating use-cases:
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
 
   create (value) { <b>return</b> <span style='color:#0057ae;'>Object</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ value } }
-  getAs  ()      { <b>return</b> <b>reduce</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#y</span></i>&gt;(value) }
+  getAs  ()      { <b>return</b> <b>reduce</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>, <i><span style='color:#0057ae;'>#y</span></i>&gt;(value) }
 }</pre>
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
@@ -1752,7 +1752,7 @@ Here are a few motivating use-cases:
 `reduce` *cannot* be used to "downcast" a value (e.g., converting a `Formatted`
 to a `Float`) since the argument has the same type as the first parameter.
 
-For example, `reduce<#x,#y>(value)` checks `#x`&rarr;`#y`, and since `value`
+For example, `reduce<#x, #y>(value)` checks `#x`&rarr;`#y`, and since `value`
 must be `optional #x`, `value` can only be converted upward. In other words, it
 only allows conversions that would otherwise be allowed, returning `empty` for
 all other conversions.
@@ -1969,7 +1969,7 @@ Builtin meta-types:
 
 - **`identify`**: Returns an `Identifier<#x>` for the value.
 - **`present`**: Check `optional` for `empty`.
-- **`reduce<#x,#y>(value)`**: See
+- **`reduce<#x, #y>(value)`**: See
   [Runtime Type Reduction](#runtime-type-reduction).
 - **`require`**: Convert `optional` to non-`optional`.
 - **`strong`**: Convert `weak` to `optional`.
@@ -2259,29 +2259,29 @@ These must occur at the very top of a function definition.
 
 These must be at the top of a category `define` immediately following `{`.
 
-- **`$FlatCleanup[`**_`memberName`_**`]$`**. (As of compiler version `0.21.0.0`.)
-  Clear the `@value` member `memberName` before actually cleaning up the
-  `@value` itself to avoid recursive cleanup. Use this when recursive cleanup
-  might otherwise result in a stack overflow, e.g., with linked lists.
+- **`$FlatCleanup[`**_`memberName`_**`]$`**. (As of compiler version
+  `0.21.0.0`.) Clear the `@value` member `memberName` before actually cleaning
+  up the `@value` itself to avoid recursive cleanup. Use this when recursive
+  cleanup might otherwise result in a stack overflow, e.g., with linked lists.
 
   Only *one* member can be specified in this pragma so that the implementation
   does not need to use a dynamically-sized cleanup queue to handle branching.
 
-- **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. (As of compiler version
+- **`$ReadOnly[`**_`var1, var2, ...`_**`]$`**. (As of compiler version
   `0.16.0.0`.) See [Local Variable Rules](#local-variable-rules). Only applies
   to `@category` and `@value` members.
 
-- **`$Hidden[`**_`var1,var2,...`_**`]$`**. (As of compiler version  `0.16.0.0`.)
-  See [Local Variable Rules](#local-variable-rules). Only applies  to
-  `@category` and `@value` members.
+- **`$Hidden[`**_`var1, var2, ...`_**`]$`**. (As of compiler version
+  `0.16.0.0`.) See [Local Variable Rules](#local-variable-rules). Only applies
+  to `@category` and `@value` members.
 
-- **`$ReadOnlyExcept[`**_`var1,var2,...`_**`]$`**. (As of compiler version
+- **`$ReadOnlyExcept[`**_`var1, var2, ...`_**`]$`**. (As of compiler version
   `0.22.1.0`.) Marks all `@category` and `@value` members as read-only *except*
   those listed.
 
   - If multiple `ReadOnlyExcept` are used, they are unioned rather than
     intersected. For example, `$ReadOnlyExcept[foo]$` and
-    `$ReadOnlyExcept[bar]$` together make `$ReadOnlyExcept[foo,bar]$` and *not*
+    `$ReadOnlyExcept[bar]$` together make `$ReadOnlyExcept[foo, bar]$` and *not*
     `$ReadOnlyExcept[]$`.
 
   - If a variable is listed in both `ReadOnly` and `ReadOnlyExcept`, the
@@ -2299,7 +2299,7 @@ These must be at the top of a `unittest` immediately following `{`.
 
 These pragmas alter how variables are dealt with locally:
 
-- **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. (As of compiler version
+- **`$ReadOnly[`**_`var1, var2, ...`_**`]$`**. (As of compiler version
   `0.13.0.0`.) Marks `var1`, `var2`, etc. as read-only for the remainder of the
   statements in this context. Note that this only prevents *assignment* to the
   variable; it does not prevent making calls to functions that change the state
@@ -2321,10 +2321,10 @@ These pragmas alter how variables are dealt with locally:
   This can be used for any variable name visible in the current scope, including
   `@value` and `@category` members and argument and return variables.
 
-- **`$Hidden[`**_`var1,var2,...`_**`]$`**. (As of compiler version `0.13.0.0`.)
-  This works the same way as `ReadOnly` except that it also makes the variables
-  inaccessible for reading. Note that this *does not* allow you to reuse a
-  variable name; the variable name remains reserved.
+- **`$Hidden[`**_`var1, var2, ...`_**`]$`**. (As of compiler version
+  `0.13.0.0`.) This works the same way as `ReadOnly` except that it also makes
+  the variables inaccessible for reading. Note that this *does not* allow you to
+  reuse a variable name; the variable name remains reserved.
 
 - As of compiler version `0.16.0.0` both `$ReadOnly[...]$` and `$Hidden[...]$`
   can be used at the top of a `define` for a `concrete` category to protect
@@ -2420,7 +2420,7 @@ These can be used in place of language expressions.
     ]
 
     <span style='color:#898887;'>// (Standard part of .zeolite-module.)</span>
-    <b>mode:</b> <i>incremental</i> {}
+    <b>mode:</b> <i>incremental</i> { }
     </pre>
 
     The `name:` must only contain uppercase letters, numbers, and `_`, and the

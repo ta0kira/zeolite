@@ -21,14 +21,14 @@ testcase "HashedMap tests" {
 }
 
 unittest integrationTest {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.default()
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.default()
   Int count <- 33
   $ReadOnly[count]$
 
   // Insert values.
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
-    \ map.set(new,i)
+    \ map.set(new, i)
     \ map.size() `Matches:with` CheckValue:equals(i+1)
   }
 
@@ -60,16 +60,16 @@ unittest integrationTest {
 }
 
 unittest removeNotPresent {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new().set(1,1).set(2,2).set(4,4)
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.new().set(1, 1).set(2, 2).set(4, 4)
   \ map.remove(3)
   \ map.size() `Matches:with` CheckValue:equals(3)
 }
 
 unittest defaultOrder {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -80,10 +80,10 @@ unittest defaultOrder {
 
   // Validate traversal coverage.
   Int index <- 0
-  traverse (map.defaultOrder() -> KeyValue<Int,Int> entry) {
+  traverse (map.defaultOrder() -> KeyValue<Int, Int> entry) {
     \ visited.readAt(entry.getKey()) `Matches:with` CheckValue:equals(false)
     \ (entry.getValue()*hash)%max `Matches:with` CheckValue:equals(entry.getKey())
-    \ visited.writeAt(entry.getKey(),true)
+    \ visited.writeAt(entry.getKey(), true)
     index <- index+1
   }
 
@@ -91,16 +91,16 @@ unittest defaultOrder {
 }
 
 unittest defaultOrderEmpty {
-  traverse (HashedMap<Int,Int>.new().defaultOrder() -> _) {
+  traverse (HashedMap<Int, Int>.new().defaultOrder() -> _) {
     fail("not empty")
   }
 }
 
 unittest keyOrder {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -113,7 +113,7 @@ unittest keyOrder {
   Int index <- 0
   traverse (map.keyOrder() -> Int key) {
     \ visited.readAt(key) `Matches:with` CheckValue:equals(false)
-    \ visited.writeAt(key,true)
+    \ visited.writeAt(key, true)
     index <- index+1
   }
 
@@ -121,10 +121,10 @@ unittest keyOrder {
 }
 
 unittest valueOrder {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the map in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -137,7 +137,7 @@ unittest valueOrder {
   Int index <- 0
   traverse (map.valueOrder() -> Int value) {
     \ visited.readAt(value) `Matches:with` CheckValue:equals(false)
-    \ visited.writeAt(value,true)
+    \ visited.writeAt(value, true)
     index <- index+1
   }
 
@@ -145,22 +145,22 @@ unittest valueOrder {
 }
 
 unittest duplicate {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.default()
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.default()
   Int max <- 31
   $ReadOnly[max]$
 
   traverse (Counter.zeroIndexed(max) -> Int i) {
-    \ map.set(i,i)
+    \ map.set(i, i)
   }
 
-  HashedMap<Int,Int> copy <- map.duplicate()
+  HashedMap<Int, Int> copy <- map.duplicate()
   \ copy.size() `Matches:with` CheckValue:equals(map.size())
   traverse (Counter.zeroIndexed(max) -> Int i) {
     $Hidden[map]$
     \ copy.get(i) `Matches:with` CheckValue:equals(i)
   }
 
-  \ copy.set(2,5)
+  \ copy.set(2, 5)
   \ copy.remove(7)
   $Hidden[copy]$
 
@@ -171,20 +171,20 @@ unittest duplicate {
 }
 
 unittest duplicateEmpty {
-  HashedMap<Int,Int> map <- HashedMap<Int,Int>.new()
-  HashedMap<Int,Int> copy <- map.duplicate()
-  \ map.set(1,1)
+  HashedMap<Int, Int> map <- HashedMap<Int, Int>.new()
+  HashedMap<Int, Int> copy <- map.duplicate()
+  \ map.set(1, 1)
   \ copy.size() `Matches:with` CheckValue:equals(0)
 }
 
 unittest weakSetExists {
-  HashedMap<Int,Value> map <- HashedMap<Int,Value>.default()
-      .set(1,Value.new(1))
-      .set(2,Value.new(2))
-      .set(3,Value.new(3))
+  HashedMap<Int, Value> map <- HashedMap<Int, Value>.default()
+      .set(1, Value.new(1))
+      .set(2, Value.new(2))
+      .set(3, Value.new(3))
 
   Value value0 <- Value.new(5)
-  Value value1 <- map.weakSet(1,value0)
+  Value value1 <- map.weakSet(1, value0)
   \ map.size() `Matches:with` CheckValue:equals(3)
 
   \ value0.get() `Matches:with` CheckValue:equals(5)
@@ -196,13 +196,13 @@ unittest weakSetExists {
 }
 
 unittest weakSetMissing {
-  HashedMap<Int,Value> map <- HashedMap<Int,Value>.default()
-      .set(1,Value.new(1))
-      .set(2,Value.new(2))
-      .set(3,Value.new(3))
+  HashedMap<Int, Value> map <- HashedMap<Int, Value>.default()
+      .set(1, Value.new(1))
+      .set(2, Value.new(2))
+      .set(3, Value.new(3))
 
   Value value0 <- Value.new(5)
-  Value value1 <- map.weakSet(7,value0)
+  Value value1 <- map.weakSet(7, value0)
   \ map.size() `Matches:with` CheckValue:equals(4)
 
   \ value0.get() `Matches:with` CheckValue:equals(5)
@@ -214,10 +214,10 @@ unittest weakSetMissing {
 }
 
 unittest setMember {
-  HashedMap<Int,Value> map <- HashedMap<Int,Value>.default()
-      .set(1,Value.new(1))
-      .set(2,Value.new(2))
-      .set(3,Value.new(3))
+  HashedMap<Int, Value> map <- HashedMap<Int, Value>.default()
+      .set(1, Value.new(1))
+      .set(2, Value.new(2))
+      .set(3, Value.new(3))
   \ map.member(1) `Matches:with` CheckValue:equals(true)
   \ map.member(5) `Matches:with` CheckValue:equals(false)
 }
@@ -242,7 +242,7 @@ define Value {
     return value.formatted()
   }
 
-  equals (x,y) {
+  equals (x, y) {
     return x.get() == y.get()
   }
 }

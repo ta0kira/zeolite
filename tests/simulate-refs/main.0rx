@@ -47,17 +47,17 @@ define SimulateRefs {
   @type getRoutines (ReferenceState) -> (DefaultOrder<StateMachine>)
   getRoutines (state) {
     return Vector<StateMachine>.new()
-        .append(Routines.newShared("shared1",state))
-        .append(Routines.newWeak("weak1",state))
-        .append(Routines.newWeak("weak2",state))
+        .append(Routines.newShared("shared1", state))
+        .append(Routines.newWeak("weak1", state))
+        .append(Routines.newWeak("weak2", state))
   }
 
   @type getRoutinesBroken (ReferenceState) -> (DefaultOrder<StateMachine>)
   getRoutinesBroken (state) {
     return Vector<StateMachine>.new()
-        .append(Routines.newSharedBroken("shared1",state))
-        .append(Routines.newWeakBroken("weak1",state))
-        .append(Routines.newWeakBroken("weak2",state))
+        .append(Routines.newSharedBroken("shared1", state))
+        .append(Routines.newWeakBroken("weak1", state))
+        .append(Routines.newWeakBroken("weak2", state))
   }
 
   @type runOnce (Bool) -> (Bool)
@@ -69,7 +69,7 @@ define SimulateRefs {
     } else {
       routines <- getRoutines(state)
     }
-    \ StateExecutor:multiplexStates(routines,random)
+    \ StateExecutor:multiplexStates(routines, random)
 
     scoped {
       optional String error <- state.getError()

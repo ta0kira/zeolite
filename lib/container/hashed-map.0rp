@@ -21,15 +21,15 @@ limitations under the License.
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-concrete HashedMap<#k,#v> {
+concrete HashedMap<#k, #v> {
   defines Default
   refines Container
-  refines DefaultOrder<KeyValue<#k,#v>>
+  refines DefaultOrder<KeyValue<#k, #v>>
   refines Duplicate
   refines KeyOrder<#k>
-  refines KVExchange<#k,#v>
-  refines KVWriter<#k,#v>
-  refines KVReader<#k,#v>
+  refines KVExchange<#k, #v>
+  refines KVWriter<#k, #v>
+  refines KVReader<#k, #v>
   refines ValueOrder<#v>
   refines SetReader<#k>
   #k immutable

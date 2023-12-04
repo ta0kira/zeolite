@@ -29,10 +29,10 @@ unittest almostEquals {
 }
 
 unittest closeTo {
-  \ 1.24 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.011)
-  \ 1.22 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.011)
-  \ -1.24 `Matches:with` CheckFloat:closeTo(-1.23,epsilon: 0.011)
-  \ -1.22 `Matches:with` CheckFloat:closeTo(-1.23,epsilon: 0.011)
+  \ 1.24 `Matches:with` CheckFloat:closeTo(1.23, epsilon: 0.011)
+  \ 1.22 `Matches:with` CheckFloat:closeTo(1.23, epsilon: 0.011)
+  \ -1.24 `Matches:with` CheckFloat:closeTo(-1.23, epsilon: 0.011)
+  \ -1.22 `Matches:with` CheckFloat:closeTo(-1.23, epsilon: 0.011)
 }
 
 
@@ -82,7 +82,7 @@ testcase "CheckFloat:closeTo failure empty" {
 }
 
 unittest test {
-  \ empty `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.001)
+  \ empty `Matches:with` CheckFloat:closeTo(1.23, epsilon: 0.001)
 }
 
 
@@ -92,7 +92,7 @@ testcase "CheckFloat:closeTo failure above" {
 }
 
 unittest test {
-  \ 1.24 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.001)
+  \ 1.24 `Matches:with` CheckFloat:closeTo(1.23, epsilon: 0.001)
 }
 
 
@@ -102,5 +102,5 @@ testcase "CheckFloat:closeTo failure below" {
 }
 
 unittest test {
-  \ 1.22 `Matches:with` CheckFloat:closeTo(1.23,epsilon: 0.001)
+  \ 1.22 `Matches:with` CheckFloat:closeTo(1.23, epsilon: 0.001)
 }

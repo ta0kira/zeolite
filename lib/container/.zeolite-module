@@ -34,4 +34,4 @@ extra_files: [
     categories: [Vector]
   }
 ]
-mode: incremental {}
+mode: incremental { }

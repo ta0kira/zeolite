@@ -37,7 +37,7 @@ testcase "#self disallowed in @category members" {
   require "#self not found"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   @category optional #self value <- empty
@@ -239,11 +239,11 @@ define Type {
   }
 
   checkFrom () {
-    return present(reduce<#self,#y>(self))
+    return present(reduce<#self, #y>(self))
   }
 
   checkTo (from) {
-    return present(reduce<#y,#self>(from))
+    return present(reduce<#y, #self>(from))
   }
 }
 
@@ -253,7 +253,7 @@ testcase "#self in typename" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Type<Bool>.get(),"Type<Type<Bool>>")
+  \ Testing.checkEquals(Type<Bool>.get(), "Type<Type<Bool>>")
 }
 
 concrete Type<#x> {
@@ -374,12 +374,12 @@ testcase "#self preserves type in implementations" {
 
 unittest withConcrete {
   Type value <- Type.create()
-  \ Testing.checkEquals(value.next().prev().prev().next().next().get(),1)
+  \ Testing.checkEquals(value.next().prev().prev().next().next().get(), 1)
 }
 
 unittest withIntersect {
-  [Cell<Int>&Forward&Reverse] value <- Type.create()
-  \ Testing.checkEquals(value.next().prev().prev().next().next().get(),1)
+  [Cell<Int> & Forward & Reverse] value <- Type.create()
+  \ Testing.checkEquals(value.next().prev().prev().next().next().get(), 1)
 }
 
 @value interface Cell<|#x> {
@@ -431,7 +431,7 @@ testcase "#self preserves type in function param filters" {
 
 unittest test {
   Type value <- Helper.new<Type>()
-  \ Testing.checkEquals((value `Advance.by` 3).get(),3)
+  \ Testing.checkEquals((value `Advance.by` 3).get(), 3)
 }
 
 @value interface Forward {
@@ -453,11 +453,11 @@ define Helper {
 concrete Advance {
   @type by<#x>
     #x requires Forward
-  (#x,Int) -> (#x)
+  (#x, Int) -> (#x)
 }
 
 define Advance {
-  by (x,i) (x2) {
+  by (x, i) (x2) {
     x2 <- x
     scoped {
       Int count <- 0
@@ -501,7 +501,7 @@ concrete Type<#x> {
   #x allows #self
 }
 
-define Type {}
+define Type { }
 
 
 testcase "#self nested in param filter" {
@@ -513,9 +513,9 @@ concrete Type<#x> {
   #x defines Equals<#self>
 }
 
-define Type {}
+define Type { }
 
-@value interface Writer<#x|> {}
+@value interface Writer<#x|> { }
 
 
 testcase "#self nested in inheritance" {
@@ -554,13 +554,13 @@ concrete Type1<#x> {
   #x allows #self
 }
 
-define Type1 {}
+define Type1 { }
 
 concrete Type2<#x> {
   #x requires #self
 }
 
-define Type2 {}
+define Type2 { }
 
 
 testcase "#self allowed in covavariant position of function param filter" {
@@ -654,7 +654,7 @@ testcase "bad explicit conversion with #self in param" {
   exclude "#self"
 }
 
-@value interface Reader<|#x> {}
+@value interface Reader<|#x> { }
 
 concrete Type {
   refines Reader<#self>
@@ -675,13 +675,13 @@ testcase "#self cannot be contravariant in refine" {
   require "contravariant"
 }
 
-@value interface Base<#x|> {}
+@value interface Base<#x|> { }
 
 concrete Type {
   refines Base<#self>
 }
 
-define Type {}
+define Type { }
 
 
 testcase "#self cannot be contravariant in define" {
@@ -691,13 +691,13 @@ testcase "#self cannot be contravariant in define" {
   require "contravariant"
 }
 
-@type interface Base<#x|> {}
+@type interface Base<#x|> { }
 
 concrete Type {
   defines Base<#self>
 }
 
-define Type {}
+define Type { }
 
 
 testcase "#self cannot be invariant in refine" {
@@ -707,13 +707,13 @@ testcase "#self cannot be invariant in refine" {
   require "invariant"
 }
 
-@value interface Base<#x> {}
+@value interface Base<#x> { }
 
 concrete Type {
   refines Base<#self>
 }
 
-define Type {}
+define Type { }
 
 
 testcase "#self cannot be invariant in define" {
@@ -723,13 +723,13 @@ testcase "#self cannot be invariant in define" {
   require "invariant"
 }
 
-@type interface Base<#x> {}
+@type interface Base<#x> { }
 
 concrete Type {
   defines Base<#self>
 }
 
-define Type {}
+define Type { }
 
 
 testcase "#self nested in value init with filters" {
@@ -737,7 +737,7 @@ testcase "#self nested in value init with filters" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Type<Int>.create().formatted(),"Type<Type<Int>>")
+  \ Testing.checkEquals(Type<Int>.create().formatted(), "Type<Type<Int>>")
 }
 
 concrete Type<|#x> {

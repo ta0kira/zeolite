@@ -25,7 +25,7 @@ unittest simpleSum {
   traverse (Counter.zeroIndexed(5) -> Int i) {
     total <- total+i
   }
-  \ Testing.checkEquals(total,10)
+  \ Testing.checkEquals(total, 10)
 }
 
 unittest ignoreValue {
@@ -33,7 +33,7 @@ unittest ignoreValue {
   traverse (Counter.zeroIndexed(5) -> _) {
     total <- total+1
   }
-  \ Testing.checkEquals(total,5)
+  \ Testing.checkEquals(total, 5)
 }
 
 unittest existingVariable {
@@ -42,8 +42,8 @@ unittest existingVariable {
   traverse (Counter.zeroIndexed(5) -> i) {
     total <- total+i
   }
-  \ Testing.checkEquals(total,10)
-  \ Testing.checkEquals(i,4)
+  \ Testing.checkEquals(total, 10)
+  \ Testing.checkEquals(i, 4)
 }
 
 unittest breakAtLimit {
@@ -54,7 +54,7 @@ unittest breakAtLimit {
     }
     total <- total+i
   }
-  \ Testing.checkEquals(total,10)
+  \ Testing.checkEquals(total, 10)
 }
 
 unittest continueOnOdd {
@@ -65,7 +65,7 @@ unittest continueOnOdd {
     }
     total <- total+i
   }
-  \ Testing.checkEquals(total,20)
+  \ Testing.checkEquals(total, 20)
 }
 
 unittest withUpdate {
@@ -77,7 +77,7 @@ unittest withUpdate {
   } update {
     total <- total+i
   }
-  \ Testing.checkEquals(total,45)
+  \ Testing.checkEquals(total, 45)
 }
 
 unittest overwriteVisibleValue {
@@ -86,7 +86,7 @@ unittest overwriteVisibleValue {
     // i shouldn't be overwritten after the last iteration.
     i <- 0
   }
-  \ Testing.checkEquals(i,0)
+  \ Testing.checkEquals(i, 0)
 }
 
 unittest overwriteLocalValue {
@@ -95,7 +95,7 @@ unittest overwriteLocalValue {
     i <- 0
   } update {
     // i should also be visible here.
-    \ Testing.checkEquals(i,0)
+    \ Testing.checkEquals(i, 0)
   }
 }
 
@@ -138,7 +138,7 @@ testcase "bad traverse container" {
 }
 
 unittest test {
-  traverse (0 -> _) {}
+  traverse (0 -> _) { }
 }
 
 
@@ -168,7 +168,7 @@ define Empty {
 }
 
 unittest test {
-  traverse (Empty:new<String>() -> Int i) {}
+  traverse (Empty:new<String>() -> Int i) { }
 }
 
 
@@ -191,7 +191,7 @@ define Test {
     traverse (Counter.new() -> Int i) {
       total <- total+i
     }
-    \ Testing.checkEquals(total,10)
+    \ Testing.checkEquals(total, 10)
   }
 }
 
@@ -242,7 +242,7 @@ define Test {
     traverse (Counter.new() -> Int i) {
       total <- total+i
     }
-    \ Testing.checkEquals(total,10)
+    \ Testing.checkEquals(total, 10)
   }
 }
 
@@ -280,7 +280,7 @@ testcase "no clash when #auto also the inferred type" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Test.run("message"),"message")
+  \ Testing.checkEquals(Test.run("message"), "message")
 }
 
 concrete Test {
@@ -291,24 +291,24 @@ define Test {
   run (x) (i) {
     i <- x
     Int total <- 0
-    traverse (Repeat:times(x,10) -> i) {
+    traverse (Repeat:times(x, 10) -> i) {
       total <- total+1
     }
-    \ Testing.checkEquals(total,10)
+    \ Testing.checkEquals(total, 10)
   }
 }
 
 concrete Repeat<|#x> {
   refines Order<#x>
 
-  @category times<#y> (#y,Int) -> (optional Repeat<#y>)
+  @category times<#y> (#y, Int) -> (optional Repeat<#y>)
 }
 
 define Repeat {
   @value #x value
   @value Int count
 
-  times (value,count) {
+  times (value, count) {
     if (count < 1) {
       return empty
     } else {

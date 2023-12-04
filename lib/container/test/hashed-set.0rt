@@ -24,7 +24,7 @@ unittest addAndRemove {
   HashedSet<Int> set <- HashedSet<Int>.default()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -64,7 +64,7 @@ unittest defaultOrder {
   HashedSet<Int> set <- HashedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -77,7 +77,7 @@ unittest defaultOrder {
   Int index <- 0
   traverse (set.defaultOrder() -> Int entry) {
     \ visited.readAt(entry) `Matches:with` CheckValue:equals(false)
-    \ visited.writeAt(entry,true)
+    \ visited.writeAt(entry, true)
     index <- index+1
   }
 

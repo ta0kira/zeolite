@@ -33,12 +33,12 @@ limitations under the License.
 //   of the tree. It is provided as a filter for the return of getRoot() so that
 //   a container can implement custom functionality using the tree's structure
 //   without risking modification of the tree.
-concrete AutoBinaryTree<|#n,#k,#v|#r> {
+concrete AutoBinaryTree<|#n, #k, #v|#r> {
   refines Container
   refines Duplicate
   #k immutable
-  #n defines  KVFactory<#k,#v>
-  #n requires BalancedTreeNode<#n,#k,#v>
+  #n defines  KVFactory<#k, #v>
+  #n requires BalancedTreeNode<#n, #k, #v>
   #n requires Duplicate
   #k defines  LessThan<#k>
   #r allows   #n
@@ -57,21 +57,21 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
   // Notes:
   // - updateNode() will be called on every affected node, starting with the
   //   deepest node. It might be called an arbitrary number of times per node.
-  @value weakSet (#k,#v) -> (#v)
+  @value weakSet (#k, #v) -> (#v)
 
   // Swap the value associated with the key if it is not present.
   //
   // Notes:
   // - updateNode() will be called on every affected node, starting with the
   //   deepest node. It might be called an arbitrary number of times per node.
-  @value swap (#k,optional #v) -> (optional #v)
+  @value swap (#k, optional #v) -> (optional #v)
 }
 
 // An interface for reading the state of a BST node.
 //
 // Notes:
 // - This is intended for internal use in BST-based categories.
-@value interface BinaryTreeNode<|#k,#v> {
+@value interface BinaryTreeNode<|#k, #v> {
   getLower  () -> (optional #self)
   getHigher () -> (optional #self)
   getKey    () -> (#k)
@@ -83,8 +83,8 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
 //
 // Notes:
 // - This is intended for internal use in BST-based categories.
-@value interface BalancedTreeNode<#n|#k,#v|> {
-  refines BinaryTreeNode<#k,#v>
+@value interface BalancedTreeNode<#n|#k, #v|> {
+  refines BinaryTreeNode<#k, #v>
 
   // Set the lower child of the node.
   //
@@ -119,26 +119,26 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
 //
 // Notes:
 // - This is intended for internal use in BST-based categories.
-concrete ForwardTreeOrder<|#k,#v> {
-  refines Order<KeyValue<#k,#v>>
+concrete ForwardTreeOrder<|#k, #v> {
+  refines Order<KeyValue<#k, #v>>
 
-  @category create<#k,#v> (optional BinaryTreeNode<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+  @category create<#k, #v> (optional BinaryTreeNode<#k, #v>) -> (optional ForwardTreeOrder<#k, #v>)
 
-  @category seek<#k,#v>
+  @category seek<#k, #v>
     #k defines LessThan<#k>
-  (#k,optional BinaryTreeNode<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+  (#k, optional BinaryTreeNode<#k, #v>) -> (optional ForwardTreeOrder<#k, #v>)
 }
 
 // Provides reverse iteration of the nodes in a BST.
 //
 // Notes:
 // - This is intended for internal use in BST-based categories.
-concrete ReverseTreeOrder<|#k,#v> {
-  refines Order<KeyValue<#k,#v>>
+concrete ReverseTreeOrder<|#k, #v> {
+  refines Order<KeyValue<#k, #v>>
 
-  @category create<#k,#v> (optional BinaryTreeNode<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+  @category create<#k, #v> (optional BinaryTreeNode<#k, #v>) -> (optional ReverseTreeOrder<#k, #v>)
 
-  @category seek<#k,#v>
+  @category seek<#k, #v>
     #k defines LessThan<#k>
-  (#k,optional BinaryTreeNode<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+  (#k, optional BinaryTreeNode<#k, #v>) -> (optional ReverseTreeOrder<#k, #v>)
 }

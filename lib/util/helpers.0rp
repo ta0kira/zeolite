@@ -29,7 +29,7 @@ concrete OrderH {
   //   Bool lt <- x.defaultOrder() `OrderH:lessThan` y.defaultOrder()
   @category lessThan<#x>
     #x defines LessThan<#x>
-  (optional Order<#x>,optional Order<#x>) -> (Bool)
+  (optional Order<#x>, optional Order<#x>) -> (Bool)
 
   // The same as lessThan, but with a custom comparator.
   //
@@ -39,10 +39,10 @@ concrete OrderH {
   //
   // Example:
   //
-  //   Bool lt <- x.defaultOrder() `OrderH:lessThanWith<?,Reversed<Int>>` y.defaultOrder()
-  @category lessThanWith<#x,#xx>
+  //   Bool lt <- x.defaultOrder() `OrderH:lessThanWith<?, Reversed<Int>>` y.defaultOrder()
+  @category lessThanWith<#x, #xx>
     #xx defines LessThan<#x>
-  (optional Order<#x>,optional Order<#x>) -> (Bool)
+  (optional Order<#x>, optional Order<#x>) -> (Bool)
 
   // Extend equals, based on position-wise comparisons.
   //
@@ -51,7 +51,7 @@ concrete OrderH {
   //   Bool eq <- x.defaultOrder() `OrderH:equals` y.defaultOrder()
   @category equals<#x>
     #x defines Equals<#x>
-  (optional Order<#x>,optional Order<#x>) -> (Bool)
+  (optional Order<#x>, optional Order<#x>) -> (Bool)
 
   // The same as equals, but with a custom comparator.
   //
@@ -61,10 +61,10 @@ concrete OrderH {
   //
   // Example:
   //
-  //   Bool eq <- x.defaultOrder() `OrderH:equalsWith<?,BySize>` y.defaultOrder()
-  @category equalsWith<#x,#xx>
+  //   Bool eq <- x.defaultOrder() `OrderH:equalsWith<?, BySize>` y.defaultOrder()
+  @category equalsWith<#x, #xx>
     #xx defines Equals<#x>
-  (optional Order<#x>,optional Order<#x>) -> (Bool)
+  (optional Order<#x>, optional Order<#x>) -> (Bool)
 
   // Copies references to all elements to the destination.
   //
@@ -78,9 +78,9 @@ concrete OrderH {
   //
   // Returns:
   // - #c: The container originally passed.
-  @category copyTo<#x,#c>
+  @category copyTo<#x, #c>
     #c requires Append<#x>
-  (optional Order<#x>,#c) -> (#c)
+  (optional Order<#x>, #c) -> (#c)
 
   // Duplicates all elements to the destination.
   //
@@ -94,10 +94,10 @@ concrete OrderH {
   //
   // Returns:
   // - #c: The container originally passed.
-  @category duplicateTo<#x,#c>
+  @category duplicateTo<#x, #c>
     #x requires Duplicate
     #c requires Append<#x>
-  (optional Order<#x>,#c) -> (#c)
+  (optional Order<#x>, #c) -> (#c)
 }
 
 // Helpers to extend functionality to the ReadAt<#x> built-in.
@@ -113,7 +113,7 @@ concrete ReadAtH {
   //   Bool lt <- x `ReadAtH:lessThan` y
   @category lessThan<#x>
     #x defines LessThan<#x>
-  (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+  (ReadAt<#x>, ReadAt<#x>) -> (Bool)
 
   // The same as lessThan, but with a custom comparator.
   //
@@ -123,10 +123,10 @@ concrete ReadAtH {
   //
   // Example:
   //
-  //   Bool lt <- x `ReadAtH:lessThanWith<?,Reversed<Int>>` y
-  @category lessThanWith<#x,#xx>
+  //   Bool lt <- x `ReadAtH:lessThanWith<?, Reversed<Int>>` y
+  @category lessThanWith<#x, #xx>
     #xx defines LessThan<#x>
-  (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+  (ReadAt<#x>, ReadAt<#x>) -> (Bool)
 
   // Extend equals, based on position-wise comparisons.
   //
@@ -135,7 +135,7 @@ concrete ReadAtH {
   //   Bool eq <- x `ReadAtH:equals` y
   @category equals<#x>
     #x defines Equals<#x>
-  (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+  (ReadAt<#x>, ReadAt<#x>) -> (Bool)
 
   // The same as equals, but with a custom comparator.
   //
@@ -145,10 +145,10 @@ concrete ReadAtH {
   //
   // Example:
   //
-  //   Bool eq <- x `ReadAtH:equalsWith<?,BySize>` y
-  @category equalsWith<#x,#xx>
+  //   Bool eq <- x `ReadAtH:equalsWith<?, BySize>` y
+  @category equalsWith<#x, #xx>
     #xx defines Equals<#x>
-  (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+  (ReadAt<#x>, ReadAt<#x>) -> (Bool)
 
   // Copies references to all elements to the destination.
   //
@@ -162,9 +162,9 @@ concrete ReadAtH {
   //
   // Returns:
   // - #c: The container originally passed.
-  @category copyTo<#x,#c>
+  @category copyTo<#x, #c>
     #c requires Append<#x>
-  (ReadAt<#x>,#c) -> (#c)
+  (ReadAt<#x>, #c) -> (#c)
 
   // Duplicates all elements to the destination.
   //
@@ -178,10 +178,10 @@ concrete ReadAtH {
   //
   // Returns:
   // - #c: The container originally passed.
-  @category duplicateTo<#x,#c>
+  @category duplicateTo<#x, #c>
     #x requires Duplicate
     #c requires Append<#x>
-  (ReadAt<#x>,#c) -> (#c)
+  (ReadAt<#x>, #c) -> (#c)
 
   // Iterates over the container from 0 to the end.
   @category forwardOrder<#x> (ReadAt<#x>) -> (optional Order<#x>)
@@ -190,7 +190,7 @@ concrete ReadAtH {
   @category reverseOrder<#x> (ReadAt<#x>) -> (optional Order<#x>)
 
   // Iterates over the container using the provided index order.
-  @category iterateWith<#x> (ReadAt<#x>,optional Order<Int>) -> (optional Order<#x>)
+  @category iterateWith<#x> (ReadAt<#x>, optional Order<Int>) -> (optional Order<#x>)
 }
 
 // Helpers to extend functionality to the Formatted built-in.

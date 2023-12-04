@@ -21,9 +21,9 @@ testcase "assign while" {
   require "value.+initialized"
 }
 
-@value interface Value {}
+@value interface Value { }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (optional Value)
@@ -40,9 +40,9 @@ testcase "return while" {
   require "return"
 }
 
-@value interface Value {}
+@value interface Value { }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (optional Value)
@@ -336,7 +336,7 @@ define Type {
     while (true) {
       cleanup {
         fail(message)
-      } in {}
+      } in { }
     }
     return "return"
   }
@@ -353,7 +353,7 @@ unittest test {
   while(true) {
     cleanup {
       break
-    } in {}
+    } in { }
   }
 }
 
@@ -368,7 +368,7 @@ unittest test {
   while(true) {
     cleanup {
       continue
-    } in {}
+    } in { }
   }
 }
 

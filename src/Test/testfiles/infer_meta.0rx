@@ -1,4 +1,4 @@
-@value interface Type0 {}
+@value interface Type0 { }
 
 @value interface Type1 {
   refines Type0
@@ -12,11 +12,11 @@ concrete Type4 {
   defines Defined<Type4>
 }
 
-@type interface Defined<#x> {}
+@type interface Defined<#x> { }
 
-@value interface Interface0<|#x> {}
+@value interface Interface0<|#x> { }
 
-@value interface Interface1<#y|> {}
+@value interface Interface1<#y|> { }
 
 @value interface Interface2<#y> {
   refines Interface0<#y>

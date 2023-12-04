@@ -1,6 +1,6 @@
-@value interface Object1<#x|> {}
+@value interface Object1<#x|> { }
 
-@value interface Object2<#z> {}
+@value interface Object2<#z> { }
 
 @value interface Object3<#y|> {
   // Despite matching variance with Object1, Object2 turns it into invariant.

@@ -6,7 +6,7 @@
 // ParseState<all> can convert to all other ParseState.
 concrete ParseState<|#x> {
   // Consumes all input and returns the result.
-  @category consumeAll<#y> (Parser<#y>,String) -> (ErrorOr<#y>)
+  @category consumeAll<#y> (Parser<#y>, String) -> (ErrorOr<#y>)
 }
 
 // A self-contained parser operation.
@@ -26,7 +26,7 @@ concrete ParseState<|#x> {
 @value interface ParseContext<|#x> {
   // Continue computation.
   run<#y>       (Parser<#y>) -> (ParseContext<#y>)
-  runAndGet<#y> (Parser<#y>) -> (ParseContext<any>,ErrorOr<#y>)
+  runAndGet<#y> (Parser<#y>) -> (ParseContext<any>, ErrorOr<#y>)
   getValue      ()           -> (ErrorOr<#x>)
 
   // End computation and pass on the next state.

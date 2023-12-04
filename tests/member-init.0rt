@@ -25,7 +25,7 @@ define Test {
   @type Bool value <- false
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "@category member from @type" {
@@ -36,7 +36,7 @@ unittest test {
   // NOTE: Executing the test ensures that C++ compilation works.
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Bool value <- true
@@ -56,7 +56,7 @@ unittest test {
   // NOTE: Executing the test ensures that C++ compilation works.
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Bool value <- true
@@ -73,7 +73,7 @@ testcase "@category to @category" {
   require "get"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Bool value <- get()
@@ -90,7 +90,7 @@ testcase "@category member refers to @category member" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Test:get(),2)
+  \ Testing.checkEquals(Test:get(), 2)
 }
 
 concrete Test {
@@ -126,7 +126,7 @@ define Util {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Bool value <- Util.doNotUse()
@@ -259,7 +259,7 @@ define Test {
 
 testcase "@category init cycle" {
   failure
-  require "Value1|Value2"
+  require "Value1 | Value2"
 }
 
 unittest test {
@@ -296,7 +296,7 @@ testcase "self in @category init" {
   require "self"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Test value <- self
@@ -308,7 +308,7 @@ testcase "cycle in @category init" {
   require "disallowed"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Bool value <- get()
@@ -325,7 +325,7 @@ testcase "@category members read-only during others' init" {
   require "value1.+read-only"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category Int value1 <- 1
@@ -338,7 +338,7 @@ testcase "bad type in @category member" {
   require "Foo not found"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category optional Foo value <- empty
@@ -350,7 +350,7 @@ testcase "bad type in @value member" {
   require "Foo not found"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value Foo value
@@ -362,7 +362,7 @@ testcase "param disallowed in @category member" {
   require "#x not found"
 }
 
-concrete Test<#x> {}
+concrete Test<#x> { }
 
 define Test {
   @category optional #x value <- empty

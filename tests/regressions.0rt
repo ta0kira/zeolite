@@ -30,7 +30,7 @@ concrete Type1<#x> {
 }
 
 define Type1 {
-  call (_) {}
+  call (_) { }
 }
 
 concrete Type2<#y> {
@@ -82,8 +82,8 @@ concrete Child<#x> {
 }
 
 define Child {
-  call1 (_) {}
-  call2 (_) {}
+  call1 (_) { }
+  call2 (_) { }
 }
 
 
@@ -139,7 +139,7 @@ unittest test {
   }
 
   // The count here would be 4 if scoped was prepended to cleanup.
-  \ Testing.checkEquals<?>(count,3)
+  \ Testing.checkEquals<?>(count, 3)
 }
 
 
@@ -214,7 +214,7 @@ define Type {
 testcase "Issue #126 is fixed" {
   // https://github.com/ta0kira/zeolite/issues/126
   failure
-  require "message,12345,false"
+  require "message, 12345, false"
 }
 
 unittest test {
@@ -222,15 +222,15 @@ unittest test {
 }
 
 concrete Type {
-  @type call () -> (String,Int,Bool)
+  @type call () -> (String, Int, Bool)
 }
 
 define Type {
-  call () (x,y,z) {
+  call () (x, y, z) {
     cleanup {
       // Primitive variables y and z need to be explicitly set separately from
       // the return tuple, since the former are stored separately.
-      fail(x + "," + y.formatted() + "," + z.formatted())
+      fail(x + ", " + y.formatted() + ", " + z.formatted())
     } in return "message", 12345, false
   }
 }
@@ -259,7 +259,7 @@ define Type {
       if (true && message != "message") {
         fail("failed")
       }
-    } in {}
+    } in { }
     return "return"
   }
 }
@@ -288,7 +288,7 @@ define Type {
       while (true && message != "message") {
         fail("failed")
       }
-    } in {}
+    } in { }
     return "return"
   }
 }

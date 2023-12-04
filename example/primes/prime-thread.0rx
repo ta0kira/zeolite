@@ -2,7 +2,7 @@ define PrimeThread {
   @value ThreadContinue flag
   @value PrimeTracker   tracker
 
-  create (flag,tracker) {
+  create (flag, tracker) {
     return delegate -> #self
   }
 

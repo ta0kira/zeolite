@@ -10,4 +10,4 @@ extra_files: [
     categories: [Offset]
   }
 ]
-mode: incremental {}
+mode: incremental { }

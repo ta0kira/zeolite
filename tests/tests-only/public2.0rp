@@ -16,4 +16,4 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-concrete Type2 {}
+concrete Type2 { }

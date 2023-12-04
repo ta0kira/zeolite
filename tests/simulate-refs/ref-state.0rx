@@ -22,7 +22,7 @@ define ReferenceState {
   @value Bool locked
   @value Int aliveCleanup
   @value Int dataCleanup
-  @value [Append<Formatted>&DefaultOrder<Formatted>] operations
+  @value [Append<Formatted> & DefaultOrder<Formatted>] operations
 
   new () {
     return ReferenceState{ 0, 0, false, 0, 0, Vector<Formatted>.new() }

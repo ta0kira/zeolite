@@ -30,12 +30,12 @@ unittest orderHLessThan {
 }
 
 unittest orderHLessThanWith {
-  \ "".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "".defaultOrder() `Matches:with` CheckValue:equals(false)
-  \ "a".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
-  \ "b".defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
-  \ "abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(false)
-  \ "abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "a".defaultOrder() `Matches:with` CheckValue:equals(false)
-  \ "abc".defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` "b".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "".defaultOrder()    `OrderH:lessThanWith<?, Reversed<Char>>` "".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "a".defaultOrder()    `OrderH:lessThanWith<?, Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "b".defaultOrder()    `OrderH:lessThanWith<?, Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "abc".defaultOrder() `OrderH:lessThanWith<?, Reversed<Char>>` "abc".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:lessThanWith<?, Reversed<Char>>` "a".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:lessThanWith<?, Reversed<Char>>` "b".defaultOrder() `Matches:with` CheckValue:equals(false)
 }
 
 unittest orderHEquals {
@@ -46,11 +46,11 @@ unittest orderHEquals {
 }
 
 unittest orderHEqualsWith {
-  \ "".defaultOrder()     `OrderH:equalsWith<?,IgnoreCase>` "".defaultOrder() `Matches:with` CheckValue:equals(true)
-  \ "a".defaultOrder()   `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder() `Matches:with` CheckValue:equals(false)
-  \ "abc".defaultOrder()  `OrderH:equalsWith<?,IgnoreCase>` "ABC".defaultOrder() `Matches:with` CheckValue:equals(true)
-  \ "abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "DEF".defaultOrder() `Matches:with` CheckValue:equals(false)
-  \ "abc".defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` "A".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "".defaultOrder()     `OrderH:equalsWith<?, IgnoreCase>` "".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "a".defaultOrder()   `OrderH:equalsWith<?, IgnoreCase>` "ABC".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder()  `OrderH:equalsWith<?, IgnoreCase>` "ABC".defaultOrder() `Matches:with` CheckValue:equals(true)
+  \ "abc".defaultOrder() `OrderH:equalsWith<?, IgnoreCase>` "DEF".defaultOrder() `Matches:with` CheckValue:equals(false)
+  \ "abc".defaultOrder() `OrderH:equalsWith<?, IgnoreCase>` "A".defaultOrder() `Matches:with` CheckValue:equals(false)
 }
 
 unittest readAtHLessThan {
@@ -63,12 +63,12 @@ unittest readAtHLessThan {
 }
 
 unittest readAtHLessThanWith {
-  \ ""    `ReadAtH:lessThanWith<?,Reversed<Char>>` "" `Matches:with` CheckValue:equals(false)
-  \ "a"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(true)
-  \ "b"    `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(true)
-  \ "abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(false)
-  \ "abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "a" `Matches:with` CheckValue:equals(false)
-  \ "abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "b" `Matches:with` CheckValue:equals(false)
+  \ ""    `ReadAtH:lessThanWith<?, Reversed<Char>>` "" `Matches:with` CheckValue:equals(false)
+  \ "a"    `ReadAtH:lessThanWith<?, Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(true)
+  \ "b"    `ReadAtH:lessThanWith<?, Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(true)
+  \ "abc" `ReadAtH:lessThanWith<?, Reversed<Char>>` "abc" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:lessThanWith<?, Reversed<Char>>` "a" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:lessThanWith<?, Reversed<Char>>` "b" `Matches:with` CheckValue:equals(false)
 }
 
 unittest readAtHEquals {
@@ -79,11 +79,11 @@ unittest readAtHEquals {
 }
 
 unittest readAtHEqualsWith {
-  \ ""     `ReadAtH:equalsWith<?,IgnoreCase>` "" `Matches:with` CheckValue:equals(true)
-  \ "a"   `ReadAtH:equalsWith<?,IgnoreCase>` "ABC" `Matches:with` CheckValue:equals(false)
-  \ "abc"  `ReadAtH:equalsWith<?,IgnoreCase>` "ABC" `Matches:with` CheckValue:equals(true)
-  \ "abc" `ReadAtH:equalsWith<?,IgnoreCase>` "DEF" `Matches:with` CheckValue:equals(false)
-  \ "abc" `ReadAtH:equalsWith<?,IgnoreCase>` "a" `Matches:with` CheckValue:equals(false)
+  \ ""     `ReadAtH:equalsWith<?, IgnoreCase>` "" `Matches:with` CheckValue:equals(true)
+  \ "a"   `ReadAtH:equalsWith<?, IgnoreCase>` "ABC" `Matches:with` CheckValue:equals(false)
+  \ "abc"  `ReadAtH:equalsWith<?, IgnoreCase>` "ABC" `Matches:with` CheckValue:equals(true)
+  \ "abc" `ReadAtH:equalsWith<?, IgnoreCase>` "DEF" `Matches:with` CheckValue:equals(false)
+  \ "abc" `ReadAtH:equalsWith<?, IgnoreCase>` "a" `Matches:with` CheckValue:equals(false)
 }
 
 concrete IgnoreCase {
@@ -91,7 +91,7 @@ concrete IgnoreCase {
 }
 
 define IgnoreCase {
-  equals (x,y) {
+  equals (x, y) {
     return toLower(x) == toLower(y)
   }
 
@@ -145,30 +145,30 @@ testcase "iteration tests" {
 
 unittest orderHCopyTo {
   ValueCheck output <- ValueCheck.new(10)
-  \ ValueOrder.wrap(false,Counter.zeroIndexed(10)) `OrderH:copyTo` output
+  \ ValueOrder.wrap(false, Counter.zeroIndexed(10)) `OrderH:copyTo` output
   \ output.checkEnd()
 }
 
 unittest orderHDuplicateTo {
   ValueCheck output <- ValueCheck.new(10)
-  \ ValueOrder.wrap(true,Counter.zeroIndexed(10)) `OrderH:duplicateTo` output
+  \ ValueOrder.wrap(true, Counter.zeroIndexed(10)) `OrderH:duplicateTo` output
   \ output.checkEnd()
 }
 
 unittest readAtHCopyTo {
   ValueCheck output <- ValueCheck.new(10)
-  \ ValueSource.new(false,10) `ReadAtH:copyTo` output
+  \ ValueSource.new(false, 10) `ReadAtH:copyTo` output
   \ output.checkEnd()
 }
 
 unittest readAtHDuplicateTo {
   ValueCheck output <- ValueCheck.new(10)
-  \ ValueSource.new(true,10) `ReadAtH:duplicateTo` output
+  \ ValueSource.new(true, 10) `ReadAtH:duplicateTo` output
   \ output.checkEnd()
 }
 
 unittest readAtHForwardOrder {
-  ValueSource source <- ValueSource.new(false,10)
+  ValueSource source <- ValueSource.new(false, 10)
   Int expected <- 0
   traverse (`ReadAtH:forwardOrder` source -> Value actual) {
     \ actual.get() `Matches:with` CheckValue:equals(expected)
@@ -179,14 +179,14 @@ unittest readAtHForwardOrder {
 }
 
 unittest readAtHForwardOrderEmpty {
-  ValueSource source <- ValueSource.new(false,0)
+  ValueSource source <- ValueSource.new(false, 0)
   traverse (`ReadAtH:forwardOrder` source -> _) {
     fail("not empty")
   }
 }
 
 unittest readAtHReverseOrder {
-  ValueSource source <- ValueSource.new(false,10)
+  ValueSource source <- ValueSource.new(false, 10)
   Int expected <- 9
   traverse (`ReadAtH:reverseOrder` source -> Value actual) {
     \ actual.get() `Matches:with` CheckValue:equals(expected)
@@ -197,14 +197,14 @@ unittest readAtHReverseOrder {
 }
 
 unittest readAtHReverseOrderEmpty {
-  ValueSource source <- ValueSource.new(false,0)
+  ValueSource source <- ValueSource.new(false, 0)
   traverse (`ReadAtH:reverseOrder` source -> _) {
     fail("not empty")
   }
 }
 
 unittest readAtHIterateWith {
-  ValueSource source <- ValueSource.new(false,10)
+  ValueSource source <- ValueSource.new(false, 10)
   Int expected <- 0
   traverse (source `ReadAtH:iterateWith` `Counter.zeroIndexed` 5 -> Value actual) {
     \ actual.get() `Matches:with` CheckValue:equals(expected)
@@ -217,7 +217,7 @@ unittest readAtHIterateWith {
 concrete ValueOrder {
   refines Order<Value>
 
-  @type wrap (Bool,optional Order<Int>) -> (optional Order<Value>)
+  @type wrap (Bool, optional Order<Int>) -> (optional Order<Value>)
 }
 
 define ValueOrder {
@@ -226,7 +226,7 @@ define ValueOrder {
   @value Bool original
   @value Order<Int> order
 
-  wrap (original,order) {
+  wrap (original, order) {
     if (!present(order)) {
       return empty
     } else {
@@ -245,12 +245,12 @@ define ValueOrder {
   }
 
   get () {
-    return Value.new(original,order.get())
+    return Value.new(original, order.get())
   }
 }
 
 concrete ValueCheck {
-  // Must append the next value in the sequence [0,size).
+  // Must append the next value in the sequence [0, size).
   refines Append<Value>
 
   @type new (Int) -> (ValueCheck)
@@ -285,19 +285,19 @@ concrete Value {
   // Args:
   // - Bool: Whether or not the value is "original".
   // - Int: Value to return from get().
-  @type new (Bool,Int) -> (Value)
+  @type new (Bool, Int) -> (Value)
 
   // Crashes if "original" is true.
   @value get () -> (Int)
 }
 
 define Value {
-  $ReadOnly[original,value]$
+  $ReadOnly[original, value]$
 
   @value Bool original
   @value Int value
 
-  new (original,value) {
+  new (original, value) {
     return Value{ original, value }
   }
 
@@ -317,22 +317,22 @@ define Value {
 }
 
 concrete ValueSource {
-  // readAt(i) returns Value.new(original,i).
+  // readAt(i) returns Value.new(original, i).
   refines ReadAt<Value>
 
   // Args:
   // - Bool: Whether or not to mark new values as "original".
   // - Int: Total size.
-  @type new (Bool,Int) -> (ValueSource)
+  @type new (Bool, Int) -> (ValueSource)
 }
 
 define ValueSource {
-  $ReadOnly[original,size]$
+  $ReadOnly[original, size]$
 
   @value Bool original
   @value Int size
 
-  new (original,size) {
+  new (original, size) {
     return ValueSource{ original, size }
   }
 
@@ -341,8 +341,8 @@ define ValueSource {
   }
 
   readAt (i) {
-    \ i `Matches:with` CheckValue:betweenEquals(0,size-1)
-    return Value.new(original,i)
+    \ i `Matches:with` CheckValue:betweenEquals(0, size-1)
+    return Value.new(original, i)
   }
 }
 

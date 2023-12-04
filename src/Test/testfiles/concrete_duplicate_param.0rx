@@ -1,1 +1,1 @@
-concrete Type<#x|#y|#x> {}
+concrete Type<#x|#y|#x> { }

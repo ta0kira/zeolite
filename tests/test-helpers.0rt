@@ -21,8 +21,8 @@ testcase "checkEquals success" {
 }
 
 unittest test {
-  \ Testing.checkEquals(13,13)
-  \ Testing.checkEquals<Int>(empty,empty)
+  \ Testing.checkEquals(13, 13)
+  \ Testing.checkEquals<Int>(empty, empty)
 }
 
 
@@ -33,7 +33,7 @@ testcase "checkEquals fail non-empty" {
 }
 
 unittest test {
-  \ Testing.checkEquals(13,15)
+  \ Testing.checkEquals(13, 15)
 }
 
 
@@ -44,7 +44,7 @@ testcase "checkEquals fail empty" {
 }
 
 unittest test {
-  \ Testing.checkEquals(13,empty)
+  \ Testing.checkEquals(13, empty)
 }
 
 
@@ -53,9 +53,9 @@ testcase "checkNotEquals success" {
 }
 
 unittest test {
-  \ Testing.checkNotEquals(12,13)
-  \ Testing.checkNotEquals(empty,13)
-  \ Testing.checkNotEquals(12,empty)
+  \ Testing.checkNotEquals(12, 13)
+  \ Testing.checkNotEquals(empty, 13)
+  \ Testing.checkNotEquals(12, empty)
 }
 
 
@@ -65,7 +65,7 @@ testcase "checkNotEquals fail non-empty" {
 }
 
 unittest test {
-  \ Testing.checkNotEquals(13,13)
+  \ Testing.checkNotEquals(13, 13)
 }
 
 
@@ -75,7 +75,7 @@ testcase "checkNotEquals fail empty" {
 }
 
 unittest test {
-  \ Testing.checkNotEquals<Int>(empty,empty)
+  \ Testing.checkNotEquals<Int>(empty, empty)
 }
 
 
@@ -140,7 +140,7 @@ testcase "checkBetween success" {
 }
 
 unittest test {
-  \ Testing.checkBetween(13,13,15)
+  \ Testing.checkBetween(13, 13, 15)
 }
 
 
@@ -152,7 +152,7 @@ testcase "checkBetween fail non-empty" {
 }
 
 unittest test {
-  \ Testing.checkBetween(13,14,15)
+  \ Testing.checkBetween(13, 14, 15)
 }
 
 
@@ -164,7 +164,7 @@ testcase "checkBetween fail empty" {
 }
 
 unittest test {
-  \ Testing.checkBetween(empty,14,15)
+  \ Testing.checkBetween(empty, 14, 15)
 }
 
 
@@ -176,7 +176,7 @@ testcase "checkBetween bad range" {
 }
 
 unittest test {
-  \ Testing.checkBetween(14,15,13)
+  \ Testing.checkBetween(14, 15, 13)
 }
 
 
@@ -185,7 +185,7 @@ testcase "checkGreaterThan success" {
 }
 
 unittest test {
-  \ Testing.checkGreaterThan(13,11)
+  \ Testing.checkGreaterThan(13, 11)
 }
 
 
@@ -196,7 +196,7 @@ testcase "checkGreaterThan fail non-empty" {
 }
 
 unittest test {
-  \ Testing.checkGreaterThan(13,14)
+  \ Testing.checkGreaterThan(13, 14)
 }
 
 
@@ -207,7 +207,7 @@ testcase "checkGreaterThan fail empty" {
 }
 
 unittest test {
-  \ Testing.checkGreaterThan(empty,14)
+  \ Testing.checkGreaterThan(empty, 14)
 }
 
 
@@ -216,7 +216,7 @@ testcase "checkLessThan success" {
 }
 
 unittest test {
-  \ Testing.checkLessThan(13,14)
+  \ Testing.checkLessThan(13, 14)
 }
 
 
@@ -227,7 +227,7 @@ testcase "checkLessThan fail non-empty" {
 }
 
 unittest test {
-  \ Testing.checkLessThan(13,11)
+  \ Testing.checkLessThan(13, 11)
 }
 
 
@@ -238,7 +238,7 @@ testcase "checkLessThan fail empty" {
 }
 
 unittest test {
-  \ Testing.checkLessThan(empty,11)
+  \ Testing.checkLessThan(empty, 11)
 }
 
 

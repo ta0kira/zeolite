@@ -10,4 +10,4 @@ extra_files: [
     categories: [Templated2]
   }
 ]
-mode: incremental {}
+mode: incremental { }

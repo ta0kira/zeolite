@@ -32,37 +32,37 @@ testcase "reduce Bool" {
 }
 
 unittest bool {
-  if (!present(reduce<Bool,Bool>(true))) {
+  if (!present(reduce<Bool, Bool>(true))) {
     fail("Failed")
   }
 }
 
 unittest asBool {
-  if (!present(reduce<Bool,AsBool>(true))) {
+  if (!present(reduce<Bool, AsBool>(true))) {
     fail("Failed")
   }
 }
 
 unittest asChar {
-  if (present(reduce<Bool,AsChar>(true))) {
+  if (present(reduce<Bool, AsChar>(true))) {
     fail("Failed")
   }
 }
 
 unittest asInt {
-  if (!present(reduce<Bool,AsInt>(true))) {
+  if (!present(reduce<Bool, AsInt>(true))) {
     fail("Failed")
   }
 }
 
 unittest asFloat {
-  if (!present(reduce<Bool,AsFloat>(true))) {
+  if (!present(reduce<Bool, AsFloat>(true))) {
     fail("Failed")
   }
 }
 
 unittest formatted {
-  if (!present(reduce<Bool,Formatted>(true))) {
+  if (!present(reduce<Bool, Formatted>(true))) {
     fail("Failed")
   }
 }
@@ -73,37 +73,37 @@ testcase "reduce Char" {
 }
 
 unittest char {
-  if (!present(reduce<Char,Char>('a'))) {
+  if (!present(reduce<Char, Char>('a'))) {
     fail("Failed")
   }
 }
 
 unittest asBool {
-  if (!present(reduce<Char,AsBool>('a'))) {
+  if (!present(reduce<Char, AsBool>('a'))) {
     fail("Failed")
   }
 }
 
 unittest asChar {
-  if (!present(reduce<Char,AsChar>('a'))) {
+  if (!present(reduce<Char, AsChar>('a'))) {
     fail("Failed")
   }
 }
 
 unittest asInt {
-  if (!present(reduce<Char,AsInt>('a'))) {
+  if (!present(reduce<Char, AsInt>('a'))) {
     fail("Failed")
   }
 }
 
 unittest asFloat {
-  if (!present(reduce<Char,AsFloat>('a'))) {
+  if (!present(reduce<Char, AsFloat>('a'))) {
     fail("Failed")
   }
 }
 
 unittest formatted {
-  if (!present(reduce<Char,Formatted>('a'))) {
+  if (!present(reduce<Char, Formatted>('a'))) {
     fail("Failed")
   }
 }
@@ -114,37 +114,37 @@ testcase "reduce Int" {
 }
 
 unittest int {
-  if (!present(reduce<Int,Int>(1))) {
+  if (!present(reduce<Int, Int>(1))) {
     fail("Failed")
   }
 }
 
 unittest asBool {
-  if (!present(reduce<Int,AsBool>(1))) {
+  if (!present(reduce<Int, AsBool>(1))) {
     fail("Failed")
   }
 }
 
 unittest asChar {
-  if (!present(reduce<Int,AsChar>(1))) {
+  if (!present(reduce<Int, AsChar>(1))) {
     fail("Failed")
   }
 }
 
 unittest asInt {
-  if (!present(reduce<Int,AsInt>(1))) {
+  if (!present(reduce<Int, AsInt>(1))) {
     fail("Failed")
   }
 }
 
 unittest asFloat {
-  if (!present(reduce<Int,AsFloat>(1))) {
+  if (!present(reduce<Int, AsFloat>(1))) {
     fail("Failed")
   }
 }
 
 unittest formatted {
-  if (!present(reduce<Int,Formatted>(1))) {
+  if (!present(reduce<Int, Formatted>(1))) {
     fail("Failed")
   }
 }
@@ -155,37 +155,37 @@ testcase "reduce Float" {
 }
 
 unittest float {
-  if (!present(reduce<Float,Float>(1.0))) {
+  if (!present(reduce<Float, Float>(1.0))) {
     fail("Failed")
   }
 }
 
 unittest asBool {
-  if (!present(reduce<Float,AsBool>(1.0))) {
+  if (!present(reduce<Float, AsBool>(1.0))) {
     fail("Failed")
   }
 }
 
 unittest asChar {
-  if (present(reduce<Float,AsChar>(1.0))) {
+  if (present(reduce<Float, AsChar>(1.0))) {
     fail("Failed")
   }
 }
 
 unittest asInt {
-  if (!present(reduce<Float,AsInt>(1.0))) {
+  if (!present(reduce<Float, AsInt>(1.0))) {
     fail("Failed")
   }
 }
 
 unittest asFloat {
-  if (!present(reduce<Float,AsFloat>(1.0))) {
+  if (!present(reduce<Float, AsFloat>(1.0))) {
     fail("Failed")
   }
 }
 
 unittest formatted {
-  if (!present(reduce<Float,Formatted>(1.0))) {
+  if (!present(reduce<Float, Formatted>(1.0))) {
     fail("Failed")
   }
 }
@@ -196,31 +196,31 @@ testcase "reduce CharBuffer" {
 }
 
 unittest charBuffer {
-  if (!present(reduce<CharBuffer,CharBuffer>(CharBuffer.new(0)))) {
+  if (!present(reduce<CharBuffer, CharBuffer>(CharBuffer.new(0)))) {
     fail("Failed")
   }
 }
 
 unittest readAt {
-  if (!present(reduce<CharBuffer,ReadAt<Char>>(CharBuffer.new(0)))) {
+  if (!present(reduce<CharBuffer, ReadAt<Char>>(CharBuffer.new(0)))) {
     fail("Failed")
   }
-  if (present(reduce<CharBuffer,ReadAt<Int>>(CharBuffer.new(0)))) {
+  if (present(reduce<CharBuffer, ReadAt<Int>>(CharBuffer.new(0)))) {
     fail("Failed")
   }
 }
 
 unittest writeAt {
-  if (!present(reduce<CharBuffer,WriteAt<Char>>(CharBuffer.new(0)))) {
+  if (!present(reduce<CharBuffer, WriteAt<Char>>(CharBuffer.new(0)))) {
     fail("Failed")
   }
-  if (present(reduce<CharBuffer,WriteAt<Int>>(CharBuffer.new(0)))) {
+  if (present(reduce<CharBuffer, WriteAt<Int>>(CharBuffer.new(0)))) {
     fail("Failed")
   }
 }
 
 unittest container {
-  if (!present(reduce<CharBuffer,Container>(CharBuffer.new(0)))) {
+  if (!present(reduce<CharBuffer, Container>(CharBuffer.new(0)))) {
     fail("Failed")
   }
 }
@@ -231,67 +231,67 @@ testcase "reduce String" {
 }
 
 unittest string {
-  if (!present(reduce<String,String>("a"))) {
+  if (!present(reduce<String, String>("a"))) {
     fail("Failed")
   }
 }
 
 unittest asBool {
-  if (!present(reduce<String,AsBool>("a"))) {
+  if (!present(reduce<String, AsBool>("a"))) {
     fail("Failed")
   }
 }
 
 unittest asChar {
-  if (present(reduce<String,AsChar>("a"))) {
+  if (present(reduce<String, AsChar>("a"))) {
     fail("Failed")
   }
 }
 
 unittest asInt {
-  if (present(reduce<String,AsInt>("a"))) {
+  if (present(reduce<String, AsInt>("a"))) {
     fail("Failed")
   }
 }
 
 unittest asFloat {
-  if (present(reduce<String,AsFloat>("a"))) {
+  if (present(reduce<String, AsFloat>("a"))) {
     fail("Failed")
   }
 }
 
 unittest formatted {
-  if (!present(reduce<String,Formatted>("a"))) {
+  if (!present(reduce<String, Formatted>("a"))) {
     fail("Failed")
   }
 }
 
 unittest defaultOrder {
-  if (!present(reduce<String,DefaultOrder<Char>>("a"))) {
+  if (!present(reduce<String, DefaultOrder<Char>>("a"))) {
     fail("Failed")
   }
-  if (present(reduce<String,DefaultOrder<Int>>("a"))) {
+  if (present(reduce<String, DefaultOrder<Int>>("a"))) {
     fail("Failed")
   }
 }
 
 unittest subSequence {
-  if (!present(reduce<String,SubSequence>("a"))) {
+  if (!present(reduce<String, SubSequence>("a"))) {
     fail("Failed")
   }
 }
 
 unittest readAt {
-  if (!present(reduce<String,ReadAt<Char>>("a"))) {
+  if (!present(reduce<String, ReadAt<Char>>("a"))) {
     fail("Failed")
   }
-  if (present(reduce<String,ReadAt<Int>>("a"))) {
+  if (present(reduce<String, ReadAt<Int>>("a"))) {
     fail("Failed")
   }
 }
 
 unittest container {
-  if (!present(reduce<String,Container>("a"))) {
+  if (!present(reduce<String, Container>("a"))) {
     fail("Failed")
   }
 }
@@ -306,19 +306,19 @@ unittest boolDefault {
 }
 
 unittest charDefault {
-  \ Testing.checkEquals(Char.default(),'\000')
+  \ Testing.checkEquals(Char.default(), '\000')
 }
 
 unittest floatDefault {
-  \ Testing.checkEquals(Float.default(),0.0)
+  \ Testing.checkEquals(Float.default(), 0.0)
 }
 
 unittest intDefault {
-  \ Testing.checkEquals(Int.default(),0)
+  \ Testing.checkEquals(Int.default(), 0)
 }
 
 unittest stringDefault {
-  \ Testing.checkEquals(String.default(),"")
+  \ Testing.checkEquals(String.default(), "")
 }
 
 unittest boolDuplicate {
@@ -326,39 +326,39 @@ unittest boolDuplicate {
 }
 
 unittest charDuplicate {
-  \ Testing.checkEquals('a'.duplicate(),'a')
+  \ Testing.checkEquals('a'.duplicate(), 'a')
 }
 
 unittest floatDuplicate {
-  \ Testing.checkEquals((1.1).duplicate(),1.1)
+  \ Testing.checkEquals((1.1).duplicate(), 1.1)
 }
 
 unittest intDuplicate {
-  \ Testing.checkEquals((123).duplicate(),123)
+  \ Testing.checkEquals((123).duplicate(), 123)
 }
 
 unittest stringDuplicate {
-  \ Testing.checkEquals("string".duplicate(),"string")
+  \ Testing.checkEquals("string".duplicate(), "string")
 }
 
 unittest boolHashed {
-  \ Testing.checkNotEquals(true.hashed(),false.hashed())
+  \ Testing.checkNotEquals(true.hashed(), false.hashed())
 }
 
 unittest charHashed {
-  \ Testing.checkNotEquals('a'.hashed(),'b'.hashed())
+  \ Testing.checkNotEquals('a'.hashed(), 'b'.hashed())
 }
 
 unittest floatHashed {
-  \ Testing.checkNotEquals((1.1).hashed(),(1.2).hashed())
+  \ Testing.checkNotEquals((1.1).hashed(), (1.2).hashed())
 }
 
 unittest intHashed {
-  \ Testing.checkNotEquals((123).hashed(),(124).hashed())
+  \ Testing.checkNotEquals((123).hashed(), (124).hashed())
 }
 
 unittest stringHashed {
-  \ Testing.checkNotEquals("string12".hashed(),"string21".hashed())
+  \ Testing.checkNotEquals("string12".hashed(), "string21".hashed())
 }
 
 unittest stringLessThan {
@@ -374,10 +374,10 @@ unittest stringEquals {
 }
 
 unittest stringBuilder {
-  [Append<Formatted>&Build<String>] builder <- String.builder()
-  \ Testing.checkEquals(builder.build(),"")
-  \ Testing.checkEquals(builder.append("xyz").build(),"xyz")
-  \ Testing.checkEquals(builder.append(123).build(),"xyz123")
+  [Append<Formatted> & Build<String>] builder <- String.builder()
+  \ Testing.checkEquals(builder.build(), "")
+  \ Testing.checkEquals(builder.append("xyz").build(), "xyz")
+  \ Testing.checkEquals(builder.append(123).build(), "xyz123")
 }
 
 unittest charLessThan {
@@ -534,33 +534,33 @@ testcase "CharBuffer stuff" {
 
 unittest writeAndRead {
   CharBuffer buffer <- CharBuffer.new(5)
-      .writeAt(0,'a')
-      .writeAt(1,'b')
-      .writeAt(2,'c')
-      .writeAt(3,'d')
-      .writeAt(4,'e')
+      .writeAt(0, 'a')
+      .writeAt(1, 'b')
+      .writeAt(2, 'c')
+      .writeAt(3, 'd')
+      .writeAt(4, 'e')
       // overwriting here
-      .writeAt(1,'B')
-      .writeAt(2,'C')
+      .writeAt(1, 'B')
+      .writeAt(2, 'C')
 
-  \ Testing.checkEquals(buffer.size(),5)
-  \ Testing.checkEquals(buffer.readAt(0),'a')
-  \ Testing.checkEquals(buffer.readAt(1),'B')
-  \ Testing.checkEquals(buffer.readAt(2),'C')
-  \ Testing.checkEquals(buffer.readAt(3),'d')
-  \ Testing.checkEquals(buffer.readAt(4),'e')
+  \ Testing.checkEquals(buffer.size(), 5)
+  \ Testing.checkEquals(buffer.readAt(0), 'a')
+  \ Testing.checkEquals(buffer.readAt(1), 'B')
+  \ Testing.checkEquals(buffer.readAt(2), 'C')
+  \ Testing.checkEquals(buffer.readAt(3), 'd')
+  \ Testing.checkEquals(buffer.readAt(4), 'e')
 }
 
 unittest resizeDown {
-  CharBuffer buffer <- CharBuffer.new(5).resize(3).writeAt(2,'a')
-  \ Testing.checkEquals(buffer.size(),3)
-  \ Testing.checkEquals(buffer.readAt(2),'a')
+  CharBuffer buffer <- CharBuffer.new(5).resize(3).writeAt(2, 'a')
+  \ Testing.checkEquals(buffer.size(), 3)
+  \ Testing.checkEquals(buffer.readAt(2), 'a')
 }
 
 unittest resizeUp {
-  CharBuffer buffer <- CharBuffer.new(5).resize(7).writeAt(6,'a')
-  \ Testing.checkEquals(buffer.size(),7)
-  \ Testing.checkEquals(buffer.readAt(6),'a')
+  CharBuffer buffer <- CharBuffer.new(5).resize(7).writeAt(6, 'a')
+  \ Testing.checkEquals(buffer.size(), 7)
+  \ Testing.checkEquals(buffer.readAt(6), 'a')
 }
 
 
@@ -593,7 +593,7 @@ testcase "CharBuffer write negative" {
 }
 
 unittest test {
-  \ CharBuffer.new(3).writeAt(-10,'a')
+  \ CharBuffer.new(3).writeAt(-10, 'a')
 }
 
 
@@ -604,7 +604,7 @@ testcase "CharBuffer write past end" {
 }
 
 unittest test {
-  \ CharBuffer.new(3).writeAt(3,'a')
+  \ CharBuffer.new(3).writeAt(3, 'a')
 }
 
 
@@ -640,7 +640,7 @@ unittest builderNotLazy {
   if (!present(strong(value2))) {
     fail("Failed")
   }
-  [Append<Formatted>&Build<String>] builder <- String.builder().append(require(value1))
+  [Append<Formatted> & Build<String>] builder <- String.builder().append(require(value1))
   value1 <- empty
   if (present(strong(value2))) {
     fail("Failed")
@@ -661,7 +661,7 @@ unittest simpleAccess {
 
 unittest subsequence {
   String s <- "abcde"
-  String s2 <- s.subSequence(1,3)
+  String s2 <- s.subSequence(1, 3)
   if (s2 != "bcd") {
     fail(s2)
   }
@@ -669,7 +669,7 @@ unittest subsequence {
 
 unittest emptySubsequence {
   String s <- ""
-  String s2 <- s.subSequence(0,0)
+  String s2 <- s.subSequence(0, 0)
   if (s2 != "") {
     fail(s2)
   }
@@ -689,21 +689,21 @@ unittest traverseString {
   String value <- "abcdefg"
 
   traverse (value.defaultOrder() -> Char c) {
-    \ Testing.checkEquals(c,value.readAt(index))
+    \ Testing.checkEquals(c, value.readAt(index))
     index <- index+1
   }
 
-  \ Testing.checkEquals(index,7)
+  \ Testing.checkEquals(index, 7)
 }
 
 unittest fromCharBuffer {
   CharBuffer buffer <- CharBuffer.new(5)
-      .writeAt(0,'a')
-      .writeAt(1,'b')
-      .writeAt(2,'c')
-      .writeAt(3,'d')
-      .writeAt(4,'e')
-  \ Testing.checkEquals(String.fromCharBuffer(buffer),"abcde")
+      .writeAt(0, 'a')
+      .writeAt(1, 'b')
+      .writeAt(2, 'c')
+      .writeAt(3, 'd')
+      .writeAt(4, 'e')
+  \ Testing.checkEquals(String.fromCharBuffer(buffer), "abcde")
 }
 
 
@@ -761,7 +761,7 @@ unittest test {
 
 define Test {
   run () {
-    \ "abc".subSequence(1,3)
+    \ "abc".subSequence(1, 3)
   }
 }
 
@@ -775,19 +775,19 @@ testcase "Char stuff" {
 }
 
 unittest accurateMax {
-  \ Testing.checkEquals(Char.maxBound().asInt(),255)
+  \ Testing.checkEquals(Char.maxBound().asInt(), 255)
 }
 
 unittest accurateMin {
-  \ Testing.checkEquals(Char.minBound().asInt(),0)
+  \ Testing.checkEquals(Char.minBound().asInt(), 0)
 }
 
 unittest asIntIsUnsigned {
-  \ Testing.checkEquals('\xff'.asInt(),255)
+  \ Testing.checkEquals('\xff'.asInt(), 255)
 }
 
 unittest asFloatIsUnsigned {
-  \ Testing.checkEquals('\xff'.asFloat(),255.0)
+  \ Testing.checkEquals('\xff'.asFloat(), 255.0)
 }
 
 
@@ -796,21 +796,21 @@ testcase "Int stuff" {
 }
 
 unittest accurateMax {
-  \ Testing.checkEquals(Int.maxBound(),9223372036854775807)
+  \ Testing.checkEquals(Int.maxBound(), 9223372036854775807)
 }
 
 unittest accurateMin {
-  \ Testing.checkEquals(Int.minBound(),-9223372036854775808)
+  \ Testing.checkEquals(Int.minBound(), -9223372036854775808)
 }
 
 unittest asCharIsPeriodic {
-  \ Testing.checkEquals((65).asChar(),(65+256).asChar())
-  \ Testing.checkEquals((65).asChar(),(65+1024).asChar())
-  \ Testing.checkEquals((65).asChar(),(65-1024).asChar())
+  \ Testing.checkEquals((65).asChar(), (65+256).asChar())
+  \ Testing.checkEquals((65).asChar(), (65+1024).asChar())
+  \ Testing.checkEquals((65).asChar(), (65-1024).asChar())
 }
 
 unittest hexUnsigned {
-  \ Testing.checkEquals(\xffffffffffffffff,-1)
+  \ Testing.checkEquals(\xffffffffffffffff, -1)
 }
 
 
@@ -1065,26 +1065,26 @@ testcase "Float parsing" {
 }
 
 unittest decUnescaped {
-  \ Testing.checkEquals(123.456e-3,123.0/1000.0+456.0/1000.0/1000.0)
-  \ Testing.checkEquals(123.456e3,123.0*1000.0+456.0)
+  \ Testing.checkEquals(123.456e-3, 123.0/1000.0+456.0/1000.0/1000.0)
+  \ Testing.checkEquals(123.456e3, 123.0*1000.0+456.0)
 }
 
 unittest decEscaped {
-  \ Testing.checkEquals(\d123.456,123.456)
-  \ Testing.checkEquals(\D123.456,123.456)
+  \ Testing.checkEquals(\d123.456, 123.456)
+  \ Testing.checkEquals(\D123.456, 123.456)
 }
 
 unittest hexEscaped {
-  \ Testing.checkEquals(\xff.ee,255.0+238.0/256.0)
-  \ Testing.checkEquals(\Xff.ee,255.0+238.0/256.0)
+  \ Testing.checkEquals(\xff.ee, 255.0+238.0/256.0)
+  \ Testing.checkEquals(\Xff.ee, 255.0+238.0/256.0)
 }
 
 unittest octEscaped {
-  \ Testing.checkEquals(\o10.10,8.125)
-  \ Testing.checkEquals(\O10.10,8.125)
+  \ Testing.checkEquals(\o10.10, 8.125)
+  \ Testing.checkEquals(\O10.10, 8.125)
 }
 
 unittest binEscaped {
-  \ Testing.checkEquals(\b101.101,5.0+5.0/8.0)
-  \ Testing.checkEquals(\B101.101,5.0+5.0/8.0)
+  \ Testing.checkEquals(\b101.101, 5.0+5.0/8.0)
+  \ Testing.checkEquals(\B101.101, 5.0+5.0/8.0)
 }

@@ -17,11 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define KeyValueH {
-  lessThan (x,y) {
-    return lessThanWith<#k,#v,#k,#v>(x,y)
+  lessThan (x, y) {
+    return lessThanWith<#k, #v, #k, #v>(x, y)
   }
 
-  lessThanWith (x,y) {
+  lessThanWith (x, y) {
     if (x.getKey() `#kk.lessThan` y.getKey()) {
       return true
     } elif (y.getKey() `#kk.lessThan` x.getKey()) {
@@ -31,11 +31,11 @@ define KeyValueH {
     }
   }
 
-  equals (x,y) {
-    return equalsWith<#k,#v,#k,#v>(x,y)
+  equals (x, y) {
+    return equalsWith<#k, #v, #k, #v>(x, y)
   }
 
-  equalsWith (x,y) {
+  equalsWith (x, y) {
     if (!(x.getKey() `#kk.equals` y.getKey())) {
       return false
     } else {

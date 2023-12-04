@@ -19,7 +19,7 @@
   <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>        value
   <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> error
 
-  consumeAll (parser,data) {
+  consumeAll (parser, data) {
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context <b><span style='color:#006e28;'>&lt;-</span></b> parser<span style='color:#644a9b;'>.</span>run(new(data))
     <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
       <b>return</b> context<span style='color:#644a9b;'>.</span>getValue()

@@ -25,20 +25,20 @@ $TestsOnly$
 // }
 concrete Matches {
   // Fails immediately if match fails.
-  @category with<#x> (optional #x,ValueMatcher<#x>) -> ()
+  @category with<#x> (optional #x, ValueMatcher<#x>) -> ()
 
   // Fails later if match fails.
-  @category tryWith<#x> (optional #x,ValueMatcher<#x>) -> ()
+  @category tryWith<#x> (optional #x, ValueMatcher<#x>) -> ()
 
   // Fails immediately if match fails.
   @category value<#x>
     #x requires TestCompare<#x>
-  (optional #x,#x) -> ()
+  (optional #x, #x) -> ()
 
   // Fails later if match fails.
   @category tryValue<#x>
     #x requires TestCompare<#x>
-  (optional #x,#x) -> ()
+  (optional #x, #x) -> ()
 }
 
 // Unconditional outcomes regardless of the actual value.

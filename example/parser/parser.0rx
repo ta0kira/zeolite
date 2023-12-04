@@ -8,7 +8,7 @@ define ParseState {
   @value ErrorOr<#x>        value
   @value optional Formatted error
 
-  consumeAll (parser,data) {
+  consumeAll (parser, data) {
     ParseContext<#y> context <- parser.run(new(data))
     if (context.hasAnyError()) {
       return context.getValue()

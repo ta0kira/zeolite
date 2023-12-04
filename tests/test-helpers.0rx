@@ -19,9 +19,9 @@ limitations under the License.
 $TestsOnly$
 
 define Testing {
-  checkEquals (x,y) { $NoTrace$
+  checkEquals (x, y) { $NoTrace$
     Bool failed <- false
-    if (`present` x && `present` y && !#x.equals(`require` x,`require` y)) {
+    if (`present` x && `present` y && !#x.equals(`require` x, `require` y)) {
       failed <- true
     } elif (`present` x != `present` y) {
       failed <- true
@@ -35,9 +35,9 @@ define Testing {
     }
   }
 
-  checkNotEquals (x,y) { $NoTrace$
+  checkNotEquals (x, y) { $NoTrace$
     Bool failed <- false
-    if (`present` x && `present` y && #x.equals(`require` x,`require` y)) {
+    if (`present` x && `present` y && #x.equals(`require` x, `require` y)) {
       failed <- true
     } elif (! `present` x &&  ! `present` y) {
       failed <- true
@@ -86,8 +86,8 @@ define Testing {
     }
   }
 
-  checkBetween (x,l,h) { $NoTrace$
-    if (!lessEquals(l,h)) {
+  checkBetween (x, l, h) { $NoTrace$
+    if (!lessEquals(l, h)) {
       fail(String.builder()
           .append("Upper limit ")
           .append(autoFormat(l))
@@ -98,7 +98,7 @@ define Testing {
     Bool failed <- false
     if (! `present` x) {
       failed <- true
-    } elif (!lessEquals(l,`require` x) || !lessEquals(`require` x,h)) {
+    } elif (!lessEquals(l, `require` x) || !lessEquals(`require` x, h)) {
       failed <- true
     }
     if (failed) {
@@ -112,11 +112,11 @@ define Testing {
     }
   }
 
-  checkGreaterThan (x,l) { $NoTrace$
+  checkGreaterThan (x, l) { $NoTrace$
     Bool failed <- false
     if (! `present` x) {
       failed <- true
-    } elif (!lessEquals(l,`require` x)) {
+    } elif (!lessEquals(l, `require` x)) {
       failed <- true
     }
     if (failed) {
@@ -128,11 +128,11 @@ define Testing {
     }
   }
 
-  checkLessThan (x,h) { $NoTrace$
+  checkLessThan (x, h) { $NoTrace$
     Bool failed <- false
     if (! `present` x) {
       failed <- true
-    } elif (!lessEquals(`require` x,h)) {
+    } elif (!lessEquals(`require` x, h)) {
       failed <- true
     }
     if (failed) {
@@ -150,7 +150,7 @@ define Testing {
       return "empty"
     }
     scoped {
-      optional Formatted formatted <- reduce<#x,Formatted>(x)
+      optional Formatted formatted <- reduce<#x, Formatted>(x)
     } in if (`present` formatted) {
       return `require` formatted
     } else {
@@ -161,9 +161,9 @@ define Testing {
   @type lessEquals<#x>
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> (Bool)
-  lessEquals (x,y) { $NoTrace$
-    // Using !#x.lessThan(y,x) wouldn't account for NaNs.
-    return #x.lessThan(x,y) || #x.equals(x,y)
+  (#x, #x) -> (Bool)
+  lessEquals (x, y) { $NoTrace$
+    // Using !#x.lessThan(y, x) wouldn't account for NaNs.
+    return #x.lessThan(x, y) || #x.equals(x, y)
   }
 }

@@ -1,4 +1,4 @@
-@type interface Interface {}
+@type interface Interface { }
 
 concrete Type<#x|> {
   #x defines Interface

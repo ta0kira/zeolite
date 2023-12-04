@@ -179,10 +179,10 @@ testcase "CheckSequence:using success" {
 unittest test {
   ValueList<TestValue> actual <- ValueList<TestValue>.new()
       .append(TestValue.default())
-      .append(TestValue.new(456,"something",empty))
+      .append(TestValue.new(456, "something", empty))
   ValueList<TestValue> expected <- ValueList<TestValue>.new()
       .append(TestValue.default())
-      .append(TestValue.new(456,"something",empty))
+      .append(TestValue.new(456, "something", empty))
   \ actual `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
 }
 
@@ -195,9 +195,9 @@ testcase "CheckSequence:using failure" {
 unittest test {
   ValueList<TestValue> actual <- ValueList<TestValue>.new()
       .append(TestValue.default())
-      .append(TestValue.new(456,"something",empty))
+      .append(TestValue.new(456, "something", empty))
   ValueList<TestValue> expected <- ValueList<TestValue>.new()
       .append(TestValue.default())
-      .append(TestValue.new(321,"something",empty))
+      .append(TestValue.new(321, "something", empty))
   \ actual `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
 }

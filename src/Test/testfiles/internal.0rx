@@ -1,5 +1,5 @@
 $TestsOnly$
 
-concrete Type {}
+concrete Type { }
 
-define Type {}
+define Type { }

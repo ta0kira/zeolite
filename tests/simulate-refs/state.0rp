@@ -22,38 +22,38 @@ $ModuleOnly$
   transition () -> (optional StateMachine)
 }
 
-@value interface StateTransition<#l,#s|> {
+@value interface StateTransition<#l, #s|> {
   immutable
 
-  runWith (#l,#s) -> (optional StateTransition<#l,#s>)
+  runWith (#l, #s) -> (optional StateTransition<#l, #s>)
 }
 
-@value interface StatePredicate<#l,#s|> {
+@value interface StatePredicate<#l, #s|> {
   immutable
 
-  test (#l,#s) -> (Bool)
+  test (#l, #s) -> (Bool)
 }
 
 concrete Run {
-  @category then<#l,#s>
-  (optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) ->
-  (optional StateTransition<#l,#s>)
+  @category then<#l, #s>
+  (optional StateTransition<#l, #s>, optional StateTransition<#l, #s>) ->
+  (optional StateTransition<#l, #s>)
 
-  @category ifElse<#l,#s>
-  (StatePredicate<#l,#s> test:,
-   optional StateTransition<#l,#s> doIf:,
-   optional StateTransition<#l,#s> doElse:) ->
-  (StateTransition<#l,#s>)
+  @category ifElse<#l, #s>
+  (StatePredicate<#l, #s> test:,
+   optional StateTransition<#l, #s> doIf:,
+   optional StateTransition<#l, #s> doElse:) ->
+  (StateTransition<#l, #s>)
 }
 
-concrete LabeledStateMachine<#l,#s> {
+concrete LabeledStateMachine<#l, #s> {
   #l immutable
 
-  @category new<#l,#s>
+  @category new<#l, #s>
     #l immutable
-  (#l,#s,optional StateTransition<#l,#s>) -> (StateMachine)
+  (#l, #s, optional StateTransition<#l, #s>) -> (StateMachine)
 }
 
 concrete StateExecutor {
-  @category multiplexStates (DefaultOrder<StateMachine>,Generator<Float>) -> ()
+  @category multiplexStates (DefaultOrder<StateMachine>, Generator<Float>) -> ()
 }

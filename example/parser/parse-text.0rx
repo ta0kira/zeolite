@@ -44,7 +44,7 @@ define SequenceOfParser {
                       min.formatted() + "," + max.formatted() + "} at " +
                       contextOld.getPosition()
     ParseContext<any> context <- contextOld
-    [Append<Formatted>&Build<String>] builder <- String.builder()
+    [Append<Formatted> & Build<String>] builder <- String.builder()
 
     optional Order<Int> counter <- defer
     if (max == 0) {
@@ -55,13 +55,13 @@ define SequenceOfParser {
 
     Int count <- 0
     traverse (counter -> count) {
-      $Hidden[count,counter]$
+      $Hidden[count, counter]$
       if (context.atEof()) {
         break
       }
       Bool found <- false
       traverse (Counter.zeroIndexed(matches.size()) -> Int index) {
-        $ReadOnly[context,index]$
+        $ReadOnly[context, index]$
         if (context.current() == matches.readAt(index)) {
           \ builder.append(matches.readAt(index))
           found <- true
@@ -83,7 +83,7 @@ define SequenceOfParser {
     }
   }
 
-  create (matches,min,max) {
+  create (matches, min, max) {
     return delegate -> #self
   }
 }
@@ -175,7 +175,7 @@ define TryParser {
 }
 
 concrete OrParser<#x> {
-  @type create (Parser<#x>,Parser<#x>) -> (Parser<#x>)
+  @type create (Parser<#x>, Parser<#x>) -> (Parser<#x>)
 }
 
 define OrParser {
@@ -196,14 +196,14 @@ define OrParser {
     }
   }
 
-  create (parser1,parser2) {
+  create (parser1, parser2) {
     return delegate -> #self
   }
 }
 
 concrete LeftParser<#x> {
 
-  @type create (Parser<#x>,Parser<any>) -> (Parser<#x>)
+  @type create (Parser<#x>, Parser<any>) -> (Parser<#x>)
 }
 
 define LeftParser {
@@ -229,13 +229,13 @@ define LeftParser {
     }
   }
 
-  create (parser1,parser2) {
+  create (parser1, parser2) {
     return delegate -> #self
   }
 }
 
 concrete RightParser<#x> {
-  @type create (Parser<any>,Parser<#x>) -> (Parser<#x>)
+  @type create (Parser<any>, Parser<#x>) -> (Parser<#x>)
 }
 
 define RightParser {
@@ -256,7 +256,7 @@ define RightParser {
     }
   }
 
-  create (parser1,parser2) {
+  create (parser1, parser2) {
     return delegate -> #self
   }
 }
@@ -274,15 +274,15 @@ define Parse {
     return delegate -> `TryParser<#x>.create`
   }
 
-  or (parser1,parser2) {
+  or (parser1, parser2) {
     return delegate -> `OrParser<#x>.create`
   }
 
-  left (parser1,parser2) {
+  left (parser1, parser2) {
     return delegate -> `LeftParser<#x>.create`
   }
 
-  right (parser1,parser2) {
+  right (parser1, parser2) {
     return delegate -> `RightParser<#x>.create`
   }
 }

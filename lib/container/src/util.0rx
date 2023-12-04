@@ -37,7 +37,7 @@ define TestValue {
     return delegate -> #self
   }
 
-  testCompare (actual,report) {
+  testCompare (actual, report) {
     if (actual.message() != message) {
       \ report.addError(message: String.builder()
           .append(`Format:autoFormat` actual.message())

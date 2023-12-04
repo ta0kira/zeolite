@@ -28,7 +28,7 @@ concrete TypeMap {
   //
   // Params:
   // - #x: The value type being stored.
-  @value set<#x> (TypeKey<#x>,#x) -> (TypeMap)
+  @value set<#x> (TypeKey<#x>, #x) -> (TypeMap)
 
   // Remove the value associated with the key if present and return self.
   @value remove (TypeKey<any>) -> (TypeMap)
@@ -47,7 +47,7 @@ concrete TypeMap {
   @value get<#x> (TypeKey<#x>) -> (optional #x)
 
   // Get all values of type #x.
-  @value getAll<#c,#x>
+  @value getAll<#c, #x>
     #c requires Append<#x>
   (#c) -> (#c)
 }

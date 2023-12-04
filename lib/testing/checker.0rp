@@ -28,5 +28,5 @@ concrete TestChecker {
 
   @type isFailing () -> (Bool)
   @type checkNow () -> ()
-  @type newReport (Formatted title:,optional Order<Formatted> context:) -> (TestReport)
+  @type newReport (Formatted title:, optional Order<Formatted> context:) -> (TestReport)
 }

@@ -26,12 +26,12 @@ unittest exponential {
 }
 
 unittest gaussian {
-  Generator<Float> random <- RandomGaussian.new(0.0,1.0)
+  Generator<Float> random <- RandomGaussian.new(0.0, 1.0)
   Float value <- random.generate()
 }
 
 unittest uniform {
-  Generator<Float> random <- RandomUniform.new(0.0,1.0)
+  Generator<Float> random <- RandomUniform.new(0.0, 1.0)
   Float value <- random.generate()
 }
 
@@ -47,11 +47,11 @@ unittest constant {
 
 unittest categorical {
   CategoricalTree<Float> tree <- CategoricalTree<Float>.new()
-      .setWeight(0.0,1)
-      .setWeight(1.0,1)
-      .setWeight(2.0,1)
-      .setWeight(3.0,1)
-      .setWeight(4.0,1)
+      .setWeight(0.0, 1)
+      .setWeight(1.0, 1)
+      .setWeight(2.0, 1)
+      .setWeight(3.0, 1)
+      .setWeight(4.0, 1)
   RandomCategorical<Float> random <- tree `RandomCategorical:sampleWith` RandomUniform.probability()
   \ random.isEmpty() `Matches:with` CheckValue:equals(false)
   Float value <- random.generate()
@@ -76,7 +76,7 @@ testcase "negative standard deviation in gaussian" {
 }
 
 unittest test {
-  Generator<Float> random <- RandomGaussian.new(0.0,-1.0)
+  Generator<Float> random <- RandomGaussian.new(0.0, -1.0)
 }
 
 
@@ -87,7 +87,7 @@ testcase "empty range in uniform" {
 }
 
 unittest test {
-  Generator<Float> random <- RandomUniform.new(0.0,-1.0)
+  Generator<Float> random <- RandomUniform.new(0.0, -1.0)
 }
 
 
@@ -111,7 +111,7 @@ testcase "distribution sanity checks" {
 unittest exponential { $DisableCoverage$
   Int count <- 10000
   Float lambda <- 10.0
-  $ReadOnly[count,lambda]$
+  $ReadOnly[count, lambda]$
 
   Generator<Float> random <- RandomExponential.new(lambda)
 
@@ -122,41 +122,41 @@ unittest exponential { $DisableCoverage$
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(0.9/lambda,1.1/lambda)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(0.9/lambda, 1.1/lambda)
 }
 
 unittest gaussian { $DisableCoverage$
   Int count <- 10000
   Float mean <- 100.0
   Float sd <- 1.0
-  $ReadOnly[count,mean,sd]$
+  $ReadOnly[count, mean, sd]$
 
-  Generator<Float> random <- RandomGaussian.new(mean,sd)
+  Generator<Float> random <- RandomGaussian.new(mean, sd)
 
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     sum <- sum+random.generate()
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(mean-0.1*sd,mean+0.1*sd)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(mean-0.1*sd, mean+0.1*sd)
 }
 
 unittest uniform { $DisableCoverage$
   Int count <- 10000
   Float min <- -11.0
   Float max <- 5.0
-  $ReadOnly[count,min,max]$
+  $ReadOnly[count, min, max]$
 
-  Generator<Float> random <- RandomUniform.new(min,max)
+  Generator<Float> random <- RandomUniform.new(min, max)
 
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:betweenEquals(min,max)
+    \ value `Matches:with` CheckValue:betweenEquals(min, max)
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals((min+max)/2.0-0.1*(max-min),(min+max)/2.0+0.1*(max-min))
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals((min+max)/2.0-0.1*(max-min), (min+max)/2.0+0.1*(max-min))
 }
 
 unittest probability { $DisableCoverage$
@@ -168,17 +168,17 @@ unittest probability { $DisableCoverage$
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:betweenEquals(0.0,1.0)
+    \ value `Matches:with` CheckValue:betweenEquals(0.0, 1.0)
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(0.4,0.6)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(0.4, 0.6)
 }
 
 unittest constant { $DisableCoverage$
   Int count <- 10000
   Float constant <- 12345.0
-  $ReadOnly[count,constant]$
+  $ReadOnly[count, constant]$
 
   Generator<Float> random <- GenerateConstant.new(constant)
 
@@ -191,23 +191,23 @@ unittest constant { $DisableCoverage$
 unittest categorical { $DisableCoverage$
   Int count <- 10000
   CategoricalTree<Float> tree <- CategoricalTree<Float>.new()
-      .setWeight(0.0,1)
-      .setWeight(1.0,1)
-      .setWeight(2.0,1)
-      .setWeight(3.0,1)
-      .setWeight(4.0,1)
-  $ReadOnly[count,tree]$
+      .setWeight(0.0, 1)
+      .setWeight(1.0, 1)
+      .setWeight(2.0, 1)
+      .setWeight(3.0, 1)
+      .setWeight(4.0, 1)
+  $ReadOnly[count, tree]$
 
   Generator<Float> random <- tree `RandomCategorical:sampleWith` RandomUniform.probability()
 
   Float sum <- 0.0
   traverse (Counter.zeroIndexed(count) -> _) {
     Float value <- random.generate()
-    \ value `Matches:with` CheckValue:betweenEquals(0.0,4.0)
+    \ value `Matches:with` CheckValue:betweenEquals(0.0, 4.0)
     sum <- sum+value
   }
 
-  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(1.9,2.1)
+  \ sum/count.asFloat() `Matches:with` CheckValue:betweenEquals(1.9, 2.1)
 }
 
 
@@ -237,10 +237,10 @@ unittest exponential {
 unittest gaussian {
   Float mean <- 100.0
   Float sd <- 1.0
-  $ReadOnly[mean,sd]$
+  $ReadOnly[mean, sd]$
 
-  RandomGaussian random1 <- RandomGaussian.new(mean,sd)
-  RandomGaussian random2 <- RandomGaussian.new(mean,sd)
+  RandomGaussian random1 <- RandomGaussian.new(mean, sd)
+  RandomGaussian random2 <- RandomGaussian.new(mean, sd)
 
   Float v1 <- random1.generate()
   Float v2 <- random2.generate()
@@ -257,10 +257,10 @@ unittest gaussian {
 unittest uniform {
   Float min <- -11.0
   Float max <- 5.0
-  $ReadOnly[min,max]$
+  $ReadOnly[min, max]$
 
-  RandomUniform random1 <- RandomUniform.new(min,max)
-  RandomUniform random2 <- RandomUniform.new(min,max)
+  RandomUniform random1 <- RandomUniform.new(min, max)
+  RandomUniform random2 <- RandomUniform.new(min, max)
 
   Float v1 <- random1.generate()
   Float v2 <- random2.generate()
@@ -281,9 +281,9 @@ testcase "Randomize tests" {
 
 unittest permuteFrom {
   CategoricalTree<String> tree <- CategoricalTree<String>.new()
-      .setWeight("a",2)
-      .setWeight("b",3)
-      .setWeight("c",1)
+      .setWeight("a", 2)
+      .setWeight("b", 3)
+      .setWeight("c", 1)
 
   Vector<String> expected <- Vector<String>.new()
       .append("a")
@@ -294,7 +294,7 @@ unittest permuteFrom {
       .append("c")
 
   Vector<String> output <- Vector<String>.new()
-  \ Randomize:permuteFrom(tree,RandomUniform.new(0.0,1.0),output)
+  \ Randomize:permuteFrom(tree, RandomUniform.new(0.0, 1.0), output)
   \ Sorting:sort(output)
 
   \ output.size() `Matches:with` CheckValue:equals(expected.size())
@@ -309,9 +309,9 @@ unittest permuteFrom {
 
 unittest permuteFromWeight {
   CategoricalTree<String> tree <- CategoricalTree<String>.new()
-      .setWeight("a",2)
-      .setWeight("b",3)
-      .setWeight("c",1)
+      .setWeight("a", 2)
+      .setWeight("b", 3)
+      .setWeight("c", 1)
 
   Vector<String> expected <- Vector<String>.new()
       .append("a")
@@ -319,7 +319,7 @@ unittest permuteFromWeight {
       .append("c")
 
   Vector<String> output <- Vector<String>.new()
-  \ Randomize:permuteFromWeight(tree,RandomUniform.new(0.0,1.0),output)
+  \ Randomize:permuteFromWeight(tree, RandomUniform.new(0.0, 1.0), output)
   \ Sorting:sort(output)
 
   \ output.size() `Matches:with` CheckValue:equals(expected.size())

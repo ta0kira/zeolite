@@ -1,4 +1,4 @@
-@value interface Object1<#x|> {}
+@value interface Object1<#x|> { }
 
 @value interface Object2<|#y> {
   refines Object1<#y>

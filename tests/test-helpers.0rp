@@ -28,7 +28,7 @@ concrete Testing {
   // - #x: Expected value.
   @type checkEquals<#x>
     #x defines Equals<#x>
-  (optional #x,optional #x) -> ()
+  (optional #x, optional #x) -> ()
 
   // Check the values for inequality. Crashes if they are equal.
   //
@@ -37,7 +37,7 @@ concrete Testing {
   // - #x: Expected value.
   @type checkNotEquals<#x>
     #x defines Equals<#x>
-  (optional #x,optional #x) -> ()
+  (optional #x, optional #x) -> ()
 
   // Check the value for empty. Crashes if present.
   //
@@ -77,7 +77,7 @@ concrete Testing {
   @type checkBetween<#x>
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (optional #x,#x,#x) -> ()
+  (optional #x, #x, #x) -> ()
 
   // Check that the value is above the limit. Crashes if it is not in the range.
   //
@@ -93,7 +93,7 @@ concrete Testing {
   @type checkGreaterThan<#x>
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (optional #x,#x) -> ()
+  (optional #x, #x) -> ()
 
   // Check that the value is below the limit. Crashes if it is not in the range.
   //
@@ -109,5 +109,5 @@ concrete Testing {
   @type checkLessThan<#x>
     #x defines Equals<#x>
     #x defines LessThan<#x>
-  (optional #x,#x) -> ()
+  (optional #x, #x) -> ()
 }

@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define SortedSet {
-  @value SortedMap<#k,any> map
+  @value SortedMap<#k, any> map
 
   default () {
     return new()
   }
 
   new () {
-    return #self{ SortedMap<#k,any>.new() }
+    return #self{ SortedMap<#k, any>.new() }
   }
 
   size () {
@@ -36,7 +36,7 @@ define SortedSet {
   }
 
   add (k) {
-    \ map.set(k,Void.default())
+    \ map.set(k, Void.default())
     return self
   }
 

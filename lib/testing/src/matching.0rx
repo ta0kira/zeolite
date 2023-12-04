@@ -25,7 +25,7 @@ define MultiChecker {
     return delegate -> #self
   }
 
-  check (title,value,matcher) {
+  check (title, value, matcher) {
     if (delegate -> `executeMatch`) {
       return empty
     } else {
@@ -33,13 +33,13 @@ define MultiChecker {
     }
   }
 
-  tryCheck (title,value,matcher) {
+  tryCheck (title, value, matcher) {
     \ delegate -> `executeMatch`
     return self
   }
 
-  @value executeMatch<#x> (Formatted title:,optional #x,ValueMatcher<#x>) -> (Bool)
-  executeMatch (title,value,matcher) {
+  @value executeMatch<#x> (Formatted title:, optional #x, ValueMatcher<#x>) -> (Bool)
+  executeMatch (title, value, matcher) {
     String fullTitle <- String.builder()
         .append(title)
         .append(": ")
@@ -53,7 +53,7 @@ define MultiChecker {
 }
 
 define MatcherCompose {
-  or (left,right) {
+  or (left, right) {
     return delegate -> `OrMatcher:new`
   }
 
@@ -61,7 +61,7 @@ define MatcherCompose {
     return delegate -> `NotMatcher:new`
   }
 
-  and (left,right) {
+  and (left, right) {
     return delegate -> `AndMatcher:new`
   }
 
@@ -77,18 +77,18 @@ define MatcherCompose {
 concrete OrMatcher<#x|> {
   refines ValueMatcher<#x>
 
-  @category new<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
+  @category new<#x> (ValueMatcher<#x>, ValueMatcher<#x>) -> (ValueMatcher<#x>)
 }
 
 define OrMatcher {
   @value ValueMatcher<#x> left
   @value ValueMatcher<#x> right
 
-  new (left,right) {
+  new (left, right) {
     return delegate -> OrMatcher<#x>
   }
 
-  check (actual,report) {
+  check (actual, report) {
     TestReport leftReport <- report.newSection(title: left.summary())
     TestReport rightReport <- report.newSection(title: right.summary())
     \ actual `left.check` leftReport
@@ -126,7 +126,7 @@ define NotMatcher {
     return delegate -> NotMatcher<#x>
   }
 
-  check (actual,report) {
+  check (actual, report) {
     \ delegate -> `matcher.check`
     if (report.hasError()) {
       \ report.discardReport()
@@ -150,18 +150,18 @@ define NotMatcher {
 concrete AndMatcher<#x|> {
   refines ValueMatcher<#x>
 
-  @category new<#x> (ValueMatcher<#x>,ValueMatcher<#x>) -> (ValueMatcher<#x>)
+  @category new<#x> (ValueMatcher<#x>, ValueMatcher<#x>) -> (ValueMatcher<#x>)
 }
 
 define AndMatcher {
   @value ValueMatcher<#x> left
   @value ValueMatcher<#x> right
 
-  new (left,right) {
+  new (left, right) {
     return delegate -> AndMatcher<#x>
   }
 
-  check (actual,report) {
+  check (actual, report) {
     TestReport leftReport <- report.newSection(title: left.summary())
     TestReport rightReport <- report.newSection(title: right.summary())
     \ actual `left.check` leftReport
@@ -192,7 +192,7 @@ define AnyOfMatcher {
     return delegate -> AnyOfMatcher<#x>
   }
 
-  check (actual,report) {
+  check (actual, report) {
     ValueList<TestReport> reports <- ValueList<TestReport>.new()
     traverse (matchers.defaultOrder() -> ValueMatcher<#x> matcher) {
       TestReport subReport <- report.newSection(title: matcher.summary())
@@ -227,7 +227,7 @@ define AllOfMatcher {
     return delegate -> AllOfMatcher<#x>
   }
 
-  check (actual,report) {
+  check (actual, report) {
     traverse (matchers.defaultOrder() -> ValueMatcher<#x> matcher) {
       TestReport subReport <- report.newSection(title: matcher.summary())
       $Hidden[report]$

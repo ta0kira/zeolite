@@ -17,22 +17,22 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define TypeMap {
-  @value SortedMap<TypeKey<any>,GenericValue<any>> map
+  @value SortedMap<TypeKey<any>, GenericValue<any>> map
 
   default () {
     return new()
   }
 
   new () {
-    return TypeMap{ SortedMap<TypeKey<any>,GenericValue<any>>.new() }
+    return TypeMap{ SortedMap<TypeKey<any>, GenericValue<any>>.new() }
   }
 
   duplicate () {
     return #self{ map.duplicate() }
   }
 
-  set (k,v) {
-    \ map.set(k,GenericValue:create(v))
+  set (k, v) {
+    \ map.set(k, GenericValue:create(v))
     return self
   }
 
@@ -52,7 +52,7 @@ define TypeMap {
   }
 
   getAll (output) {
-    traverse (map.defaultOrder() -> KeyValue<any,GenericValue<any>> pair) {
+    traverse (map.defaultOrder() -> KeyValue<any, GenericValue<any>> pair) {
       scoped {
         optional #x value <- pair.getValue().check<#x>()
       } in if (present(value)) {
@@ -81,11 +81,11 @@ define TypeKey {
     return identify(self).hashed()
   }
 
-  lessThan (l,r) {
+  lessThan (l, r) {
     return identify(l) < identify(r)
   }
 
-  equals (l,r) {
+  equals (l, r) {
     return identify(l) == identify(r)
   }
 }
@@ -105,6 +105,6 @@ define GenericValue {
   }
 
   check () {
-    return reduce<#x,#y>(value)
+    return reduce<#x, #y>(value)
   }
 }

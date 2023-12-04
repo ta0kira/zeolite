@@ -30,10 +30,10 @@ concrete KeyValueH {
   // Example:
   //
   //   Bool lt <- x `KeyValueH:lessThan` y
-  @category lessThan<#k,#v>
+  @category lessThan<#k, #v>
     #k defines LessThan<#k>
     #v defines LessThan<#v>
-  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+  (KeyValue<#k, #v>, KeyValue<#k, #v>) -> (Bool)
 
   // The same as lessThan, but with custom comparators.
   //
@@ -49,11 +49,11 @@ concrete KeyValueH {
   // Example:
   //
   //   // Ignore the value and compare Int keys.
-  //   Bool lt <- x `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` y
-  @category lessThanWith<#k,#v,#kk,#vv>
+  //   Bool lt <- x `KeyValueH:lessThanWith<?, ?, Int, AlwaysEqual>` y
+  @category lessThanWith<#k, #v, #kk, #vv>
     #kk defines LessThan<#k>
     #vv defines LessThan<#v>
-  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+  (KeyValue<#k, #v>, KeyValue<#k, #v>) -> (Bool)
 
   // Compare for equals.
   //
@@ -64,10 +64,10 @@ concrete KeyValueH {
   // Example:
   //
   //   Bool eq <- x `KeyValueH:equals` y
-  @category equals<#k,#v>
+  @category equals<#k, #v>
     #k defines Equals<#k>
     #v defines Equals<#v>
-  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+  (KeyValue<#k, #v>, KeyValue<#k, #v>) -> (Bool)
 
   // The same as equals, but with custom comparators.
   //
@@ -80,9 +80,9 @@ concrete KeyValueH {
   // Example:
   //
   //   // Ignore the key and compare Int values.
-  //   Bool eq <- x `KeyValueH:equalsWith<?,?,AlwaysEqual,Int>` y
-  @category equalsWith<#k,#v,#kk,#vv>
+  //   Bool eq <- x `KeyValueH:equalsWith<?, ?, AlwaysEqual, Int>` y
+  @category equalsWith<#k, #v, #kk, #vv>
     #kk defines Equals<#k>
     #vv defines Equals<#v>
-  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+  (KeyValue<#k, #v>, KeyValue<#k, #v>) -> (Bool)
 }

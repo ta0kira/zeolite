@@ -31,7 +31,7 @@ concrete Value<#x> {
 }
 
 define Value {
-  something () {}
+  something () { }
 }
 
 
@@ -42,13 +42,13 @@ testcase "category param bounded on both sides" {
   require compiler "[Ll]ower.+ \[Type3\|Type4\]"
 }
 
-@value interface Type1 {}
+@value interface Type1 { }
 
-@value interface Type2 {}
+@value interface Type2 { }
 
-@value interface Type3 {}
+@value interface Type3 { }
 
-@value interface Type4 {}
+@value interface Type4 { }
 
 concrete Value<#x> {
   #x requires Type1
@@ -57,7 +57,7 @@ concrete Value<#x> {
   #x allows   Type4
 }
 
-define Value {}
+define Value { }
 
 
 testcase "implicit bound from reversing another filter" {
@@ -67,46 +67,46 @@ testcase "implicit bound from reversing another filter" {
   require compiler "[Ll]ower.+ #y"
 }
 
-@value interface Type {}
+@value interface Type { }
 
-concrete Value<#x,#y> {
+concrete Value<#x, #y> {
   #x requires Type
   #y requires #x
 }
 
-define Value {}
+define Value { }
 
 
 testcase "defines filter is not an upper bound" {
   compiles
 }
 
-@type interface Type1 {}
+@type interface Type1 { }
 
-@value interface Type2 {}
+@value interface Type2 { }
 
 concrete Value<#x> {
   #x defines Type1
   #x allows  Type2
 }
 
-define Value {}
+define Value { }
 
 
 testcase "defines filter is not a lower bound" {
   compiles
 }
 
-@type interface Type1 {}
+@type interface Type1 { }
 
-@value interface Type2 {}
+@value interface Type2 { }
 
 concrete Value<#x> {
   #x defines  Type1
   #x requires Type2
 }
 
-define Value {}
+define Value { }
 
 
 testcase "function param bounded on both sides" {
@@ -114,9 +114,9 @@ testcase "function param bounded on both sides" {
   require compiler "#x.+bound"
 }
 
-@value interface Type1 {}
+@value interface Type1 { }
 
-@value interface Type2 {}
+@value interface Type2 { }
 
 @value interface Value {
   call<#x>
@@ -138,7 +138,7 @@ concrete Type<#x> {
 }
 
 define Type {
-  call () {}
+  call () { }
 
   @category call2 () -> ()
   call2 () {
@@ -159,7 +159,7 @@ concrete Type<#x> {
 }
 
 define Type {
-  call () {}
+  call () { }
 
   @category call2 () -> ()
   call2 () {
@@ -180,7 +180,7 @@ concrete Type<#x> {
 }
 
 define Type {
-  call () {}
+  call () { }
 
   @category call2 () -> ()
   call2 () {
@@ -255,7 +255,7 @@ concrete Type {
 }
 
 define Type {
-  call () {}
+  call () { }
 
   @category call2 () -> ()
   call2 () {
@@ -276,7 +276,7 @@ concrete Type {
 }
 
 define Type {
-  call () {}
+  call () { }
 
   @category call2 () -> ()
   call2 () {
@@ -297,7 +297,7 @@ concrete Type {
 }
 
 define Type {
-  call () {}
+  call () { }
 
   @category call2 () -> ()
   call2 () {
@@ -311,7 +311,7 @@ testcase "category-level filters meet function-level filter requirements" {
 }
 
 concrete Type1 {
-  @type call<#i,#j,#k>
+  @type call<#i, #j, #k>
     #i requires Formatted
     #j defines Equals<#j>
     #k allows Int
@@ -319,10 +319,10 @@ concrete Type1 {
 }
 
 define Type1 {
-  call () {}
+  call () { }
 }
 
-concrete Type2<#x,#y,#z> {
+concrete Type2<#x, #y, #z> {
   #x requires Formatted
   #y defines Equals<#y>
   #z allows Int
@@ -332,7 +332,7 @@ concrete Type2<#x,#y,#z> {
 
 define Type2 {
   call () {
-    \ Type1.call<#x,#y,#z>()
+    \ Type1.call<#x, #y, #z>()
   }
 }
 
@@ -347,7 +347,7 @@ concrete Type<|#x> {
   #x requires String
 }
 
-define Type {}
+define Type { }
 
 concrete Test {
   @type call<#x>
@@ -356,7 +356,7 @@ concrete Test {
 }
 
 define Test {
-  call (_) {}
+  call (_) { }
 
   @type call2 () -> ()
   call2 () {
@@ -370,40 +370,40 @@ testcase "filters with internal functions" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
-  @category call1<#x,#y>
+  @category call1<#x, #y>
     #y immutable
     #x defines LessThan<#x>
     #x requires Formatted
     #y allows Int
-  (#x,#y) -> ()
-  call1 (x,y) {
-    \ call1<#x,#y>(x,y)
+  (#x, #y) -> ()
+  call1 (x, y) {
+    \ call1<#x, #y>(x, y)
   }
 
-  @type call2<#x,#y>
+  @type call2<#x, #y>
     #y immutable
     #x defines LessThan<#x>
     #x requires Formatted
     #y allows Int
-  (#x,#y) -> ()
-  call2 (x,y) {
-    \ call2<#x,#y>(x,y)
-    \ call1<#x,#y>(x,y)
+  (#x, #y) -> ()
+  call2 (x, y) {
+    \ call2<#x, #y>(x, y)
+    \ call1<#x, #y>(x, y)
   }
 
-  @value call3<#x,#y>
+  @value call3<#x, #y>
     #y immutable
     #x defines LessThan<#x>
     #x requires Formatted
     #y allows Int
-  (#x,#y) -> ()
-  call3 (x,y) {
-    \ call3<#x,#y>(x,y)
-    \ call2<#x,#y>(x,y)
-    \ call1<#x,#y>(x,y)
+  (#x, #y) -> ()
+  call3 (x, y) {
+    \ call3<#x, #y>(x, y)
+    \ call2<#x, #y>(x, y)
+    \ call1<#x, #y>(x, y)
   }
 }
 
@@ -412,17 +412,17 @@ testcase "filters on internal @category function with same param names as catego
   compiles
 }
 
-concrete Test<#x,#y> {}
+concrete Test<#x, #y> { }
 
 define Test {
-  @category call<#x,#y>
+  @category call<#x, #y>
     #y immutable
     #x defines LessThan<#x>
     #x requires Formatted
     #y allows Int
-  (#x,#y) -> ()
-  call (x,y) {
-    \ call<#x,#y>(x,y)
+  (#x, #y) -> ()
+  call (x, y) {
+    \ call<#x, #y>(x, y)
   }
 }
 
@@ -437,7 +437,7 @@ unittest test {
 
 concrete Test {
   @type call<#x>
-    #x allows [Formatted&AsBool]
+    #x allows [Formatted & AsBool]
   () -> (#x)
 }
 
@@ -462,7 +462,7 @@ unittest test {
 
 concrete Test {
   @type call<#x>
-    #x allows [Formatted&AsBool]
+    #x allows [Formatted & AsBool]
   () -> (#x)
 }
 
@@ -483,7 +483,7 @@ unittest test {
 
 concrete Test {
   @type call<#x>
-    #x requires [Int|String]
+    #x requires [Int | String]
   (#x) -> ()
 }
 
@@ -507,7 +507,7 @@ unittest test {
 
 concrete Test {
   @type call<#x>
-    #x requires [Int|String]
+    #x requires [Int | String]
   (#x) -> ()
 }
 

@@ -23,7 +23,7 @@ define NoOpRoutine {
     return delegate -> #self
   }
 
-  run () {}
+  run () { }
 }
 
 define CrashRoutine {

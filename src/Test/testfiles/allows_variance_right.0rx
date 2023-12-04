@@ -1,4 +1,4 @@
-@value interface Interface<|#x> {}
+@value interface Interface<|#x> { }
 
 concrete Type<#x|> {
   #x allows Interface<#x>

@@ -1,4 +1,4 @@
 concrete Type {
-  @value something<#x,#x>
+  @value something<#x, #x>
   () -> ()
 }

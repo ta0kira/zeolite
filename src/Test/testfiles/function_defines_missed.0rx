@@ -1,8 +1,8 @@
-@type interface Type1 {}
+@type interface Type1 { }
 
-@value interface Type2 {}
+@value interface Type2 { }
 
-@value interface Type3 {}
+@value interface Type3 { }
 
 concrete Type4<#x> {
   #x requires Type2

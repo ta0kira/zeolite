@@ -31,19 +31,19 @@ define CallHelper {
     Response response <- Response.create("")
     // This is just meant to test code generated for passing Pointer as a
     // function arg or return.
-    return Response.getData(callWithPointers(request.asRequest(),response.asResponse()))
+    return Response.getData(callWithPointers(request.asRequest(), response.asResponse()))
   }
 
   call2 (data) {
     Request request <- Request.create(data)
     Response response <- Response.create("")
-    \ Service.send2(request.asMessage(),response.asResponse())
+    \ Service.send2(request.asMessage(), response.asResponse())
     return response.formatted()
   }
 
-  @type callWithPointers (Pointer<Request>,Pointer<Response>) -> (Pointer<Response>)
-  callWithPointers (request,response) {
-    \ Service.send(request,response)
+  @type callWithPointers (Pointer<Request>, Pointer<Response>) -> (Pointer<Response>)
+  callWithPointers (request, response) {
+    \ Service.send(request, response)
     return response
   }
 }

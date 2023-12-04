@@ -19,7 +19,7 @@ limitations under the License.
 define CheckFloat {
   $ReadOnlyExcept[]$
 
-  refines ValueMatcher<[AsFloat&Formatted]>
+  refines ValueMatcher<[AsFloat & Formatted]>
 
   @value optional Float epsilon
   @value Float expected
@@ -28,11 +28,11 @@ define CheckFloat {
     return CheckFloat{ empty, expected.asFloat() }
   }
 
-  closeTo (expected,epsilon) {
+  closeTo (expected, epsilon) {
     return CheckFloat{ epsilon, expected.asFloat() }
   }
 
-  check (actual,report) {
+  check (actual, report) {
     optional Float threshold <- epsilon
     if (`present` actual) {
       Float value <- require(actual).asFloat()
@@ -40,7 +40,7 @@ define CheckFloat {
       if (`present` epsilon) {
         threshold <- `require` epsilon
       } else {
-        threshold <- $ExprLookup[FLOAT_RELATIVE_THRESHOLD]$ * getMaxAbs(value,expected)
+        threshold <- $ExprLookup[FLOAT_RELATIVE_THRESHOLD]$ * getMaxAbs(value, expected)
       }
       $Hidden[epsilon]$
       if (abs(value - expected) <= `require` threshold) {
@@ -82,8 +82,8 @@ define CheckFloat {
     }
   }
 
-  @type getMaxAbs (Float,Float) -> (Float)
-  getMaxAbs (x,y) (max) {
+  @type getMaxAbs (Float, Float) -> (Float)
+  getMaxAbs (x, y) (max) {
     max <- abs(x)
     if (abs(y) > max) {
       max <- abs(y)

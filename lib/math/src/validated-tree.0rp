@@ -31,7 +31,7 @@ concrete ValidatedTree<#c> {
   @type new () -> (#self)
 
   @value getTotal  ()       -> (Int)
-  @value setWeight (#c,Int) -> (#self)
+  @value setWeight (#c, Int) -> (#self)
   @value getWeight (#c)     -> (Int)
   @value locate    (Int)    -> (#c)
 }

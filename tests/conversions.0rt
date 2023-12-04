@@ -21,33 +21,33 @@ testcase "type conversions" {
 }
 
 unittest toType {
-  \ Testing.checkEquals(Helper.getType(Value.create()?Base1),"Base1")
+  \ Testing.checkEquals(Helper.getType(Value.create()?Base1), "Base1")
 }
 
 unittest toAny {
-  \ Testing.checkEquals(Helper.getType(Value.create()?any),"any")
+  \ Testing.checkEquals(Helper.getType(Value.create()?any), "any")
 }
 
 unittest toUnion {
-  \ Testing.checkEquals(Helper.getType(Value.create()?[Base1|Base2]),"[Base1|Base2]")
+  \ Testing.checkEquals(Helper.getType(Value.create()?[Base1 | Base2]), "[Base1|Base2]")
 }
 
 unittest toIntersect {
-  \ Testing.checkEquals(Helper.getType(Value.create()?[Base1&Base2]),"[Base1&Base2]")
+  \ Testing.checkEquals(Helper.getType(Value.create()?[Base1 & Base2]), "[Base1&Base2]")
 }
 
 unittest toParam {
-  \ Testing.checkEquals(Helper.toParam<Value,Base1>(Value.create()),"Base1")
+  \ Testing.checkEquals(Helper.toParam<Value, Base1>(Value.create()), "Base1")
 }
 
 unittest toTypeOptional {
   optional Value value <- Value.create()
-  \ Testing.checkEquals(Helper.getType2(value?Base1),"Base1")
+  \ Testing.checkEquals(Helper.getType2(value?Base1), "Base1")
 }
 
 unittest toAnyOptional {
   optional Value value <- Value.create()
-  \ Testing.checkEquals(Helper.getType2(value?any),"any")
+  \ Testing.checkEquals(Helper.getType2(value?any), "any")
 }
 
 unittest convertedCall {
@@ -56,7 +56,7 @@ unittest convertedCall {
 }
 
 concrete Helper {
-  @type toParam<#x,#y>
+  @type toParam<#x, #y>
     #x requires #y
   (#x) -> (String)
 
@@ -95,7 +95,7 @@ concrete Value {
 }
 
 define Value {
-  call () {}
+  call () { }
 
   create () {
     return Value{}
@@ -124,7 +124,7 @@ concrete Value {
 }
 
 define Value {
-  call () {}
+  call () { }
 
   create () {
     return Value{}

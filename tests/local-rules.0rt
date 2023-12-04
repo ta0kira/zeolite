@@ -52,7 +52,7 @@ unittest test {
     $ReadOnly[foo]$
   }
   foo <- 2
-  \ Testing.checkEquals(foo,2)
+  \ Testing.checkEquals(foo, 2)
 }
 
 
@@ -82,7 +82,7 @@ unittest test {
     $ReadOnly[foo]$
   }
   foo <- 2
-  \ Testing.checkEquals(foo,2)
+  \ Testing.checkEquals(foo, 2)
 }
 
 
@@ -97,9 +97,9 @@ unittest test {
     foo <- 2
     $ReadOnly[foo]$
   }
-  \ Testing.checkEquals(foo,2)
+  \ Testing.checkEquals(foo, 2)
   foo <- 3
-  \ Testing.checkEquals(foo,3)
+  \ Testing.checkEquals(foo, 3)
 }
 
 
@@ -151,7 +151,7 @@ unittest test {
   cleanup {
     foo <- 2
   } in $ReadOnly[foo]$
-  \ Testing.checkEquals(foo,2)
+  \ Testing.checkEquals(foo, 2)
 }
 
 
@@ -181,7 +181,7 @@ unittest test {
     $Hidden[foo]$
   }
   foo <- 2
-  \ Testing.checkEquals(foo,2)
+  \ Testing.checkEquals(foo, 2)
 }
 
 
@@ -240,9 +240,9 @@ unittest test {
     foo <- 2
     $Hidden[foo]$
   }
-  \ Testing.checkEquals(foo,2)
+  \ Testing.checkEquals(foo, 2)
   foo <- 3
-  \ Testing.checkEquals(foo,3)
+  \ Testing.checkEquals(foo, 3)
 }
 
 
@@ -264,7 +264,7 @@ testcase "ReadOnly @category member" {
   exclude "bar"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnly[foo]$
@@ -286,7 +286,7 @@ testcase "Hidden @category member" {
   exclude "bar"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $Hidden[foo]$
@@ -307,7 +307,7 @@ testcase "Bad name for Hidden @category member" {
   require "foo.+does not exist"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $Hidden[foo]$
@@ -321,7 +321,7 @@ testcase "Hidden @category member is visible during init" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Type:get(),2)
+  \ Testing.checkEquals(Type:get(), 2)
 }
 
 concrete Type {
@@ -347,7 +347,7 @@ testcase "ReadOnly @value member" {
   exclude "bar"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnly[foo]$
@@ -369,7 +369,7 @@ testcase "Hidden @value member" {
   exclude "bar"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $Hidden[foo]$
@@ -390,7 +390,7 @@ testcase "Bad name for Hidden @value member" {
   require "foo.+does not exist"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $Hidden[foo]$
@@ -404,7 +404,7 @@ testcase "ReadOnly @value member can be initialized" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Type.create().get(),1)
+  \ Testing.checkEquals(Type.create().get(), 1)
 }
 
 concrete Type {
@@ -434,7 +434,7 @@ testcase "ReadOnlyExcept applies to @category members" {
   exclude "bar"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnlyExcept[bar]$
@@ -456,7 +456,7 @@ testcase "ReadOnlyExcept applies to @value members" {
   exclude "bar"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnlyExcept[bar]$
@@ -477,7 +477,7 @@ testcase "ReadOnlyExcept plus ReadOnly results in read-only" {
   require "foo.+read-only"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnlyExcept[foo]$
@@ -497,7 +497,7 @@ testcase "ReadOnlyExcept unions rather than interscts" {
   require compiler "ReadOnlyExcept"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnlyExcept[foo]$
@@ -519,7 +519,7 @@ testcase "Bad name for ReadOnlyExcept @category member" {
   require "foo.+does not exist"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   $ReadOnlyExcept[foo]$

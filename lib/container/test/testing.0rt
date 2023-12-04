@@ -79,14 +79,14 @@ testcase "CheckMap equality success" {
 }
 
 unittest equals {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
-  HashedMap<String,Int> expected <- HashedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
+  HashedMap<String, Int> expected <- HashedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
   \ actual `Matches:with` CheckMap:equals(expected)
 }
 
@@ -100,14 +100,14 @@ testcase "CheckMap:equals different" {
 }
 
 unittest test {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2900)
-      .set("three",3)
-  HashedMap<String,Int> expected <- HashedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3900)
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2900)
+      .set("three", 3)
+  HashedMap<String, Int> expected <- HashedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3900)
   \ actual `Matches:with` CheckMap:equals(expected)
 }
 
@@ -118,15 +118,15 @@ testcase "CheckMap:equals extra" {
 }
 
 unittest test {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
-  HashedMap<String,Int> expected <- HashedMap<String,Int>.new()
-      .set("zero",0)
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
+  HashedMap<String, Int> expected <- HashedMap<String, Int>.new()
+      .set("zero", 0)
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
   \ actual `Matches:with` CheckMap:equals(expected)
 }
 
@@ -137,15 +137,15 @@ testcase "CheckMap:equals missing" {
 }
 
 unittest test {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
-      .set("four",4)
-  HashedMap<String,Int> expected <- HashedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
+      .set("four", 4)
+  HashedMap<String, Int> expected <- HashedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
   \ actual `Matches:with` CheckMap:equals(expected)
 }
 
@@ -155,14 +155,14 @@ testcase "CheckMap equality success" {
 }
 
 unittest matches {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
-  HashedMap<String,ValueMatcher<Int>> expected <- HashedMap<String,ValueMatcher<Int>>.new()
-      .set("one",CheckValue:equals(1))
-      .set("two",CheckValue:equals(2))
-      .set("three",CheckValue:equals(3))
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
+  HashedMap<String, ValueMatcher<Int>> expected <- HashedMap<String, ValueMatcher<Int>>.new()
+      .set("one", CheckValue:equals(1))
+      .set("two", CheckValue:equals(2))
+      .set("three", CheckValue:equals(3))
   \ actual `Matches:with` CheckMap:matches(expected)
 }
 
@@ -176,14 +176,14 @@ testcase "CheckMap:matches different" {
 }
 
 unittest test {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2900)
-      .set("three",3)
-  HashedMap<String,ValueMatcher<Int>> expected <- HashedMap<String,ValueMatcher<Int>>.new()
-      .set("one",CheckValue:equals(1))
-      .set("two",CheckValue:equals(2))
-      .set("three",CheckValue:equals(3900))
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2900)
+      .set("three", 3)
+  HashedMap<String, ValueMatcher<Int>> expected <- HashedMap<String, ValueMatcher<Int>>.new()
+      .set("one", CheckValue:equals(1))
+      .set("two", CheckValue:equals(2))
+      .set("three", CheckValue:equals(3900))
   \ actual `Matches:with` CheckMap:matches(expected)
 }
 
@@ -194,15 +194,15 @@ testcase "CheckMap:matches extra" {
 }
 
 unittest test {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
-  HashedMap<String,ValueMatcher<Int>> expected <- HashedMap<String,ValueMatcher<Int>>.new()
-      .set("zero",CheckValue:equals(0))
-      .set("one",CheckValue:equals(1))
-      .set("two",CheckValue:equals(2))
-      .set("three",CheckValue:equals(3))
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
+  HashedMap<String, ValueMatcher<Int>> expected <- HashedMap<String, ValueMatcher<Int>>.new()
+      .set("zero", CheckValue:equals(0))
+      .set("one", CheckValue:equals(1))
+      .set("two", CheckValue:equals(2))
+      .set("three", CheckValue:equals(3))
   \ actual `Matches:with` CheckMap:matches(expected)
 }
 
@@ -213,15 +213,15 @@ testcase "CheckMap:matches missing" {
 }
 
 unittest test {
-  SortedMap<String,Int> actual <- SortedMap<String,Int>.new()
-      .set("one",1)
-      .set("two",2)
-      .set("three",3)
-      .set("four",4)
-  HashedMap<String,ValueMatcher<Int>> expected <- HashedMap<String,ValueMatcher<Int>>.new()
-      .set("one",CheckValue:equals(1))
-      .set("two",CheckValue:equals(2))
-      .set("three",CheckValue:equals(3))
+  SortedMap<String, Int> actual <- SortedMap<String, Int>.new()
+      .set("one", 1)
+      .set("two", 2)
+      .set("three", 3)
+      .set("four", 4)
+  HashedMap<String, ValueMatcher<Int>> expected <- HashedMap<String, ValueMatcher<Int>>.new()
+      .set("one", CheckValue:equals(1))
+      .set("two", CheckValue:equals(2))
+      .set("three", CheckValue:equals(3))
   \ actual `Matches:with` CheckMap:matches(expected)
 }
 
@@ -231,12 +231,12 @@ testcase "CheckMap:using success" {
 }
 
 unittest test {
-  SortedMap<String,TestValue> actual <- SortedMap<String,TestValue>.new()
-      .set("one",TestValue.new("one"))
-      .set("two",TestValue.new("two"))
-  SortedMap<String,TestValue> expected <- SortedMap<String,TestValue>.new()
-      .set("one",TestValue.new("one"))
-      .set("two",TestValue.new("two"))
+  SortedMap<String, TestValue> actual <- SortedMap<String, TestValue>.new()
+      .set("one", TestValue.new("one"))
+      .set("two", TestValue.new("two"))
+  SortedMap<String, TestValue> expected <- SortedMap<String, TestValue>.new()
+      .set("one", TestValue.new("one"))
+      .set("two", TestValue.new("two"))
   \ actual `Matches:with` CheckMap:matches(CheckMap:using(expected))
 }
 
@@ -247,11 +247,11 @@ testcase "CheckMap:using failure" {
 }
 
 unittest test {
-  SortedMap<String,TestValue> actual <- SortedMap<String,TestValue>.new()
-      .set("one",TestValue.new("one"))
-      .set("two",TestValue.new("TWO"))
-  SortedMap<String,TestValue> expected <- SortedMap<String,TestValue>.new()
-      .set("one",TestValue.new("one"))
-      .set("two",TestValue.new("two"))
+  SortedMap<String, TestValue> actual <- SortedMap<String, TestValue>.new()
+      .set("one", TestValue.new("one"))
+      .set("two", TestValue.new("TWO"))
+  SortedMap<String, TestValue> expected <- SortedMap<String, TestValue>.new()
+      .set("one", TestValue.new("one"))
+      .set("two", TestValue.new("two"))
   \ actual `Matches:with` CheckMap:matches(CheckMap:using(expected))
 }

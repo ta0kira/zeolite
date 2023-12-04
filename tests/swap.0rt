@@ -176,7 +176,7 @@ unittest testWeakLocal {
   optional String source2 <- "def"
   weak String value1 <- source1
   weak String value2 <- source2
-  $Hidden[source1,source2]$
+  $Hidden[source1, source2]$
   value1 <-> value2
   \ Testing.checkEquals(`strong` value1, "def")
   \ Testing.checkEquals(`strong` value2, "abc")

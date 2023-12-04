@@ -1,4 +1,4 @@
 $ModuleOnly$
 $TestsOnly$
 
-concrete Type {}
+concrete Type { }

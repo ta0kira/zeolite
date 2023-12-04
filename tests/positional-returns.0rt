@@ -21,13 +21,13 @@ testcase "missing return" {
   require "Value"
 }
 
-@value interface Value {}
+@value interface Value { }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Value)
-  process () {}
+  process () { }
 }
 
 
@@ -46,11 +46,11 @@ unittest test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
 }
 
 define Test {
-  get () (x,y) {
+  get () (x, y) {
     if (false) {
       x <- 1
     } else {
@@ -76,11 +76,11 @@ unittest test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
 }
 
 define Test {
-  get () (x,y) {
+  get () (x, y) {
     return 1, 2
   }
 }
@@ -101,11 +101,11 @@ unittest test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
 }
 
 define Test {
-  get () (x,y) {
+  get () (x, y) {
     y <- 2
     if (false) {
       x <- 1

@@ -1,16 +1,16 @@
-@value interface Interface1<#x|> {}
+@value interface Interface1<#x|> { }
 
 concrete Type1<#x|> {
   #x allows Interface1<#x>
 }
 
-@type interface Interface2<#x|> {}
+@type interface Interface2<#x|> { }
 
 concrete Type2<|#x> {
   #x defines Interface2<#x>
 }
 
-@value interface Interface3<#x|> {}
+@value interface Interface3<#x|> { }
 
 concrete Type3<|#x> {
   #x requires Interface3<#x>

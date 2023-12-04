@@ -18,14 +18,14 @@ limitations under the License.
 
 $ModuleOnly$
 
-concrete SimpleKeyValue<|#k,#v> {
-  @category new<#k,#v> (#k,#v) -> (KeyValue<#k,#v>)
+concrete SimpleKeyValue<|#k, #v> {
+  @category new<#k, #v> (#k, #v) -> (KeyValue<#k, #v>)
 }
 
 concrete MapKeyOrder<#k> {
-  @category new<#k> (optional Order<KeyValue<#k,any>>) -> (optional Order<#k>)
+  @category new<#k> (optional Order<KeyValue<#k, any>>) -> (optional Order<#k>)
 }
 
 concrete MapValueOrder<#v> {
-  @category new<#v> (optional Order<KeyValue<any,#v>>) -> (optional Order<#v>)
+  @category new<#v> (optional Order<KeyValue<any, #v>>) -> (optional Order<#v>)
 }

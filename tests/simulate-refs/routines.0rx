@@ -17,13 +17,13 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Routines {
-  @category optional StateTransition<String,ReferenceState> dropWeak <-
+  @category optional StateTransition<String, ReferenceState> dropWeak <-
       Run:ifElse(
       test:   DecrWeakIsZero.new(),
       doIf:   FreeRef.new(),
       doElse: empty)
 
-  @category optional StateTransition<String,ReferenceState> sharedThenDrop <-
+  @category optional StateTransition<String, ReferenceState> sharedThenDrop <-
       LockRef.new() `Run:then`
       Run:ifElse(
       test:   IncrRefIsOne.new(),
@@ -34,7 +34,7 @@ define Routines {
               dropWeak `Run:then`
               dropShared)
 
-  @category optional StateTransition<String,ReferenceState> dropShared <-
+  @category optional StateTransition<String, ReferenceState> dropShared <-
       LockRef.new() `Run:then`
       Run:ifElse(
       test:   DecrRefIsZero.new(),
@@ -43,7 +43,7 @@ define Routines {
               dropWeak,
       doElse: UnlockRef.new())
 
-  @category optional StateTransition<String,ReferenceState> sharedThenDropBroken <-
+  @category optional StateTransition<String, ReferenceState> sharedThenDropBroken <-
       Run:ifElse(
       test:   PlusLockModLockZero.new(),
       doIf:   MinusLock.new() `Run:then`
@@ -52,34 +52,34 @@ define Routines {
               dropWeak `Run:then`
               dropSharedBroken)
 
-  @category optional StateTransition<String,ReferenceState> dropSharedBroken <-
+  @category optional StateTransition<String, ReferenceState> dropSharedBroken <-
       Run:ifElse(
       test:   DecrRefIsZero.new(),
       doIf:   FreeObject.new() `Run:then`
               dropWeak,
       doElse: empty)
 
-  newShared (name,state) {
+  newShared (name, state) {
     if (state.addStrong() == 1) {
       \ state.addWeak()
     }
-    return LabeledStateMachine:new(name,state,dropShared)
+    return LabeledStateMachine:new(name, state, dropShared)
   }
 
-  newWeak (name,state) {
+  newWeak (name, state) {
     \ state.addWeak()
-    return LabeledStateMachine:new(name,state,sharedThenDrop)
+    return LabeledStateMachine:new(name, state, sharedThenDrop)
   }
 
-  newSharedBroken (name,state) {
+  newSharedBroken (name, state) {
     if (state.addStrong() == 1) {
       \ state.addWeak()
     }
-    return LabeledStateMachine:new(name,state,dropSharedBroken)
+    return LabeledStateMachine:new(name, state, dropSharedBroken)
   }
 
-  newWeakBroken (name,state) {
+  newWeakBroken (name, state) {
     \ state.addWeak()
-    return LabeledStateMachine:new(name,state,sharedThenDropBroken)
+    return LabeledStateMachine:new(name, state, sharedThenDropBroken)
   }
 }

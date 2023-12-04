@@ -90,8 +90,8 @@ testcase "Matches:value fails immediately" {
 }
 
 unittest test {
-  \ TestValue.default() `Matches:value` TestValue.new(123,"message1",empty)
-  \ TestValue.default() `Matches:value` TestValue.new(321,"message2",999)
+  \ TestValue.default() `Matches:value` TestValue.new(123, "message1", empty)
+  \ TestValue.default() `Matches:value` TestValue.new(321, "message2", 999)
 }
 
 
@@ -101,7 +101,7 @@ testcase "Matches:value failure with empty" {
 }
 
 unittest test {
-  \ empty?TestValue `Matches:value` TestValue.new(123,"message1",empty)
+  \ empty?TestValue `Matches:value` TestValue.new(123, "message1", empty)
 }
 
 
@@ -114,8 +114,8 @@ testcase "Matches:tryValue fails later" {
 }
 
 unittest test {
-  \ TestValue.default() `Matches:tryValue` TestValue.new(123,"message1",empty)
-  \ TestValue.default() `Matches:tryValue` TestValue.new(321,"message2",999)
+  \ TestValue.default() `Matches:tryValue` TestValue.new(123, "message1", empty)
+  \ TestValue.default() `Matches:tryValue` TestValue.new(321, "message2", 999)
 }
 
 
@@ -125,7 +125,7 @@ testcase "Matches:tryValue failure with empty" {
 }
 
 unittest test {
-  \ empty?TestValue `Matches:tryValue` TestValue.new(123,"message1",empty)
+  \ empty?TestValue `Matches:tryValue` TestValue.new(123, "message1", empty)
 }
 
 
@@ -149,7 +149,7 @@ testcase "Matches:value doesn't evaluate pending errors" {
 }
 
 unittest test {
-  \ TestValue.default() `Matches:tryValue` TestValue.new(123,"message1",empty)
+  \ TestValue.default() `Matches:tryValue` TestValue.new(123, "message1", empty)
   \ TestValue.default() `Matches:value` TestValue.default()
   fail("message2")
 }
@@ -160,15 +160,15 @@ testcase "CheckAlways" {
 }
 
 unittest match {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
-  \ CheckAlways:match().check(123,report)
-  \ Testing.checkEquals(report.hasError(),false)
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
+  \ CheckAlways:match().check(123, report)
+  \ Testing.checkEquals(report.hasError(), false)
 }
 
 unittest fromWithoutError {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
-  \ CheckAlways:error("message").check(123,report)
-  \ Testing.checkEquals(report.hasError(),true)
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
+  \ CheckAlways:error("message").check(123, report)
+  \ Testing.checkEquals(report.hasError(), true)
 }
 
 
@@ -178,7 +178,7 @@ testcase "CheckAlways:die" {
 }
 
 unittest test {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
   \ report.addError(message: "message")
-  \ CheckAlways:die("something").check(123,report)
+  \ CheckAlways:die("something").check(123, report)
 }

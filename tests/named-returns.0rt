@@ -21,13 +21,13 @@ testcase "missing assign" {
   require "value"
 }
 
-@value interface Value {}
+@value interface Value { }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Value)
-  process () (value) {}
+  process () (value) { }
 }
 
 
@@ -35,7 +35,7 @@ testcase "assign before logical" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Bool)
@@ -50,7 +50,7 @@ testcase "assign after logical" {
   require "value.+initialized"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Bool)
@@ -64,7 +64,7 @@ testcase "assign before arithmetic" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Int)
@@ -78,7 +78,7 @@ testcase "assign after arithmetic" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value process () -> (Int)
@@ -93,7 +93,7 @@ testcase "return used before assigned" {
   require "value.+initialized"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category process () -> (Int)
@@ -131,7 +131,7 @@ testcase "return used as return before assigned" {
   require "value.+initialized"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category process () -> (Int)
@@ -145,7 +145,7 @@ testcase "explicit return with named" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category process () -> (Int)
@@ -160,7 +160,7 @@ testcase "empty return with named" {
   require "value.+initialized"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category process () -> (Int)
@@ -185,7 +185,7 @@ unittest test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
 }
 
 define Test {
@@ -220,11 +220,11 @@ define Value {
 }
 
 concrete Test {
-  @type get () -> (Value,Int,Int)
+  @type get () -> (Value, Int, Int)
 }
 
 define Test {
-  get () (v,x,y) {
+  get () (v, x, y) {
     // This makes sure that x and y (primitive) are offset.
     v <- Value.create()
     x <- 1
@@ -248,11 +248,11 @@ unittest test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
 }
 
 define Test {
-  get () (x,y) {
+  get () (x, y) {
     x <- 1
     y <- 2
     return _
@@ -287,11 +287,11 @@ testcase "top-level scoped/cleanup sets named return" {
 }
 
 unittest withScoped {
-  \ Testing.checkEquals(Test.withScoped(),"message")
+  \ Testing.checkEquals(Test.withScoped(), "message")
 }
 
 unittest withCleanup {
-  \ Testing.checkEquals(Test.withCleanup(),"message")
+  \ Testing.checkEquals(Test.withCleanup(), "message")
 }
 
 concrete Test {

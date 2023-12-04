@@ -19,21 +19,21 @@ limitations under the License.
 concrete CheckSet {
   @category equals<#k>
     #k requires Formatted
-  ([SetReader<#k>&DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>)
+  ([SetReader<#k> & DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k> & DefaultOrder<#k>]>)
 }
 
 concrete CheckMap {
-  @category using<#k,#v>
+  @category using<#k, #v>
     #v requires TestCompare<#v>
-  ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>])
+  ([SetReader<#k> & DefaultOrder<KeyValue<#k, #v>>]) -> ([SetReader<#k> & DefaultOrder<KeyValue<#k, ValueMatcher<#v>>>])
 
-  @category equals<#k,#v>
+  @category equals<#k, #v>
     #k requires Formatted
     #v requires Formatted
     #v defines Equals<#v>
-  ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+  ([SetReader<#k> & DefaultOrder<KeyValue<#k, #v>>]) -> (ValueMatcher<[KVReader<#k, #v> & KeyOrder<#k>]>)
 
-  @category matches<#k,#v>
+  @category matches<#k, #v>
     #k requires Formatted
-  ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+  ([SetReader<#k> & DefaultOrder<KeyValue<#k, ValueMatcher<#v>>>]) -> (ValueMatcher<[KVReader<#k, #v> & KeyOrder<#k>]>)
 }

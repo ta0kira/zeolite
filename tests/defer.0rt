@@ -120,7 +120,7 @@ testcase "can defer @value member" {
   require "initialized"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   @value Int value
@@ -139,7 +139,7 @@ testcase "can defer @category member" {
   require "initialized"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   @category Int value <- 1
@@ -159,7 +159,7 @@ testcase "cannot defer function argument" {
   require "read-only"
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   @value call (Int) -> ()

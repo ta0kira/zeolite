@@ -126,12 +126,12 @@ unittest test {
 }
 
 concrete Test {
-  @category add (Int,Int) -> (Int)
+  @category add (Int, Int) -> (Int)
   @category neg (Int) -> (Int)
 }
 
 define Test {
-  add (x,y) {
+  add (x, y) {
     return x + y
   }
 
@@ -147,7 +147,7 @@ testcase "builtins as unary" {
 
 unittest requireUnary {
   optional Int value <- 1
-  \ Testing.checkEquals(`require` value,1)
+  \ Testing.checkEquals(`require` value, 1)
 }
 
 unittest presentUnary {
@@ -165,6 +165,6 @@ unittest strongUnary {
 }
 
 unittest reduceUnary {
-  optional Formatted value <- `reduce<Int,Formatted>` 123
-  \ Testing.checkEquals(require(value).formatted(),"123")
+  optional Formatted value <- `reduce<Int, Formatted>` 123
+  \ Testing.checkEquals(require(value).formatted(), "123")
 }

@@ -16,6 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define Type1 {}
+define Type1 { }
 
-define Type2 {}
+define Type2 { }

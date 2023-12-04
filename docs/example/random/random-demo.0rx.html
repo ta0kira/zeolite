@@ -10,64 +10,64 @@
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>RandomDemo</span></b> {
-  <span style='color:#644a9b;'>@type</span> run () -&gt; ()
+  <span style='color:#644a9b;'>@type</span> run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>RandomDemo</span></b> {
   run () {
-    <i><span style='color:#0057ae;'>Float</span></i> timeLimit &lt;- <span style='color:#b08000;'>0.0</span>
-    <i><span style='color:#0057ae;'>Float</span></i> startTime &lt;- <span style='color:#0057ae;'>Realtime</span><span style='color:#644a9b;'>.</span>monoSeconds()
+    <i><span style='color:#0057ae;'>Float</span></i> timeLimit <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0.0</span>
+    <i><span style='color:#0057ae;'>Float</span></i> startTime <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Realtime</span><span style='color:#644a9b;'>.</span>monoSeconds()
     <b>if</b> (<span style='color:#0057ae;'>Argv</span><span style='color:#644a9b;'>.</span>global()<span style='color:#644a9b;'>.</span>size() &gt; <span style='color:#b08000;'>1</span>) {
-      timeLimit &lt;- <span style='color:#0057ae;'>ParseChars</span><span style='color:#644a9b;'>.</span>float(<span style='color:#0057ae;'>Argv</span><span style='color:#644a9b;'>.</span>global()<span style='color:#644a9b;'>.</span>readAt(<span style='color:#b08000;'>1</span>))<span style='color:#644a9b;'>.</span>getValue()
+      timeLimit <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>ParseChars</span><span style='color:#644a9b;'>.</span>float(<span style='color:#0057ae;'>Argv</span><span style='color:#644a9b;'>.</span>global()<span style='color:#644a9b;'>.</span>readAt(<span style='color:#b08000;'>1</span>))<span style='color:#644a9b;'>.</span>getValue()
     }
 
     <span style='color:#898887;'>// Rough distribution of letter frequencies in the English language.</span>
     <span style='color:#898887;'>// Taken from https://en.wikipedia.org/wiki/Letter_frequency.</span>
     <span style='color:#898887;'>// NOTE: The overall scale here doesn't matter; it just matters what the</span>
     <span style='color:#898887;'>// relative weights are. CategoricalTree only supports positive Int weights.</span>
-    <span style='color:#0057ae;'>CategoricalTree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> weights &lt;- <span style='color:#0057ae;'>CategoricalTree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'a'</span>,<span style='color:#b08000;'>8167</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'b'</span>,<span style='color:#b08000;'>1492</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'c'</span>,<span style='color:#b08000;'>2782</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'d'</span>,<span style='color:#b08000;'>4253</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'e'</span>,<span style='color:#b08000;'>12702</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'f'</span>,<span style='color:#b08000;'>2228</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'g'</span>,<span style='color:#b08000;'>2015</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'h'</span>,<span style='color:#b08000;'>6094</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'i'</span>,<span style='color:#b08000;'>6966</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'j'</span>,<span style='color:#b08000;'>153</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'k'</span>,<span style='color:#b08000;'>772</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'l'</span>,<span style='color:#b08000;'>4025</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'m'</span>,<span style='color:#b08000;'>2406</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'n'</span>,<span style='color:#b08000;'>6749</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'o'</span>,<span style='color:#b08000;'>7507</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'p'</span>,<span style='color:#b08000;'>1929</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'q'</span>,<span style='color:#b08000;'>95</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'r'</span>,<span style='color:#b08000;'>5987</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'s'</span>,<span style='color:#b08000;'>6327</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'t'</span>,<span style='color:#b08000;'>9056</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'u'</span>,<span style='color:#b08000;'>2758</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'v'</span>,<span style='color:#b08000;'>978</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'w'</span>,<span style='color:#b08000;'>2361</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'x'</span>,<span style='color:#b08000;'>150</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'y'</span>,<span style='color:#b08000;'>1974</span>)
-        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'z'</span>,<span style='color:#b08000;'>74</span>)
+    <span style='color:#0057ae;'>CategoricalTree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> weights <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>CategoricalTree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'a'</span>, <span style='color:#b08000;'>8167</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'b'</span>, <span style='color:#b08000;'>1492</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'c'</span>, <span style='color:#b08000;'>2782</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'d'</span>, <span style='color:#b08000;'>4253</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'e'</span>, <span style='color:#b08000;'>12702</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'f'</span>, <span style='color:#b08000;'>2228</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'g'</span>, <span style='color:#b08000;'>2015</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'h'</span>, <span style='color:#b08000;'>6094</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'i'</span>, <span style='color:#b08000;'>6966</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'j'</span>, <span style='color:#b08000;'>153</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'k'</span>, <span style='color:#b08000;'>772</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'l'</span>, <span style='color:#b08000;'>4025</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'m'</span>, <span style='color:#b08000;'>2406</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'n'</span>, <span style='color:#b08000;'>6749</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'o'</span>, <span style='color:#b08000;'>7507</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'p'</span>, <span style='color:#b08000;'>1929</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'q'</span>, <span style='color:#b08000;'>95</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'r'</span>, <span style='color:#b08000;'>5987</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'s'</span>, <span style='color:#b08000;'>6327</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'t'</span>, <span style='color:#b08000;'>9056</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'u'</span>, <span style='color:#b08000;'>2758</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'v'</span>, <span style='color:#b08000;'>978</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'w'</span>, <span style='color:#b08000;'>2361</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'x'</span>, <span style='color:#b08000;'>150</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'y'</span>, <span style='color:#b08000;'>1974</span>)
+        <span style='color:#644a9b;'>.</span>setWeight(<span style='color:#924c9d;'>'z'</span>, <span style='color:#b08000;'>74</span>)
 
-    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>  letter &lt;- weights <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>RandomCategorical</span><span style='color:#644a9b;'>:</span>sampleWith<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>RandomUniform</span><span style='color:#644a9b;'>.</span>probability()
-    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> length &lt;- <span style='color:#0057ae;'>RandomGaussian</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>5.0</span>,<span style='color:#b08000;'>3.0</span>)
-    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> timing &lt;- <span style='color:#0057ae;'>RandomExponential</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>4.0</span>)
+    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>  letter <b><span style='color:#006e28;'>&lt;-</span></b> weights <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>RandomCategorical</span><span style='color:#644a9b;'>:</span>sampleWith<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>RandomUniform</span><span style='color:#644a9b;'>.</span>probability()
+    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> length <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>RandomGaussian</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>5.0</span>, <span style='color:#b08000;'>3.0</span>)
+    <span style='color:#0057ae;'>Generator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span> timing <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>RandomExponential</span><span style='color:#644a9b;'>.</span>new(<span style='color:#b08000;'>4.0</span>)
 
     <b>while</b> (timeLimit &lt;= <span style='color:#b08000;'>0.0</span> || <span style='color:#0057ae;'>Realtime</span><span style='color:#644a9b;'>.</span>monoSeconds() &lt; startTime+timeLimit) {
       <span style='color:#898887;'>// Generate a word with a random length.</span>
-      <i><span style='color:#0057ae;'>Int</span></i> wordLength &lt;- length<span style='color:#644a9b;'>.</span>generate()<span style='color:#644a9b;'>.</span>asInt()
+      <i><span style='color:#0057ae;'>Int</span></i> wordLength <b><span style='color:#006e28;'>&lt;-</span></b> length<span style='color:#644a9b;'>.</span>generate()<span style='color:#644a9b;'>.</span>asInt()
       <b>if</b> (wordLength &lt; <span style='color:#b08000;'>1</span>) {
         <b>continue</b>
       }
-      <i><span style='color:#0057ae;'>CharBuffer</span></i> buffer &lt;- <i><span style='color:#0057ae;'>CharBuffer</span></i><span style='color:#644a9b;'>.</span>new(wordLength)
+      <i><span style='color:#0057ae;'>CharBuffer</span></i> buffer <b><span style='color:#006e28;'>&lt;-</span></b> <i><span style='color:#0057ae;'>CharBuffer</span></i><span style='color:#644a9b;'>.</span>new(wordLength)
 
       <span style='color:#898887;'>// Populate the letters using their relative frequencies.</span>
-      <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(buffer<span style='color:#644a9b;'>.</span>size()) -&gt; <i><span style='color:#0057ae;'>Int</span></i> pos) {
-        <span style='color:#006e28;'>\</span> buffer<span style='color:#644a9b;'>.</span>writeAt(pos,letter<span style='color:#644a9b;'>.</span>generate())
+      <b>traverse</b> (<span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>zeroIndexed(buffer<span style='color:#644a9b;'>.</span>size()) <b><span style='color:#006e28;'>-&gt;</span></b> <i><span style='color:#0057ae;'>Int</span></i> pos) {
+        <span style='color:#006e28;'>\</span> buffer<span style='color:#644a9b;'>.</span>writeAt(pos, letter<span style='color:#644a9b;'>.</span>generate())
       }
 
       <span style='color:#898887;'>// Print the word.</span>

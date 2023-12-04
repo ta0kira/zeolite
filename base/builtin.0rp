@@ -165,7 +165,7 @@ concrete String {
   // Example:
   //
   //   String.builder().append("foo").append("bar").build()
-  @type builder () -> ([Append<Formatted>&Build<String>])
+  @type builder () -> ([Append<Formatted> & Build<String>])
 }
 
 // Built-in fixed-size buffer of byte data.
@@ -358,7 +358,7 @@ concrete Identifier<|#x> {
   refines Container
 
   // Write the value at the given index and return self.
-  writeAt (Int,#x) -> (#self)
+  writeAt (Int, #x) -> (#self)
 }
 
 // Sequence that can be subsequenced.
@@ -366,7 +366,7 @@ concrete Identifier<|#x> {
   refines Container
 
   // Return a copy of a subsequence.
-  subSequence (Int,Int) -> (#self)
+  subSequence (Int, Int) -> (#self)
 }
 
 // The type has a default value.
@@ -393,7 +393,7 @@ concrete Identifier<|#x> {
 // - #x: The value type to be compared.
 @type interface Equals<#x|> {
   // Returns true iff the two values are equal. Must be symmetric.
-  equals (#x,#x) -> (Bool)
+  equals (#x, #x) -> (Bool)
 }
 
 // The type can compare values for less-than.
@@ -402,5 +402,5 @@ concrete Identifier<|#x> {
 // - #x: The value type to be compared.
 @type interface LessThan<#x|> {
   // Returns true iff the first value is less than the second.
-  lessThan (#x,#x) -> (Bool)
+  lessThan (#x, #x) -> (Bool)
 }

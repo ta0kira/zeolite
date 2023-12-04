@@ -20,14 +20,14 @@ testcase "success with unknown type" {
   success Foo
 }
 
-unittest test {}
+unittest test { }
 
 
 testcase "success with non-Testcase type" {
   success String
 }
 
-unittest test {}
+unittest test { }
 
 
 testcase "success with param" {
@@ -39,11 +39,11 @@ concrete Helper<#x> {
 }
 
 define Helper {
-  start () {}
-  finish () {}
+  start () { }
+  finish () { }
 }
 
-unittest test {}
+unittest test { }
 
 
 testcase "success with invalid substitution" {
@@ -56,8 +56,8 @@ concrete Helper<#x> {
 }
 
 define Helper {
-  start () {}
-  finish () {}
+  start () { }
+  finish () { }
 }
 
-unittest test {}
+unittest test { }

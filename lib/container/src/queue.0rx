@@ -30,7 +30,7 @@ define SimpleQueue {
   }
 
   duplicate () {
-    $ReadOnly[size,head]$
+    $ReadOnly[size, head]$
     $Hidden[tail]$
     scoped {
       optional ForwardNode<#x> head2, optional ForwardNode<#x> tail2 <-

@@ -1,2 +1,2 @@
 path: "/dev/null"
-mode: incremental {}
+mode: incremental { }

@@ -25,7 +25,7 @@ unittest boxed {
   String value2 <- "value"
   Identifier<String> id1 <- `identify` value1
   Identifier<String> id2 <- `identify` value2
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
   \ Testing.checkTrue((id1 < id2) ^ (id2 < id1))
   \ Testing.checkTrue((id1 > id2) ^ (id2 > id1))
@@ -47,7 +47,7 @@ unittest unboxed {
   Identifier<Int> id1 <- identify(value1)
   Identifier<Int> id2 <- identify(value2)
   Identifier<Int> id3 <- identify(value3)
-  $Hidden[value1,value2,value3]$
+  $Hidden[value1, value2, value3]$
 
   \ Testing.checkTrue((id1 < id2) ^ (id2 < id1))
   \ Testing.checkTrue((id1 > id2) ^ (id2 > id1))
@@ -69,7 +69,7 @@ unittest differentTypes {
   Int value2 <- 2
   Identifier<String> id1 <- identify(value1)
   Identifier<Int> id2 <- identify(value2)
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
   \ Testing.checkTrue((id1 < id2) ^ (id2 < id1))
   \ Testing.checkTrue((id1 > id2) ^ (id2 > id1))
@@ -85,7 +85,7 @@ unittest hashing {
   String value2 <- "value"
   Identifier<String> id1 <- `identify` value1
   Identifier<String> id2 <- `identify` value2
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
   \ Testing.checkEquals(id1.hashed(), id1.hashed())
   \ Testing.checkNotEquals(id1.hashed(), id2.hashed())
@@ -96,7 +96,7 @@ unittest meta {
   Int value2 <- 2
   Identifier<String> id1 <- identify(value1)
   Identifier<Int> id2 <- identify(value2)
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
   \ Testing.checkTrue(id1 == `identify` id1)
   \ Testing.checkTrue(id2 == `identify` id2)
@@ -108,12 +108,12 @@ unittest formatted {
   String value2 <- "value"
   Identifier<String> id1 <- `identify` value1
   Identifier<String> id2 <- `identify` value2
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
-  \ Testing.checkEquals(id1.formatted(),id1.formatted())
-  \ Testing.checkNotEquals(id1.formatted(),id2.formatted())
+  \ Testing.checkEquals(id1.formatted(), id1.formatted())
+  \ Testing.checkNotEquals(id1.formatted(), id2.formatted())
 
-  \ Testing.checkEquals((`identify` empty).formatted(),"0000000000000000")
+  \ Testing.checkEquals((`identify` empty).formatted(), "0000000000000000")
 }
 
 unittest equals {
@@ -121,7 +121,7 @@ unittest equals {
   String value2 <- "value"
   Identifier<String> id1 <- `identify` value1
   Identifier<String> id2 <- `identify` value2
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
   \ Testing.checkTrue(id1 `Identifier<any>.equals` id1)
   \ Testing.checkFalse(id1 `Identifier<any>.equals` id2)
@@ -132,7 +132,7 @@ unittest lessThan {
   String value2 <- "value"
   Identifier<String> id1 <- `identify` value1
   Identifier<String> id2 <- `identify` value2
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
 
   \ Testing.checkFalse(id1 `Identifier<any>.lessThan` id1)
   \ Testing.checkTrue((id1 `Identifier<any>.lessThan` id2) ^ (id2 `Identifier<any>.lessThan` id1))
@@ -143,7 +143,7 @@ unittest swap {
   String value2 <- "value"
   Identifier<String> id1 <- `identify` value1
   Identifier<String> id2 <- `identify` value2
-  $Hidden[value1,value2]$
+  $Hidden[value1, value2]$
   Identifier<String> id3 <- id1
 
   \ Testing.checkTrue(id1 == id3)
@@ -155,9 +155,9 @@ unittest swap {
 
 unittest reduceTest {
   Identifier<String> id <- `identify` "value"
-  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>,Identifier<Formatted>>(id),id)
-  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>,Identifier<Int>>(id),empty)
-  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<Formatted>,Identifier<String>>(id),empty)
+  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>, Identifier<Formatted>>(id), id)
+  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<String>, Identifier<Int>>(id), empty)
+  \ Testing.checkEquals<Identifier<any>>(reduce<Identifier<Formatted>, Identifier<String>>(id), empty)
 }
 
 
@@ -205,9 +205,9 @@ define Test {
       optional Identifier<String> optionalLocalId <- optionalValueId
       weak Identifier<String> weakLocalId <- weakValueId
     } in {
-      \ Testing.checkEquals<Identifier<any>>(localId,valueId)
-      \ Testing.checkEquals<Identifier<any>>(optionalLocalId,optionalValueId)
-      \ Testing.checkEquals<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
+      \ Testing.checkEquals<Identifier<any>>(localId, valueId)
+      \ Testing.checkEquals<Identifier<any>>(optionalLocalId, optionalValueId)
+      \ Testing.checkEquals<Identifier<any>>(`strong` weakLocalId, `strong` weakLocalId)
     }
     // @category vs. local
     scoped {
@@ -215,9 +215,9 @@ define Test {
       optional Identifier<String> optionalLocalId <- optionalCategoryId
       weak Identifier<String> weakLocalId <- weakCategoryId
     } in {
-      \ Testing.checkEquals<Identifier<any>>(localId,categoryId)
-      \ Testing.checkEquals<Identifier<any>>(optionalLocalId,optionalCategoryId)
-      \ Testing.checkEquals<Identifier<any>>(`strong` weakLocalId,`strong` weakLocalId)
+      \ Testing.checkEquals<Identifier<any>>(localId, categoryId)
+      \ Testing.checkEquals<Identifier<any>>(optionalLocalId, optionalCategoryId)
+      \ Testing.checkEquals<Identifier<any>>(`strong` weakLocalId, `strong` weakLocalId)
     }
   }
 }
@@ -250,7 +250,7 @@ testcase "too many args to identify" {
 }
 
 unittest test {
-  \ identify("value",123)
+  \ identify("value", 123)
 }
 
 
@@ -265,7 +265,7 @@ unittest test {
 }
 
 concrete Helper {
-  @type foo () -> (Int,Int)
+  @type foo () -> (Int, Int)
 }
 
 define Helper {

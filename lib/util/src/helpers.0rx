@@ -17,16 +17,16 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define OrderH {
-  lessThan (x,y) {
-    return lessThanWith<#x,#x>(x,y)
+  lessThan (x, y) {
+    return lessThanWith<#x, #x>(x, y)
   }
 
-  lessThanWith (x,y) {
+  lessThanWith (x, y) {
     optional Order<#x> xx <- x
     optional Order<#x> yy <- y
-    $Hidden[x,y]$
+    $Hidden[x, y]$
     while (present(xx) && present(yy)) {
-      $ReadOnly[xx,yy]$
+      $ReadOnly[xx, yy]$
       if (require(xx).get() `#xx.lessThan` require(yy).get()) {
         return true
       } elif (require(yy).get() `#xx.lessThan` require(xx).get()) {
@@ -39,16 +39,16 @@ define OrderH {
     return present(yy)
   }
 
-  equals (x,y) {
-    return equalsWith<#x,#x>(x,y)
+  equals (x, y) {
+    return equalsWith<#x, #x>(x, y)
   }
 
-  equalsWith (x,y) {
+  equalsWith (x, y) {
     optional Order<#x> xx <- x
     optional Order<#x> yy <- y
-    $Hidden[x,y]$
+    $Hidden[x, y]$
     while (present(xx) && present(yy)) {
-      $ReadOnly[xx,yy]$
+      $ReadOnly[xx, yy]$
       if (!(require(xx).get() `#xx.equals` require(yy).get())) {
         return false
       }
@@ -59,7 +59,7 @@ define OrderH {
     return !present(xx) && !present(yy)
   }
 
-  copyTo (input,output) (original) {
+  copyTo (input, output) (original) {
     original <- output
     $Hidden[original]$
     traverse (input -> #x value) {
@@ -67,7 +67,7 @@ define OrderH {
     }
   }
 
-  duplicateTo (input,output) (original) {
+  duplicateTo (input, output) (original) {
     original <- output
     $Hidden[original]$
     traverse (input -> #x value) {
@@ -77,11 +77,11 @@ define OrderH {
 }
 
 define ReadAtH {
-  lessThan (x,y) {
-    return lessThanWith<#x,#x>(x,y)
+  lessThan (x, y) {
+    return lessThanWith<#x, #x>(x, y)
   }
 
-  lessThanWith (x,y) {
+  lessThanWith (x, y) {
     traverse (`Counter.zeroIndexed` (x.size() `Ranges:min` y.size()) -> Int i) {
       $ReadOnly[i]$
       if (x.readAt(i) `#xx.lessThan` y.readAt(i)) {
@@ -93,11 +93,11 @@ define ReadAtH {
     return x.size() < y.size()
   }
 
-  equals (x,y) {
-    return equalsWith<#x,#x>(x,y)
+  equals (x, y) {
+    return equalsWith<#x, #x>(x, y)
   }
 
-  equalsWith (x,y) {
+  equalsWith (x, y) {
     if (x.size() != y.size()) {
       return false
     }
@@ -110,7 +110,7 @@ define ReadAtH {
     return true
   }
 
-  copyTo (input,output) (original) {
+  copyTo (input, output) (original) {
     original <- output
     $Hidden[original]$
     traverse (`Counter.zeroIndexed` input.size() -> Int i) {
@@ -118,7 +118,7 @@ define ReadAtH {
     }
   }
 
-  duplicateTo (input,output) (original) {
+  duplicateTo (input, output) (original) {
     original <- output
     $Hidden[original]$
     traverse (`Counter.zeroIndexed` input.size() -> Int i) {
@@ -134,7 +134,7 @@ define ReadAtH {
     return input `iterateWith` `Counter.revZeroIndexed` input.size()
   }
 
-  iterateWith (input,order) {
+  iterateWith (input, order) {
     return input `IndexOrder:iterateWith` order
   }
 }
@@ -143,7 +143,7 @@ define FormattedH {
   try (x) {
     if (present(x)) {
       scoped {
-        optional Formatted formatted <- reduce<#x,Formatted>(x)
+        optional Formatted formatted <- reduce<#x, Formatted>(x)
       } in if (present(formatted)) {
         return require(formatted)
       } else {
@@ -164,7 +164,7 @@ define FormattedH {
 concrete IndexOrder<#x> {
   refines Order<#x>
 
-  @category iterateWith<#x> (ReadAt<#x>,optional Order<Int>) -> (optional Order<#x>)
+  @category iterateWith<#x> (ReadAt<#x>, optional Order<Int>) -> (optional Order<#x>)
 }
 
 define IndexOrder {
@@ -173,7 +173,7 @@ define IndexOrder {
   @value ReadAt<#x> container
   @value Order<Int> index
 
-  iterateWith (container,index) {
+  iterateWith (container, index) {
     if (`present` index) {
       return IndexOrder<#x>{ container, `require` index }
     } else {
@@ -198,27 +198,27 @@ define IndexOrder {
 }
 
 define Reversed {
-  lessThan (x,y) {
+  lessThan (x, y) {
     return y `#x.lessThan` x
   }
 }
 
 define BySize {
-  equals (x,y) {
+  equals (x, y) {
     return x.size() == y.size()
   }
 
-  lessThan (x,y) {
+  lessThan (x, y) {
     return x.size() < y.size()
   }
 }
 
 define AlwaysEqual {
-  equals (_,_) {
+  equals (_, _) {
     return true
   }
 
-  lessThan (_,_) {
+  lessThan (_, _) {
     return false
   }
 }
@@ -230,7 +230,7 @@ define AsLessThan2 {
     return delegate -> #self
   }
 
-  lessThan2 (x,y) {
+  lessThan2 (x, y) {
     return x `#xx.lessThan` y
   }
 }

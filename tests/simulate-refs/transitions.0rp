@@ -19,49 +19,49 @@ limitations under the License.
 $ModuleOnly$
 
 concrete LockRef {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete DecrRefIsZero {
-  @type new () -> (StatePredicate<String,ReferenceState>)
+  @type new () -> (StatePredicate<String, ReferenceState>)
 }
 
 concrete UnlockRef {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete FreeObject {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete DecrWeakIsZero {
-  @type new () -> (StatePredicate<String,ReferenceState>)
+  @type new () -> (StatePredicate<String, ReferenceState>)
 }
 
 concrete FreeRef {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete IncrRefIsOne {
-  @type new () -> (StatePredicate<String,ReferenceState>)
+  @type new () -> (StatePredicate<String, ReferenceState>)
 }
 
 concrete DecrRef {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete DecrWeak {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete PlusLockModLockZero {
-  @type new () -> (StatePredicate<String,ReferenceState>)
+  @type new () -> (StatePredicate<String, ReferenceState>)
 }
 
 concrete MinusLockPlusOne {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }
 
 concrete MinusLock {
-  @type new () -> (StateTransition<String,ReferenceState>)
+  @type new () -> (StateTransition<String, ReferenceState>)
 }

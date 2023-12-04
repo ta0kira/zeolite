@@ -31,11 +31,11 @@ define Void {
     return "Void"
   }
 
-  equals (_,_) {
+  equals (_, _) {
     return true
   }
 
-  lessThan (_,_) {
+  lessThan (_, _) {
     return false
   }
 
@@ -67,7 +67,7 @@ define AlwaysEmpty {
     fail("container is always empty")
   }
 
-  writeAt (_,_) {
+  writeAt (_, _) {
     fail("container is always empty")
   }
 }
@@ -106,7 +106,7 @@ define ErrorOr {
 
   convertError () {
     scoped {
-      optional ErrorOr<all> error <- reduce<#self,ErrorOr<all>>(self)
+      optional ErrorOr<all> error <- reduce<#self, ErrorOr<all>>(self)
     } in if (present(error)) {
       return require(error)
     } else {

@@ -63,7 +63,7 @@ testcase "TestChecker.newReport fails if not started" {
 }
 
 unittest test {
-  \ TestChecker.newReport(title: "title",context: empty)
+  \ TestChecker.newReport(title: "title", context: empty)
 }
 
 
@@ -73,9 +73,9 @@ testcase "TestChecker explicit start and finish" {
 
 unittest test {
   \ TestChecker.start()
-  \ TestChecker.newReport(title: "title",context: empty)
-  \ TestChecker.newReport(title: "title",context: empty).newSection(title: "subtitle")
-  \ Testing.checkEquals(TestChecker.isFailing(),false)
+  \ TestChecker.newReport(title: "title", context: empty)
+  \ TestChecker.newReport(title: "title", context: empty).newSection(title: "subtitle")
+  \ Testing.checkEquals(TestChecker.isFailing(), false)
   \ TestChecker.checkNow()
   \ TestChecker.finish()
 }
@@ -85,7 +85,7 @@ testcase "TestChecker succeeds by default" {
   success TestChecker
 }
 
-unittest test {}
+unittest test { }
 
 
 testcase "TestChecker fails when error added to report" {
@@ -103,8 +103,8 @@ unittest testError {
   ValueList<String> context <- ValueList<String>.new()
       .append("context1")
       .append("context2")
-  \ TestChecker.newReport(title: "title1",context: context.defaultOrder()).addError(message: "message1")
-  \ TestChecker.newReport(title: "title2",context: empty).addError(message: "message2")
+  \ TestChecker.newReport(title: "title1", context: context.defaultOrder()).addError(message: "message1")
+  \ TestChecker.newReport(title: "title2", context: empty).addError(message: "message2")
 }
 
 
@@ -117,7 +117,7 @@ testcase "TestChecker fails when error added to child" {
 }
 
 unittest testError {
-  TestReport report <- TestChecker.newReport(title: "title",context: empty)
+  TestReport report <- TestChecker.newReport(title: "title", context: empty)
   TestReport child <- report.newSection(title: "child")
   \ child.addError(message: "message")
 }
@@ -128,27 +128,27 @@ testcase "TestChecker ignores discarded errors" {
 }
 
 unittest topLevel {
-  TestReport report <- TestChecker.newReport(title: "title",context: empty)
-  \ Testing.checkEquals(report.hasError(),false)
+  TestReport report <- TestChecker.newReport(title: "title", context: empty)
+  \ Testing.checkEquals(report.hasError(), false)
 
   \ report.addError(message: "message")
-  \ Testing.checkEquals(report.hasError(),true)
+  \ Testing.checkEquals(report.hasError(), true)
 
   \ report.discardReport()
-  \ Testing.checkEquals(report.hasError(),false)
+  \ Testing.checkEquals(report.hasError(), false)
 }
 
 unittest recursive {
-  TestReport report <- TestChecker.newReport(title: "title",context: empty)
+  TestReport report <- TestChecker.newReport(title: "title", context: empty)
   TestReport child <- report.newSection(title: "child")
-  \ Testing.checkEquals(report.hasError(),false)
-  \ Testing.checkEquals(child.hasError(),false)
+  \ Testing.checkEquals(report.hasError(), false)
+  \ Testing.checkEquals(child.hasError(), false)
 
   \ child.addError(message: "message")
-  \ Testing.checkEquals(report.hasError(),true)
-  \ Testing.checkEquals(child.hasError(),true)
+  \ Testing.checkEquals(report.hasError(), true)
+  \ Testing.checkEquals(child.hasError(), true)
 
   \ report.discardReport()
-  \ Testing.checkEquals(report.hasError(),false)
-  \ Testing.checkEquals(child.hasError(),true)
+  \ Testing.checkEquals(report.hasError(), false)
+  \ Testing.checkEquals(child.hasError(), true)
 }

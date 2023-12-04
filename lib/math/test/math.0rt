@@ -21,99 +21,99 @@ testcase "sanity check all functions" {
 }
 
 unittest cos {
-  \ Math.cos(2.0) `Matches:with` CheckValue:betweenEquals(-0.42,-0.41)
+  \ Math.cos(2.0) `Matches:with` CheckValue:betweenEquals(-0.42, -0.41)
 }
 
 unittest sin {
-  \ Math.sin(2.0) `Matches:with` CheckValue:betweenEquals(0.90,0.91)
+  \ Math.sin(2.0) `Matches:with` CheckValue:betweenEquals(0.90, 0.91)
 }
 
 unittest tan {
-  \ Math.tan(2.0) `Matches:with` CheckValue:betweenEquals(-2.19,-2.18)
+  \ Math.tan(2.0) `Matches:with` CheckValue:betweenEquals(-2.19, -2.18)
 }
 
 unittest acos {
-  \ Math.acos(0.5) `Matches:with` CheckValue:betweenEquals(1.04,1.05)
+  \ Math.acos(0.5) `Matches:with` CheckValue:betweenEquals(1.04, 1.05)
 }
 
 unittest asin {
-  \ Math.asin(0.5) `Matches:with` CheckValue:betweenEquals(0.52,0.53)
+  \ Math.asin(0.5) `Matches:with` CheckValue:betweenEquals(0.52, 0.53)
 }
 
 unittest atan {
-  \ Math.atan(0.5) `Matches:with` CheckValue:betweenEquals(0.46,0.47)
+  \ Math.atan(0.5) `Matches:with` CheckValue:betweenEquals(0.46, 0.47)
 }
 
 unittest cosh {
-  \ Math.cosh(2.0) `Matches:with` CheckValue:betweenEquals(3.76,3.77)
+  \ Math.cosh(2.0) `Matches:with` CheckValue:betweenEquals(3.76, 3.77)
 }
 
 unittest sinh {
-  \ Math.sinh(2.0) `Matches:with` CheckValue:betweenEquals(3.62,3.63)
+  \ Math.sinh(2.0) `Matches:with` CheckValue:betweenEquals(3.62, 3.63)
 }
 
 unittest tanh {
-  \ Math.tanh(2.0) `Matches:with` CheckValue:betweenEquals(0.96,0.97)
+  \ Math.tanh(2.0) `Matches:with` CheckValue:betweenEquals(0.96, 0.97)
 }
 
 unittest acosh {
-  \ Math.acosh(2.0) `Matches:with` CheckValue:betweenEquals(1.31,1.32)
+  \ Math.acosh(2.0) `Matches:with` CheckValue:betweenEquals(1.31, 1.32)
 }
 
 unittest asinh {
-  \ Math.asinh(2.0) `Matches:with` CheckValue:betweenEquals(1.44,1.45)
+  \ Math.asinh(2.0) `Matches:with` CheckValue:betweenEquals(1.44, 1.45)
 }
 
 unittest atanh {
-  \ Math.atanh(0.5) `Matches:with` CheckValue:betweenEquals(0.54,0.55)
+  \ Math.atanh(0.5) `Matches:with` CheckValue:betweenEquals(0.54, 0.55)
 }
 
 unittest exp {
-  \ Math.exp(1.0) `Matches:with` CheckValue:betweenEquals(2.71,2.72)
+  \ Math.exp(1.0) `Matches:with` CheckValue:betweenEquals(2.71, 2.72)
 }
 
 unittest log {
-  \ Math.log(9.0) `Matches:with` CheckValue:betweenEquals(2.19,2.20)
+  \ Math.log(9.0) `Matches:with` CheckValue:betweenEquals(2.19, 2.20)
 }
 
 unittest log10 {
-  \ Math.log10(100.0) `Matches:with` CheckValue:betweenEquals(1.99,2.01)
+  \ Math.log10(100.0) `Matches:with` CheckValue:betweenEquals(1.99, 2.01)
 }
 
 unittest log2 {
-  \ Math.log2(8.0) `Matches:with` CheckValue:betweenEquals(2.99,3.01)
+  \ Math.log2(8.0) `Matches:with` CheckValue:betweenEquals(2.99, 3.01)
 }
 
 unittest pow {
-  \ Math.pow(2.0,3.0) `Matches:with` CheckValue:betweenEquals(7.99,8.01)
+  \ Math.pow(2.0, 3.0) `Matches:with` CheckValue:betweenEquals(7.99, 8.01)
 }
 
 unittest sqrt {
-  \ Math.sqrt(4.0) `Matches:with` CheckValue:betweenEquals(1.99,2.01)
+  \ Math.sqrt(4.0) `Matches:with` CheckValue:betweenEquals(1.99, 2.01)
 }
 
 unittest ceil {
-  \ Math.ceil(2.2) `Matches:with` CheckValue:betweenEquals(2.99,3.01)
+  \ Math.ceil(2.2) `Matches:with` CheckValue:betweenEquals(2.99, 3.01)
 }
 
 unittest floor {
-  \ Math.floor(2.2) `Matches:with` CheckValue:betweenEquals(1.99,2.01)
+  \ Math.floor(2.2) `Matches:with` CheckValue:betweenEquals(1.99, 2.01)
 }
 
 unittest fmod {
-  \ Math.fmod(7.0,4.0) `Matches:with` CheckValue:betweenEquals(2.99,3.01)
+  \ Math.fmod(7.0, 4.0) `Matches:with` CheckValue:betweenEquals(2.99, 3.01)
 }
 
 unittest trunc {
-  \ Math.trunc(2.2) `Matches:with` CheckValue:betweenEquals(1.99,2.01)
+  \ Math.trunc(2.2) `Matches:with` CheckValue:betweenEquals(1.99, 2.01)
 }
 
 unittest round {
-  \ Math.round(2.7) `Matches:with` CheckValue:betweenEquals(2.99,3.01)
+  \ Math.round(2.7) `Matches:with` CheckValue:betweenEquals(2.99, 3.01)
 }
 
 unittest fabs {
-  \ Math.fabs(-10.0) `Matches:with` CheckValue:betweenEquals(9.99,10.01)
+  \ Math.fabs(-10.0) `Matches:with` CheckValue:betweenEquals(9.99, 10.01)
 }
 
 unittest isinf {

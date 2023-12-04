@@ -19,50 +19,50 @@ limitations under the License.
 $TestsOnly$
 
 define Matches {
-  with (value,matcher) { $NoTrace$
+  with (value, matcher) { $NoTrace$
     if (delegate -> `executeMatch`) {
       \ TestChecker.checkNow()
     }
   }
 
-  tryWith (value,matcher) { $NoTrace$
+  tryWith (value, matcher) { $NoTrace$
     \ delegate -> `executeMatch`
   }
 
-  value (actual,expected) { $NoTrace$
+  value (actual, expected) { $NoTrace$
     if (delegate -> `executeValue`) {
       \ TestChecker.checkNow()
     }
   }
 
-  tryValue (actual,expected) { $NoTrace$
+  tryValue (actual, expected) { $NoTrace$
     \ delegate -> `executeValue`
   }
 
-  @category executeMatch<#x> (optional #x,ValueMatcher<#x>) -> (Bool)
-  executeMatch (value,matcher) { $NoTrace$
+  @category executeMatch<#x> (optional #x, ValueMatcher<#x>) -> (Bool)
+  executeMatch (value, matcher) { $NoTrace$
     String title <- String.builder()
         .append("Matches with ")
         .append(matcher.summary())
         .build()
-    TestReport report <- TestChecker.newReport(title: title,context: $CallTrace$)
+    TestReport report <- TestChecker.newReport(title: title, context: $CallTrace$)
     \ value `matcher.check` report
     return report.hasError()
   }
 
   @category executeValue<#x>
     #x requires TestCompare<#x>
-  (optional #x,#x) -> (Bool)
-  executeValue (actual,expected) { $NoTrace$
+  (optional #x, #x) -> (Bool)
+  executeValue (actual, expected) { $NoTrace$
     String title <- String.builder()
         .append("Matches ")
         .append(typename<#x>())
         .build()
-    TestReport report <- TestChecker.newReport(title: title,context: $CallTrace$)
+    TestReport report <- TestChecker.newReport(title: title, context: $CallTrace$)
     if (! `present` actual) {
       \ report.addError(message: "expected value but got empty")
     } else {
-      \ expected.testCompare(actual: require(actual),report)
+      \ expected.testCompare(actual: require(actual), report)
     }
     return report.hasError()
   }
@@ -88,7 +88,7 @@ define CheckAlways {
     return CheckAlways{ true, message }
   }
 
-  check (_,report) {
+  check (_, report) {
     if (! `present` message) {
     } elif (die) {
       fail(`require` message)

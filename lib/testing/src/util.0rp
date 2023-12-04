@@ -22,7 +22,7 @@ concrete IndentAppend {
   refines Append<Formatted>
   refines Build<Formatted>
 
-  @type new ([Append<Formatted>&Build<Formatted>]) -> (#self)
+  @type new ([Append<Formatted> & Build<Formatted>]) -> (#self)
 
   @value pushIndent () -> (#self)
   @value popIndent () -> (#self)
@@ -45,7 +45,7 @@ concrete TestHandler {
 concrete TestReportTree {
   refines TestReport
 
-  @type new (Formatted,ValueList<Formatted>) -> (#self)
+  @type new (Formatted, ValueList<Formatted>) -> (#self)
 
   // NOTE: This will write passing sections unless you prune() first.
   @value writeTo (IndentAppend) -> (IndentAppend)

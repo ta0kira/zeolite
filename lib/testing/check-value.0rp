@@ -48,7 +48,7 @@ concrete CheckValue<#x|> {
   @category betweenNotEquals<#x>
     #x requires Formatted
     #x defines LessThan<#x>
-  (#x,#x) -> (ValueMatcher<#x>)
+  (#x, #x) -> (ValueMatcher<#x>)
 
   @category lessThanEquals<#x>
     #x requires Formatted
@@ -63,5 +63,5 @@ concrete CheckValue<#x|> {
   @category betweenEquals<#x>
     #x requires Formatted
     #x defines LessThan<#x>
-  (#x,#x) -> (ValueMatcher<#x>)
+  (#x, #x) -> (ValueMatcher<#x>)
 }

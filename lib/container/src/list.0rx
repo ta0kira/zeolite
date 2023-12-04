@@ -35,7 +35,7 @@ define LinkedNode { $FlatCleanup[next]$
   }
 
   builder () {
-    return ListBuilder<#x,#self>.new()
+    return ListBuilder<#x, #self>.new()
   }
 
   next () {
@@ -47,7 +47,7 @@ define LinkedNode { $FlatCleanup[next]$
   }
 
   duplicate () {
-    $Hidden[prev,next,value]$
+    $Hidden[prev, next, value]$
     return require(builder().appendAll(self).build(){0})
   }
 
@@ -104,7 +104,7 @@ define ForwardNode { $FlatCleanup[next]$
   }
 
   builder () {
-    return ListBuilder<#x,#self>.new()
+    return ListBuilder<#x, #self>.new()
   }
 
   next () {
@@ -112,7 +112,7 @@ define ForwardNode { $FlatCleanup[next]$
   }
 
   duplicate () {
-    $Hidden[next,value]$
+    $Hidden[next, value]$
     return require(builder().appendAll(self).build(){0})
   }
 

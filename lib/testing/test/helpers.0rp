@@ -21,15 +21,15 @@ $TestsOnly$
 
 concrete TestValue {
   refines TestCompare<TestValue>
-  // TestValue.new(123,"message",empty)
+  // TestValue.new(123, "message", empty)
   defines Default
 
-  @type new (Int,String,optional Int) -> (#self)
+  @type new (Int, String, optional Int) -> (#self)
 }
 
 concrete Testing {
   @type checkEquals<#x>
     #x requires Formatted
     #x defines Equals<#x>
-  (optional #x,optional #x) -> ()
+  (optional #x, optional #x) -> ()
 }

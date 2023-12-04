@@ -18,11 +18,11 @@ limitations under the License.
 
 testcase "multi return to call" {
   error
-  require "call.+\{Value,Value\}"
+  require "call.+\{Value, Value\}"
 }
 
 @value interface Value {
-  get () -> (Value,Value)
+  get () -> (Value, Value)
   call () -> ()
 }
 
@@ -33,7 +33,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "zero return to call" {
@@ -53,7 +53,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "multi return assign" {
@@ -68,7 +68,7 @@ unittest test {
 
 concrete Test {
   @type create () -> (Test)
-  @value double () -> (Test,Test)
+  @value double () -> (Test, Test)
 }
 
 define Test {
@@ -95,7 +95,7 @@ define Test {
     return 1, 2
   }
 
-  call (x,y) {
+  call (x, y) {
     if (x != 1) {
       fail("Failed")
     }
@@ -106,8 +106,8 @@ define Test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
-  @type call (Int,Int) -> ()
+  @type get () -> (Int, Int)
+  @type call (Int, Int) -> ()
 }
 
 
@@ -128,7 +128,7 @@ define Test {
     return 1, 2
   }
 
-  call (x,y) {
+  call (x, y) {
     if (!(x `#x.lessThan` y)) {
       fail("Failed")
     }
@@ -136,10 +136,10 @@ define Test {
 }
 
 concrete Test {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
   @type call<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> ()
+  (#x, #x) -> ()
 }
 
 
@@ -148,16 +148,16 @@ testcase "return selection" {
 }
 
 unittest correctPosition {
-  \ Testing.checkEquals(Test.get(){0},123)
-  \ Testing.checkEquals(Test.get(){1},"message")
+  \ Testing.checkEquals(Test.get(){0}, 123)
+  \ Testing.checkEquals(Test.get(){1}, "message")
 }
 
 unittest chainedCall {
-  \ Testing.checkEquals(Test.get(){0}.formatted(),"123")
+  \ Testing.checkEquals(Test.get(){0}.formatted(), "123")
 }
 
 concrete Test {
-  @type get () -> (Int,String)
+  @type get () -> (Int, String)
 }
 
 define Test {
@@ -177,7 +177,7 @@ unittest test {
 }
 
 concrete Test {
-  @type get () -> (Int,String)
+  @type get () -> (Int, String)
 }
 
 define Test {

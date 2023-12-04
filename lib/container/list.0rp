@@ -38,7 +38,7 @@ limitations under the License.
 
 // List element that supports reverse iteration.
 @value interface DoubleNode<|#n|#x> {
-  refines ListNode<#n,#x>
+  refines ListNode<#n, #x>
 
   // Return the previous element.
   prev () -> (optional #self)
@@ -63,10 +63,10 @@ concrete LinkedNode<#x> {
   defines NewNode<#x>
   // Duplication happens only in the forward direction.
   refines Duplicate
-  refines DoubleNode<LinkedNode<#x>,#x>
+  refines DoubleNode<LinkedNode<#x>, #x>
 
   // Create a new builder.
-  @type builder () -> (ListBuilder<#x,#self>)
+  @type builder () -> (ListBuilder<#x, #self>)
 
   // Set the value held by the node.
   @value set (#x) -> (#self)
@@ -80,10 +80,10 @@ concrete LinkedNode<#x> {
 concrete ForwardNode<#x> {
   defines NewNode<#x>
   refines Duplicate
-  refines ListNode<ForwardNode<#x>,#x>
+  refines ListNode<ForwardNode<#x>, #x>
 
   // Create a new builder.
-  @type builder () -> (ListBuilder<#x,#self>)
+  @type builder () -> (ListBuilder<#x, #self>)
 
   // Set the value held by the node.
   @value set (#x) -> (#self)
@@ -93,7 +93,7 @@ concrete ForwardNode<#x> {
 concrete ListBuilder<#x|#n> {
   refines Append<#x>
   #n defines NewNode<#x>
-  #n requires ListNode<#n,#x>
+  #n requires ListNode<#n, #x>
 
   // Create a new builder.
   @type new () -> (#self)
@@ -112,5 +112,5 @@ concrete ListBuilder<#x|#n> {
   //   head/tail, but that tail will no longer be the end.
   // - Calling mutating functions (e.g., setNext, setPrev) on any of the
   //   elements between the returned head/tail will invalidate the builder.
-  @value build () -> (optional #n,optional #n)
+  @value build () -> (optional #n, optional #n)
 }

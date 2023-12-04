@@ -7,4 +7,4 @@ private_deps: [
   "lib/file"
   "lib/testing"
 ]
-mode: incremental {}
+mode: incremental { }

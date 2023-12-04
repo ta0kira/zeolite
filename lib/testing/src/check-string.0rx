@@ -37,7 +37,7 @@ define CheckString {
     return CheckString{ expected.formatted(), false, true }
   }
 
-  check (actual,report) {
+  check (actual, report) {
     if (! `present` actual) {
       \ report.addError(message: appendErrorAndBuild(String.builder().append("empty")))
       return _
@@ -83,7 +83,7 @@ define CheckString {
     }
   }
 
-  @value appendErrorAndBuild ([Append<Formatted>&Build<String>]) -> (String)
+  @value appendErrorAndBuild ([Append<Formatted> & Build<String>]) -> (String)
   appendErrorAndBuild (output) {
     if (fromStart) {
       return output.append(" does not start with ").append(`Format:autoFormat` expected).build()

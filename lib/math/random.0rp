@@ -37,7 +37,7 @@ concrete RandomGaussian {
   refines Generator<Float>
 
   // Creates a new generator with the specified mean and standard deviation.
-  @type new (Float,Float) -> (#self)
+  @type new (Float, Float) -> (#self)
 
   // Resets the seed for RNG.
   @value setSeed (Int) -> (#self)
@@ -48,9 +48,9 @@ concrete RandomUniform {
   refines Generator<Float>
 
   // Creates a new generator with the specified min and max values.
-  @type new (Float,Float) -> (#self)
+  @type new (Float, Float) -> (#self)
 
-  // Creates a new generator for the range [0.0,1.0).
+  // Creates a new generator for the range [0.0, 1.0).
   @type probability () -> (#self)
 
   // Resets the seed for RNG.
@@ -72,10 +72,10 @@ concrete RandomCategorical<|#c> {
   // Creates a generator for the provided distribution.
   //
   // Notes:
-  // - The Generator<Float> *must* return values in the range [0,1).
+  // - The Generator<Float> *must* return values in the range [0, 1).
   // - The distribution is not copied; therefore, changes to the distribution
   //   will affect the returned generator.
-  @category sampleWith<#c> (CategoricalReader<#c>,Generator<Float>) -> (RandomCategorical<#c>)
+  @category sampleWith<#c> (CategoricalReader<#c>, Generator<Float>) -> (RandomCategorical<#c>)
 
   // Returns true if the distribution is empty.
   //
@@ -93,9 +93,9 @@ concrete Randomize {
   // 2. Samples from the copy *without* replacement until the tree is empty.
   //
   // Notes:
-  // - The Generator must only return values in [0,1).
+  // - The Generator must only return values in [0, 1).
   // - If category c has a weight of n, it will occur n times in the output.
-  @category permuteFrom<#c> (CategoricalTree<#c>,Generator<Float>,Append<#c>) -> ()
+  @category permuteFrom<#c> (CategoricalTree<#c>, Generator<Float>, Append<#c>) -> ()
 
   // Creates a permutation from the CategoricalTree.
   //
@@ -103,8 +103,8 @@ concrete Randomize {
   // 2. Samples from the copy *without* replacement until the tree is empty.
   //
   // Notes:
-  // - The Generator must only return values in [0,1).
+  // - The Generator must only return values in [0, 1).
   // - If category c has a weight of n, it will occur *once* in the output, but
   //   it will have a relative chance of n to be chosen ahead of others.
-  @category permuteFromWeight<#c> (CategoricalTree<#c>,Generator<Float>,Append<#c>) -> ()
+  @category permuteFromWeight<#c> (CategoricalTree<#c>, Generator<Float>, Append<#c>) -> ()
 }

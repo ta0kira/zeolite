@@ -85,8 +85,8 @@ testcase "ProcessThread mutex integration test" {
 unittest test {
   Mutex mutex <- SimpleMutex.new()
   Value value <- Value.create()
-  Thread evenThread <- ProcessThread.from(EvenOrOdd.create(mutex,true, 10,value)).start()
-  Thread oddThread  <- ProcessThread.from(EvenOrOdd.create(mutex,false,10,value)).start()
+  Thread evenThread <- ProcessThread.from(EvenOrOdd.create(mutex, true, 10, value)).start()
+  Thread oddThread  <- ProcessThread.from(EvenOrOdd.create(mutex, false, 10, value)).start()
   \ evenThread.join()
   \ oddThread.join()
   \ value.get() `Matches:with` CheckValue:equals(20)
@@ -100,7 +100,7 @@ concrete EvenOrOdd {
   // - Bool:  Increment only on even if true, or on odd if false.
   // - Int:   Number of increment operations.
   // - Value: Value to increment.
-  @type create (Mutex,Bool,Int,Value) -> (Routine)
+  @type create (Mutex, Bool, Int, Value) -> (Routine)
 }
 
 define EvenOrOdd {
@@ -109,7 +109,7 @@ define EvenOrOdd {
   @value Int count
   @value Value value
 
-  create (m,e,c,v) {
+  create (m, e, c, v) {
     return EvenOrOdd{ m, e, c, v }
   }
 

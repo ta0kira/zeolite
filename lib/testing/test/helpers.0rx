@@ -25,19 +25,19 @@ define TestValue {
   @value String message
   @value optional Int error
 
-  new (number,message,error) {
+  new (number, message, error) {
     return delegate -> #self
   }
 
   default () {
-    return new(123,"message",empty)
+    return new(123, "message", empty)
   }
 
-  testCompare (actual,report) {
+  testCompare (actual, report) {
     \ MultiChecker.new(report)
-        .tryCheck(title: "number",actual.number(),CheckValue:equals(number))
-        .tryCheck(title: "message",actual.message(),CheckValue:equals(message))
-        .tryCheck(title: "error",actual.error(),CheckValue:equals(error))
+        .tryCheck(title: "number", actual.number(), CheckValue:equals(number))
+        .tryCheck(title: "message", actual.message(), CheckValue:equals(message))
+        .tryCheck(title: "error", actual.error(), CheckValue:equals(error))
   }
 
   @value number () -> (Int)
@@ -51,9 +51,9 @@ define TestValue {
 }
 
 define Testing {
-  checkEquals (x,y) { $NoTrace$
+  checkEquals (x, y) { $NoTrace$
     Bool failed <- false
-    if (`present` x && `present` y && !#x.equals(`require` x,`require` y)) {
+    if (`present` x && `present` y && !#x.equals(`require` x, `require` y)) {
       failed <- true
     } elif (`present` x != `present` y) {
       failed <- true

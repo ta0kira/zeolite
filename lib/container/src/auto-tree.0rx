@@ -41,11 +41,11 @@ define AutoBinaryTree {
   }
 
   get (k) {
-    return find(root,k)
+    return find(root, k)
   }
 
-  weakSet (k,v) {
-    root, optional #v v2 <- insertWeak(root,k,v)
+  weakSet (k, v) {
+    root, optional #v v2 <- insertWeak(root, k, v)
     if (`present` v2) {
       return `require` v2
     } else {
@@ -54,8 +54,8 @@ define AutoBinaryTree {
     }
   }
 
-  swap (k,v) (old) {
-    root, old <- exchange(root,k,v)
+  swap (k, v) (old) {
+    root, old <- exchange(root, k, v)
     if (!present(v) && present(old)) {
       treeSize <- treeSize-1
     } elif (present(v) && !present(old)) {
@@ -63,22 +63,22 @@ define AutoBinaryTree {
     }
   }
 
-  @type exchange (optional #n,#k,optional #v) -> (optional #n,optional #v)
-  exchange (node,k,v) (newRoot,old) {
+  @type exchange (optional #n, #k, optional #v) -> (optional #n, optional #v)
+  exchange (node, k, v) (newRoot, old) {
     if (!present(node)) {
       if (present(v)) {
-        return #n.newNode(k,require(v)), empty
+        return #n.newNode(k, require(v)), empty
       } else {
         return empty, empty
       }
     }
     #n node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {
-      newRoot, old <- exchange(node2.getLower(),k,v)
+      newRoot, old <- exchange(node2.getLower(), k, v)
       \ node2.setLower(newRoot)
       newRoot <- rebalance(node2)
     } elif (node2.getKey() `#k.lessThan` k) {
-      newRoot, old <- exchange(node2.getHigher(),k,v)
+      newRoot, old <- exchange(node2.getHigher(), k, v)
       \ node2.setHigher(newRoot)
       newRoot <- rebalance(node2)
     } elif (present(v)) {
@@ -93,18 +93,18 @@ define AutoBinaryTree {
   }
 
 
-  @type insertWeak (optional #n,#k,#v) -> (optional #n,optional #v)
-  insertWeak (node,k,v) (newRoot,value) {
+  @type insertWeak (optional #n, #k, #v) -> (optional #n, optional #v)
+  insertWeak (node, k, v) (newRoot, value) {
     if (!present(node)) {
-      return #n.newNode(k,v), empty
+      return #n.newNode(k, v), empty
     }
     #n node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {
-      newRoot, value <- insertWeak(node2.getLower(),k,v)
+      newRoot, value <- insertWeak(node2.getLower(), k, v)
       \ node2.setLower(newRoot)
       newRoot <- rebalance(node2)
     } elif (node2.getKey() `#k.lessThan` k) {
-      newRoot, value <- insertWeak(node2.getHigher(),k,v)
+      newRoot, value <- insertWeak(node2.getHigher(), k, v)
       \ node2.setHigher(newRoot)
       newRoot <- rebalance(node2)
     } else {
@@ -112,15 +112,15 @@ define AutoBinaryTree {
     }
   }
 
-  @type find (optional #n,#k) -> (optional #v)
-  find (node,k) {
+  @type find (optional #n, #k) -> (optional #v)
+  find (node, k) {
     if (present(node)) {
       scoped {
         #n node2 <- require(node)
       } in if (k `#k.lessThan` node2.getKey()) {
-        return find(node2.getLower(),k)
+        return find(node2.getLower(), k)
       } elif (node2.getKey() `#k.lessThan` k) {
-        return find(node2.getHigher(),k)
+        return find(node2.getHigher(), k)
       } else {
         return node2.getValue()
       }
@@ -195,13 +195,13 @@ define AutoBinaryTree {
       \ node.setHigher(temp)
     }
     if (present(newNode)) {
-      \ swapChildren(node,require(newNode))
+      \ swapChildren(node, require(newNode))
       \ require(newNode).updateNode()
     }
   }
 
-  @type removeHighest (optional #n) -> (optional #n,optional #n)
-  removeHighest (node) (newNode,removed) {
+  @type removeHighest (optional #n) -> (optional #n, optional #n)
+  removeHighest (node) (newNode, removed) {
     if (!present(node)) {
       return empty, empty
     }
@@ -217,8 +217,8 @@ define AutoBinaryTree {
     }
   }
 
-  @type removeLowest (optional #n) -> (optional #n,optional #n)
-  removeLowest (node) (newNode,removed) {
+  @type removeLowest (optional #n) -> (optional #n, optional #n)
+  removeLowest (node) (newNode, removed) {
     if (!present(node)) {
       return empty, empty
     }
@@ -234,8 +234,8 @@ define AutoBinaryTree {
     }
   }
 
-  @type swapChildren (#n,#n) -> ()
-  swapChildren (l,r) {
+  @type swapChildren (#n, #n) -> ()
+  swapChildren (l, r) {
     scoped {
       optional #n temp <- l.getLower()
       \ l.setLower(r.getLower())
@@ -250,30 +250,30 @@ define AutoBinaryTree {
 define ForwardTreeOrder {
   $ReadOnlyExcept[]$
 
-  @value BinaryTreeNode<#k,#v> node
-  @value optional ForwardTreeOrder<#k,#v> prev
+  @value BinaryTreeNode<#k, #v> node
+  @value optional ForwardTreeOrder<#k, #v> prev
 
   create (node) (current) {
-    optional BinaryTreeNode<#k,#v> node2 <- node
+    optional BinaryTreeNode<#k, #v> node2 <- node
     current <- empty
     while (present(node2)) {
-      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+      current <- ForwardTreeOrder<#k, #v>{ require(node2), current }
       node2 <- require(node2).getLower()
     }
   }
 
-  seek (key,node) (current) {
-    optional BinaryTreeNode<#k,#v> node2 <- node
+  seek (key, node) (current) {
+    optional BinaryTreeNode<#k, #v> node2 <- node
     current <- empty
     while (present(node2)) {
       if (require(node2).getKey() `#k.lessThan` key) {
         // Skip node2 in the traversal, since it's before key.
         node2 <- require(node2).getHigher()
       } elif (key `#k.lessThan` require(node2).getKey()) {
-        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+        current <- ForwardTreeOrder<#k, #v>{ require(node2), current }
         node2 <- require(node2).getLower()
       } else {
-        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+        current <- ForwardTreeOrder<#k, #v>{ require(node2), current }
         break
       }
     }
@@ -283,46 +283,46 @@ define ForwardTreeOrder {
     // Algorithm:
     // 1. Pop self from the stack.
     // 2. Traverse lower to the bottom starting from the higher child of self.
-    optional BinaryTreeNode<#k,#v> node2 <- node.getHigher()
+    optional BinaryTreeNode<#k, #v> node2 <- node.getHigher()
     current <- prev
     while (present(node2)) {
-      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+      current <- ForwardTreeOrder<#k, #v>{ require(node2), current }
       node2 <- require(node2).getLower()
     }
   }
 
   get () {
-    return SimpleKeyValue:new(node.getKey(),node.getValue())
+    return SimpleKeyValue:new(node.getKey(), node.getValue())
   }
 }
 
 define ReverseTreeOrder {
   $ReadOnlyExcept[]$
 
-  @value BinaryTreeNode<#k,#v> node
-  @value optional ReverseTreeOrder<#k,#v> prev
+  @value BinaryTreeNode<#k, #v> node
+  @value optional ReverseTreeOrder<#k, #v> prev
 
   create (node) (current) {
-    optional BinaryTreeNode<#k,#v> node2 <- node
+    optional BinaryTreeNode<#k, #v> node2 <- node
     current <- empty
     while (present(node2)) {
-      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+      current <- ReverseTreeOrder<#k, #v>{ require(node2), current }
       node2 <- require(node2).getHigher()
     }
   }
 
-  seek (key,node) (current) {
-    optional BinaryTreeNode<#k,#v> node2 <- node
+  seek (key, node) (current) {
+    optional BinaryTreeNode<#k, #v> node2 <- node
     current <- empty
     while (present(node2)) {
       if (require(node2).getKey() `#k.lessThan` key) {
-        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+        current <- ReverseTreeOrder<#k, #v>{ require(node2), current }
         node2 <- require(node2).getHigher()
       } elif (key `#k.lessThan` require(node2).getKey()) {
         // Skip node2 in the traversal, since it's after key.
         node2 <- require(node2).getLower()
       } else {
-        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+        current <- ReverseTreeOrder<#k, #v>{ require(node2), current }
         break
       }
     }
@@ -332,15 +332,15 @@ define ReverseTreeOrder {
     // Algorithm:
     // 1. Pop self from the stack.
     // 2. Traverse higher to the bottom starting from the lower child of self.
-    optional BinaryTreeNode<#k,#v> node2 <- node.getLower()
+    optional BinaryTreeNode<#k, #v> node2 <- node.getLower()
     current <- prev
     while (present(node2)) {
-      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+      current <- ReverseTreeOrder<#k, #v>{ require(node2), current }
       node2 <- require(node2).getHigher()
     }
   }
 
   get () {
-    return SimpleKeyValue:new(node.getKey(),node.getValue())
+    return SimpleKeyValue:new(node.getKey(), node.getValue())
   }
 }

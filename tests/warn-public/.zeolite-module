@@ -4,4 +4,4 @@ public_deps: [
   "internal"
   "internal2"
 ]
-mode: incremental {}
+mode: incremental { }

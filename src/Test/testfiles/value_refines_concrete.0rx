@@ -1,4 +1,4 @@
-concrete Parent {}
+concrete Parent { }
 
 @value interface Child {
   refines Parent

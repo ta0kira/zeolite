@@ -43,7 +43,7 @@ testcase "warning statement after return" {
   require compiler "unreachable"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category failedReturn () -> (Int)
@@ -59,7 +59,7 @@ testcase "warning statement after conditional return" {
   require compiler "unreachable"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category failedReturn () -> (Int)
@@ -79,7 +79,7 @@ testcase "warning statement after scoped return" {
   require compiler "unreachable"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category failedReturn () -> (Int)
@@ -128,7 +128,7 @@ unittest test {
     fail("message")
   } cleanup {
     \ empty
-  } in {}
+  } in { }
 }
 
 

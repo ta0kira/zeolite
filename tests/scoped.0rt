@@ -47,7 +47,7 @@ testcase "return inside scope" {
   compiles
 }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   @value process () -> (optional Value)
@@ -63,7 +63,7 @@ testcase "return from scoped" {
   compiles
 }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   @value process () -> (optional Value)
@@ -93,7 +93,7 @@ testcase "assign inside scope" {
   compiles
 }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   @value process () -> (optional Value)
@@ -109,7 +109,7 @@ testcase "assign from scoped" {
   compiles
 }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   @value process () -> (optional Value)
@@ -208,11 +208,11 @@ unittest test {
 concrete Test {
   // Using a second return ensures that assignment works properly when the
   // ReturnTuple is constructed during assignment.
-  @type get () -> (String,Int)
+  @type get () -> (String, Int)
 }
 
 define Test {
-  get () (value,value2) {
+  get () (value, value2) {
     value <- "failed"
     cleanup {
       fail(value)
@@ -252,7 +252,7 @@ testcase "cannot refer to cleanup variables" {
   require "value.+not defined"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type get () -> (Int)
@@ -352,8 +352,8 @@ unittest test {
 
 concrete Value {
   @type create () -> (Value)
-  @value call () -> (Int,Int,Int)
-  @value get () -> (Int,Int,Int)
+  @value call () -> (Int, Int, Int)
+  @value get () -> (Int, Int, Int)
 }
 
 define Value {
@@ -396,7 +396,7 @@ unittest test {
     value <- 1
   } in Int value <- 2
 
-  \ Testing.checkEquals(value,1)
+  \ Testing.checkEquals(value, 1)
 }
 
 
@@ -409,7 +409,7 @@ unittest test {
   scoped {
   } cleanup {
     value <- 1
-  } in {}
+  } in { }
 
   Int value <- 2
 }
@@ -610,13 +610,13 @@ unittest test {
         }
       }
     }
-    \ Testing.checkEquals(x,0)
-    \ Testing.checkEquals(y,2)
-    \ Testing.checkEquals(z,3)
+    \ Testing.checkEquals(x, 0)
+    \ Testing.checkEquals(y, 2)
+    \ Testing.checkEquals(z, 3)
   }
-  \ Testing.checkEquals(x,1)
-  \ Testing.checkEquals(y,2)
-  \ Testing.checkEquals(z,3)
+  \ Testing.checkEquals(x, 1)
+  \ Testing.checkEquals(y, 2)
+  \ Testing.checkEquals(z, 3)
 }
 
 
@@ -634,8 +634,8 @@ unittest test {
   } in {
     while ((called <- called+1) < 3) {
       if (called > 1) {
-        \ Testing.checkEquals(y,2)
-        \ Testing.checkEquals(z,3)
+        \ Testing.checkEquals(y, 2)
+        \ Testing.checkEquals(z, 3)
       }
       cleanup {
         y <- 2
@@ -647,14 +647,14 @@ unittest test {
         }
       }
     }
-    \ Testing.checkEquals(called,3)
-    \ Testing.checkEquals(x,0)
-    \ Testing.checkEquals(y,2)
-    \ Testing.checkEquals(z,3)
+    \ Testing.checkEquals(called, 3)
+    \ Testing.checkEquals(x, 0)
+    \ Testing.checkEquals(y, 2)
+    \ Testing.checkEquals(z, 3)
   }
-  \ Testing.checkEquals(x,1)
-  \ Testing.checkEquals(y,2)
-  \ Testing.checkEquals(z,3)
+  \ Testing.checkEquals(x, 1)
+  \ Testing.checkEquals(y, 2)
+  \ Testing.checkEquals(z, 3)
 }
 
 
@@ -667,23 +667,23 @@ unittest test {
   scoped {
     Int x, Int y, Int z <- value.call()
   } in {
-    \ Testing.checkEquals(x,0)
-    \ Testing.checkEquals(y,0)
-    \ Testing.checkEquals(z,0)
+    \ Testing.checkEquals(x, 0)
+    \ Testing.checkEquals(y, 0)
+    \ Testing.checkEquals(z, 0)
   }
   scoped {
     Int x, Int y, Int z <- value.get()
   } in {
-    \ Testing.checkEquals(x,1)
-    \ Testing.checkEquals(y,2)
-    \ Testing.checkEquals(z,3)
+    \ Testing.checkEquals(x, 1)
+    \ Testing.checkEquals(y, 2)
+    \ Testing.checkEquals(z, 3)
   }
 }
 
 concrete Value {
   @type create () -> (Value)
-  @value call () -> (Int,Int,Int)
-  @value get () -> (Int,Int,Int)
+  @value call () -> (Int, Int, Int)
+  @value get () -> (Int, Int, Int)
 }
 
 define Value {
@@ -723,7 +723,7 @@ testcase "named return cannot be modified in cleanup" {
   require compiler "assign.+value"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type get () -> (String)
@@ -739,7 +739,7 @@ testcase "named return check in cleanup skipped if unreachable" {
   compiles
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type get () -> (String)
@@ -756,7 +756,7 @@ testcase "positional return not allowed in cleanup" {
   require compiler "return.+cleanup"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type get () -> (Int)

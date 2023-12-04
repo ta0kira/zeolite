@@ -21,23 +21,23 @@ testcase "simple inference" {
 }
 
 unittest test {
-  Int value1, String value2 <- Test.get<?,?>(10,"message")
-  \ Testing.checkEquals<?>(value1,10)
-  \ Testing.checkEquals<?>(value2,"message")
+  Int value1, String value2 <- Test.get<?, ?>(10, "message")
+  \ Testing.checkEquals<?>(value1, 10)
+  \ Testing.checkEquals<?>(value2, "message")
 }
 
 unittest testImplicit {
-  Int value1, String value2 <- Test.get(10,"message")
-  \ Testing.checkEquals<?>(value1,10)
-  \ Testing.checkEquals<?>(value2,"message")
+  Int value1, String value2 <- Test.get(10, "message")
+  \ Testing.checkEquals<?>(value1, 10)
+  \ Testing.checkEquals<?>(value2, "message")
 }
 
 concrete Test {
-  @type get<#x,#y> (#x,#y) -> (#x,#y)
+  @type get<#x, #y> (#x, #y) -> (#x, #y)
 }
 
 define Test {
-  get (x,y) {
+  get (x, y) {
     return x, y
   }
 }
@@ -50,15 +50,15 @@ testcase "wrong param count" {
 }
 
 unittest test {
-  Int value1, String value2 <- Test.get<?>(10,"message")
+  Int value1, String value2 <- Test.get<?>(10, "message")
 }
 
 concrete Test {
-  @type get<#x,#y> (#x,#y) -> (#x,#y)
+  @type get<#x, #y> (#x, #y) -> (#x, #y)
 }
 
 define Test {
-  get (x,y) {
+  get (x, y) {
     return x, y
   }
 }
@@ -192,7 +192,7 @@ testcase "inference conflict" {
 }
 
 unittest test {
-  Type<Int> value <- Test.get<?>(Type<Int>.create(),"bad")
+  Type<Int> value <- Test.get<?>(Type<Int>.create(), "bad")
 }
 
 concrete Type<#x> {
@@ -206,11 +206,11 @@ define Type {
 }
 
 concrete Test {
-  @type get<#x> (Type<#x>,#x) -> (Type<#x>)
+  @type get<#x> (Type<#x>, #x) -> (Type<#x>)
 }
 
 define Test {
-  get (x,_) {
+  get (x, _) {
     return x
   }
 }
@@ -256,7 +256,7 @@ testcase "elimination by filter without param" {
 }
 
 unittest test {
-  \ Test.get<Formatted,?>(Type<String>.new())
+  \ Test.get<Formatted, ?>(Type<String>.new())
 }
 
 concrete Type<#x> {
@@ -268,7 +268,7 @@ define Type {
 }
 
 concrete Test {
-  @type get<#y,#x>
+  @type get<#y, #x>
     #x allows #y
   (Type<#x>) -> (Type<#x>)
 }
@@ -348,7 +348,7 @@ testcase "mutually dependent filters" {
 unittest test {
   Type<String> x <- Type<String>.create()
   Type<String> y <- Type<String>.create()
-  \ Test.get<?,?>(x,y)
+  \ Test.get<?, ?>(x, y)
 }
 
 concrete Type<#x> {
@@ -362,14 +362,14 @@ define Type {
 }
 
 concrete Test {
-  @type get<#x,#y>
+  @type get<#x, #y>
     #x defines LessThan<#y>
     #y defines LessThan<#x>
-  (Type<#x>,Type<#y>) -> ()
+  (Type<#x>, Type<#y>) -> ()
 }
 
 define Test {
-  get (_,_) {}
+  get (_, _) { }
 }
 
 
@@ -379,13 +379,13 @@ testcase "two inferences in one filter" {
 
 unittest test {
   Type z <- Type.create()
-  \ Test.get<?,?,?>(z,1,"message")
+  \ Test.get<?, ?, ?>(z, 1, "message")
 }
 
-@type interface Base<#x,#y> {}
+@type interface Base<#x, #y> { }
 
 concrete Type {
-  defines Base<Int,String>
+  defines Base<Int, String>
   @type create () -> (Type)
 }
 
@@ -396,13 +396,13 @@ define Type {
 }
 
 concrete Test {
-  @type get<#z,#x,#y>
-    #z defines Base<#x,#y>
-  (#z,#x,#y) -> ()
+  @type get<#z, #x, #y>
+    #z defines Base<#x, #y>
+  (#z, #x, #y) -> ()
 }
 
 define Test {
-  get (_,_,_) {}
+  get (_, _, _) { }
 }
 
 
@@ -411,7 +411,7 @@ testcase "all/any as valid lower/upper bounds" {
 }
 
 concrete Test {
-  @type call<#x,#y> (Convert<#x,#y>) -> (#x,#y)
+  @type call<#x, #y> (Convert<#x, #y>) -> (#x, #y)
 }
 
 define Test {
@@ -421,8 +421,8 @@ define Test {
 
   @value run () -> ()
   run () {
-    any x1, all y1 <- call<?,?>(Convert<any,all>.create())
-    all x2, any y2 <- call<?,?>(Convert<all,any>.create())
+    any x1, all y1 <- call<?, ?>(Convert<any, all>.create())
+    all x2, any y2 <- call<?, ?>(Convert<all, any>.create())
   }
 }
 
@@ -452,16 +452,16 @@ concrete Type {
 
 define Type {
   run () {
-    \ call<?,?>("message")
-    \ call<String,?>("message")
+    \ call<?, ?>("message")
+    \ call<String, ?>("message")
   }
 
-  @type call<#x,#c>
+  @type call<#x, #c>
     #c requires Formatted
     #x requires DefaultOrder<#c>
   (#x) -> ()
   call (value) {
-    [Append<Formatted>&Build<String>] builder <- String.builder()
+    [Append<Formatted> & Build<String>] builder <- String.builder()
     traverse (value.defaultOrder() -> #c char) {
       \ builder.append(char).append(" ")
     }
@@ -485,11 +485,11 @@ concrete Type {
 
 define Type {
   run () {
-    \ call<?,?>("message")
-    \ call<String,?>("message")
+    \ call<?, ?>("message")
+    \ call<String, ?>("message")
   }
 
-  @type call<#x,#c>
+  @type call<#x, #c>
     #x defines LessThan<#c>
   (#x) -> ()
   call (value) {
@@ -513,11 +513,11 @@ concrete Type {
 
 define Type {
   run () {
-    \ call<?,?>("message")
-    \ call<String,?>("message")
+    \ call<?, ?>("message")
+    \ call<String, ?>("message")
   }
 
-  @type call<#x,#c>
+  @type call<#x, #c>
     #x allows #c
   (#x) -> ()
   call (value) {
@@ -541,11 +541,11 @@ concrete Type {
 
 define Type {
   run () {
-    \ call<?,?>("message")
-    \ call<String,?>("message")
+    \ call<?, ?>("message")
+    \ call<String, ?>("message")
   }
 
-  @type call<#x,#c>
+  @type call<#x, #c>
     #c allows #x
   (#x) -> ()
   call (value) {
@@ -569,11 +569,11 @@ concrete Type {
 
 define Type {
   run () {
-    \ call<?,?>("message")
-    \ call<String,?>("message")
+    \ call<?, ?>("message")
+    \ call<String, ?>("message")
   }
 
-  @type call<#x,#c>
+  @type call<#x, #c>
     #c requires #x
   (#x) -> ()
   call (value) {
@@ -642,9 +642,9 @@ unittest test {
   \ Test.call<?>(Type.create())
 }
 
-@value interface Base1<|#x> {}
+@value interface Base1<|#x> { }
 
-@value interface Base2<|#x> {}
+@value interface Base2<|#x> { }
 
 concrete Type {
   refines Base1<Int>
@@ -660,7 +660,7 @@ define Type {
 }
 
 concrete Test {
-  @type call<#x> ([Base1<#x>|Base2<#x>]) -> ()
+  @type call<#x> ([Base1<#x> | Base2<#x>]) -> ()
 }
 
 define Test {
@@ -678,9 +678,9 @@ unittest test {
   \ Test.call<?>(Type.create())
 }
 
-@value interface Base1<#x> {}
+@value interface Base1<#x> { }
 
-@value interface Base2<#x> {}
+@value interface Base2<#x> { }
 
 concrete Type {
   refines Base1<Int>
@@ -696,7 +696,7 @@ define Type {
 }
 
 concrete Test {
-  @type call<#x> ([Base1<#x>&Base2<#x>]) -> ()
+  @type call<#x> ([Base1<#x> & Base2<#x>]) -> ()
 }
 
 define Test {
@@ -713,9 +713,9 @@ unittest test {
   \ Test.call<?>(Type.create())
 }
 
-@value interface Base1<|#x> {}
+@value interface Base1<|#x> { }
 
-@value interface Base2<|#x> {}
+@value interface Base2<|#x> { }
 
 concrete Type {
   refines Base1<Int>
@@ -731,7 +731,7 @@ define Type {
 }
 
 concrete Test {
-  @type call<#x> ([Base1<#x>&Base2<#x>]) -> ()
+  @type call<#x> ([Base1<#x> & Base2<#x>]) -> ()
 }
 
 define Test {
@@ -750,9 +750,9 @@ unittest test {
   \ Test.call<?>(Type.create())
 }
 
-@value interface Base1<|#x> {}
+@value interface Base1<|#x> { }
 
-@value interface Base2<|#x> {}
+@value interface Base2<|#x> { }
 
 concrete Type {
   refines Base1<Int>
@@ -770,7 +770,7 @@ define Type {
 concrete Test {
   @type call<#x>
     #x requires AsChar
-  ([Base1<#x>|Base2<#x>]) -> ()
+  ([Base1<#x> | Base2<#x>]) -> ()
 }
 
 define Test {

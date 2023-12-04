@@ -24,8 +24,8 @@ unittest resumeAll {
   Value value <- Value.create()
   ThreadCondition cond <- ThreadCondition.new()
 
-  Thread thread1 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
-  Thread thread2 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+  Thread thread1 <- ProcessThread.from(WaitAndUpdate.create(value, cond)).start()
+  Thread thread2 <- ProcessThread.from(WaitAndUpdate.create(value, cond)).start()
 
   // Wait for both threads to increment Value once, to indicate readiness.
   while (true) {
@@ -49,8 +49,8 @@ unittest resumeOne {
   Value value <- Value.create()
   ThreadCondition cond <- ThreadCondition.new()
 
-  Thread thread1 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
-  Thread thread2 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+  Thread thread1 <- ProcessThread.from(WaitAndUpdate.create(value, cond)).start()
+  Thread thread2 <- ProcessThread.from(WaitAndUpdate.create(value, cond)).start()
 
   \ Realtime.sleepSeconds(0.01)
 
@@ -76,7 +76,7 @@ unittest forceWaitTimeout {
   Value value <- Value.create()
   ThreadCondition cond <- ThreadCondition.new()
 
-  Thread thread <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+  Thread thread <- ProcessThread.from(WaitAndUpdate.create(value, cond)).start()
 
   \ Realtime.sleepSeconds(0.2)
   \ cond.resumeOne()
@@ -121,14 +121,14 @@ define JustWait {
 concrete WaitAndUpdate {
   refines Routine
 
-  @type create (Value,ConditionWait) -> (WaitAndUpdate)
+  @type create (Value, ConditionWait) -> (WaitAndUpdate)
 }
 
 define WaitAndUpdate {
   @value Value value
   @value ConditionWait cond
 
-  create (value,cond) {
+  create (value, cond) {
     return WaitAndUpdate{ value, cond }
   }
 

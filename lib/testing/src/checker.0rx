@@ -57,7 +57,7 @@ define TestChecker {
     }
   }
 
-  newReport (title,context) { $NoTrace$
+  newReport (title, context) { $NoTrace$
     \ checkTestingAllowed()
     ValueList<Formatted> contextList <- ValueList<Formatted>.new()
     traverse (context -> Formatted item) {
@@ -75,7 +75,7 @@ define TestChecker {
         .append(": ")
         .append(title)
         .build()
-    TestReportTree report <- TestReportTree.new(numberedTitle,contextList)
+    TestReportTree report <- TestReportTree.new(numberedTitle, contextList)
     \ reports.append(report)
     return report
   }

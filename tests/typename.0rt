@@ -21,94 +21,94 @@ testcase "builtin typenames" {
 }
 
 unittest string {
-  \ Testing.checkEquals(typename<String>().formatted(),"String")
+  \ Testing.checkEquals(typename<String>().formatted(), "String")
 }
 
 unittest int {
-  \ Testing.checkEquals(typename<Int>().formatted(),"Int")
+  \ Testing.checkEquals(typename<Int>().formatted(), "Int")
 }
 
 unittest char {
-  \ Testing.checkEquals(typename<Char>().formatted(),"Char")
+  \ Testing.checkEquals(typename<Char>().formatted(), "Char")
 }
 
 unittest charBuffer {
-  \ Testing.checkEquals(typename<CharBuffer>().formatted(),"CharBuffer")
+  \ Testing.checkEquals(typename<CharBuffer>().formatted(), "CharBuffer")
 }
 
 unittest float {
-  \ Testing.checkEquals(typename<Float>().formatted(),"Float")
+  \ Testing.checkEquals(typename<Float>().formatted(), "Float")
 }
 
 unittest bool {
-  \ Testing.checkEquals(typename<Bool>().formatted(),"Bool")
+  \ Testing.checkEquals(typename<Bool>().formatted(), "Bool")
 }
 
 unittest anyType {
-  \ Testing.checkEquals(typename<any>().formatted(),"any")
+  \ Testing.checkEquals(typename<any>().formatted(), "any")
 }
 
 unittest allType {
-  \ Testing.checkEquals(typename<all>().formatted(),"all")
+  \ Testing.checkEquals(typename<all>().formatted(), "all")
 }
 
 unittest intersectDedup {
-  \ Testing.checkEquals(typename<[AsBool&Char&Formatted&Int]>().formatted(),
-                           typename<[Char&Int]>().formatted())
+  \ Testing.checkEquals(typename<[AsBool & Char & Formatted & Int]>().formatted(),
+                           typename<[Char & Int]>().formatted())
 }
 
 unittest unionDedup {
-  \ Testing.checkEquals(typename<[AsBool|Char|Formatted|Int]>().formatted(),
-                           typename<[AsBool|Formatted]>().formatted())
+  \ Testing.checkEquals(typename<[AsBool | Char | Formatted | Int]>().formatted(),
+                           typename<[AsBool | Formatted]>().formatted())
 }
 
 unittest param {
-  \ Testing.checkEquals(Wrapped:getTypename<String,Value<Int>>().formatted(),
+  \ Testing.checkEquals(Wrapped:getTypename<String, Value<Int>>().formatted(),
                            "Type<String,Value<Int>>")
 }
 
 unittest intersectParam {
-  String text <- Wrapped:getTypenameIntersect<Formatted,Int>().formatted()
+  String text <- Wrapped:getTypenameIntersect<Formatted, Int>().formatted()
   if (text != "[Formatted&Int]") {
     fail(text)
   }
 }
 
 unittest unionParam {
-  String text <- Wrapped:getTypenameUnion<Formatted,Int>().formatted()
+  String text <- Wrapped:getTypenameUnion<Formatted, Int>().formatted()
   if (text != "[Formatted|Int]") {
     fail(text)
   }
 }
 
 unittest intersectDedupParam {
-  \ Testing.checkEquals(Wrapped:getTypenameIntersect<Int,Int>().formatted(),"Int")
+  \ Testing.checkEquals(Wrapped:getTypenameIntersect<Int, Int>().formatted(), "Int")
 }
 
 unittest unionDedupParam {
-  \ Testing.checkEquals(Wrapped:getTypenameUnion<Int,Int>().formatted(),"Int")
+  \ Testing.checkEquals(Wrapped:getTypenameUnion<Int, Int>().formatted(), "Int")
 }
 
-@value interface Value<#x> {}
+@value interface Value<#x> { }
 
-@value interface Type<#x,#y> {}
+@value interface Type<#x, #y> { }
 
 concrete Wrapped {
-  @category getTypename<#x,#y> () -> (Formatted)
-  @category getTypenameIntersect<#x,#y> () -> (Formatted)
-  @category getTypenameUnion<#x,#y> () -> (Formatted)
+  @category getTypename<#x, #y> () -> (Formatted)
+  @category getTypenameIntersect<#x, #y> () -> (Formatted)
+  @category getTypenameUnion<#x, #y> () -> (Formatted)
 }
 
 define Wrapped {
   getTypename () {
-    return typename<Type<#x,#y>>()
+    return typename<Type<#x, #y>>()
   }
 
   getTypenameIntersect () {
-    return typename<[#x&#y]>()
+    return typename<[#x & #y]>()
   }
 
   getTypenameUnion () {
-    return typename<[#x|#y]>()
+    return typename<[#x | #y]>()
   }
 }

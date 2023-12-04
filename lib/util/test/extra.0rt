@@ -32,7 +32,7 @@ unittest global {
 }
 
 unittest subSequence {
-  ReadAt<String> argv <- Argv.global().subSequence(2,2)
+  ReadAt<String> argv <- Argv.global().subSequence(2, 2)
   Int count <- argv.size()
   \ count `Matches:with` CheckValue:equals(2)
   \ argv.readAt(0) `Matches:with` CheckValue:equals("arg2")
@@ -56,7 +56,7 @@ testcase "Argv subSequence out of bounds" {
 }
 
 unittest test {
-  \ Argv.global().subSequence(5,1)
+  \ Argv.global().subSequence(5, 1)
 }
 
 
@@ -180,5 +180,5 @@ testcase "AlwaysEmpty.writeAt fails" {
 }
 
 unittest readAt {
-  \ AlwaysEmpty.default().writeAt(0,123)
+  \ AlwaysEmpty.default().writeAt(0, 123)
 }

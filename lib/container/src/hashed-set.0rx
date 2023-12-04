@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define HashedSet {
-  @value HashedMap<#k,any> map
+  @value HashedMap<#k, any> map
 
   default () {
     return new()
   }
 
   new () {
-    return #self{ HashedMap<#k,any>.new() }
+    return #self{ HashedMap<#k, any>.new() }
   }
 
   size () {
@@ -36,7 +36,7 @@ define HashedSet {
   }
 
   add (k) {
-    \ map.set(k,Void.default())
+    \ map.set(k, Void.default())
     return self
   }
 

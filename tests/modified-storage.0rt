@@ -185,7 +185,7 @@ define Value {
 }
 
 concrete Test {
-  @type get () -> (Value,Value)
+  @type get () -> (Value, Value)
 }
 
 define Test {
@@ -260,7 +260,7 @@ define Test {
     return Test{ }
   }
 
-  call () {}
+  call () { }
 }
 
 
@@ -271,37 +271,37 @@ testcase "ValidateRefs succeeds" {
 unittest boxed {
   String value <- "message"
   weak String value2 <- value
-  $ValidateRefs[value,value2]$
+  $ValidateRefs[value, value2]$
 }
 
 unittest int {
   Int value <- 1
   weak Int value2 <- value
-  $ValidateRefs[value,value2]$
+  $ValidateRefs[value, value2]$
 }
 
 unittest char {
   Char value <- 'a'
   weak Char value2 <- value
-  $ValidateRefs[value,value2]$
+  $ValidateRefs[value, value2]$
 }
 
 unittest bool {
   Bool value <- false
   weak Bool value2 <- value
-  $ValidateRefs[value,value2]$
+  $ValidateRefs[value, value2]$
 }
 
 unittest float {
   Float value <- 1.0
   weak Float value2 <- value
-  $ValidateRefs[value,value2]$
+  $ValidateRefs[value, value2]$
 }
 
 unittest emptyVal {
   optional all value <- empty
   weak all value2 <- value
-  $ValidateRefs[value,value2]$
+  $ValidateRefs[value, value2]$
 }
 
 
@@ -322,30 +322,30 @@ testcase "inline assignment to weak" {
 unittest unboxed {
   weak Int value <- empty
   Int value2 <- (value <- 123)
-  \ Testing.checkEquals(value2,123)
-  \ Testing.checkEquals(strong(value),123)
+  \ Testing.checkEquals(value2, 123)
+  \ Testing.checkEquals(strong(value), 123)
 }
 
 unittest boxedNoRefs {
   weak String value <- empty
-  \ Testing.checkEquals((value <- "message"),"message")
-  \ Testing.checkEquals(strong(value),empty)
+  \ Testing.checkEquals((value <- "message"), "message")
+  \ Testing.checkEquals(strong(value), empty)
 }
 
 unittest boxedRefs {
   weak String value <- empty
   String original <- "message"
   String value2 <- (value <- original)
-  \ Testing.checkEquals(value2,original)
-  \ Testing.checkEquals(strong(value),original)
+  \ Testing.checkEquals(value2, original)
+  \ Testing.checkEquals(strong(value), original)
 }
 
 unittest weakToWeak {
   weak String value <- empty
   String original <- "message"
   weak String value2 <- original
-  \ Testing.checkEquals(`strong` (value <- value2),original)
-  \ Testing.checkEquals(strong(value),original)
+  \ Testing.checkEquals(`strong` (value <- value2), original)
+  \ Testing.checkEquals(strong(value), original)
 }
 
 
@@ -366,32 +366,32 @@ define Helper {
 unittest shortCircuit {
   optional Int value <- 123
   Int value2 <- (value <-| Helper.notCalled())
-  \ Testing.checkEquals(value2,123)
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value2, 123)
+  \ Testing.checkEquals(value, 123)
 }
 
 unittest unboxedToUnboxed {
   optional Int value <- empty
 
   Int value2 <- (value <-| 123)
-  \ Testing.checkEquals(value2,123)
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value2, 123)
+  \ Testing.checkEquals(value, 123)
 
   Int value3 <- (value <-| 456)
-  \ Testing.checkEquals(value3,123)
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value3, 123)
+  \ Testing.checkEquals(value, 123)
 }
 
 unittest boxedToBoxed {
   optional String value <- empty
 
   String value2 <- (value <-| "message")
-  \ Testing.checkEquals(value2,"message")
-  \ Testing.checkEquals(value,"message")
+  \ Testing.checkEquals(value2, "message")
+  \ Testing.checkEquals(value, "message")
 
   String value3 <- (value <-| "other")
-  \ Testing.checkEquals(value3,"message")
-  \ Testing.checkEquals(value,"message")
+  \ Testing.checkEquals(value3, "message")
+  \ Testing.checkEquals(value, "message")
 }
 
 
@@ -412,27 +412,27 @@ define Helper {
 unittest shortCircuit {
   optional Int value <- 123
   value <-| Helper.notCalled()
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value, 123)
 }
 
 unittest unboxedToUnboxed {
   optional Int value <- empty
 
   value <-| 123
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value, 123)
 
   value <-| 456
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value, 123)
 }
 
 unittest boxedToBoxed {
   optional String value <- empty
 
   value <-| "message"
-  \ Testing.checkEquals(value,"message")
+  \ Testing.checkEquals(value, "message")
 
   value <-| "other"
-  \ Testing.checkEquals(value,"message")
+  \ Testing.checkEquals(value, "message")
 }
 
 
@@ -499,7 +499,7 @@ testcase "conditional assignment wrong return count" {
 }
 
 concrete Helper {
-  @type get () -> (Int,Int)
+  @type get () -> (Int, Int)
 }
 
 define Helper {
@@ -530,17 +530,17 @@ define Helper {
 
 unittest nonEmpty {
   optional Int value <- 123
-  \ Testing.checkEquals(value&.formatted(),"123")
+  \ Testing.checkEquals(value&.formatted(), "123")
 }
 
 unittest chainedCalls {
   optional Int value <- 123
-  \ Testing.checkEquals(value&.formatted()&.readAt(0),'1')
+  \ Testing.checkEquals(value&.formatted()&.readAt(0), '1')
 }
 
 unittest emptyValue {
   optional Int value <- empty
-  \ Testing.checkEquals(value&.formatted(),empty)
+  \ Testing.checkEquals(value&.formatted(), empty)
 }
 
 unittest shortCircuit {
@@ -587,7 +587,7 @@ testcase "conditional call with multi returns" {
 
 concrete Value {
   @type new () -> (Value)
-  @value get () -> (optional Int,Int)
+  @value get () -> (optional Int, Int)
 }
 
 define Value {
@@ -602,7 +602,7 @@ define Value {
 
 unittest chained {
   optional Value value <- Value.new()
-  \ Testing.checkEquals(value&.get(){1}&.formatted(),"2")
+  \ Testing.checkEquals(value&.get(){1}&.formatted(), "2")
 }
 
 unittest notCalled {
@@ -640,7 +640,7 @@ define Value {
 }
 
 unittest test {
-  \ Testing.checkEquals(Value.new()&.get()&.formatted()&.readAt(0),'1')
+  \ Testing.checkEquals(Value.new()&.get()&.formatted()&.readAt(0), '1')
 }
 
 

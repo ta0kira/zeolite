@@ -18,15 +18,15 @@ limitations under the License.
 
 define Sorting {
   sort (seq) {
-    \ sortWith<#x,#x>(seq)
+    \ sortWith<#x, #x>(seq)
   }
 
   sortWith (seq) {
-    \ seq `sortWith2` AsLessThan2<#x,#xx>.new()
+    \ seq `sortWith2` AsLessThan2<#x, #xx>.new()
   }
 
-  sortWith2 (seq,compare) {
-    \ HeapSort<#x>.inPlace(seq,compare)
+  sortWith2 (seq, compare) {
+    \ HeapSort<#x>.inPlace(seq, compare)
   }
 
   reverse (seq) {
@@ -36,23 +36,23 @@ define Sorting {
       $ReadOnly[i]$
       Int j <- seq.size()-i-1
       #x temp <- seq.readAt(i)
-      \ seq.writeAt(i,seq.readAt(j))
-      \ seq.writeAt(j,temp)
+      \ seq.writeAt(i, seq.readAt(j))
+      \ seq.writeAt(j, temp)
     } update {
       i <- i-1
     }
   }
 
   sortList (head) {
-    return sortListWith<#n,#x,#x>(head)
+    return sortListWith<#n, #x, #x>(head)
   }
 
   sortListWith (head) {
-    return head `sortListWith2` AsLessThan2<#x,#xx>.new()
+    return head `sortListWith2` AsLessThan2<#x, #xx>.new()
   }
 
-  sortListWith2 (head,compare) {
-    return MergeSort<#n,#x>.sort(head,compare)
+  sortListWith2 (head, compare) {
+    return MergeSort<#n, #x>.sort(head, compare)
   }
 
   reverseList (head) (head2) {
@@ -80,16 +80,16 @@ define Sorting {
 // Putting the params at the top level allows helpers to be called without
 // needing to pass the params every time.
 concrete HeapSort<#x> {
-  @type inPlace ([ReadAt<#x>&WriteAt<#x>],LessThan2<#x>) -> ()
+  @type inPlace ([ReadAt<#x> & WriteAt<#x>], LessThan2<#x>) -> ()
 }
 
 define HeapSort {
   $ReadOnlyExcept[]$
 
-  @value [ReadAt<#x>&WriteAt<#x>] seq
+  @value [ReadAt<#x> & WriteAt<#x>] seq
   @value LessThan2<#x> compare
 
-  inPlace (seq,compare) {
+  inPlace (seq, compare) {
     \ (delegate -> #self).execute()
   }
 
@@ -100,7 +100,7 @@ define HeapSort {
       Int i <- seq.size()/2-1
     } in while (i >= 0) {
       $ReadOnly[i]$
-      \ sift(i,seq.size())
+      \ sift(i, seq.size())
     } update {
       i <- i-1
     }
@@ -110,15 +110,15 @@ define HeapSort {
       Int i <- seq.size()-1
     } in while (i >= 0) {
       $ReadOnly[i]$
-      \ swap(0,i)
-      \ sift(0,i)
+      \ swap(0, i)
+      \ sift(0, i)
     } update {
       i <- i-1
     }
   }
 
-  @value sift (Int,Int) -> ()
-  sift (start,size) { $NoTrace$
+  @value sift (Int, Int) -> ()
+  sift (start, size) { $NoTrace$
     scoped {
       Int last         <- start
       Int indexLargest <- last
@@ -127,7 +127,7 @@ define HeapSort {
       $ReadOnly[last]$
       Int left  <- 2*last+1
       Int right <- 2*last+2
-      $ReadOnly[left,right]$
+      $ReadOnly[left, right]$
       if (seq.readAt(indexLargest) `compare.lessThan2` seq.readAt(left)) {
         indexLargest <- left
       }
@@ -138,33 +138,33 @@ define HeapSort {
         break
       }
     } update {
-      \ swap(last,indexLargest)
+      \ swap(last, indexLargest)
       last <- indexLargest
     }
   }
 
-  @value swap (Int,Int) -> ()
-  swap (i,j) { $NoTrace$
+  @value swap (Int, Int) -> ()
+  swap (i, j) { $NoTrace$
     if (i != j) {
       #x temp <- seq.readAt(i)
-      \ seq.writeAt(i,seq.readAt(j))
-      \ seq.writeAt(j,temp)
+      \ seq.writeAt(i, seq.readAt(j))
+      \ seq.writeAt(j, temp)
     }
   }
 }
 
 // Putting the params at the top level allows helpers to be called without
 // needing to pass the params every time.
-concrete MergeSort<#n,#x> {
-  #n requires ListNode<#n,#x>
+concrete MergeSort<#n, #x> {
+  #n requires ListNode<#n, #x>
 
-  @type sort (optional #n,LessThan2<#x>) -> (optional #n)
+  @type sort (optional #n, LessThan2<#x>) -> (optional #n)
 }
 
 define MergeSort {
   @value LessThan2<#x> compare
 
-  sort (head,compare) {
+  sort (head, compare) {
     return #self{ compare }.iterated(head)
   }
 
@@ -188,7 +188,7 @@ define MergeSort {
         optional #n right <- left  `splitAt` chunk
         next              <- right `splitAt` chunk
         $Hidden[next]$
-        $ReadOnly[left,right]$
+        $ReadOnly[left, right]$
         dirty <- dirty || present(right)
         optional #n newHead, optional #n newTail <- left `merge` right
         if (!present(head2)) {
@@ -203,8 +203,8 @@ define MergeSort {
     }
   }
 
-  @value splitAt (optional #n,Int) -> (optional #n)
-  splitAt (head,n) {
+  @value splitAt (optional #n, Int) -> (optional #n)
+  splitAt (head, n) {
     optional #n head2 <- head
     $Hidden[head]$
 
@@ -223,14 +223,14 @@ define MergeSort {
     return empty
   }
 
-  @value merge (optional #n,optional #n) -> (optional #n,optional #n)
-  merge (left,right) (head,tail) {
+  @value merge (optional #n, optional #n) -> (optional #n, optional #n)
+  merge (left, right) (head, tail) {
     head <- empty
     tail <- empty
 
     optional #n left2  <- left
     optional #n right2 <- right
-    $Hidden[left,right]$
+    $Hidden[left, right]$
 
     while (present(left2) && present(right2)) {
       #n append <- defer

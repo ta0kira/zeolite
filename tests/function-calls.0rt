@@ -24,7 +24,7 @@ testcase "call from union failed merge" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
+  [Value1 | Value2] value <- Value1.create()
   \ value.get()
 }
 
@@ -72,7 +72,7 @@ testcase "call from union ambiguous base" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
+  [Value1 | Value2] value <- Value1.create()
   \ value.get()
 }
 
@@ -119,7 +119,7 @@ testcase "call from union bad function name" {
 }
 
 unittest test {
-  [Int|String] value <- 1
+  [Int | String] value <- 1
   \ value.asFloat()
 }
 
@@ -129,8 +129,8 @@ testcase "call from union automatic merge" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
-  \ Testing.checkEquals(value.get().formatted(),"1")
+  [Value1 | Value2] value <- Value1.create()
+  \ Testing.checkEquals(value.get().formatted(), "1")
 }
 
 @value interface Base<|#x> {
@@ -177,7 +177,7 @@ testcase "call from union automatic merge correct direction" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
+  [Value1 | Value2] value <- Value1.create()
   \ value.get()+1
 }
 
@@ -221,8 +221,8 @@ testcase "call from union explicit conversion" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
-  \ Testing.checkEquals(value?Base<Formatted>.get().formatted(),"1")
+  [Value1 | Value2] value <- Value1.create()
+  \ Testing.checkEquals(value?Base<Formatted>.get().formatted(), "1")
 }
 
 @value interface Base<|#x> {
@@ -280,7 +280,7 @@ testcase "call from intersect failed merge" {
 }
 
 unittest test {
-  [Base<AsBool>&Base<Formatted>] value <- Value1.create()
+  [Base<AsBool> & Base<Formatted>] value <- Value1.create()
   \ value.get()
 }
 
@@ -326,7 +326,7 @@ testcase "call from intersect bad function name" {
 }
 
 unittest test {
-  [AsBool&Formatted] value <- 1
+  [AsBool & Formatted] value <- 1
   \ value.asFloat()
 }
 
@@ -336,8 +336,8 @@ testcase "call from intersect automatic merge" {
 }
 
 unittest test {
-  [Base<Int>&Base<Formatted>] value <- Value1.create()
-  \ Testing.checkEquals(value.get(),1)
+  [Base<Int> & Base<Formatted>] value <- Value1.create()
+  \ Testing.checkEquals(value.get(), 1)
 }
 
 @value interface Base<|#x> {
@@ -380,8 +380,8 @@ testcase "call from intersect explicit conversion" {
 }
 
 unittest test {
-  [Base<AsBool>&Base<Formatted>] value <- Value1.create()
-  \ Testing.checkEquals(value?Base<Formatted>.get().formatted(),"1")
+  [Base<AsBool> & Base<Formatted>] value <- Value1.create()
+  \ Testing.checkEquals(value?Base<Formatted>.get().formatted(), "1")
 }
 
 @value interface Base<|#x> {
@@ -436,7 +436,7 @@ concrete Value {
 }
 
 define Value {
-  call () {}
+  call () { }
 }
 
 concrete Test {
@@ -469,7 +469,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 
@@ -493,7 +493,7 @@ concrete Value {
 }
 
 define Value {
-  call () {}
+  call () { }
 
   create () {
     return Value{}
@@ -530,7 +530,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "convert arg" {
@@ -552,7 +552,7 @@ concrete Value {
 }
 
 define Value {
-  call () {}
+  call () { }
 
   create () {
     return Value{}
@@ -575,11 +575,11 @@ testcase "bad convert arg" {
   require "does not refine Value"
 }
 
-@value interface Base {}
+@value interface Base { }
 
-concrete Value {}
+concrete Value { }
 
-define Value {}
+define Value { }
 
 define Test {
   @type convert (Base) -> (Value)
@@ -588,7 +588,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "bad instance in param" {
@@ -606,14 +606,14 @@ concrete Value<#x> {
   #x defines Equals<#x>
 }
 
-define Value {}
+define Value { }
 
 concrete Call {
   @type call<#x> () -> ()
 }
 
 define Call {
-  call () {}
+  call () { }
 }
 
 
@@ -629,7 +629,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "self in @category function" {
@@ -644,7 +644,7 @@ define Test {
   }
 }
 
-concrete Test {}
+concrete Test { }
 
 
 testcase "large dispatch tables" {
@@ -652,47 +652,47 @@ testcase "large dispatch tables" {
 }
 
 unittest callDispatch {
-  \ Testing.checkEquals(Type.new().get(),00)
-  \ Testing.checkEquals(Type.new().get01(),01)
-  \ Testing.checkEquals(Type.new().get02(),02)
-  \ Testing.checkEquals(Type.new().get03(),03)
-  \ Testing.checkEquals(Type.new().get04(),04)
-  \ Testing.checkEquals(Type.new().get05(),05)
-  \ Testing.checkEquals(Type.new().get06(),06)
-  \ Testing.checkEquals(Type.new().get07(),07)
-  \ Testing.checkEquals(Type.new().get08(),08)
-  \ Testing.checkEquals(Type.new().get09(),09)
-  \ Testing.checkEquals(Type.new().get10(),10)
-  \ Testing.checkEquals(Type.new().get11(),11)
-  \ Testing.checkEquals(Type.new().get12(),12)
-  \ Testing.checkEquals(Type.new().get13(),13)
-  \ Testing.checkEquals(Type.new().get14(),14)
-  \ Testing.checkEquals(Type.new().get15(),15)
-  \ Testing.checkEquals(Type.new().get16(),16)
-  \ Testing.checkEquals(Type.new().get17(),17)
-  \ Testing.checkEquals(Type.new().get18(),18)
+  \ Testing.checkEquals(Type.new().get(), 00)
+  \ Testing.checkEquals(Type.new().get01(), 01)
+  \ Testing.checkEquals(Type.new().get02(), 02)
+  \ Testing.checkEquals(Type.new().get03(), 03)
+  \ Testing.checkEquals(Type.new().get04(), 04)
+  \ Testing.checkEquals(Type.new().get05(), 05)
+  \ Testing.checkEquals(Type.new().get06(), 06)
+  \ Testing.checkEquals(Type.new().get07(), 07)
+  \ Testing.checkEquals(Type.new().get08(), 08)
+  \ Testing.checkEquals(Type.new().get09(), 09)
+  \ Testing.checkEquals(Type.new().get10(), 10)
+  \ Testing.checkEquals(Type.new().get11(), 11)
+  \ Testing.checkEquals(Type.new().get12(), 12)
+  \ Testing.checkEquals(Type.new().get13(), 13)
+  \ Testing.checkEquals(Type.new().get14(), 14)
+  \ Testing.checkEquals(Type.new().get15(), 15)
+  \ Testing.checkEquals(Type.new().get16(), 16)
+  \ Testing.checkEquals(Type.new().get17(), 17)
+  \ Testing.checkEquals(Type.new().get18(), 18)
 }
 
 unittest reduceBuiltin {
-  \ Testing.checkPresent(reduce<Type,Type>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base01>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base02>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base03>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base04>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base05>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base06>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base07>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base08>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base09>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base10>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base11>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base12>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base13>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base14>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base15>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base16>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base17>(Type.new()))
-  \ Testing.checkPresent(reduce<Type,Base18>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Type>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base01>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base02>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base03>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base04>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base05>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base06>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base07>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base08>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base09>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base10>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base11>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base12>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base13>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base14>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base15>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base16>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base17>(Type.new()))
+  \ Testing.checkPresent(reduce<Type, Base18>(Type.new()))
 }
 
 concrete Type {
@@ -774,7 +774,7 @@ testcase "multiple mergeable @value functions match from filters" {
   execute (Formatted) -> ()
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type test<#x>
@@ -799,7 +799,7 @@ testcase "multiple mergeable @type functions match from filters" {
   execute (Formatted) -> ()
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type test<#x>
@@ -826,7 +826,7 @@ testcase "multiple unmergeable @value functions match from filters" {
   execute () -> (String)
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type test<#x>
@@ -853,7 +853,7 @@ testcase "multiple unmergeable @type functions match from filters" {
   execute () -> (String)
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type test<#x>
@@ -871,12 +871,12 @@ testcase "discarded args are skipped over" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Value.create().call(1,"mess",2,"age"),"message")
+  \ Testing.checkEquals(Value.create().call(1, "mess", 2, "age"), "message")
 }
 
 concrete Value {
   @type create () -> (Value)
-  @value call (Int,String,any,Formatted) -> (String)
+  @value call (Int, String, any, Formatted) -> (String)
 }
 
 define Value {
@@ -884,7 +884,7 @@ define Value {
     return Value{}
   }
 
-  call (_,x,_,y) {
+  call (_, x, _, y) {
     return x+y.formatted()
   }
 }
@@ -895,19 +895,19 @@ testcase "@type function calls" {
 }
 
 unittest sameType {
-  \ Testing.checkEquals(Value<Int>.sameType(),"Value<Int>")
+  \ Testing.checkEquals(Value<Int>.sameType(), "Value<Int>")
 }
 
 unittest sameValue {
-  \ Testing.checkEquals(Value<Int>.create().sameValue(),"Value<Int>")
+  \ Testing.checkEquals(Value<Int>.create().sameValue(), "Value<Int>")
 }
 
 unittest diffType {
-  \ Testing.checkEquals(Value<Int>.diffType<String>(),"Value<String>")
+  \ Testing.checkEquals(Value<Int>.diffType<String>(), "Value<String>")
 }
 
 unittest diffValue {
-  \ Testing.checkEquals(Value<Int>.create().diffValue<String>(),"Value<String>")
+  \ Testing.checkEquals(Value<Int>.create().diffValue<String>(), "Value<String>")
 }
 
 concrete Value<#x> {
@@ -952,7 +952,7 @@ testcase "cannot use @category function as @type function" {
   require "category"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category something () -> ()
@@ -971,7 +971,7 @@ testcase "cannot use @category function as @value function" {
   require "category"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @category something () -> ()
@@ -990,7 +990,7 @@ testcase "cannot use @type function as @value function" {
   require "value"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type something () -> ()
@@ -1009,7 +1009,7 @@ testcase "cannot use @value function as @type function" {
   require "type"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value something () -> ()
@@ -1027,7 +1027,7 @@ testcase "cannot implicitly use @value function as @type function" {
   require "something"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @value something () -> ()

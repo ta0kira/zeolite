@@ -1,4 +1,4 @@
-testFunction1 (a,b,c) (d,e,f) {
+testFunction1 (a, b, c) (d, e, f) {
   if (T.f()) {
     // do nothing
   } elif (#q.r().f()) {
@@ -7,12 +7,12 @@ testFunction1 (a,b,c) (d,e,f) {
     // sleep
   }
 
-  x <- Type<#z,T<#m>>{ r, Type.new() }
+  x <- Type<#z, T<#m>>{ r, Type.new() }
 
   x <- empty
 
   scoped {
-    optional T myvar <- reduce<#x,#y>(q)
+    optional T myvar <- reduce<#x, #y>(q)
   } in if (present(myvar)) {
     \ unqualified()
   } else {
@@ -20,7 +20,7 @@ testFunction1 (a,b,c) (d,e,f) {
   }
 
   scoped {
-    optional T myvar <- reduce<#x,#y>(q)
+    optional T myvar <- reduce<#x, #y>(q)
   } in v, _ <- x.process(myvar)
 
   scoped {
@@ -30,7 +30,7 @@ testFunction1 (a,b,c) (d,e,f) {
   } in \ x.process()
 
   \ z.call().call()
-  x, weak [#k|Type] y, _ <- z.call()
+  x, weak [#k | Type] y, _ <- z.call()
   x <- z?T<#z>.call().call()
   return _
   return a
@@ -44,4 +44,4 @@ testFunction1 (a,b,c) (d,e,f) {
   }
 }
 
-testFunction2 (a,b,c) {}
+testFunction2 (a, b, c) { }

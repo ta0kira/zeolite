@@ -52,4 +52,4 @@ extra_files: [
   "base/src/returns.cpp"
   "base/src/thread-crosser.cc"
 ]
-mode: incremental {}
+mode: incremental { }

@@ -1,5 +1,5 @@
 define ThreadFlag {
-  @value [ConditionWait&ConditionResume] cond
+  @value [ConditionWait & ConditionResume] cond
   @value Bool enabled
   @value Bool canceled
 

@@ -1,4 +1,4 @@
-@value interface Type1 {}
+@value interface Type1 { }
 
 @value interface Type2 {
   refines Type1

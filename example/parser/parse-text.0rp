@@ -21,7 +21,7 @@ concrete Parse {
 
   @type error     (Formatted)              -> (Parser<all>)
   @type try<#x>   (Parser<#x>)             -> (Parser<#x>)
-  @type or<#x>    (Parser<#x>,Parser<#x>)  -> (Parser<#x>)
-  @type left<#x>  (Parser<#x>,Parser<any>) -> (Parser<#x>)
-  @type right<#x> (Parser<any>,Parser<#x>) -> (Parser<#x>)
+  @type or<#x>    (Parser<#x>, Parser<#x>)  -> (Parser<#x>)
+  @type left<#x>  (Parser<#x>, Parser<any>) -> (Parser<#x>)
+  @type right<#x> (Parser<any>, Parser<#x>) -> (Parser<#x>)
 }

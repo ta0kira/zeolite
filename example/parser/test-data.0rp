@@ -17,7 +17,7 @@ concrete TestData {
   visibility TestDataParser
 
   // We can give arguments labels to require calls to be clearer.
-  @type create (String name:,String description:,Bool boolean:) -> (TestData)
+  @type create (String name:, String description:, Bool boolean:) -> (TestData)
 }
 
 

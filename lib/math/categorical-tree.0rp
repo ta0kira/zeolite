@@ -33,11 +33,11 @@ limitations under the License.
   // Return the value at the given offset.
   //
   // Notes:
-  // - The offset must be within [0,getTotal()). A uniform selection in that
+  // - The offset must be within [0, getTotal()). A uniform selection in that
   //   range will provide samples that follow the categorical distribution
   //   corresponding to the relative weights of the respective #c.
   // - The return value is deterministic. If you were to iterate over
-  //   [0,getTotal()), you'd get an increasing sequence of all #c in the
+  //   [0, getTotal()), you'd get an increasing sequence of all #c in the
   //   CategoricalReader, each repeated the number of times indicated by its
   //   respective weight.
   // - Also see RandomCategorical in random.0rp.
@@ -74,7 +74,7 @@ concrete CategoricalTree<#c> {
   // Notes:
   // - The weight must not be negative.
   // - The sum of all weights (see getTotal()) must not exceed Int.maxBound().
-  @value setWeight (#c,Int) -> (#self)
+  @value setWeight (#c, Int) -> (#self)
 
   // Increments the weight of the value by 1.
   @value incrWeight (#c) -> (#self)

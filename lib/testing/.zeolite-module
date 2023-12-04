@@ -16,4 +16,4 @@ extra_files: [
     categories: [TestHandler]
   }
 ]
-mode: incremental {}
+mode: incremental { }

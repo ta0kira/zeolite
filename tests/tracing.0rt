@@ -66,7 +66,7 @@ define Test {
   error () {
     cleanup {
       fail("message")
-    } in {}
+    } in { }
   }
 }
 
@@ -103,7 +103,7 @@ testcase "TraceCreation ignored in @type" {
   require compiler "tracing ignored"
 }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   @type run () -> ()

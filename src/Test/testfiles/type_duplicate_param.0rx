@@ -1,1 +1,1 @@
-@type interface Type<#x|#y|#x> {}
+@type interface Type<#x|#y|#x> { }

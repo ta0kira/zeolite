@@ -96,9 +96,9 @@ testcase "internal define links properly for dispatching" {
   success
 }
 
-unittest test {}
+unittest test { }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   refines Formatted
@@ -108,7 +108,7 @@ define Value {
     return "Value"
   }
 
-  equals (_,_) {
+  equals (_, _) {
     return true
   }
 }
@@ -121,7 +121,7 @@ testcase "internal define is visible privately" {
 unittest test {
   Value value1 <- Value.create(1)
   Value value2 <- Value.create(2)
-  if (Value.compare(value1,value2)) {
+  if (Value.compare(value1, value2)) {
     fail("Failed")
   }
 }
@@ -129,18 +129,18 @@ unittest test {
 concrete Compare<#x> {
   #x defines Equals<#x>
 
-  @type compare (#x,#x) -> (Bool)
+  @type compare (#x, #x) -> (Bool)
 }
 
 define Compare {
-  compare (x,y) {
-    return #x.equals(x,y)
+  compare (x, y) {
+    return #x.equals(x, y)
   }
 }
 
 concrete Value {
   @type create (Int) -> (Value)
-  @type compare (Value,Value) -> (Bool)
+  @type compare (Value, Value) -> (Bool)
 }
 
 define Value {
@@ -148,7 +148,7 @@ define Value {
 
   @value Int value
 
-  equals (x,y) {
+  equals (x, y) {
     return x.get() == y.get()
   }
 
@@ -156,8 +156,8 @@ define Value {
     return Value{ x }
   }
 
-  compare (x,y) {
-    return Compare<Value>.compare(x,y)
+  compare (x, y) {
+    return Compare<Value>.compare(x, y)
   }
 
   @value get () -> (Int)
@@ -177,18 +177,18 @@ testcase "internal define is not public" {
 unittest test {
   Value value1 <- Value.create(1)
   Value value2 <- Value.create(2)
-  \ Compare<Value>.compare(value1,value2)
+  \ Compare<Value>.compare(value1, value2)
 }
 
 concrete Compare<#x> {
   #x defines Equals<#x>
 
-  @type compare (#x,#x) -> (Bool)
+  @type compare (#x, #x) -> (Bool)
 }
 
 define Compare {
-  compare (x,y) {
-    return #x.equals(x,y)
+  compare (x, y) {
+    return #x.equals(x, y)
   }
 }
 
@@ -201,7 +201,7 @@ define Value {
 
   @value Int value
 
-  equals (x,y) {
+  equals (x, y) {
     return x.get() == y.get()
   }
 
@@ -222,9 +222,9 @@ testcase "internal inheritance wrong interface type" {
   require "type interface"
 }
 
-@value interface Base {}
+@value interface Base { }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   defines Base
@@ -241,7 +241,7 @@ testcase "internal inheritance bad refines variance" {
   call (#x) -> ()
 }
 
-concrete Type<|#x> {}
+concrete Type<|#x> { }
 
 define Type {
   refines Base<#x>
@@ -258,7 +258,7 @@ testcase "internal inheritance bad defines variance" {
   call (#x) -> ()
 }
 
-concrete Type<|#x> {}
+concrete Type<|#x> { }
 
 define Type {
   defines Base<#x>
@@ -269,7 +269,7 @@ testcase "indirect internal inheritance flattened correctly" {
   compiles
 }
 
-@value interface Base1<#x> {}
+@value interface Base1<#x> { }
 
 @value interface Base2<#x> {
   refines Base1<#x>

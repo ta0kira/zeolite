@@ -133,14 +133,14 @@ unittest unlimitedValue {
 
 unittest minMax {
   scoped {
-    Int x, Int y <- Ranges:minMax(10,3)
+    Int x, Int y <- Ranges:minMax(10, 3)
   } in {
     \ x `Matches:with` CheckValue:equals(3)
     \ y `Matches:with` CheckValue:equals(10)
   }
 
   scoped {
-    Int x, Int y <- Ranges:minMax(3,10)
+    Int x, Int y <- Ranges:minMax(3, 10)
   } in {
     \ x `Matches:with` CheckValue:equals(3)
     \ y `Matches:with` CheckValue:equals(10)
@@ -149,20 +149,20 @@ unittest minMax {
 
 unittest min {
   scoped {
-    Int x <- Ranges:min(10,3)
+    Int x <- Ranges:min(10, 3)
   } in \ x `Matches:with` CheckValue:equals(3)
 
   scoped {
-    Int x <- Ranges:min(3,10)
+    Int x <- Ranges:min(3, 10)
   } in \ x `Matches:with` CheckValue:equals(3)
 }
 
 unittest max {
   scoped {
-    Int x <- Ranges:max(10,3)
+    Int x <- Ranges:max(10, 3)
   } in \ x `Matches:with` CheckValue:equals(10)
 
   scoped {
-    Int x <- Ranges:max(3,10)
+    Int x <- Ranges:max(3, 10)
   } in \ x `Matches:with` CheckValue:equals(10)
 }

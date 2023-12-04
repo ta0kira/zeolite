@@ -86,7 +86,7 @@ testcase "attempt to define outside of this module" {
 }
 
 // The declaration for String is in scope, but it lives outside of this module.
-define String {}
+define String { }
 
 
 testcase "attempt to define interface" {
@@ -95,9 +95,9 @@ testcase "attempt to define interface" {
   require "concrete"
 }
 
-@value interface Type {}
+@value interface Type { }
 
-define Type {}
+define Type { }
 
 
 testcase "no deadlock with recursive type" {
@@ -113,7 +113,7 @@ concrete Type<#x> {
 }
 
 define Type {
-  call () {}
+  call () { }
 }
 
 
@@ -133,7 +133,7 @@ testcase "custom timeout works as expected" {
 }
 
 unittest test {
-  while (true) {}
+  while (true) { }
 }
 
 
@@ -144,7 +144,7 @@ testcase "args escaped properly" {
   args "\" }; exit(1); const char fake[] = { \""
 }
 
-unittest test {}
+unittest test { }
 
 
 testcase "inline assignment return type" {
@@ -154,24 +154,24 @@ testcase "inline assignment return type" {
 unittest unboxedToUnboxed {
   Int value <- 456
   Int value2 <- (value <- 123)
-  \ Testing.checkEquals(value2,123)
-  \ Testing.checkEquals(value,123)
+  \ Testing.checkEquals(value2, 123)
+  \ Testing.checkEquals(value, 123)
 }
 
 unittest unboxedToBoxed {
   optional Formatted value <- empty
   Int value2 <- (value <- 123)
-  \ Testing.checkEquals(value2,123)
+  \ Testing.checkEquals(value2, 123)
   \ Testing.checkPresent(value)
-  \ Testing.checkEquals(require(value).formatted(),"123")
+  \ Testing.checkEquals(require(value).formatted(), "123")
 }
 
 unittest boxedToBoxed {
   optional Formatted value <- empty
   String value2 <- (value <- "message")
-  \ Testing.checkEquals(value2,"message")
+  \ Testing.checkEquals(value2, "message")
   \ Testing.checkPresent(value)
-  \ Testing.checkEquals(require(value).formatted(),"message")
+  \ Testing.checkEquals(require(value).formatted(), "message")
 }
 
 

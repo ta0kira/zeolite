@@ -17,10 +17,10 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Randomize {
-  permuteFrom (tree,random,output) {
+  permuteFrom (tree, random, output) {
     CategoricalTree<#c> copy <- tree.duplicate()
     Generator<#c> generator <- copy `RandomCategorical:sampleWith` random
-    $Hidden[tree,random]$
+    $Hidden[tree, random]$
     while (copy.getTotal() > 0) {
       #c cat <- generator.generate()
       \ output.append(cat)
@@ -28,14 +28,14 @@ define Randomize {
     }
   }
 
-  permuteFromWeight (tree,random,output) {
+  permuteFromWeight (tree, random, output) {
     CategoricalTree<#c> copy <- tree.duplicate()
     Generator<#c> generator <- copy `RandomCategorical:sampleWith` random
-    $Hidden[tree,random]$
+    $Hidden[tree, random]$
     while (copy.getTotal() > 0) {
       #c cat <- generator.generate()
       \ output.append(cat)
-      \ copy.setWeight(cat,0)
+      \ copy.setWeight(cat, 0)
     }
   }
 }
@@ -60,7 +60,7 @@ define RandomCategorical {
   @value CategoricalReader<#c> categorical
   @value Generator<Float> random
 
-  sampleWith (categorical,random) {
+  sampleWith (categorical, random) {
     return delegate -> RandomCategorical<#c>
   }
 

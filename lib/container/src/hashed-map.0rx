@@ -18,10 +18,10 @@ limitations under the License.
 
 define HashedMap {
   @value Int itemCount
-  @value [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] table
+  @value [DefaultOrder<HashRoot<#k, #v>> & ReadAt<HashRoot<#k, #v>>] table
 
   new () {
-    return #self{ 0, Vector:createSize<HashRoot<#k,#v>>($ExprLookup[HASH_TABLE_MIN_SIZE]$) }
+    return #self{ 0, Vector:createSize<HashRoot<#k, #v>>($ExprLookup[HASH_TABLE_MIN_SIZE]$) }
   }
 
   default () {
@@ -29,7 +29,7 @@ define HashedMap {
   }
 
   duplicate () {
-    return #self{ itemCount, table.defaultOrder() `OrderH:duplicateTo` Vector<HashRoot<#k,#v>>.new() }
+    return #self{ itemCount, table.defaultOrder() `OrderH:duplicateTo` Vector<HashRoot<#k, #v>>.new() }
   }
 
   size () {
@@ -44,18 +44,18 @@ define HashedMap {
     return table.readAt(getBin(k.hashed())).find(k)
   }
 
-  set (k,v) {
-    \ swap(k,v)
+  set (k, v) {
+    \ swap(k, v)
     return self
   }
 
   remove (k) {
-    \ swap(k,empty)
+    \ swap(k, empty)
     return self
   }
 
-  weakSet (k,v) {
-    optional #v value <- table.readAt(getBin(k.hashed())).weakReplace(k,v)
+  weakSet (k, v) {
+    optional #v value <- table.readAt(getBin(k.hashed())).weakReplace(k, v)
     if (`present` value) {
       return `require` value
     } else {
@@ -65,8 +65,8 @@ define HashedMap {
     }
   }
 
-  swap (k,v) (old) {
-    old <- table.readAt(getBin(k.hashed())).exchange(k,v)
+  swap (k, v) (old) {
+    old <- table.readAt(getBin(k.hashed())).exchange(k, v)
     if (!present(v) && present(old)) {
       itemCount <- itemCount-1
       \ maybeResize()
@@ -77,7 +77,7 @@ define HashedMap {
   }
 
   defaultOrder () {
-    return HashedMapOrder<#k,#v>.new(itemCount,table)
+    return HashedMapOrder<#k, #v>.new(itemCount, table)
   }
 
   keyOrder () {
@@ -99,34 +99,34 @@ define HashedMap {
 
   @value maybeResize () -> ()
   maybeResize () {
-    optional [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] newTable <- empty
+    optional [DefaultOrder<HashRoot<#k, #v>> & ReadAt<HashRoot<#k, #v>>] newTable <- empty
     if (itemCount >= $ExprLookup[HASH_TABLE_EXPAND_RATIO]$*table.size()) {
-      newTable <- Vector:createSize<HashRoot<#k,#v>>(2*table.size())
+      newTable <- Vector:createSize<HashRoot<#k, #v>>(2*table.size())
     } elif ($ExprLookup[HASH_TABLE_CONTRACT_RATIO]$*itemCount < table.size() && table.size() > $ExprLookup[HASH_TABLE_MIN_SIZE]$) {
-      newTable <- Vector:createSize<HashRoot<#k,#v>>(table.size()/2)
+      newTable <- Vector:createSize<HashRoot<#k, #v>>(table.size()/2)
     }
     if (`present` newTable) {
-      [DefaultOrder<HashRoot<#k,#v>>&ReadAt<HashRoot<#k,#v>>] oldTable <- table
+      [DefaultOrder<HashRoot<#k, #v>> & ReadAt<HashRoot<#k, #v>>] oldTable <- table
       table <- `require` newTable
       $Hidden[newTable]$
-      traverse (oldTable.defaultOrder() -> HashRoot<#k,#v> root) {
-        traverse (root.defaultOrder() -> HashNode<#k,#v> node) {
-          \ table.readAt(getBin(node.getKey().hashed())).exchange(node.getKey(),node.getValue())
+      traverse (oldTable.defaultOrder() -> HashRoot<#k, #v> root) {
+        traverse (root.defaultOrder() -> HashNode<#k, #v> node) {
+          \ table.readAt(getBin(node.getKey().hashed())).exchange(node.getKey(), node.getValue())
         }
       }
     }
   }
 }
 
-concrete HashNode<#k,#v> {
+concrete HashNode<#k, #v> {
   refines Duplicate
   refines Order<#self>
 
-  @type new (#k,#v,optional HashNode<#k,#v>) -> (#self)
+  @type new (#k, #v, optional HashNode<#k, #v>) -> (#self)
   @value getKey () -> (#k)
   @value getValue () -> (#v)
   @value setValue (#v) -> ()
-  @value setNext (optional HashNode<#k,#v>) -> (optional #self)
+  @value setNext (optional HashNode<#k, #v>) -> (optional #self)
 }
 
 define HashNode {
@@ -134,14 +134,14 @@ define HashNode {
 
   @value #k key
   @value #v value
-  @value optional HashNode<#k,#v> next
+  @value optional HashNode<#k, #v> next
 
-  new (key,value,next) {
+  new (key, value, next) {
     return delegate -> #self
   }
 
   duplicate () {
-    optional HashNode<#k,#v> next2 <- empty
+    optional HashNode<#k, #v> next2 <- empty
     if (`present` next) {
       next2 <- require(next).duplicate()
     }
@@ -160,21 +160,21 @@ define HashNode {
   }
 }
 
-concrete HashRoot<#k,#v> {
+concrete HashRoot<#k, #v> {
   defines Default
-  refines DefaultOrder<HashNode<#k,#v>>
+  refines DefaultOrder<HashNode<#k, #v>>
   refines Duplicate
   #k defines Equals<#k>
 
-  @value exchange (#k,optional #v) -> (optional #v)
-  @value weakReplace (#k,#v) -> (optional #v)
+  @value exchange (#k, optional #v) -> (optional #v)
+  @value weakReplace (#k, #v) -> (optional #v)
   @value find (#k) -> (optional #v)
   // Override to allow returning HashNode directly.
-  @value defaultOrder () -> (optional HashNode<#k,#v>)
+  @value defaultOrder () -> (optional HashNode<#k, #v>)
 }
 
 define HashRoot {
-  @value optional HashNode<#k,#v> root
+  @value optional HashNode<#k, #v> root
 
   default () {
     return #self{ empty }
@@ -192,17 +192,17 @@ define HashRoot {
     }
   }
 
-  exchange (k,v) (old) {
+  exchange (k, v) (old) {
     old <- empty
     scoped {
-      optional HashNode<#k,#v> prev <- empty
-    } in traverse (root -> HashNode<#k,#v> node) {
+      optional HashNode<#k, #v> prev <- empty
+    } in traverse (root -> HashNode<#k, #v> node) {
       if (node.getKey() `#k.equals` k) {
         old <- node.getValue()
         if (`present` v) {
           \ node.setValue(`require` v)
         } else {
-          optional HashNode<#k,#v> next <- node.setNext(empty)
+          optional HashNode<#k, #v> next <- node.setNext(empty)
           if (`present` prev) {
             \ require(prev).setNext(next)
           } else {
@@ -215,23 +215,23 @@ define HashRoot {
       prev <- node
     }
     if (`present` v) {
-      root <- HashNode<#k,#v>.new(k,`require` v,root)
+      root <- HashNode<#k, #v>.new(k, `require` v, root)
     }
   }
 
-  weakReplace (k,v) {
-    traverse (root -> HashNode<#k,#v> node) {
+  weakReplace (k, v) {
+    traverse (root -> HashNode<#k, #v> node) {
       if (node.getKey() `#k.equals` k) {
         return node.getValue()
       }
     }
-    root <- HashNode<#k,#v>.new(k,v,root)
+    root <- HashNode<#k, #v>.new(k, v, root)
     return empty
   }
 
   find (k) (v) {
     v <- empty
-    traverse (root -> HashNode<#k,#v> node) {
+    traverse (root -> HashNode<#k, #v> node) {
       if (node.getKey() `#k.equals` k) {
         return node.getValue()
       }
@@ -239,22 +239,22 @@ define HashRoot {
   }
 }
 
-concrete HashedMapOrder<#k,#v> {
-  refines Order<KeyValue<#k,#v>>
+concrete HashedMapOrder<#k, #v> {
+  refines Order<KeyValue<#k, #v>>
 
-  @type new (Int,DefaultOrder<HashRoot<#k,#v>>) -> (optional #self)
+  @type new (Int, DefaultOrder<HashRoot<#k, #v>>) -> (optional #self)
 }
 
 define HashedMapOrder {
   @value Int count
-  @value optional Order<HashRoot<#k,#v>> root
-  @value HashNode<#k,#v> node
+  @value optional Order<HashRoot<#k, #v>> root
+  @value HashNode<#k, #v> node
 
-  new (count,table) (next) {
+  new (count, table) (next) {
     next <- empty
     if (count > 0) {
       scoped {
-        optional Order<HashRoot<#k,#v>> root, optional HashNode<#k,#v> node <- seekNext(table.defaultOrder())
+        optional Order<HashRoot<#k, #v>> root, optional HashNode<#k, #v> node <- seekNext(table.defaultOrder())
       } in if (`present` node) {
         next <- #self{ count, root, `require` node }
       }
@@ -262,20 +262,20 @@ define HashedMapOrder {
   }
 
   get () {
-    return SimpleKeyValue:new(node.getKey(),node.getValue())
+    return SimpleKeyValue:new(node.getKey(), node.getValue())
   }
 
   next () (next) {
     next <- empty
     if ((count <- count-1) > 0) {
       scoped {
-        optional HashNode<#k,#v> newNode <- node.next()
+        optional HashNode<#k, #v> newNode <- node.next()
       } in if (`present` newNode) {
         node <- `require` newNode
         return self
       }
       scoped {
-        root, optional HashNode<#k,#v> newNode <- seekNext(root)
+        root, optional HashNode<#k, #v> newNode <- seekNext(root)
       } in if (`present` newNode) {
         node <- `require` newNode
         return self
@@ -283,8 +283,8 @@ define HashedMapOrder {
     }
   }
 
-  @type seekNext (optional Order<HashRoot<#k,#v>>) -> (optional Order<HashRoot<#k,#v>>,optional HashNode<#k,#v>)
-  seekNext (start) (root,node) {
+  @type seekNext (optional Order<HashRoot<#k, #v>>) -> (optional Order<HashRoot<#k, #v>>, optional HashNode<#k, #v>)
+  seekNext (start) (root, node) {
     root <- start
     node <- empty
     $Hidden[start]$

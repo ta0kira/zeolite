@@ -83,7 +83,7 @@ concrete Argv {
   // Notes:
   // - When used in unit tests, arg 0 is "testcase" and the remaining args are
   //   set from args in the testcase. (See extra.0rt.)
-  @type global () -> ([ReadAt<String>&SubSequence])
+  @type global () -> ([ReadAt<String> & SubSequence])
 }
 
 // A resource that requires explicit cleanup.

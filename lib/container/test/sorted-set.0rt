@@ -24,7 +24,7 @@ unittest addAndRemove {
   SortedSet<Int> set <- SortedSet<Int>.default()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -64,7 +64,7 @@ unittest defaultOrder {
   SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -91,7 +91,7 @@ unittest reverseOrder {
   SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -112,7 +112,7 @@ unittest getForward {
   SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
@@ -153,7 +153,7 @@ unittest getReverse {
   SortedSet<Int> set <- SortedSet<Int>.new()
   Int hash <- 13
   Int max  <- 20
-  $ReadOnly[hash,max]$
+  $ReadOnly[hash, max]$
 
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {

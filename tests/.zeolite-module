@@ -50,4 +50,4 @@ extension_specs: [
     defines: [Default]
   }
 ]
-mode: incremental {}
+mode: incremental { }

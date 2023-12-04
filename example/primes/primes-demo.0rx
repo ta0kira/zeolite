@@ -6,14 +6,14 @@ define PrimesDemo {
   run () {
     PrimeTracker tracker <- PrimeTracker.create()
     ThreadFlag flag <- ThreadFlag.new()
-    Thread thread <- ProcessThread.from(PrimeThread.create(flag,tracker)).start()
+    Thread thread <- ProcessThread.from(PrimeThread.create(flag, tracker)).start()
 
     // Interactive input loop.
 
     scoped {
       TextReader reader <- TextReader.fromBlockReader(BasicInput.stdin())
     } in while (!reader.pastEnd()) {
-      $Hidden[tracker,thread]$
+      $Hidden[tracker, thread]$
 
       \ BasicOutput.stderr()
           .writeNow("Press [Enter] to toggle start/stop computation thread. Type \"exit\" to exit.\n")

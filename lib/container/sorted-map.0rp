@@ -21,15 +21,15 @@ limitations under the License.
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-concrete SortedMap<#k,#v> {
+concrete SortedMap<#k, #v> {
   defines Default
   refines Container
-  refines DefaultOrder<KeyValue<#k,#v>>
+  refines DefaultOrder<KeyValue<#k, #v>>
   refines Duplicate
   refines KeyOrder<#k>
-  refines KVExchange<#k,#v>
-  refines KVWriter<#k,#v>
-  refines KVReader<#k,#v>
+  refines KVExchange<#k, #v>
+  refines KVWriter<#k, #v>
+  refines KVReader<#k, #v>
   refines SetReader<#k>
   refines ValueOrder<#v>
   #k immutable
@@ -45,7 +45,7 @@ concrete SortedMap<#k,#v> {
   // - Traversal of the entire map is amortized O(n); however, the cost of any
   //   particular iteration could be up to O(log n).
   // - The overall memory cost is O(log n).
-  @value defaultOrder () -> (optional Order<KeyValue<#k,#v>>)
+  @value defaultOrder () -> (optional Order<KeyValue<#k, #v>>)
 
   // Traverse the map in the reverse order of defaultOrder().
   //
@@ -53,19 +53,19 @@ concrete SortedMap<#k,#v> {
   // - Traversal of the entire map is amortized O(n); however, the cost of any
   //   particular iteration could be up to O(log n).
   // - The overall memory cost is O(log n).
-  @value reverseOrder () -> (optional Order<KeyValue<#k,#v>>)
+  @value reverseOrder () -> (optional Order<KeyValue<#k, #v>>)
 
   // Start forward traversal (same as defaultOrder()) from the specified key.
   //
   // Notes:
   // - If the key does not exist in the SortedMap, the position right after
   //   where it would be (in the forward direction) is returned.
-  @value getForward (#k) -> (optional Order<KeyValue<#k,#v>>)
+  @value getForward (#k) -> (optional Order<KeyValue<#k, #v>>)
 
   // Start reverse traversal (same as reverseOrder()) from the specified key.
   //
   // Notes:
   // - If the key does not exist in the SortedMap, the position right after
   //   where it would be (in the reverse direction) is returned.
-  @value getReverse (#k) -> (optional Order<KeyValue<#k,#v>>)
+  @value getReverse (#k) -> (optional Order<KeyValue<#k, #v>>)
 }

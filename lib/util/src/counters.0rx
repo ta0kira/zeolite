@@ -64,7 +64,7 @@ define CounterBuilder {
       actualStart <- start + increment*(require(actualCount)-1)
       actualIncrement <- -increment
     }
-    return IntCounter.new(actualStart,actualIncrement,actualCount)
+    return IntCounter.new(actualStart, actualIncrement, actualCount)
   }
 
   start (x) {
@@ -96,7 +96,7 @@ define CounterBuilder {
 }
 
 concrete IntCounter {
-  @type new (Int,Int,optional Int) -> (optional Order<Int>)
+  @type new (Int, Int, optional Int) -> (optional Order<Int>)
 }
 
 define IntCounter {
@@ -108,7 +108,7 @@ define IntCounter {
   @value Int increment
   @value optional Int remaining
 
-  new (start,increment,count) {
+  new (start, increment, count) {
     if (`present` count && `require` count <= 0) {
       return empty
     } else {
@@ -141,7 +141,7 @@ define Repeat {
   @value #x value
   @value Order<any> counter
 
-  times (value,max) {
+  times (value, max) {
     optional Order<any> counter <- Counter.builder().count(max).done()
     if (! `present` counter) {
       return empty
@@ -170,15 +170,15 @@ define Repeat {
 }
 
 define Ranges {
-  min (x,y) {
-    return minMax(x,y){0}
+  min (x, y) {
+    return minMax(x, y){0}
   }
 
-  max (x,y) (z) {
-    return minMax(x,y){1}
+  max (x, y) (z) {
+    return minMax(x, y){1}
   }
 
-  minMax (x,y) {
+  minMax (x, y) {
     // NOTE: Using y < x makes the default x, y when they are equal.
     if (y `#x.lessThan` x) {
       return y, x

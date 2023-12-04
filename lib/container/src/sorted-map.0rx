@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define SortedMap {
-  @value AutoBinaryTree<SortedMapNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>> map
+  @value AutoBinaryTree<SortedMapNode<#k, #v>, #k, #v, BinaryTreeNode<#k, #v>> map
 
   default () {
     return new()
   }
 
   new () {
-    return #self{ AutoBinaryTree<SortedMapNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
+    return #self{ AutoBinaryTree<SortedMapNode<#k, #v>, #k, #v, BinaryTreeNode<#k, #v>>.new() }
   }
 
   size () {
@@ -43,22 +43,22 @@ define SortedMap {
     return map.get(k)
   }
 
-  set (k,v) {
-    \ swap(k,v)
+  set (k, v) {
+    \ swap(k, v)
     return self
   }
 
   remove (k) {
-    \ swap(k,empty)
+    \ swap(k, empty)
     return self
   }
 
-  weakSet (k,v) {
-    return map.weakSet(k,v)
+  weakSet (k, v) {
+    return map.weakSet(k, v)
   }
 
-  swap (k,v) {
-    return map.swap(k,v)
+  swap (k, v) {
+    return map.swap(k, v)
   }
 
   defaultOrder () {
@@ -70,11 +70,11 @@ define SortedMap {
   }
 
   getForward (k) {
-    return ForwardTreeOrder:seek(k,map.getRoot())
+    return ForwardTreeOrder:seek(k, map.getRoot())
   }
 
   getReverse (k) {
-    return ReverseTreeOrder:seek(k,map.getRoot())
+    return ReverseTreeOrder:seek(k, map.getRoot())
   }
 
   keyOrder () {
@@ -87,24 +87,24 @@ define SortedMap {
 }
 
 define ValidatedTree {
-  @value AutoBinaryTree<SortedMapNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>> map
+  @value AutoBinaryTree<SortedMapNode<#k, #v>, #k, #v, BinaryTreeNode<#k, #v>> map
 
   new () { $NoTrace$
-    return #self{ AutoBinaryTree<SortedMapNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
+    return #self{ AutoBinaryTree<SortedMapNode<#k, #v>, #k, #v, BinaryTreeNode<#k, #v>>.new() }
   }
 
   size () { $NoTrace$
     return map.size()
   }
 
-  set (k,v) { $NoTrace$
-    \ map.swap(k,v)
+  set (k, v) { $NoTrace$
+    \ map.swap(k, v)
     \ validate(map.getRoot())
     return self
   }
 
   remove (k) { $NoTrace$
-    \ map.swap(k,empty)
+    \ map.swap(k, empty)
     \ validate(map.getRoot())
     return self
   }
@@ -113,7 +113,7 @@ define ValidatedTree {
     return map.get(k)
   }
 
-  @type validate (optional BinaryTreeNode<#k,#v>) -> ()
+  @type validate (optional BinaryTreeNode<#k, #v>) -> ()
   validate (node) { $NoTrace$
     if (present(node)) {
       \ validateOrder(require(node))
@@ -121,7 +121,7 @@ define ValidatedTree {
     }
   }
 
-  @type validateOrder (BinaryTreeNode<#k,#v>) -> ()
+  @type validateOrder (BinaryTreeNode<#k, #v>) -> ()
   validateOrder (node) { $NoTrace$
     if (present(node.getLower())) {
       if (!(require(node.getLower()).getKey() `#k.lessThan` node.getKey())) {
@@ -137,7 +137,7 @@ define ValidatedTree {
     }
   }
 
-  @type validateBalance (BinaryTreeNode<#k,#v>) -> ()
+  @type validateBalance (BinaryTreeNode<#k, #v>) -> ()
   validateBalance (node) { $NoTrace$
     scoped {
       Int balance <- 0
@@ -160,9 +160,9 @@ define ValidatedTree {
   }
 }
 
-concrete SortedMapNode<#k,#v> {
-  defines KVFactory<#k,#v>
-  refines BalancedTreeNode<SortedMapNode<#k,#v>,#k,#v>
+concrete SortedMapNode<#k, #v> {
+  defines KVFactory<#k, #v>
+  refines BalancedTreeNode<SortedMapNode<#k, #v>, #k, #v>
   refines Duplicate
 }
 
@@ -175,7 +175,7 @@ define SortedMapNode {
   @value optional #self lower
   @value optional #self higher
 
-  newNode (k,v) {
+  newNode (k, v) {
     return #self{ 1, k, v, empty, empty }
   }
 

@@ -20,7 +20,7 @@ define Token {
   $ReadOnlyExcept[]$
 
   @category Mutex mutex <- SpinlockMutex.new()
-  @category HashedMap<String,Token> toToken <- HashedMap<String,Token>.new()
+  @category HashedMap<String, Token> toToken <- HashedMap<String, Token>.new()
 
   @value String string
 
@@ -45,11 +45,11 @@ define Token {
     return identify(self).hashed()
   }
 
-  equals (x,y) {
+  equals (x, y) {
     return identify(x) == identify(y)
   }
 
-  lessThan (x,y) {
+  lessThan (x, y) {
     return identify(x) < identify(y)
   }
 }

@@ -24,33 +24,33 @@ define CheckSet {
 
 define CheckMap {
   using (expected) {
-    return MapAdapter<#k,#v>.new(expected)
+    return MapAdapter<#k, #v>.new(expected)
   }
 
   equals (expected) {
-    return MapEquals<#k,#v>.new(expected)
+    return MapEquals<#k, #v>.new(expected)
   }
 
   matches (expected) {
-    return MapMatches<#k,#v>.new(expected)
+    return MapMatches<#k, #v>.new(expected)
   }
 }
 
-concrete MapAdapter<#k,#v> {
+concrete MapAdapter<#k, #v> {
   #v requires TestCompare<#v>
 
-  @type new ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>])
+  @type new ([SetReader<#k> & DefaultOrder<KeyValue<#k, #v>>]) -> ([SetReader<#k> & DefaultOrder<KeyValue<#k, ValueMatcher<#v>>>])
 }
 
 define MapAdapter {
   $ReadOnlyExcept[current]$
 
   refines SetReader<#k>
-  refines DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>
-  refines Order<KeyValue<#k,ValueMatcher<#v>>>
+  refines DefaultOrder<KeyValue<#k, ValueMatcher<#v>>>
+  refines Order<KeyValue<#k, ValueMatcher<#v>>>
 
-  @value [SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>] original
-  @value optional Order<KeyValue<#k,#v>> current
+  @value [SetReader<#k> & DefaultOrder<KeyValue<#k, #v>>] original
+  @value optional Order<KeyValue<#k, #v>> current
 
   new (original) {
     return #self{ original, empty }
@@ -62,8 +62,8 @@ define MapAdapter {
 
   get () {
     scoped {
-      KeyValue<#k,#v> keyValue <- `require` current&.get()
-    } in return SimpleKeyValue:new(keyValue.getKey(),CheckValue:using(keyValue.getValue()))
+      KeyValue<#k, #v> keyValue <- `require` current&.get()
+    } in return SimpleKeyValue:new(keyValue.getKey(), CheckValue:using(keyValue.getValue()))
   }
 
   next () {
@@ -82,21 +82,21 @@ define MapAdapter {
 concrete SetEquals<#k> {
   #k requires Formatted
 
-  @type new ([SetReader<#k>&DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>)
+  @type new ([SetReader<#k> & DefaultOrder<#k>]) -> (ValueMatcher<[SetReader<#k> & DefaultOrder<#k>]>)
 }
 
 define SetEquals {
   $ReadOnlyExcept[]$
 
-  refines ValueMatcher<[SetReader<#k>&DefaultOrder<#k>]>
+  refines ValueMatcher<[SetReader<#k> & DefaultOrder<#k>]>
 
-  @value [SetReader<#k>&DefaultOrder<#k>] expected
+  @value [SetReader<#k> & DefaultOrder<#k>] expected
 
   new (expected) {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     traverse (expected.defaultOrder() -> #k currentExpected) {
       if (`present` actual && ! `require(actual).member` currentExpected) {
         \ report.addError(message: String.builder()
@@ -122,29 +122,29 @@ define SetEquals {
   }
 }
 
-concrete MapEquals<#k,#v> {
+concrete MapEquals<#k, #v> {
   #k requires Formatted
   #v requires Formatted
   #v defines Equals<#v>
 
-  @type new ([SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+  @type new ([SetReader<#k> & DefaultOrder<KeyValue<#k, #v>>]) -> (ValueMatcher<[KVReader<#k, #v> & KeyOrder<#k>]>)
 }
 
 define MapEquals {
   $ReadOnlyExcept[]$
 
-  refines ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>
+  refines ValueMatcher<[KVReader<#k, #v> & KeyOrder<#k>]>
 
-  @value [SetReader<#k>&DefaultOrder<KeyValue<#k,#v>>] expected
+  @value [SetReader<#k> & DefaultOrder<KeyValue<#k, #v>>] expected
 
   new (expected) {
     return delegate -> #self
   }
 
-  check (actual,report) {
-    traverse (expected.defaultOrder() -> KeyValue<#k,#v> current) {
+  check (actual, report) {
+    traverse (expected.defaultOrder() -> KeyValue<#k, #v> current) {
       optional #v value <- actual&.get(current.getKey())
-      $Hidden[actual,expected]$
+      $Hidden[actual, expected]$
       if (! `present` value) {
         \ report.addError(message: String.builder()
             .append("Key ")
@@ -180,27 +180,27 @@ define MapEquals {
   }
 }
 
-concrete MapMatches<#k,#v> {
+concrete MapMatches<#k, #v> {
   #k requires Formatted
 
-  @type new ([SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>]) -> (ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>)
+  @type new ([SetReader<#k> & DefaultOrder<KeyValue<#k, ValueMatcher<#v>>>]) -> (ValueMatcher<[KVReader<#k, #v> & KeyOrder<#k>]>)
 }
 
 define MapMatches {
   $ReadOnlyExcept[]$
 
-  refines ValueMatcher<[KVReader<#k,#v>&KeyOrder<#k>]>
+  refines ValueMatcher<[KVReader<#k, #v> & KeyOrder<#k>]>
 
-  @value [SetReader<#k>&DefaultOrder<KeyValue<#k,ValueMatcher<#v>>>] expected
+  @value [SetReader<#k> & DefaultOrder<KeyValue<#k, ValueMatcher<#v>>>] expected
 
   new (expected) {
     return delegate -> #self
   }
 
-  check (actual,report) {
-    traverse (expected.defaultOrder() -> KeyValue<#k,ValueMatcher<#v>> current) {
+  check (actual, report) {
+    traverse (expected.defaultOrder() -> KeyValue<#k, ValueMatcher<#v>> current) {
       optional #v value <- actual&.get(current.getKey())
-      $Hidden[actual,expected]$
+      $Hidden[actual, expected]$
       if (! `present` value) {
         \ report.addError(message: String.builder()
             .append("Key ")

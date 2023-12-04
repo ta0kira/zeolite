@@ -32,7 +32,7 @@ define CheckErrorOr {
     return CheckErrorOr<any>{ empty, errorMatcher }
   }
 
-  check (actual,report) {
+  check (actual, report) {
     optional #x value <- empty
     if (`present` actual && !require(actual).isError()) {
       value <- require(actual).getValue()
@@ -43,9 +43,9 @@ define CheckErrorOr {
     }
     MultiChecker checker <- MultiChecker.new(report)
     if (`present` valueMatcher) {
-      \ checker.tryCheck(title: "value",value,require(valueMatcher))
+      \ checker.tryCheck(title: "value", value, require(valueMatcher))
     } elif (`present` value) {
-      optional Formatted formattedValue <- reduce<#y,ErrorOr<Formatted>>(actual)&.getValue()
+      optional Formatted formattedValue <- reduce<#y, ErrorOr<Formatted>>(actual)&.getValue()
       if (`present` formattedValue) {
       \ report.newSection(title: "value")
           .addError(message: String.builder()
@@ -62,7 +62,7 @@ define CheckErrorOr {
       }
     }
     if (`present` errorMatcher) {
-      \ checker.tryCheck(title: "error",error,require(errorMatcher))
+      \ checker.tryCheck(title: "error", error, require(errorMatcher))
     } elif (`present` error) {
       \ report.newSection(title: "error")
           .addError(message: String.builder()

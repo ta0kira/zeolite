@@ -1,10 +1,10 @@
-@value interface Value0 {}
+@value interface Value0 { }
 
 @value interface Value1 {
   refines Value0
 }
 
-@value interface Value2<|#x> {}
+@value interface Value2<|#x> { }
 
 concrete Object {
   refines Value2<Value0>

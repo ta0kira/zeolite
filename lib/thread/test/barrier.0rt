@@ -40,8 +40,8 @@ unittest waitForMultipleThreads {
   Mutex mutex <- SimpleMutex.new()
   ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(3)
 
-  Thread thread1 <- ProcessThread.from(WaitAndIncrement.create(2,value,mutex,barriers.readAt(1))).start()
-  Thread thread2 <- ProcessThread.from(WaitAndIncrement.create(2,value,mutex,barriers.readAt(2))).start()
+  Thread thread1 <- ProcessThread.from(WaitAndIncrement.create(2, value, mutex, barriers.readAt(1))).start()
+  Thread thread2 <- ProcessThread.from(WaitAndIncrement.create(2, value, mutex, barriers.readAt(2))).start()
 
   \ barriers.readAt(0).wait()
   \ value.get() `Matches:with` CheckValue:equals(2)
@@ -56,7 +56,7 @@ unittest waitForMultipleThreads {
 concrete WaitAndIncrement {
   refines Routine
 
-  @type create (Int,Value,Mutex,BarrierWait) -> (WaitAndIncrement)
+  @type create (Int, Value, Mutex, BarrierWait) -> (WaitAndIncrement)
 }
 
 define WaitAndIncrement {
@@ -65,7 +65,7 @@ define WaitAndIncrement {
   @value Mutex mutex
   @value BarrierWait barrier
 
-  create (count,value,mutex,barrier) {
+  create (count, value, mutex, barrier) {
     return WaitAndIncrement{ count, value, mutex, barrier }
   }
 
@@ -73,7 +73,7 @@ define WaitAndIncrement {
     scoped {
       Int i <- 0
     } in while (i < count) {
-      $Hidden[i,count]$
+      $Hidden[i, count]$
       scoped {
         MutexLock lock <- MutexLock.lock(mutex)
       } cleanup {

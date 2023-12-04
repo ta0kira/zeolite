@@ -28,7 +28,7 @@ concrete Sorting {
   // - Worst-case storage is O(1).
   @category sort<#x>
     #x defines LessThan<#x>
-  ([ReadAt<#x>&WriteAt<#x>]) -> ()
+  ([ReadAt<#x> & WriteAt<#x>]) -> ()
 
   // In-place unstable sorting of a random-access container.
   //
@@ -43,17 +43,17 @@ concrete Sorting {
   // Example:
   //
   //   // Sort myIntContainer in reverse order. (Reversed is from lib/util.)
-  //   \ Sorting:sortWith<?,Reversed<Int>>(myIntContainer)
-  @category sortWith<#x,#xx>
+  //   \ Sorting:sortWith<?, Reversed<Int>>(myIntContainer)
+  @category sortWith<#x, #xx>
     #xx defines LessThan<#x>
-  ([ReadAt<#x>&WriteAt<#x>]) -> ()
+  ([ReadAt<#x> & WriteAt<#x>]) -> ()
 
   // The same as sortWith, but with LessThan2 instead of LessThan.
   @category sortWith2<#x>
-  ([ReadAt<#x>&WriteAt<#x>],LessThan2<#x>) -> ()
+  ([ReadAt<#x> & WriteAt<#x>], LessThan2<#x>) -> ()
 
   // In-place order reversal of a random-access container.
-  @category reverse<#x> ([ReadAt<#x>&WriteAt<#x>]) -> ()
+  @category reverse<#x> ([ReadAt<#x> & WriteAt<#x>]) -> ()
 
   // In-place stable sorting of an iterable list.
   //
@@ -69,9 +69,9 @@ concrete Sorting {
   // - Worst-case storage is O(1).
   // - If the node is not the actual head, the part of the list being sorted
   //   might become detached from the earlier part of the list.
-  @category sortList<#n,#x>
+  @category sortList<#n, #x>
     #x defines LessThan<#x>
-    #n requires ListNode<#n,#x>
+    #n requires ListNode<#n, #x>
   (optional #n) -> (optional #n)
 
   // In-place stable sorting of an iterable list.
@@ -93,16 +93,16 @@ concrete Sorting {
   // Example:
   //
   //   // Sort myIntContainer in reverse order. (Reversed is from lib/util.)
-  //   optional ListNode<#n,#x> newHead <- Sorting:sortListWith<?,?,Reversed<Int>>(oldHead)
-  @category sortListWith<#n,#x,#xx>
+  //   optional ListNode<#n, #x> newHead <- Sorting:sortListWith<?, ?, Reversed<Int>>(oldHead)
+  @category sortListWith<#n, #x, #xx>
     #xx defines LessThan<#x>
-    #n requires ListNode<#n,#x>
+    #n requires ListNode<#n, #x>
   (optional #n) -> (optional #n)
 
   // The same as sortListWith, but with LessThan2 instead of LessThan.
-  @category sortListWith2<#n,#x>
-    #n requires ListNode<#n,#x>
-  (optional #n,LessThan2<#x>) -> (optional #n)
+  @category sortListWith2<#n, #x>
+    #n requires ListNode<#n, #x>
+  (optional #n, LessThan2<#x>) -> (optional #n)
 
   // Reverses the list in place and returns the new head.
   //
@@ -112,7 +112,7 @@ concrete Sorting {
   // Notes:
   // - If the node is not the actual head, the part of the list being reversed
   //   might become detached from the earlier part of the list.
-  @category reverseList<#n,#x>
-    #n requires ListNode<#n,#x>
+  @category reverseList<#n, #x>
+    #n requires ListNode<#n, #x>
   (optional #n) -> (optional #n)
 }

@@ -19,9 +19,9 @@ limitations under the License.
 $ModuleOnly$
 
 concrete Routines {
-  @type newShared (String,ReferenceState) -> (StateMachine)
-  @type newWeak   (String,ReferenceState) -> (StateMachine)
+  @type newShared (String, ReferenceState) -> (StateMachine)
+  @type newWeak   (String, ReferenceState) -> (StateMachine)
 
-  @type newSharedBroken (String,ReferenceState) -> (StateMachine)
-  @type newWeakBroken   (String,ReferenceState) -> (StateMachine)
+  @type newSharedBroken (String, ReferenceState) -> (StateMachine)
+  @type newWeakBroken   (String, ReferenceState) -> (StateMachine)
 }

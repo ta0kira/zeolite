@@ -1,10 +1,10 @@
-@value interface Type1 {}
+@value interface Type1 { }
 
 @value interface Type2 {
   refines Type1
 }
 
-@value interface Inherited<|#x> {}
+@value interface Inherited<|#x> { }
 
 @value interface Parent {
   refines Inherited<Type2>

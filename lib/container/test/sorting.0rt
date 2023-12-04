@@ -26,7 +26,7 @@ unittest sort {
   TestSequence expected <- TestSequence.create()
   Int hash <- 269
   Int size <- 137
-  $ReadOnly[hash,size]$
+  $ReadOnly[hash, size]$
 
   traverse (Counter.zeroIndexed(size) -> Int i) {
     \ original.append((i*hash)%size/3)
@@ -42,14 +42,14 @@ unittest sortWith { $DisableCoverage$
   TestSequence expected <- TestSequence.create()
   Int hash <- 313
   Int size <- 197
-  $ReadOnly[hash,size]$
+  $ReadOnly[hash, size]$
 
   traverse (Counter.revZeroIndexed(size) -> Int i) {
     \ original.append((i*hash)%size/3)
     \ expected.append(i/3)
   }
 
-  \ Sorting:sortWith<?,Reversed<Int>>(original)
+  \ Sorting:sortWith<?, Reversed<Int>>(original)
   \ original `Matches:with` CheckValue:equals(expected)
 }
 
@@ -106,11 +106,11 @@ unittest reverseEmpty {
 }
 
 unittest sortList {
-  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int, LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 137
-  $ReadOnly[hash,size]$
+  $ReadOnly[hash, size]$
 
   traverse (Counter.zeroIndexed(size) -> Int i) {
     \ builder.append((i*hash)%size/3)
@@ -128,11 +128,11 @@ unittest sortList {
 }
 
 unittest sortListSingle { $DisableCoverage$
-  ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
+  ListBuilder<Int, ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
   Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 137
-  $ReadOnly[hash,size]$
+  $ReadOnly[hash, size]$
 
   traverse (Counter.zeroIndexed(size) -> Int i) {
     \ builder.append((i*hash)%size/3)
@@ -150,15 +150,15 @@ unittest sortListSingle { $DisableCoverage$
 }
 
 unittest sortListEmpty {
-  \ Sorting:sortList<LinkedNode<Int>,Int>(empty)
+  \ Sorting:sortList<LinkedNode<Int>, Int>(empty)
 }
 
 unittest sortListPow2 { $DisableCoverage$
-  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int, LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 256
-  $ReadOnly[hash,size]$
+  $ReadOnly[hash, size]$
 
   traverse (Counter.zeroIndexed(size) -> Int i) {
     \ builder.append((i*hash)%size/3)
@@ -176,18 +176,18 @@ unittest sortListPow2 { $DisableCoverage$
 }
 
 unittest sortListWith { $DisableCoverage$
-  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int, LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector<Int>.new()
   Int hash <- 269
   Int size <- 137
-  $ReadOnly[hash,size]$
+  $ReadOnly[hash, size]$
 
   traverse (Counter.revZeroIndexed(size) -> Int i) {
     \ builder.append((i*hash)%size/3)
     \ expected.append(i/3)
   }
 
-  optional LinkedNode<Int> actual <- Sorting:sortListWith<?,?,Reversed<Int>>(builder.build(){0})
+  optional LinkedNode<Int> actual <- Sorting:sortListWith<?, ?, Reversed<Int>>(builder.build(){0})
 
   traverse (expected.defaultOrder() -> Int n) {
     \ require(actual).get() `Matches:with` CheckValue:equals(n)
@@ -198,7 +198,7 @@ unittest sortListWith { $DisableCoverage$
 }
 
 unittest reverseList {
-  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int, LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector<Int>.new()
   Int size <- 101
   $ReadOnly[size]$
@@ -222,7 +222,7 @@ unittest reverseList {
 }
 
 unittest reverseListSingle { $DisableCoverage$
-  ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
+  ListBuilder<Int, ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
   Vector<Int> expected <- Vector<Int>.new()
   Int size <- 101
   $ReadOnly[size]$
@@ -246,7 +246,7 @@ unittest reverseListSingle { $DisableCoverage$
 }
 
 unittest reverseListEmpty {
-  \ Sorting:reverseList<LinkedNode<Int>,Int>(empty)
+  \ Sorting:reverseList<LinkedNode<Int>, Int>(empty)
 }
 
 concrete TestSequence {
@@ -267,7 +267,7 @@ define TestSequence {
   }
 
   formatted () {
-    [Append<Formatted>&Build<String>] builder <- String.builder()
+    [Append<Formatted> & Build<String>] builder <- String.builder()
     \ builder.append("{")
     traverse (seq.defaultOrder() -> Formatted x) {
       \ builder.append(" ").append(x)
@@ -283,8 +283,8 @@ define TestSequence {
     return seq.readAt(i)
   }
 
-  writeAt (i,x) {
-    \ seq.writeAt(i,x)
+  writeAt (i, x) {
+    \ seq.writeAt(i, x)
     return self
   }
 
@@ -293,7 +293,7 @@ define TestSequence {
     return self
   }
 
-  equals (x,y) {
+  equals (x, y) {
     return x `ReadAtH:equals` y
   }
 }

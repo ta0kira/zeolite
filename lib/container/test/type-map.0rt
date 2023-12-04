@@ -31,9 +31,9 @@ unittest basicOperations {
   \ map.get(keyString) `Matches:with` CheckValue:equals(empty?String)
   \ map.get(keyValue)  `Matches:with` CheckValue:equals(empty?Value)
 
-  \ map.set(keyInt,1)
-  \ map.set(keyString,"a")
-  \ map.set(keyValue,Value.new())
+  \ map.set(keyInt, 1)
+  \ map.set(keyString, "a")
+  \ map.set(keyValue, Value.new())
 
   \ map.get(keyInt) `Matches:with` CheckValue:equals(   1)
   \ map.get(keyString) `Matches:with` CheckValue:equals("a")
@@ -50,10 +50,10 @@ unittest wrongReturnType {
   TypeKey<String> keyString <- TypeKey<String>.new()
 
   // Added as Formatted, which means it cannot be retrieved as String later.
-  \ map.set<Formatted>(keyString,"a")
+  \ map.set<Formatted>(keyString, "a")
   \ map.get<String>(keyString) `Matches:with` CheckValue:equals(empty?String)
 
-  \ map.set<String>(keyString,"a")
+  \ map.set<String>(keyString, "a")
   \ map.get<String>(keyString) `Matches:with` CheckValue:equals("a")
 }
 
@@ -61,7 +61,7 @@ unittest duplicate {
   TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
   TypeKey<String> keyString <- TypeKey<String>.new()
 
-  TypeMap map <- TypeMap.new().set(keyInt,1).set(keyString,"a")
+  TypeMap map <- TypeMap.new().set(keyInt, 1).set(keyString, "a")
 
   TypeMap copy <- map.duplicate()
   \ copy.get(keyInt) `Matches:with` CheckValue:equals(1)
@@ -75,12 +75,12 @@ unittest duplicate {
 
 unittest getValues {
   TypeMap map <- TypeMap.new()
-      .set(TypeKey<String>.new(),"one")
-      .set(TypeKey<Int>.new(),2)
-      .set(TypeKey<String>.new(),"two")
-      .set(TypeKey<Int>.new(),1)
+      .set(TypeKey<String>.new(), "one")
+      .set(TypeKey<Int>.new(), 2)
+      .set(TypeKey<String>.new(), "two")
+      .set(TypeKey<Int>.new(), 1)
 
-  [Container&SetReader<String>] actual <- map.getAll(SortedSet<String>.new())
+  [Container & SetReader<String>] actual <- map.getAll(SortedSet<String>.new())
 
   \ actual.size() `Matches:with` CheckValue:equals(2)
   \ actual.member("one") `Matches:with` CheckValue:equals(true)
@@ -119,7 +119,7 @@ define Value {
     return "Value"
   }
 
-  equals (_,_) {
+  equals (_, _) {
     return true
   }
 }

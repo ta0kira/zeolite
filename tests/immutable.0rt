@@ -168,7 +168,7 @@ testcase "@value members must have immutable types" {
   require "value2"
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
 concrete Test {
   immutable
@@ -204,16 +204,16 @@ testcase "intersection requires at least one immutable type" {
   require "value"
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
-@value interface Bar {}
+@value interface Bar { }
 
 concrete Test {
   immutable
 }
 
 define Test {
-  @value [Foo&Bar] value
+  @value [Foo & Bar] value
 }
 
 
@@ -221,7 +221,7 @@ testcase "intersection only requires one immutable type" {
   compiles
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
 @value interface Bar {
   immutable
@@ -232,7 +232,7 @@ concrete Test {
 }
 
 define Test {
-  @value [Foo&Bar] value
+  @value [Foo & Bar] value
 }
 
 
@@ -242,7 +242,7 @@ testcase "union requires all immutable types" {
   require "value"
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
 @value interface Bar {
   immutable
@@ -253,7 +253,7 @@ concrete Test {
 }
 
 define Test {
-  @value [Foo|Bar] value
+  @value [Foo | Bar] value
 }
 
 
@@ -274,7 +274,7 @@ concrete Test {
 }
 
 define Test {
-  @value [Foo|Bar] value
+  @value [Foo | Bar] value
 }
 
 
@@ -373,7 +373,7 @@ testcase "param substitution checked for @type calls" {
   require "Foo"
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
 concrete Test<#x> {
   #x immutable
@@ -421,7 +421,7 @@ testcase "param substitution checked for function params" {
   require "Foo"
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
 concrete Test {
   @type call<#x>
@@ -474,9 +474,9 @@ testcase "immutable type checked for internal refines inheritance" {
   immutable
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   refines Base
@@ -497,9 +497,9 @@ testcase "immutable type checked for internal defines inheritance" {
   immutable
 }
 
-@value interface Foo {}
+@value interface Foo { }
 
-concrete Test {}
+concrete Test { }
 
 define Test {
   defines Base

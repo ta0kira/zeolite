@@ -15,4 +15,4 @@ extra_files: [
   }
   "tests/pointer/call.hpp"
 ]
-mode: incremental {}
+mode: incremental { }

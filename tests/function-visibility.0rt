@@ -27,7 +27,7 @@ concrete Test {
   visibility Append<#x>, Foo
 }
 
-define Test {}
+define Test { }
 
 
 testcase "visibility filters not checked" {
@@ -40,7 +40,7 @@ concrete Test<#x> {
   visibility Test<Int>
 }
 
-define Test {}
+define Test { }
 
 
 testcase "visibility disallows contravariant" {
@@ -54,7 +54,7 @@ concrete Test<#x|> {
   visibility #x
 }
 
-define Test {}
+define Test { }
 
 
 testcase "visibility allows covariant" {
@@ -65,7 +65,7 @@ concrete Test<|#x> {
   visibility #x
 }
 
-define Test {}
+define Test { }
 
 
 testcase "visibility allowed types" {
@@ -73,12 +73,12 @@ testcase "visibility allowed types" {
 }
 
 concrete Test<#x> {
-  visibility [Int|Char], #self
+  visibility [Int | Char], #self
   visibility _
   visibility #x, Test<#x>
 }
 
-define Test {}
+define Test { }
 
 
 testcase "restricted visibility not allowed for @category" {
@@ -94,7 +94,7 @@ concrete Test {
 }
 
 define Test {
-  foo () {}
+  foo () { }
 }
 
 
@@ -187,7 +187,7 @@ testcase "visibilty checks correct conversion direction" {
   compiles
 }
 
-@value interface Base<|#x> {}
+@value interface Base<|#x> { }
 
 concrete Test {
   visibility Base<Formatted>
@@ -257,7 +257,7 @@ define Test {
   }
 }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   @category Int value <- Test.call()
@@ -354,7 +354,7 @@ testcase "visibilty allows any" {
   compiles
 }
 
-@value interface Base {}
+@value interface Base { }
 
 concrete Test {
   visibility String, Int, Base, Bool
@@ -387,7 +387,7 @@ unittest test {
   \ Test.test()
 }
 
-@value interface Base<|#x> {}
+@value interface Base<|#x> { }
 
 concrete Value<|#x> {
   @type new () -> (#self)

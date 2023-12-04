@@ -23,7 +23,7 @@ testcase "reduce to self" {
 unittest test {
   Value value <- Value.create()
   scoped {
-    optional Value value2 <- reduce<Value,Value>(value)
+    optional Value value2 <- reduce<Value, Value>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
@@ -47,7 +47,7 @@ testcase "reduce to unrelated" {
 unittest test {
   Value value <- Value.create()
   scoped {
-    optional String value2 <- reduce<Value,String>(value)
+    optional String value2 <- reduce<Value, String>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
@@ -73,7 +73,7 @@ testcase "reduce wrong arg type" {
 
 unittest test {
   Value value <- Value.create()
-  optional Value value2 <- reduce<String,Value>(value)
+  optional Value value2 <- reduce<String, Value>(value)
 }
 
 concrete Value {
@@ -96,7 +96,7 @@ testcase "reduce wrong return type" {
 
 unittest test {
   Value value <- Value.create()
-  optional Value value2 <- reduce<Value,String>(value)
+  optional Value value2 <- reduce<Value, String>(value)
 }
 
 concrete Value {
@@ -136,11 +136,11 @@ define Value {
   }
 
   attempt () {
-    return reduce<Value<#x>,Value<#y>>(self)
+    return reduce<Value<#x>, Value<#y>>(self)
   }
 }
 
-@value interface Type1 {}
+@value interface Type1 { }
 
 @value interface Type2 {
   refines Type1
@@ -173,11 +173,11 @@ define Value {
   }
 
   attempt () {
-    return reduce<Value<#x>,Value<#y>>(self)
+    return reduce<Value<#x>, Value<#y>>(self)
   }
 }
 
-@value interface Type1 {}
+@value interface Type1 { }
 
 @value interface Type2 {
   refines Type1
@@ -210,11 +210,11 @@ define Value {
   }
 
   attempt () {
-    return reduce<Value<#x>,Value<#y>>(self)
+    return reduce<Value<#x>, Value<#y>>(self)
   }
 }
 
-@value interface Type1 {}
+@value interface Type1 { }
 
 @value interface Type2 {
   refines Type1
@@ -247,11 +247,11 @@ define Value {
   }
 
   attempt () {
-    return reduce<Value<#x>,Value<#y>>(self)
+    return reduce<Value<#x>, Value<#y>>(self)
   }
 }
 
-@value interface Type1 {}
+@value interface Type1 { }
 
 @value interface Type2 {
   refines Type1
@@ -263,15 +263,15 @@ testcase "reduce success from union" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
+  [Value1 | Value2] value <- Value1.create()
   scoped {
-    optional Base value2 <- reduce<[Value1|Value2],Base>(value)
+    optional Base value2 <- reduce<[Value1 | Value2], Base>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base {}
+@value interface Base { }
 
 concrete Value1 {
   refines Base
@@ -295,15 +295,15 @@ testcase "reduce fail from union" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value1.create()
+  [Value1 | Value2] value <- Value1.create()
   scoped {
-    optional Value2 value2 <- reduce<[Value1|Value2],Value2>(value)
+    optional Value2 value2 <- reduce<[Value1 | Value2], Value2>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base {}
+@value interface Base { }
 
 concrete Value1 {
   refines Base
@@ -329,15 +329,15 @@ testcase "reduce success to intersect" {
 unittest test {
   Value value <- Value.create()
   scoped {
-    optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
+    optional [Base1 & Base2] value2 <- reduce<Value, [Base1 & Base2]>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base1 {}
+@value interface Base1 { }
 
-@value interface Base2 {}
+@value interface Base2 { }
 
 concrete Value {
   refines Base1
@@ -360,15 +360,15 @@ testcase "reduce fail to intersect" {
 unittest test {
   Value value <- Value.create()
   scoped {
-    optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
+    optional [Base1 & Base2] value2 <- reduce<Value, [Base1 & Base2]>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base1 {}
+@value interface Base1 { }
 
-@value interface Base2 {}
+@value interface Base2 { }
 
 concrete Value {
   refines Base1
@@ -388,17 +388,17 @@ testcase "reduce success union to intersect" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value2.create()
+  [Value1 | Value2] value <- Value2.create()
   scoped {
-    optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
+    optional [Base1 & Base2] value2 <- reduce<[Value1 | Value2], [Base1 & Base2]>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base1 {}
+@value interface Base1 { }
 
-@value interface Base2 {}
+@value interface Base2 { }
 
 @value interface Value1 {
   refines Base1
@@ -424,17 +424,17 @@ testcase "reduce fail union to intersect" {
 }
 
 unittest test {
-  [Value1|Value2] value <- Value2.create()
+  [Value1 | Value2] value <- Value2.create()
   scoped {
-    optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
+    optional [Base1 & Base2] value2 <- reduce<[Value1 | Value2], [Base1 & Base2]>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base1 {}
+@value interface Base1 { }
 
-@value interface Base2 {}
+@value interface Base2 { }
 
 @value interface Value1 {
   refines Base1
@@ -459,23 +459,23 @@ testcase "reduce success intersect to union" {
 }
 
 unittest test {
-  [Value1&Value2] value <- Data.create()
+  [Value1 & Value2] value <- Data.create()
   scoped {
-    optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
+    optional [Base1 | Base2] value2 <- reduce<[Value1 & Value2], [Base1 | Base2]>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base1 {}
+@value interface Base1 { }
 
-@value interface Base2 {}
+@value interface Base2 { }
 
 @value interface Value1 {
   refines Base1
 }
 
-@value interface Value2 {}
+@value interface Value2 { }
 
 concrete Data {
   refines Value1
@@ -496,21 +496,21 @@ testcase "reduce fail intersect to union" {
 }
 
 unittest test {
-  [Value1&Value2] value <- Data.create()
+  [Value1 & Value2] value <- Data.create()
   scoped {
-    optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
+    optional [Base1 | Base2] value2 <- reduce<[Value1 & Value2], [Base1 | Base2]>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
 }
 
-@value interface Base1 {}
+@value interface Base1 { }
 
-@value interface Base2 {}
+@value interface Base2 { }
 
-@value interface Value1 {}
+@value interface Value1 { }
 
-@value interface Value2 {}
+@value interface Value2 { }
 
 concrete Data {
   refines Value1
@@ -533,7 +533,7 @@ testcase "reduce succeeds to covariant any" {
 unittest test {
   Value<String> value <- Value<String>.create()
   scoped {
-    optional Value<any> value2 <- reduce<Value<String>,Value<any>>(value)
+    optional Value<any> value2 <- reduce<Value<String>, Value<any>>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
@@ -557,7 +557,7 @@ testcase "reduce succeeds to contravariant all" {
 unittest test {
   Value<String> value <- Value<String>.create()
   scoped {
-    optional Value<all> value2 <- reduce<Value<String>,Value<all>>(value)
+    optional Value<all> value2 <- reduce<Value<String>, Value<all>>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
@@ -581,7 +581,7 @@ testcase "reduce fails to invariant any" {
 unittest test {
   Value<String> value <- Value<String>.create()
   scoped {
-    optional Value<any> value2 <- reduce<Value<String>,Value<any>>(value)
+    optional Value<any> value2 <- reduce<Value<String>, Value<any>>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
@@ -605,7 +605,7 @@ testcase "reduce succeeds from covariant all" {
 unittest test {
   Value<all> value <- Value<all>.create()
   scoped {
-    optional Value<String> value2 <- reduce<Value<all>,Value<String>>(value)
+    optional Value<String> value2 <- reduce<Value<all>, Value<String>>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
@@ -629,7 +629,7 @@ testcase "reduce succeeds from contravariant any" {
 unittest test {
   Value<any> value <- Value<any>.create()
   scoped {
-    optional Value<String> value2 <- reduce<Value<any>,Value<String>>(value)
+    optional Value<String> value2 <- reduce<Value<any>, Value<String>>(value)
   } in if (!present(value2)) {
     fail("Failed")
   }
@@ -653,7 +653,7 @@ testcase "reduce fails from invariant all" {
 unittest test {
   Value<all> value <- Value<all>.create()
   scoped {
-    optional Value<String> value2 <- reduce<Value<all>,Value<String>>(value)
+    optional Value<String> value2 <- reduce<Value<all>, Value<String>>(value)
   } in if (present(value2)) {
     fail("Failed")
   }
@@ -675,7 +675,7 @@ testcase "reduce from interface" {
 }
 
 unittest test {
-  if (!present(reduce<Base1,Base0>(Value.create()))) {
+  if (!present(reduce<Base1, Base0>(Value.create()))) {
     fail("Failed")
   }
 }
@@ -704,21 +704,21 @@ testcase "reduce with internal override" {
 }
 
 unittest test {
-  if (!present(reduce<Value,Base2<Base0>>(Value.create()))) {
+  if (!present(reduce<Value, Base2<Base0>>(Value.create()))) {
     fail("Failed")
   }
-  if (present(reduce<Value,Base2<Base1>>(Value.create()))) {
+  if (present(reduce<Value, Base2<Base1>>(Value.create()))) {
     fail("Failed")
   }
 }
 
-@value interface Base0 {}
+@value interface Base0 { }
 
 @value interface Base1 {
   refines Base0
 }
 
-@value interface Base2<|#x> {}
+@value interface Base2<|#x> { }
 
 concrete Value {
   refines Base2<Base0>
@@ -738,9 +738,9 @@ testcase "partial matches in nested types" {
   success
 }
 
-@value interface A {}
-@value interface B {}
-@value interface C {}
+@value interface A { }
+@value interface B { }
+@value interface C { }
 
 concrete AB {
   refines A
@@ -763,23 +763,23 @@ define AC {
 }
 
 unittest leftNestedInRight {
-  \ Testing.checkTrue(present(reduce<[A&B],[[A&B]|C]>(AB.create())))
+  \ Testing.checkTrue(present(reduce<[A & B], [[A & B] | C]>(AB.create())))
 }
 
 unittest rightNestedInLeft {
-  \ Testing.checkTrue(present(reduce<[[A|B]&C],[A|B]>(AC.create())))
+  \ Testing.checkTrue(present(reduce<[[A | B] & C], [A | B]>(AC.create())))
 }
 
 unittest unionToUnion {
-  \ Testing.checkTrue(present(reduce<[[A&B]|C],[[A&B]|C]>(AB.create())))
+  \ Testing.checkTrue(present(reduce<[[A & B] | C], [[A & B] | C]>(AB.create())))
 }
 
 unittest intersectToIntersect {
-  \ Testing.checkTrue(present(reduce<[[A|B]&C],[[A|B]&C]>(AC.create())))
+  \ Testing.checkTrue(present(reduce<[[A | B] & C], [[A | B] & C]>(AC.create())))
 }
 
 unittest unionToIntersect {
-  \ Testing.checkFalse(present(reduce<[A|B],[A&B]>(AB.create())))
+  \ Testing.checkFalse(present(reduce<[A | B], [A & B]>(AB.create())))
 }
 
 
@@ -788,13 +788,13 @@ testcase "parent param contains meta type" {
 }
 
 unittest test {
-  \ Testing.checkTrue(present(reduce<Type,Build<AsBool>>(Type.new())))
-  \ Testing.checkTrue(present(reduce<Type,Build<ReadAt<Char>>>(Type.new())))
-  \ Testing.checkFalse(present(reduce<Type,Build<String>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type, Build<AsBool>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type, Build<ReadAt<Char>>>(Type.new())))
+  \ Testing.checkFalse(present(reduce<Type, Build<String>>(Type.new())))
 }
 
 concrete Type {
-  refines Build<[AsBool&ReadAt<Char>]>
+  refines Build<[AsBool & ReadAt<Char>]>
 
   @type new () -> (Type)
 }
@@ -810,11 +810,11 @@ testcase "parent param contains #self" {
 }
 
 unittest test {
-  \ Testing.checkTrue(present(reduce<Type,Order<Type>>(Type.new())))
-  \ Testing.checkTrue(present(reduce<Type,Order<Order<Type>>>(Type.new())))
-  \ Testing.checkFalse(present(reduce<Type,Build<Type>>(Type.new())))
-  \ Testing.checkTrue(present(reduce<Type,Build<Order<Type>>>(Type.new())))
-  \ Testing.checkTrue(present(reduce<Type,Order<Formatted>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type, Order<Type>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type, Order<Order<Type>>>(Type.new())))
+  \ Testing.checkFalse(present(reduce<Type, Build<Type>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type, Build<Order<Type>>>(Type.new())))
+  \ Testing.checkTrue(present(reduce<Type, Order<Formatted>>(Type.new())))
 }
 
 concrete Type {

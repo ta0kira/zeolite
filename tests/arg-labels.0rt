@@ -22,11 +22,11 @@ testcase "call with arg labels" {
 }
 
 unittest categoryCall {
-  \ Testing.checkEquals(Value:call(value: 1),1)
+  \ Testing.checkEquals(Value:call(value: 1), 1)
 }
 
 unittest typeValueCall {
-  \ Testing.checkEquals(Value.new(value: 1).add(value: 10),11)
+  \ Testing.checkEquals(Value.new(value: 1).add(value: 10), 11)
 }
 
 concrete Value {
@@ -104,7 +104,7 @@ testcase "merge with matched label" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Value.call(value: 1),1)
+  \ Testing.checkEquals(Value.call(value: 1), 1)
 }
 
 @type interface Base {
@@ -241,11 +241,11 @@ unittest test {
 }
 
 concrete Value {
-  @type call (Int value1:,Int value2:) -> (Int)
+  @type call (Int value1:, Int value2:) -> (Int)
 }
 
 define Value {
-  call (_,_) { return 1 }
+  call (_, _) { return 1 }
 }
 
 
@@ -260,13 +260,13 @@ unittest test {
 }
 
 concrete Value {
-  @type call1 () -> (Int,Int)
-  @type call2 (Int value1:,Int value2:) -> ()
+  @type call1 () -> (Int, Int)
+  @type call2 (Int value1:, Int value2:) -> ()
 }
 
 define Value {
   call1 () { return 1, 2 }
-  call2 (_,_) { }
+  call2 (_, _) { }
 }
 
 
@@ -281,13 +281,13 @@ unittest test {
 }
 
 concrete Value {
-  @type call1 () -> (Int,Int)
-  @type call2 (Int value1:,Int value2:) -> ()
+  @type call1 () -> (Int, Int)
+  @type call2 (Int value1:, Int value2:) -> ()
 }
 
 define Value {
   call1 () { return 1, 2 }
-  call2 (_,_) { }
+  call2 (_, _) { }
 }
 
 
@@ -296,13 +296,13 @@ testcase "reusing label is allowed" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Value.call(positive: 1,positive: 2),3)
+  \ Testing.checkEquals(Value.call(positive: 1, positive: 2), 3)
 }
 
 concrete Value {
-  @type call (Int positive:,Int positive:) -> (Int)
+  @type call (Int positive:, Int positive:) -> (Int)
 }
 
 define Value {
-  call (value1,value2) { return value1+value2 }
+  call (value1, value2) { return value1+value2 }
 }

@@ -135,7 +135,7 @@ testcase "CheckValue:using failure not equal" {
 }
 
 unittest test {
-  \ TestValue.default() `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
+  \ TestValue.default() `Matches:with` `CheckValue:using` TestValue.new(123, "message1", empty)
 }
 
 
@@ -145,7 +145,7 @@ testcase "CheckValue:using failure left empty" {
 }
 
 unittest test {
-  \ empty?TestValue `Matches:with` `CheckValue:using` TestValue.new(123,"message1",empty)
+  \ empty?TestValue `Matches:with` `CheckValue:using` TestValue.new(123, "message1", empty)
 }
 
 
@@ -236,7 +236,7 @@ testcase "CheckValue:betweenNotEqual success" {
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:betweenNotEquals(0,3)
+  \ 1 `Matches:with` CheckValue:betweenNotEquals(0, 3)
 }
 
 
@@ -248,7 +248,7 @@ testcase "CheckValue:betweenNotEqual failure below" {
 }
 
 unittest test {
-  \ 3 `Matches:with` CheckValue:betweenNotEquals(5,200)
+  \ 3 `Matches:with` CheckValue:betweenNotEquals(5, 200)
 }
 
 
@@ -260,7 +260,7 @@ testcase "CheckValue:betweenNotEqual failure above" {
 }
 
 unittest test {
-  \ 300 `Matches:with` CheckValue:betweenNotEquals(5,200)
+  \ 300 `Matches:with` CheckValue:betweenNotEquals(5, 200)
 }
 
 
@@ -271,7 +271,7 @@ testcase "CheckValue:betweenNotEqual failure endpoint low" {
 }
 
 unittest test {
-  \ 5 `Matches:with` CheckValue:betweenNotEquals(5,200)
+  \ 5 `Matches:with` CheckValue:betweenNotEquals(5, 200)
 }
 
 
@@ -282,7 +282,7 @@ testcase "CheckValue:betweenNotEqual failure endpoint high" {
 }
 
 unittest test {
-  \ 200 `Matches:with` CheckValue:betweenNotEquals(5,200)
+  \ 200 `Matches:with` CheckValue:betweenNotEquals(5, 200)
 }
 
 
@@ -294,7 +294,7 @@ testcase "CheckValue:betweenNotEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:betweenNotEquals(5,200)
+  \ empty?Int `Matches:with` CheckValue:betweenNotEquals(5, 200)
 }
 
 
@@ -367,9 +367,9 @@ testcase "CheckValue:betweenEqual success" {
 }
 
 unittest test {
-  \ 1 `Matches:with` CheckValue:betweenEquals(0,3)
-  \ 0 `Matches:with` CheckValue:betweenEquals(0,3)
-  \ 3 `Matches:with` CheckValue:betweenEquals(0,3)
+  \ 1 `Matches:with` CheckValue:betweenEquals(0, 3)
+  \ 0 `Matches:with` CheckValue:betweenEquals(0, 3)
+  \ 3 `Matches:with` CheckValue:betweenEquals(0, 3)
 }
 
 
@@ -381,7 +381,7 @@ testcase "CheckValue:betweenEqual failure below" {
 }
 
 unittest test {
-  \ 3 `Matches:with` CheckValue:betweenEquals(5,200)
+  \ 3 `Matches:with` CheckValue:betweenEquals(5, 200)
 }
 
 
@@ -393,7 +393,7 @@ testcase "CheckValue:betweenEqual failure above" {
 }
 
 unittest test {
-  \ 300 `Matches:with` CheckValue:betweenEquals(5,200)
+  \ 300 `Matches:with` CheckValue:betweenEquals(5, 200)
 }
 
 
@@ -405,5 +405,5 @@ testcase "CheckValue:betweenEqual failure empty" {
 }
 
 unittest test {
-  \ empty?Int `Matches:with` CheckValue:betweenEquals(5,200)
+  \ empty?Int `Matches:with` CheckValue:betweenEquals(5, 200)
 }

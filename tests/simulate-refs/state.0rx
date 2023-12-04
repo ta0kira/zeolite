@@ -17,38 +17,38 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Run {
-  then (first,second) {
+  then (first, second) {
     return delegate -> `RunThen:new`
   }
 
-  ifElse (test,doIf,doElse) {
+  ifElse (test, doIf, doElse) {
     return delegate -> `RunIfElse:new`
   }
 }
 
-concrete RunThen<#l,#s|> {
-  @category new<#l,#s> (optional StateTransition<#l,#s>,optional StateTransition<#l,#s>) -> (optional StateTransition<#l,#s>)
+concrete RunThen<#l, #s|> {
+  @category new<#l, #s> (optional StateTransition<#l, #s>, optional StateTransition<#l, #s>) -> (optional StateTransition<#l, #s>)
 }
 
 define RunThen {
-  refines StateTransition<#l,#s>
+  refines StateTransition<#l, #s>
 
-  @value StateTransition<#l,#s> first
-  @value StateTransition<#l,#s> second
+  @value StateTransition<#l, #s> first
+  @value StateTransition<#l, #s> second
 
-  new (first,second) {
+  new (first, second) {
     if (! `present` first) {
       return second
     } elif (! `present` second) {
       return first
     } else {
-      return RunThen<#l,#s>{ `require` first, `require` second }
+      return RunThen<#l, #s>{ `require` first, `require` second }
     }
   }
 
-  runWith (label,state) {
+  runWith (label, state) {
     scoped {
-      optional StateTransition<#l,#s> next <- label `first.runWith` state
+      optional StateTransition<#l, #s> next <- label `first.runWith` state
     } in if (`present` next) {
       return #self{ `require` next, second }
     } else {
@@ -57,24 +57,24 @@ define RunThen {
   }
 }
 
-concrete RunIfElse<#l,#s|> {
-  @category new<#l,#s>
-  (StatePredicate<#l,#s> test:,optional StateTransition<#l,#s> doIf:,optional StateTransition<#l,#s> doElse:) ->
-  (StateTransition<#l,#s>)
+concrete RunIfElse<#l, #s|> {
+  @category new<#l, #s>
+  (StatePredicate<#l, #s> test:, optional StateTransition<#l, #s> doIf:, optional StateTransition<#l, #s> doElse:) ->
+  (StateTransition<#l, #s>)
 }
 
 define RunIfElse {
-  refines StateTransition<#l,#s>
+  refines StateTransition<#l, #s>
 
-  @value StatePredicate<#l,#s> test
-  @value optional StateTransition<#l,#s> doIf
-  @value optional StateTransition<#l,#s> doElse
+  @value StatePredicate<#l, #s> test
+  @value optional StateTransition<#l, #s> doIf
+  @value optional StateTransition<#l, #s> doElse
 
-  new (test,doIf,doElse) {
-    return delegate -> RunIfElse<#l,#s>
+  new (test, doIf, doElse) {
+    return delegate -> RunIfElse<#l, #s>
   }
 
-  runWith (label,state) {
+  runWith (label, state) {
     if (label `test.test` state) {
       return doIf
     } else {
@@ -90,10 +90,10 @@ define LabeledStateMachine {
 
   @value #l label
   @value #s state
-  @value optional StateTransition<#l,#s> machine
+  @value optional StateTransition<#l, #s> machine
 
-  new (label,state,transition) {
-    return delegate -> LabeledStateMachine<#l,#s>
+  new (label, state, transition) {
+    return delegate -> LabeledStateMachine<#l, #s>
   }
 
   transition () {
@@ -108,8 +108,8 @@ define LabeledStateMachine {
 }
 
 define StateExecutor {
-  multiplexStates (original,random) {
-    HashedMap<Int,StateMachine> states <- HashedMap<Int,StateMachine>.new()
+  multiplexStates (original, random) {
+    HashedMap<Int, StateMachine> states <- HashedMap<Int, StateMachine>.new()
     CategoricalTree<Int> weights <- CategoricalTree<Int>.new()
 
     scoped {

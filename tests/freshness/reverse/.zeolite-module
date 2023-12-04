@@ -3,4 +3,4 @@ path: "tests/freshness/reverse"
 private_deps: [
   "../../../tests/freshness"
 ]
-mode: incremental {}
+mode: incremental { }

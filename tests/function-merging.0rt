@@ -50,7 +50,7 @@ testcase "internal merge failed" {
   require "Interface2"
 }
 
-@value interface Interface {}
+@value interface Interface { }
 
 @value interface Interface2 {
   refines Interface
@@ -108,7 +108,7 @@ testcase "external merge failed" {
   require "Interface2"
 }
 
-@value interface Interface {}
+@value interface Interface { }
 
 @value interface Interface2 {
   refines Interface
@@ -144,14 +144,14 @@ testcase "merging of internal inherited functions works" {
   call (String) -> ()
 }
 
-concrete Type {}
+concrete Type { }
 
 define Type {
   refines Base0
   refines Base1
 
   @value call (Formatted) -> ()
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -175,7 +175,7 @@ define Type {
   refines Base1
 
   @value call (Formatted) -> ()
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -200,7 +200,7 @@ concrete Type {
 
 define Type {
   @value call (any) -> ()
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -224,7 +224,7 @@ define Type {
   refines Base0
   refines Base1
 
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -252,7 +252,7 @@ concrete Type {
 
 define Type {
   @value call (Formatted) -> ()
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -280,7 +280,7 @@ define Type {
   refines Base0
   refines Base1
 
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -316,7 +316,7 @@ define Type {
   refines Base3
 
   @value call (any) -> ()
-  call (_) {}
+  call (_) { }
 }
 
 
@@ -356,5 +356,5 @@ define Type {
   refines Base2
   refines Base3
 
-  call (_) {}
+  call (_) { }
 }

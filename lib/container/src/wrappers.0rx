@@ -19,13 +19,13 @@ limitations under the License.
 define SimpleKeyValue {
   $ReadOnlyExcept[]$
 
-  refines KeyValue<#k,#v>
+  refines KeyValue<#k, #v>
 
   @value #k key
   @value #v value
 
-  new (key,value) {
-    return delegate -> SimpleKeyValue<#k,#v>
+  new (key, value) {
+    return delegate -> SimpleKeyValue<#k, #v>
   }
 
   getKey () {
@@ -40,7 +40,7 @@ define SimpleKeyValue {
 define MapKeyOrder {
   refines Order<#k>
 
-  @value Order<KeyValue<#k,any>> order
+  @value Order<KeyValue<#k, any>> order
 
   new (order) {
     if (!present(order)) {
@@ -52,7 +52,7 @@ define MapKeyOrder {
 
   next () {
     scoped {
-      optional Order<KeyValue<#k,any>> order2 <- order.next()
+      optional Order<KeyValue<#k, any>> order2 <- order.next()
     } in if (present(order2)) {
       order <- require(order2)
       return self
@@ -69,7 +69,7 @@ define MapKeyOrder {
 define MapValueOrder {
   refines Order<#v>
 
-  @value Order<KeyValue<any,#v>> order
+  @value Order<KeyValue<any, #v>> order
 
   new (order) {
     if (!present(order)) {
@@ -81,7 +81,7 @@ define MapValueOrder {
 
   next () {
     scoped {
-      optional Order<KeyValue<any,#v>> order2 <- order.next()
+      optional Order<KeyValue<any, #v>> order2 <- order.next()
     } in if (present(order2)) {
       order <- require(order2)
       return self

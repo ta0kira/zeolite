@@ -4,5 +4,5 @@ $ModuleOnly$
 concrete PrimeThread {
   refines Routine
 
-  @type create (ThreadContinue,PrimeTracker) -> (PrimeThread)
+  @type create (ThreadContinue, PrimeTracker) -> (PrimeThread)
 }

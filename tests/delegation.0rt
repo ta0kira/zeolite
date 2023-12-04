@@ -21,54 +21,54 @@ testcase "delegate to functions" {
 }
 
 unittest fromCategory {
-  \ Testing.checkEquals(Value:call1(13,"message"),123-13+7)
+  \ Testing.checkEquals(Value:call1(13, "message"), 123-13+7)
 }
 
 unittest fromType {
-  \ Testing.checkEquals(Value.call2(13,"message"),456-13+7)
+  \ Testing.checkEquals(Value.call2(13, "message"), 456-13+7)
 }
 
 unittest fromValue {
-  \ Testing.checkEquals(Value.new().call3(13,"message"),789-13+7)
+  \ Testing.checkEquals(Value.new().call3(13, "message"), 789-13+7)
 }
 
 concrete Value {
   @type new () -> (#self)
-  @category call1 (Int,String) -> (Int)
-  @type call2 (Int,String) -> (Int)
-  @value call3 (Int,String) -> (Int)
+  @category call1 (Int, String) -> (Int)
+  @type call2 (Int, String) -> (Int)
+  @value call3 (Int, String) -> (Int)
 }
 
 define Value {
   new () { return #self{ } }
 
-  call1 (number1,message1) {
+  call1 (number1, message1) {
     return delegate -> `delegatedTo1`
   }
 
-  call2 (number2,message2) {
+  call2 (number2, message2) {
     \ delegate -> `delegatedTo1`
     return delegate -> `delegatedTo2`
   }
 
-  call3 (number3,message3) {
+  call3 (number3, message3) {
     \ delegate -> `delegatedTo1`
     \ delegate -> `delegatedTo2`
     return delegate -> `delegatedTo3`
   }
 
-  @category delegatedTo1 (Int,String) -> (Int)
-  delegatedTo1 (number,message) {
+  @category delegatedTo1 (Int, String) -> (Int)
+  delegatedTo1 (number, message) {
     return 123-number+message.size()
   }
 
-  @type delegatedTo2 (Int,String) -> (Int)
-  delegatedTo2 (number,message) {
+  @type delegatedTo2 (Int, String) -> (Int)
+  delegatedTo2 (number, message) {
     return 456-number+message.size()
   }
 
-  @value delegatedTo3 (Int,String) -> (Int)
-  delegatedTo3 (number,message) {
+  @value delegatedTo3 (Int, String) -> (Int)
+  delegatedTo3 (number, message) {
     return 789-number+message.size()
   }
 }
@@ -79,28 +79,28 @@ testcase "delegate to correct initializer" {
 }
 
 unittest fromCategory {
-  Value value <- Value:new1(13,"message")
-  \ Testing.checkEquals(value.getInt(),13)
-  \ Testing.checkEquals(value.getString(),"message")
+  Value value <- Value:new1(13, "message")
+  \ Testing.checkEquals(value.getInt(), 13)
+  \ Testing.checkEquals(value.getString(), "message")
 }
 
 unittest fromType {
-  Value value <- Value.new2(13,"message")
-  \ Testing.checkEquals(value.getInt(),13)
-  \ Testing.checkEquals(value.getString(),"message")
+  Value value <- Value.new2(13, "message")
+  \ Testing.checkEquals(value.getInt(), 13)
+  \ Testing.checkEquals(value.getString(), "message")
 }
 
 unittest fromValue {
-  Value value <- Value.new2(9,"error")
-  value <- value.new3(13,"message")
-  \ Testing.checkEquals(value.getInt(),13)
-  \ Testing.checkEquals(value.getString(),"message")
+  Value value <- Value.new2(9, "error")
+  value <- value.new3(13, "message")
+  \ Testing.checkEquals(value.getInt(), 13)
+  \ Testing.checkEquals(value.getString(), "message")
 }
 
 concrete Value {
-  @category new1 (Int,String) -> (Value)
-  @type new2 (Int,String) -> (Value)
-  @value new3 (Int,String) -> (Value)
+  @category new1 (Int, String) -> (Value)
+  @type new2 (Int, String) -> (Value)
+  @value new3 (Int, String) -> (Value)
   @value getInt () -> (Int)
   @value getString () -> (String)
 }
@@ -109,15 +109,15 @@ define Value {
   @value Int number
   @value String message
 
-  new1 (number1,message1) {
+  new1 (number1, message1) {
     return delegate -> Value
   }
 
-  new2 (number2,message2) {
+  new2 (number2, message2) {
     return delegate -> Value
   }
 
-  new3 (number3,message3) {
+  new3 (number3, message3) {
     return delegate -> Value
   }
 
@@ -131,21 +131,21 @@ testcase "delegate to #self" {
 }
 
 unittest fromType {
-  Value value <- Value.new1(13,"message")
-  \ Testing.checkEquals(value.getInt(),13)
-  \ Testing.checkEquals(value.getString(),"message")
+  Value value <- Value.new1(13, "message")
+  \ Testing.checkEquals(value.getInt(), 13)
+  \ Testing.checkEquals(value.getString(), "message")
 }
 
 unittest fromValue {
-  Value value <- Value.new1(9,"error")
-  value <- value.new2(13,"message")
-  \ Testing.checkEquals(value.getInt(),13)
-  \ Testing.checkEquals(value.getString(),"message")
+  Value value <- Value.new1(9, "error")
+  value <- value.new2(13, "message")
+  \ Testing.checkEquals(value.getInt(), 13)
+  \ Testing.checkEquals(value.getString(), "message")
 }
 
 concrete Value {
-  @type new1 (Int,String) -> (Value)
-  @value new2 (Int,String) -> (Value)
+  @type new1 (Int, String) -> (Value)
+  @value new2 (Int, String) -> (Value)
   @value getInt () -> (Int)
   @value getString () -> (String)
 }
@@ -154,11 +154,11 @@ define Value {
   @value Int number
   @value String message
 
-  new1 (number1,message1) {
+  new1 (number1, message1) {
     return delegate -> #self
   }
 
-  new2 (number2,message2) {
+  new2 (number2, message2) {
     return delegate -> #self
   }
 
@@ -192,7 +192,7 @@ testcase "delegate fails from @category variable initializer" {
   require compiler "delegation"
 }
 
-concrete Value {}
+concrete Value { }
 
 define Value {
   @category Value value <- delegate -> Value
@@ -205,16 +205,16 @@ testcase "delegate fails with ignored args" {
 }
 
 concrete Value {
-  @category new (Int,String) -> (Value)
+  @category new (Int, String) -> (Value)
 }
 
 define Value {
-  new (value,_) {
+  new (value, _) {
     return delegate -> `delegatedTo`
   }
 
-  @category delegatedTo (Int,String) -> (Value)
-  delegatedTo (number,message) {
+  @category delegatedTo (Int, String) -> (Value)
+  delegatedTo (number, message) {
     return Value{ }
   }
 }
@@ -227,17 +227,17 @@ testcase "delegate fails with hidden args" {
 }
 
 concrete Value {
-  @category new (Int,String) -> (Value)
+  @category new (Int, String) -> (Value)
 }
 
 define Value {
-  new (value,message) {
+  new (value, message) {
     $Hidden[message]$
     return delegate -> `delegatedTo`
   }
 
-  @category delegatedTo (Int,String) -> (Value)
-  delegatedTo (number,message) {
+  @category delegatedTo (Int, String) -> (Value)
+  delegatedTo (number, message) {
     return Value{ }
   }
 }
@@ -249,16 +249,16 @@ testcase "delegate fails with missing label" {
 }
 
 concrete Value {
-  @category new (Int,String) -> (Value)
+  @category new (Int, String) -> (Value)
 }
 
 define Value {
-  new (number,message) {
+  new (number, message) {
     return delegate -> `delegatedTo`
   }
 
-  @category delegatedTo (Int,String message:) -> (Value)
-  delegatedTo (number,message) {
+  @category delegatedTo (Int, String message:) -> (Value)
+  delegatedTo (number, message) {
     return Value{ }
   }
 }
@@ -269,11 +269,11 @@ testcase "delegate passes along labels" {
 }
 
 unittest test {
-  \ Testing.checkEquals(Value:new(13,message: "message").getString(),"message")
+  \ Testing.checkEquals(Value:new(13, message: "message").getString(), "message")
 }
 
 concrete Value {
-  @category new (Int,String message:) -> (Value)
+  @category new (Int, String message:) -> (Value)
   @value getString () -> (String)
 }
 
@@ -281,14 +281,14 @@ define Value {
   @value Int number
   @value String message
 
-  new (number,message) {
+  new (number, message) {
     return delegate -> `delegatedTo`
   }
 
   getString () { return message }
 
-  @category delegatedTo (Int,String message:) -> (Value)
-  delegatedTo (number,message) {
+  @category delegatedTo (Int, String message:) -> (Value)
+  delegatedTo (number, message) {
     return delegate -> Value
   }
 }

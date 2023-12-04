@@ -48,9 +48,9 @@ limitations under the License.
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-@value interface KVWriter<#k,#v|> {
+@value interface KVWriter<#k, #v|> {
   // Sets or replaces the value associated with the key and returns self.
-  set (#k,#v) -> (#self)
+  set (#k, #v) -> (#self)
   // Removes the value associated with the key if present and returns self.
   remove (#k) -> (#self)
 }
@@ -84,7 +84,7 @@ limitations under the License.
 // - #v: The value type.
 @value interface KVExchange<#k|#v|> {
   // Replaces the value if it does not exist and returns the final value.
-  weakSet (#k,#v) -> (#v)
+  weakSet (#k, #v) -> (#v)
 
   // Swap the value associated with the key.
   //
@@ -94,7 +94,7 @@ limitations under the License.
   //
   // Returns:
   // - optional #v: Previous value, or empty if none existed.
-  swap (#k,optional #v) -> (optional #v)
+  swap (#k, optional #v) -> (optional #v)
 }
 
 // Writing to a set of values.
@@ -118,13 +118,13 @@ limitations under the License.
 }
 
 // Factory for creating a new key-value pair.
-@type interface KVFactory<#k,#v|> {
+@type interface KVFactory<#k, #v|> {
   // Create a new pair from the provided key and value.
-  newNode (#k,#v) -> (#self)
+  newNode (#k, #v) -> (#self)
 }
 
 // A single key-value pair from a KVReader.
-@value interface KeyValue<|#k,#v> {
+@value interface KeyValue<|#k, #v> {
   // Get the key.
   //
   // Notes:

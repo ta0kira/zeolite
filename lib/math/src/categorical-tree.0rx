@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define CategoricalTree {
-  @value AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>> tree
+  @value AutoBinaryTree<CategoricalTreeNode<#c>, #c, Int, CategoricalSearch<#c>> tree
 
   default () {
     return new()
   }
 
   new () {
-    return #self{ AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>>.new() }
+    return #self{ AutoBinaryTree<CategoricalTreeNode<#c>, #c, Int, CategoricalSearch<#c>>.new() }
   }
 
   duplicate () {
@@ -35,13 +35,13 @@ define CategoricalTree {
     return CategoricalTreeNode<#c>.tryTotal(tree.getRoot())
   }
 
-  setWeight (cat,size) {
+  setWeight (cat, size) {
     if (size < 0) {
       fail("size must not be negative")
     } elif (size > 0) {
-      \ tree.swap(cat,size)
+      \ tree.swap(cat, size)
     } else {
-      \ tree.swap(cat,empty)
+      \ tree.swap(cat, empty)
     }
     return self
   }
@@ -57,12 +57,12 @@ define CategoricalTree {
   }
 
   incrWeight (cat) {
-    \ setWeight(cat,getWeight(cat)+1)
+    \ setWeight(cat, getWeight(cat)+1)
     return self
   }
 
   decrWeight (cat) {
-    \ setWeight(cat,getWeight(cat)-1)
+    \ setWeight(cat, getWeight(cat)-1)
     return self
   }
 
@@ -72,7 +72,7 @@ define CategoricalTree {
     } elif (pos >= getTotal()) {
       fail("position must be strictly less than the total")
     } else {
-      return require(CategoricalTreeNode<#c>.findPosition(pos,tree.getRoot()))
+      return require(CategoricalTreeNode<#c>.findPosition(pos, tree.getRoot()))
     }
   }
 
@@ -86,23 +86,23 @@ define CategoricalTree {
 }
 
 define ValidatedTree {
-  @value AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>> tree
+  @value AutoBinaryTree<CategoricalTreeNode<#c>, #c, Int, CategoricalSearch<#c>> tree
 
   new () { $NoTrace$
-    return #self{ AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>>.new() }
+    return #self{ AutoBinaryTree<CategoricalTreeNode<#c>, #c, Int, CategoricalSearch<#c>>.new() }
   }
 
   getTotal () { $NoTrace$
     return CategoricalTreeNode<#c>.tryTotal(tree.getRoot())
   }
 
-  setWeight (cat,size) { $NoTrace$
+  setWeight (cat, size) { $NoTrace$
     if (size < 0) {
       fail("size must not be negative")
     } elif (size > 0) {
-      \ tree.swap(cat,size)
+      \ tree.swap(cat, size)
     } else {
-      \ tree.swap(cat,empty)
+      \ tree.swap(cat, empty)
     }
     \ validateTotal(tree.getRoot())
     return self
@@ -124,7 +124,7 @@ define ValidatedTree {
     } elif (pos >= getTotal()) {
       fail("position must be strictly less than the total")
     } else {
-      return require(CategoricalTreeNode<#c>.findPosition(pos,tree.getRoot()))
+      return require(CategoricalTreeNode<#c>.findPosition(pos, tree.getRoot()))
     }
   }
 
@@ -154,18 +154,18 @@ define ValidatedTree {
 }
 
 @value interface CategoricalSearch<|#c> {
-  refines BinaryTreeNode<#c,Int>
+  refines BinaryTreeNode<#c, Int>
 
   getTotal () -> (Int)
 }
 
 concrete CategoricalTreeNode<#c> {
-  defines KVFactory<#c,Int>
+  defines KVFactory<#c, Int>
   refines CategoricalSearch<#c>
-  refines BalancedTreeNode<CategoricalTreeNode<#c>,#c,Int>
+  refines BalancedTreeNode<CategoricalTreeNode<#c>, #c, Int>
   refines Duplicate
 
-  @type findPosition (Int,optional CategoricalSearch<#c>) -> (optional #c)
+  @type findPosition (Int, optional CategoricalSearch<#c>) -> (optional #c)
   @type tryTotal (optional CategoricalSearch<#c>) -> (Int)
 
   @value getTotal () -> (Int)
@@ -193,7 +193,7 @@ define CategoricalTreeNode {
     return #self{ height, key, size, total, lower2, higher2 }
   }
 
-  findPosition (pos,node) (cat) {
+  findPosition (pos, node) (cat) {
     cat <- empty
     if (present(node)) {
       scoped {
@@ -202,11 +202,11 @@ define CategoricalTreeNode {
         CategoricalSearch<#c> node2 <- require(node)
         Int lower <- tryTotal(node2.getLower())
         Int size <- node2.getValue()
-        $ReadOnly[node2,lower,size]$
+        $ReadOnly[node2, lower, size]$
       } in if (pos2 < node2.getTotal()) {
         if (pos2 < lower) {
           // pos2 is in the 1st (lower) of the 3 sections.
-          return findPosition(pos2,node2.getLower())
+          return findPosition(pos2, node2.getLower())
         }
         pos2 <- pos2-lower
         if (pos2 < size) {
@@ -215,7 +215,7 @@ define CategoricalTreeNode {
         }
         pos2 <- pos2-size
           // pos2 is in the 3rd (higher) of the 3 sections.
-        return findPosition(pos2,node2.getHigher())
+        return findPosition(pos2, node2.getHigher())
       }
     }
   }
@@ -228,7 +228,7 @@ define CategoricalTreeNode {
     }
   }
 
-  newNode (k,v) {
+  newNode (k, v) {
     return #self{ 1, k, v, v, empty, empty }
   }
 

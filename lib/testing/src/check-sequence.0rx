@@ -88,11 +88,11 @@ define SequenceEquals {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     optional Order<#x> currentActual   <- actual&.defaultOrder()
     optional Order<#x> currentExpected <- expected.defaultOrder()
     Int index <- 0
-    $Hidden[actual,expected]$
+    $Hidden[actual, expected]$
     while (`present` currentActual || `present` currentExpected) {
       optional #x valueActual   <- currentActual&.get()
       optional #x valueExpected <- currentExpected&.get()
@@ -145,11 +145,11 @@ define SequenceMatches {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     optional Order<#x> currentActual <- actual&.defaultOrder()
     optional Order<ValueMatcher<#x>> currentExpected <- expected.defaultOrder()
     Int index <- 0
-    $Hidden[actual,expected]$
+    $Hidden[actual, expected]$
     while (`present` currentActual || `present` currentExpected) {
       optional #x valueActual <- currentActual&.get()
       optional ValueMatcher<#x> valueExpected <- currentExpected&.get()
@@ -200,7 +200,7 @@ define SequenceAllMatch {
     return delegate -> #self
   }
 
-  check (actual,report) {
+  check (actual, report) {
     scoped {
       Int index <- 0
     } in traverse (actual&.defaultOrder() -> #x value) {

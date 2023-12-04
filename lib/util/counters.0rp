@@ -31,7 +31,7 @@ concrete Counter {
 // Creates an Order<#x> that repeats a single value, for use with traverse.
 concrete Repeat<#x> {
   // Repeat the value the specified number of times.
-  @category times<#y>     (#y,Int) -> (optional Order<#y>)
+  @category times<#y>     (#y, Int) -> (optional Order<#y>)
   // Repeat the value an unlimited number of times.
   @category unlimited<#y> (#y)     -> (optional Order<#y>)
 }
@@ -41,17 +41,17 @@ concrete Ranges {
   // Get the lower value. (Defaults to the first value.)
   @category min<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> (#x)
+  (#x, #x) -> (#x)
 
   // Get the higher value. (Defaults to the second value.)
   @category max<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> (#x)
+  (#x, #x) -> (#x)
 
   // Determine the lower and higher values. (Defaults to the same order.)
   @category minMax<#x>
     #x defines LessThan<#x>
-  (#x,#x) -> (#x,#x)
+  (#x, #x) -> (#x, #x)
 }
 
 // Builds a sequence of values.

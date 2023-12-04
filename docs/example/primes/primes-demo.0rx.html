@@ -10,25 +10,25 @@
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>PrimesDemo</span></b> {
-  <span style='color:#644a9b;'>@type</span> run () -&gt; ()
+  <span style='color:#644a9b;'>@type</span> run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>PrimesDemo</span></b> {
   run () {
-    <span style='color:#0057ae;'>PrimeTracker</span> tracker &lt;- <span style='color:#0057ae;'>PrimeTracker</span><span style='color:#644a9b;'>.</span>create()
-    <span style='color:#0057ae;'>ThreadFlag</span> flag &lt;- <span style='color:#0057ae;'>ThreadFlag</span><span style='color:#644a9b;'>.</span>new()
-    <span style='color:#0057ae;'>Thread</span> thread &lt;- <span style='color:#0057ae;'>ProcessThread</span><span style='color:#644a9b;'>.</span>from(<span style='color:#0057ae;'>PrimeThread</span><span style='color:#644a9b;'>.</span>create(flag,tracker))<span style='color:#644a9b;'>.</span>start()
+    <span style='color:#0057ae;'>PrimeTracker</span> tracker <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>PrimeTracker</span><span style='color:#644a9b;'>.</span>create()
+    <span style='color:#0057ae;'>ThreadFlag</span> flag <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>ThreadFlag</span><span style='color:#644a9b;'>.</span>new()
+    <span style='color:#0057ae;'>Thread</span> thread <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>ProcessThread</span><span style='color:#644a9b;'>.</span>from(<span style='color:#0057ae;'>PrimeThread</span><span style='color:#644a9b;'>.</span>create(flag, tracker))<span style='color:#644a9b;'>.</span>start()
 
     <span style='color:#898887;'>// Interactive input loop.</span>
 
     <b>scoped</b> {
-      <span style='color:#0057ae;'>TextReader</span> reader &lt;- <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>.</span>fromBlockReader(<span style='color:#0057ae;'>BasicInput</span><span style='color:#644a9b;'>.</span>stdin())
+      <span style='color:#0057ae;'>TextReader</span> reader <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>.</span>fromBlockReader(<span style='color:#0057ae;'>BasicInput</span><span style='color:#644a9b;'>.</span>stdin())
     } <b>in</b> <b>while</b> (!reader<span style='color:#644a9b;'>.</span>pastEnd()) {
-      <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>tracker,thread</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+      <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>tracker, thread</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
 
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()
           <span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Press [Enter] to toggle start/stop computation thread. Type </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>exit</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> to exit.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-      <i><span style='color:#0057ae;'>String</span></i> input &lt;- reader<span style='color:#644a9b;'>.</span>readNextLine()
+      <i><span style='color:#0057ae;'>String</span></i> input <b><span style='color:#006e28;'>&lt;-</span></b> reader<span style='color:#644a9b;'>.</span>readNextLine()
       <b>if</b> (reader<span style='color:#644a9b;'>.</span>pastEnd()) {
         <b>break</b>
       }
@@ -54,7 +54,7 @@
     <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stderr()<span style='color:#644a9b;'>.</span>writeNow(<span style='color:#bf0303;'>&quot;Exiting.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
     <span style='color:#006e28;'>\</span> thread<span style='color:#644a9b;'>.</span>join()
 
-    <b>traverse</b> (tracker<span style='color:#644a9b;'>.</span>getResults() -&gt; <i><span style='color:#0057ae;'>Int</span></i> prime) {
+    <b>traverse</b> (tracker<span style='color:#644a9b;'>.</span>getResults() <b><span style='color:#006e28;'>-&gt;</span></b> <i><span style='color:#0057ae;'>Int</span></i> prime) {
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>BasicOutput</span><span style='color:#644a9b;'>.</span>stdout()
           <span style='color:#644a9b;'>.</span>write(prime)
           <span style='color:#644a9b;'>.</span>write(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)

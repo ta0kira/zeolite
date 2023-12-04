@@ -21,11 +21,11 @@ testcase "TextReader checks" {
 }
 
 concrete Helper {
-  @type checkNext (TextReader,String) -> ()
+  @type checkNext (TextReader, String) -> ()
 }
 
 define Helper {
-  checkNext (reader,line) {
+  checkNext (reader, line) {
     if (reader.pastEnd()) {
       fail("past end")
     }
@@ -70,11 +70,11 @@ define FakeFile {
 
 unittest correctSplit {
     TextReader reader <- TextReader.fromBlockReader(FakeFile.create())
-    \ Helper.checkNext(reader,"this is a partial line")
-    \ Helper.checkNext(reader,"with some more data")
-    \ Helper.checkNext(reader,"and")
-    \ Helper.checkNext(reader,"more lines")
-    \ Helper.checkNext(reader,"unfinished")
+    \ Helper.checkNext(reader, "this is a partial line")
+    \ Helper.checkNext(reader, "with some more data")
+    \ Helper.checkNext(reader, "and")
+    \ Helper.checkNext(reader, "more lines")
+    \ Helper.checkNext(reader, "unfinished")
     if (!reader.pastEnd()) {
       fail("not past end")
     }

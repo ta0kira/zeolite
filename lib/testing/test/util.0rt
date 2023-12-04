@@ -24,7 +24,7 @@ unittest nothingAppended {
   String result <- IndentAppend.new(String.builder())
       .build()
       .formatted()
-  \ Testing.checkEquals(result,"")
+  \ Testing.checkEquals(result, "")
 }
 
 unittest addNewline {
@@ -32,7 +32,7 @@ unittest addNewline {
       .addNewline()
       .build()
       .formatted()
-  \ Testing.checkEquals(result,"\n")
+  \ Testing.checkEquals(result, "\n")
 }
 
 unittest usesNewlines {
@@ -41,7 +41,7 @@ unittest usesNewlines {
       .append("message2")
       .build()
       .formatted()
-  \ Testing.checkEquals(result,"message1\nmessage2\n")
+  \ Testing.checkEquals(result, "message1\nmessage2\n")
 }
 
 unittest indents {
@@ -55,7 +55,7 @@ unittest indents {
       .append("message3")
       .build()
       .formatted()
-  \ Testing.checkEquals(result,"  message1\n    message2\nmessage3\n")
+  \ Testing.checkEquals(result, "  message1\n    message2\nmessage3\n")
 }
 
 
@@ -78,7 +78,7 @@ define Helper {
   }
 
   checkNext (value) {
-    \ Testing.checkEquals(current&.get(),value)
+    \ Testing.checkEquals(current&.get(), value)
     current <- current&.next()
     return self
   }
@@ -92,7 +92,7 @@ define Helper {
 
 unittest nothingAdded {
   ValueList<Int> list <- ValueList<Int>.new()
-  \ Testing.checkEquals(list.isEmpty(),true)
+  \ Testing.checkEquals(list.isEmpty(), true)
   \ Helper.new(list)
       .checkFinished()
 }
@@ -102,7 +102,7 @@ unittest withItems {
       .append(1)
       .append(2)
       .append(3)
-  \ Testing.checkEquals(list.isEmpty(),false)
+  \ Testing.checkEquals(list.isEmpty(), false)
   \ Helper.new(list)
       .checkNext(1)
       .checkNext(2)
@@ -127,21 +127,21 @@ testcase "TestReportTree success" {
 }
 
 unittest nothingAdded {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
   IndentAppend output <- IndentAppend.new(String.builder())
-  \ Testing.checkEquals(report.hasError(),false)
+  \ Testing.checkEquals(report.hasError(), false)
   \ report.prune()&.writeTo(output)
-  \ Testing.checkEquals(output.build().formatted(),"")
+  \ Testing.checkEquals(output.build().formatted(), "")
 }
 
 unittest nonFailingSections {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
   \ report.newSection(title: "child1")
   \ report.newSection(title: "child2")
-  \ Testing.checkEquals(report.hasError(),false)
+  \ Testing.checkEquals(report.hasError(), false)
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.prune()&.writeTo(output)
-  \ Testing.checkEquals(output.build().formatted(),"")
+  \ Testing.checkEquals(output.build().formatted(), "")
 }
 
 
@@ -157,13 +157,13 @@ testcase "TestReportTree prune doesn't include non-failing sections" {
 }
 
 unittest test {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
   \ report.newSection(title: "child1")
   \ report.newSection(title: "child2").addError(message: "message2")
   \ report.newSection(title: "child3").addError(message: "message3").discardReport()
   \ report.newSection(title: "child4").addError(message: "message4")
   \ report.newSection(title: "child5")
-  \ Testing.checkEquals(report.hasError(),true)
+  \ Testing.checkEquals(report.hasError(), true)
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.prune()&.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())
@@ -182,13 +182,13 @@ testcase "TestReportTree unpruned preserves non-failing sections" {
 }
 
 unittest test {
-  TestReportTree report <- TestReportTree.new("title",ValueList<Formatted>.new())
+  TestReportTree report <- TestReportTree.new("title", ValueList<Formatted>.new())
   \ report.newSection(title: "child1")
   \ report.newSection(title: "child2").addError(message: "message2")
   \ report.newSection(title: "child3").addError(message: "message3").discardReport()
   \ report.newSection(title: "child4").addError(message: "message4")
   \ report.newSection(title: "child5")
-  \ Testing.checkEquals(report.hasError(),true)
+  \ Testing.checkEquals(report.hasError(), true)
   IndentAppend output <- IndentAppend.new(String.builder())
   \ report.writeTo(output)
   \ TestHandler:failAndExit(output.build().formatted())
