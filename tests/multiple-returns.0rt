@@ -18,7 +18,7 @@ limitations under the License.
 
 testcase "multi return to call" {
   error
-  require "call.+\{Value, Value\}"
+  require "call.+Value.+Value"
 }
 
 @value interface Value {
@@ -38,7 +38,7 @@ concrete Test { }
 
 testcase "zero return to call" {
   error
-  require "call.+\{\}"
+  require "call.+none"
 }
 
 @value interface Value {

@@ -769,8 +769,9 @@ compileExpression = compile where
     return (Positional [ts !! pos],WrappedSingle $ useAsReturns e' ++ ".At(" ++ show pos ++ ")")
   requireSingle _ [t] = return t
   requireSingle c2 ts =
-    compilerErrorM $ "Function call requires 1 return but found but found {" ++
-                            intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c2
+    compilerErrorM $ "Function call requires one return but got " ++ formatTypes ts ++ formatFullContextBrace c2
+  formatTypes [] = "none"
+  formatTypes ts = intercalate ", " (map show ts)
 
 forceOptionalReturns :: [c] -> ScopedFunction c -> ScopedFunction c
 forceOptionalReturns c0 (ScopedFunction c n t s v as rs ps fs ms) =
