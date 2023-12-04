@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ------------------------------------------------------------------------------
-# Copyright 2020-2022 Kevin P. Barry
+# Copyright 2020-2023 Kevin P. Barry
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -320,12 +320,12 @@ test_tests_only4() {
 
 test_module_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only -f || true)
-  if ! echo "$output" | egrep -q 'Type1 not found'; then
+  if ! echo "$output" | egrep -q 'Type1.+not found'; then
     show_message 'Expected Type1 definition error from tests/module-only:'
     echo "$output" 1>&2
     return 1
   fi
-  if echo "$output" | egrep -q 'Type2 not found'; then
+  if echo "$output" | egrep -q 'Type2.+not (found|visible)'; then
     show_message 'Unexpected Type2 definition error from tests/module-only:'
     echo "$output" 1>&2
     return 1
@@ -335,12 +335,12 @@ test_module_only() {
 
 test_module_only2() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only2 -f || true)
-  if ! echo "$output" | egrep -q 'Type1'; then
+  if ! echo "$output" | egrep -q 'Type1.+not visible'; then
     show_message 'Expected Type1 definition error from tests/module-only2:'
     echo "$output" 1>&2
     return 1
   fi
-  if echo "$output" | egrep -q 'Type2'; then
+  if echo "$output" | egrep -q 'Type2.+not (found|visible)'; then
     show_message 'Unexpected Type2 definition error from tests/module-only2:'
     echo "$output" 1>&2
     return 1

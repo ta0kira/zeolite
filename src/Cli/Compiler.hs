@@ -49,7 +49,6 @@ import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
 import Parser.TextParser (SourceContext)
-import Types.Builtin
 import Types.DefinedCategory
 import Types.TypeCategory
 import Types.TypeInstance
@@ -316,12 +315,12 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath -> [FilePa
 createModuleTemplates resolver p d ds cm deps1 deps2 = do
   time <- errorFromIO getCurrentTime
   (ps,xs,_) <- findSourceFiles p (d:ds)
-  (LanguageModule _ _ _ cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 _ _) <-
+  (LanguageModule _ _ _ cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 _ _ cm0) <-
     fmap (createLanguageModule [] Map.empty . fst) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds2 <- mapCompilerM parseInternalSource xs'
   let ds3 = concat $ map (\(_,_,d2) -> d2) ds2
-  tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,tc0,tp0,tc1,tp1]
+  tm <- foldM includeNewTypes cm0 [cs0,cs1,ps0,ps1,tc0,tp0,tc1,tp1]
   let cs = filter isValueConcrete $ cs1++ps1++tc1++tp1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds3
@@ -388,8 +387,10 @@ createLanguageModule ss em cs = lm where
       lmPublicTestingLocal  = map wvData $ apply cs [without FromDependency,without ModuleOnly,with TestsOnly],
       lmPrivateTestingLocal = map wvData $ apply cs [without FromDependency,with    ModuleOnly,with TestsOnly],
       lmStreamlined = ss,
-      lmExprMap  = em
+      lmExprMap  = em,
+      lmEmptyCategories = CategoryMap km Map.empty
     }
+  km = Map.fromList $ map (\(WithVisibility _ t) -> (getCategoryName t,getCategoryContext t)) cs
   ns = map (mapCodeVisibility getCategoryNamespace) cs
   with    v = hasCodeVisibility v
   without v = not . hasCodeVisibility v

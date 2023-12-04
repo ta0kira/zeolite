@@ -193,6 +193,10 @@
 * **[new]** Allows single-`-` CLI options to be clustered, e.g., `-rfj8`, which
   is expanded to `-r`, `-f`, and `-j` `8`.
 
+* **[behavior]** Clearer error messages for categories hidden by `$ModuleOnly$`,
+  `$TestsOnly$`, and `private_deps`. Previously, the compiler would just say
+  that the category wasn't found.
+
 ## 0.23.0.0  -- 2022-10-08
 
 ### Language

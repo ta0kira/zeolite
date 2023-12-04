@@ -22,7 +22,7 @@ limitations under the License.
 module Types.TypeCategory (
   AnyCategory(..),
   CallArgLabel(..),
-  CategoryMap,
+  CategoryMap(..),
   CategoryResolver(..),
   FunctionName(..),
   FunctionVisibility(..),
@@ -42,6 +42,7 @@ module Types.TypeCategory (
   checkFunctionCallVisibility,
   checkParamVariances,
   declareAllTypes, -- TODO: Remove?
+  emptyCategoryMap,
   flattenAllConnections,
   formatFullContext,
   formatFullContextBrace,
@@ -89,6 +90,7 @@ module Types.TypeCategory (
   replaceSelfFunction,
   setCategoryNamespace,
   singleFromCategory,
+  toCategoryMap,
   topoSortCategories,
   uncheckedSubFunction,
   validateCategoryFunction,
@@ -473,18 +475,25 @@ subAllParams :: CollectErrorsM m =>
   ParamValues -> GeneralInstance -> m GeneralInstance
 subAllParams pa = uncheckedSubInstance (getValueForParam pa)
 
-type CategoryMap c = Map.Map CategoryName (AnyCategory c)
+data CategoryMap c =
+  CategoryMap {
+    cmKnown :: Map.Map CategoryName [c],
+    cmAvailable :: Map.Map CategoryName (AnyCategory c)
+  }
+
+emptyCategoryMap :: CategoryMap c
+emptyCategoryMap = toCategoryMap []
+
+toCategoryMap :: [(CategoryName,AnyCategory c)] -> CategoryMap c
+toCategoryMap = CategoryMap Map.empty . Map.fromList
 
 getCategory :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
-getCategory tm (c,n) =
-  case n `Map.lookup` tm of
-       (Just t) -> return (c,t)
-       _ -> compilerErrorM $ "Type " ++ show n ++ context ++ " not found"
-  where
-    context
-      | null c = ""
-      | otherwise = formatFullContextBrace c
+getCategory (CategoryMap km tm) (c,n) = handle (n `Map.lookup` tm) (n `Map.lookup` km) where
+  handle (Just t) _ = return (c,t)
+  handle _ (Just c2) = compilerErrorM $ "Type " ++ show n ++ formatFullContextBrace c2 ++
+                                        " not visible here" ++ formatFullContextBrace c
+  handle _ _ = compilerErrorM $ "Type " ++ show n ++ " not found" ++ formatFullContextBrace c
 
 getValueCategory :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
@@ -530,13 +539,13 @@ includeNewTypes tm0 ts = do
 declareAllTypes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
 declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
-  update t tm =
+  update t (CategoryMap km tm) =
     case getCategoryName t `Map.lookup` tm of
         (Just t2) -> compilerErrorM $ "Type " ++ show (getCategoryName t) ++
                                       formatFullContextBrace (getCategoryContext t) ++
                                       " has already been declared" ++
                                       formatFullContextBrace (getCategoryContext t2)
-        _ -> return $ Map.insert (getCategoryName t) t tm
+        _ -> return $ CategoryMap km $ Map.insert (getCategoryName t) t tm
 
 getFilterMap :: CollectErrorsM m => [ValueParam c] -> [ParamFilter c] -> m ParamFilters
 getFilterMap ps fs = do
@@ -587,20 +596,20 @@ disallowBoundedParams = mapCompilerM_ checkBounds . Map.toList where
 
 checkConnectedTypes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
-checkConnectedTypes tm0 ts = do
-  tm <- declareAllTypes tm0 ts
-  collectAllM_ (map (checkSingle tm) ts)
+checkConnectedTypes cm0 ts = do
+  cm <- declareAllTypes cm0 ts
+  collectAllM_ (map (checkSingle cm) ts)
   where
-    checkSingle tm (ValueInterface c _ n _ _ rs _) = do
+    checkSingle cm (ValueInterface c _ n _ _ rs _) = do
       let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
-      is <- mapCompilerM (getCategory tm) ts2
+      is <- mapCompilerM (getCategory cm) ts2
       collectAllM_ (map (valueRefinesInstanceError c n) is)
       collectAllM_ (map (valueRefinesConcreteError c n) is)
-    checkSingle tm (ValueConcrete c _ n _ _ _ rs ds _ _) = do
+    checkSingle cm (ValueConcrete c _ n _ _ _ rs ds _ _) = do
       let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
       let ts3 = map (\d -> (vdContext d,diName $ vdType d)) ds
-      is1 <- mapCompilerM (getCategory tm) ts2
-      is2 <- mapCompilerM (getCategory tm) ts3
+      is1 <- mapCompilerM (getCategory cm) ts2
+      is2 <- mapCompilerM (getCategory cm) ts3
       collectAllM_ (map (concreteRefinesInstanceError c n) is1)
       collectAllM_ (map (concreteDefinesValueError c n) is2)
       collectAllM_ (map (concreteRefinesConcreteError c n) is1)
@@ -647,17 +656,18 @@ checkConnectedTypes tm0 ts = do
 
 checkConnectionCycles :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
-checkConnectionCycles tm0 ts = collectAllM_ (map (checker []) ts) where
+checkConnectionCycles (CategoryMap km tm0) ts = collectAllM_ (map (checker []) ts) where
   tm = Map.union tm0 $ Map.fromList $ zip (map getCategoryName ts) ts
+  cm = CategoryMap km tm
   checker us (ValueInterface c _ n _ _ rs _) = do
     failIfCycle n c us
     let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
-    is <- mapCompilerM (getValueCategory tm) ts2
+    is <- mapCompilerM (getValueCategory cm) ts2
     collectAllM_ (map (checker (us ++ [n]) . snd) is)
   checker us (ValueConcrete c _ n _ _ _ rs _ _ _) = do
     failIfCycle n c us
     let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
-    is <- mapCompilerM (getValueCategory tm) ts2
+    is <- mapCompilerM (getValueCategory cm) ts2
     collectAllM_ (map (checker (us ++ [n]) . snd) is)
   checker _ _ = return ()
   failIfCycle n c us =
@@ -668,9 +678,9 @@ checkConnectionCycles tm0 ts = collectAllM_ (map (checker []) ts) where
 
 checkParamVariances :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
-checkParamVariances tm0 ts = do
-  tm <- declareAllTypes tm0 ts
-  let r = CategoryResolver tm
+checkParamVariances cm0 ts = do
+  cm <- declareAllTypes cm0 ts
+  let r = CategoryResolver cm
   mapCompilerM_ (checkCategory r) ts
   mapCompilerM_ checkBounds ts
   where
@@ -709,9 +719,9 @@ checkParamVariances tm0 ts = do
 
 checkCategoryInstances :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
-checkCategoryInstances tm0 ts = do
-  tm <- declareAllTypes tm0 ts
-  let r = CategoryResolver tm
+checkCategoryInstances cm0 ts = do
+  cm <- declareAllTypes cm0 ts
+  let r = CategoryResolver cm
   mapCompilerM_ (checkSingle r) ts
   where
     checkSingle r t = do
@@ -766,18 +776,18 @@ validateCategoryFunction r t f = do
 
 topoSortCategories :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
-topoSortCategories tm0 ts = do
-  tm <- declareAllTypes tm0 ts
-  fmap fst $ update tm (Map.keysSet tm0) ts
+topoSortCategories cm0 ts = do
+  cm <- declareAllTypes cm0 ts
+  fmap fst $ update cm (Map.keysSet $ cmAvailable cm0) ts
   where
-    update tm ta (t:ts2) = do
+    update cm ta (t:ts2) = do
       if getCategoryName t `Set.member` ta
-         then update tm ta ts2
+         then update cm ta ts2
          else do
-           refines <- mapCompilerM (\r -> getCategory tm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
-           defines <- mapCompilerM (\d -> getCategory tm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
-           (ts3,ta2) <- update tm (getCategoryName t `Set.insert` ta) (map snd $ refines ++ defines)
-           (ts4,ta3) <- update tm ta2 ts2
+           refines <- mapCompilerM (\r -> getCategory cm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
+           defines <- mapCompilerM (\d -> getCategory cm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
+           (ts3,ta2) <- update cm (getCategoryName t `Set.insert` ta) (map snd $ refines ++ defines)
+           (ts4,ta3) <- update cm ta2 ts2
            return (ts3 ++ [t] ++ ts4,ta3)
     update _ ta _ = return ([],ta)
 
@@ -823,10 +833,10 @@ noDuplicateCategories c n ns = do
 
 flattenAllConnections :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
-flattenAllConnections tm0 ts = do
+flattenAllConnections (CategoryMap km tm0) ts = do
   -- We need to process all refines before type-checking can be done.
   tm1 <- foldr preMerge (return tm0) (reverse ts)
-  let r = CategoryResolver tm1
+  let r = CategoryResolver (CategoryMap km tm1)
   (ts',_) <- foldr (update r) (return ([],tm0)) (reverse ts)
   return ts'
   where
@@ -856,7 +866,7 @@ flattenAllConnections tm0 ts = do
       checkMerged r fm rs rs''
       pg2 <- fmap concat $ mapCompilerM (getRefinesPragmas tm) rs
       -- Only merge from direct parents.
-      fs' <- mergeFunctions r tm pm fm rs [] fs
+      fs' <- mergeFunctions r (CategoryMap km tm) pm fm rs [] fs
       return $ ValueInterface c ns n (pg++pg2) ps rs'' fs'
     -- TODO: Remove duplication below and/or have separate tests.
     updateSingle r tm t@(ValueConcrete c ns n pg fv ps rs ds vs fs) = do
@@ -871,11 +881,11 @@ flattenAllConnections tm0 ts = do
       pg2 <- fmap concat $ mapCompilerM (getRefinesPragmas tm) rs
       pg3 <- fmap concat $ mapCompilerM (getDefinesPragmas tm) ds
       -- Only merge from direct parents.
-      fs' <- mergeFunctions r tm pm fm rs ds fs
+      fs' <- mergeFunctions r (CategoryMap km tm) pm fm rs ds fs
       return $ ValueConcrete c ns n (pg++pg2++pg3) fv ps rs'' ds' vs fs'
     updateSingle _ _ t = return t
     getRefines tm ra@(ValueRefine c t@(TypeInstance n _)) = do
-      (_,v) <- getValueCategory tm (c,n)
+      (_,v) <- getValueCategory (CategoryMap km tm) (c,n)
       let refines = getCategoryRefines v
       pa <- assignParams tm c t
       fmap (ra:) $ mapCompilerM (subAll c pa) refines
@@ -883,7 +893,7 @@ flattenAllConnections tm0 ts = do
       t2 <- uncheckedSubSingle (getValueForParam pa) t1
       return $ ValueRefine (c ++ c1) t2
     assignParams tm c (TypeInstance n ps) = do
-      (_,v) <- getValueCategory tm (c,n)
+      (_,v) <- getValueCategory (CategoryMap km tm) (c,n)
       let ns = map vpParam $ getCategoryParams v
       paired <- processPairs alwaysPair (Positional ns) ps
       return $ Map.insert ParamSelf selfType $ Map.fromList paired
@@ -898,31 +908,31 @@ flattenAllConnections tm0 ts = do
       return ()
     checkConvert _ _ _ _ = return ()
     getRefinesPragmas tm rf = do
-      (_,t) <- getCategory tm (vrContext rf,tiName $ vrType rf)
+      (_,t) <- getCategory (CategoryMap km tm) (vrContext rf,tiName $ vrType rf)
       return $ map (prependCategoryPragmaContext $ vrContext rf) $ getCategoryPragmas t
     getDefinesPragmas tm df = do
-      (_,t) <- getCategory tm (vdContext df,diName $ vdType df)
+      (_,t) <- getCategory (CategoryMap km tm) (vdContext df,diName $ vdType df)
       return $ map (prependCategoryPragmaContext $ vdContext df) $ getCategoryPragmas t
 
 mergeFunctions :: (Show c, CollectErrorsM m, TypeResolver r) =>
   r -> CategoryMap c -> ParamValues -> ParamFilters -> [ValueRefine c] ->
   [ValueDefine c] -> [ScopedFunction c] -> m [ScopedFunction c]
-mergeFunctions r tm pm fm rs ds fs = do
-  inheritValue <- fmap concat $ mapCompilerM (getRefinesFuncs tm) rs
-  inheritType  <- fmap concat $ mapCompilerM (getDefinesFuncs tm) ds
+mergeFunctions r cm pm fm rs ds fs = do
+  inheritValue <- fmap concat $ mapCompilerM getRefinesFuncs rs
+  inheritType  <- fmap concat $ mapCompilerM getDefinesFuncs ds
   let inheritByName  = fmap (nubBy sameFunction) $ Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
   let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
   let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
   mapCompilerM (mergeByName inheritByName explicitByName) allNames where
-    getRefinesFuncs tm2 (ValueRefine c (TypeInstance n ts2)) = do
-      (_,t) <- getValueCategory tm2 (c,n)
+    getRefinesFuncs (ValueRefine c (TypeInstance n ts2)) = do
+      (_,t) <- getValueCategory cm (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList $ (ParamSelf,selfType):paired
       mapCompilerM (unfixedSubFunction assigned) fs2
-    getDefinesFuncs tm2 (ValueDefine c (DefinesInstance n ts2)) = do
-      (_,t) <- getInstanceCategory tm2 (c,n)
+    getDefinesFuncs (ValueDefine c (DefinesInstance n ts2)) = do
+      (_,t) <- getInstanceCategory cm (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2

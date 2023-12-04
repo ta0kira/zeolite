@@ -23,7 +23,6 @@ module Types.Builtin (
   PrimitiveType(..),
   boolRequiredValue,
   charRequiredValue,
-  defaultCategories,
   emptyType,
   floatRequiredValue,
   formattedRequiredValue,
@@ -35,17 +34,11 @@ module Types.Builtin (
   stringRequiredValue,
 ) where
 
-import qualified Data.Map as Map
-
 import Base.GeneralType
 import Base.MergeTree (reduceMergeTree)
 import Base.Positional
-import Types.TypeCategory
 import Types.TypeInstance
 
-
-defaultCategories :: CategoryMap c
-defaultCategories = Map.empty
 
 boolRequiredValue :: ValueType
 boolRequiredValue = requiredSingleton BuiltinBool

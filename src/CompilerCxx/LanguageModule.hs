@@ -35,7 +35,6 @@ import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.CxxFiles
 import CompilerCxx.Naming
 import Module.CompileMetadata (CategorySpec(..))
-import Types.Builtin
 import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
@@ -56,7 +55,8 @@ data LanguageModule c =
     lmPublicTestingLocal :: [AnyCategory c],
     lmPrivateTestingLocal :: [AnyCategory c],
     lmStreamlined :: [CategoryName],
-    lmExprMap :: ExprMap c
+    lmExprMap :: ExprMap c,
+    lmEmptyCategories :: CategoryMap c
   }
 
 data PrivateSource c =
@@ -70,14 +70,14 @@ data PrivateSource c =
 compileLanguageModule :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> Map.Map CategoryName (CategorySpec c) ->
   [PrivateSource c] -> m [CxxOutput]
-compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 ss em) cm xa = do
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 ss em cm0) sm xa = do
   let dm = mapDefByName $ concat $ map psDefine xa
   checkDefined dm extensions allExternal $ filter isValueConcrete (cs1 ++ ps1 ++ tc1 ++ tp1)
   checkSupefluous $ Set.toList $ extensions `Set.difference` ca
-  tmPublic         <- foldM includeNewTypes defaultCategories [cs0,cs1]
-  tmPrivate        <- foldM includeNewTypes tmPublic          [ps0,ps1]
-  tmPublicTesting  <- foldM includeNewTypes tmPublic          [tc0,tc1]
-  tmPrivateTesting <- foldM includeNewTypes tmPublicTesting   [ps0,tp0,ps1,tp1]
+  tmPublic         <- foldM includeNewTypes cm0             [cs0,cs1]
+  tmPrivate        <- foldM includeNewTypes tmPublic        [ps0,ps1]
+  tmPublicTesting  <- foldM includeNewTypes tmPublic        [tc0,tc1]
+  tmPrivateTesting <- foldM includeNewTypes tmPublicTesting [ps0,tp0,ps1,tp1]
   xxInterfaces <- fmap concat $ collectAllM $
     map (generateNativeInterface False nsPublic)  (onlyNativeInterfaces cs1) ++
     map (generateNativeInterface False nsPrivate) (onlyNativeInterfaces ps1) ++
@@ -91,7 +91,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp
     nsPublic  = ns0 `Set.union` ns2
     nsPrivate = ns1 `Set.union` nsPublic
     extensions = Set.fromList ss
-    allExternal = Set.unions [extensions,Map.keysSet cm]
+    allExternal = Set.unions [extensions,Map.keysSet sm]
     testingCats = Set.fromList $ (map getCategoryName tc1) ++ (map getCategoryName tp1)
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
     localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ tc1 ++ tp1
@@ -101,7 +101,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp
       let tm = if testing then tm2 else tm0
       (_,t) <- getConcreteCategory tm ([],n)
       let ctx = FileContext testing tm nsPrivate Map.empty
-      let spec = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) cm
+      let spec = Map.findWithDefault (CategorySpec [] [] []) (getCategoryName t) sm
       generateStreamlinedExtension ctx t spec
     compilePrivate tmPrivate tmTesting (PrivateSource ns3 testing cs2 ds) = do
       let tm = if testing
@@ -112,7 +112,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp
                                                        else cs2 ++ cs1 ++ ps1
       tm' <- includeNewTypes tm cs2
       let ctx = FileContext testing tm' (ns3 `Set.insert` nsPrivate) em
-      checkLocals ds $ Map.keysSet tm'
+      checkLocals ds $ Map.keysSet $ cmAvailable tm'
       when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapDefByName ds
       checkDefined dm Set.empty Set.empty $ filter isValueConcrete cs2
@@ -190,17 +190,17 @@ compileTestsModule cm ns args t cs ds ts = do
 compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [String] -> Maybe ([c],TypeInstance) -> PrivateSource c -> [TestProcedure c] ->
   m (CxxOutput,[(FunctionName,[c])])
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 _ em) args t ts2 tests = do
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 tc0 tp0 cs1 ps1 tc1 tp1 _ em cm0) args t ts2 tests = do
   tm' <- tm
   (CompiledData req traces main) <- generateTestFile tm' em args t tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req traces main
   let tests' = map (\t2 -> (tpName t2,tpContext t2)) tests
   return (output,tests') where
-  tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,tc0,tp0,tc1,tp1,psCategory ts2]
+  tm = foldM includeNewTypes cm0 [cs0,cs1,ps0,ps1,tc0,tp0,tc1,tp1,psCategory ts2]
 
 compileModuleMain :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ _ cs1 ps1 _ _ _ em) xa n f = do
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ _ cs1 ps1 _ _ _ em cm0) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
   reconcile resolved
   tm' <- tm
@@ -208,7 +208,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ _ cs1 ps1 _ _ _ em) xa n
   tm'' <- includeNewTypes tm' cs
   (ns,main) <- generateMainFile tm'' em n f
   return $ CxxOutput Nothing mainFilename NoNamespace (ns `Set.insert` Set.unions [ns0,ns1,ns2]) (Set.fromList [n]) Set.empty main where
-    tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1]
+    tm = foldM includeNewTypes cm0 [cs0,cs1,ps0,ps1]
     reconcile [_] = return ()
     reconcile []  = compilerErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =

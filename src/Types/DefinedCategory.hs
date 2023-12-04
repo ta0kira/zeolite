@@ -229,13 +229,13 @@ mapMembers readOnly hidden ms = foldr update (return Map.empty) ms where
 -- TODO: Most of this duplicates parts of flattenAllConnections.
 mergeInternalInheritance :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> DefinedCategory c -> m (CategoryMap c)
-mergeInternalInheritance tm d = "In definition of " ++ show (dcName d) ++ formatFullContextBrace (dcContext d) ??> do
+mergeInternalInheritance cm@(CategoryMap km tm) d = "In definition of " ++ show (dcName d) ++ formatFullContextBrace (dcContext d) ??> do
   let rs2 = dcRefines d
   let ds2 = dcDefines d
-  (_,t@(ValueConcrete c ns n pg fv ps rs ds vs fs)) <- getConcreteCategory tm (dcContext d,dcName d)
+  (_,t@(ValueConcrete c ns n pg fv ps rs ds vs fs)) <- getConcreteCategory cm (dcContext d,dcName d)
   let c2 = ValueConcrete c ns n pg fv ps (rs++rs2) (ds++ds2) vs fs
   let tm' = Map.insert (dcName d) c2 tm
-  let r = CategoryResolver tm'
+  let r = CategoryResolver (CategoryMap km tm')
   fm <- getCategoryFilterMap t
   let pm = getCategoryParamMap t
   rs2' <- fmap concat $ mapCompilerM (flattenRefine r) rs2
@@ -249,17 +249,17 @@ mergeInternalInheritance tm d = "In definition of " ++ show (dcName d) ++ format
   pg2 <- fmap concat $ mapCompilerM getRefinesPragmas rs2
   pg3 <- fmap concat $ mapCompilerM getDefinesPragmas ds2
   let fs2 = mergeInternalFunctions fs (dcFunctions d)
-  fs' <- mergeFunctions r tm' pm fm rs' ds' fs2
+  fs' <- mergeFunctions r (CategoryMap km tm') pm fm rs' ds' fs2
   let c2' = ValueConcrete c ns n (pg++pg2++pg3) fv ps rs' ds' vs fs'
   let tm0 = (dcName d) `Map.delete` tm
-  checkCategoryInstances tm0 [c2']
-  return $ Map.insert (dcName d) c2' tm
+  checkCategoryInstances (CategoryMap km tm0) [c2']
+  return $ CategoryMap km $ Map.insert (dcName d) c2' tm
   where
     getRefinesPragmas rf = do
-      (_,t) <- getCategory tm (vrContext rf,tiName $ vrType rf)
+      (_,t) <- getCategory cm (vrContext rf,tiName $ vrType rf)
       return $ map (prependCategoryPragmaContext $ vrContext rf) $ getCategoryPragmas t
     getDefinesPragmas df = do
-      (_,t) <- getCategory tm (vdContext df,diName $ vdType df)
+      (_,t) <- getCategory cm (vdContext df,diName $ vdType df)
       return $ map (prependCategoryPragmaContext $ vdContext df) $ getCategoryPragmas t
     mergeInternalFunctions fs1 = Map.elems . foldr single (funcMap fs1)
     funcMap = Map.fromList . map (\f -> (sfName f,f))
@@ -285,7 +285,7 @@ mergeInternalInheritance tm d = "In definition of " ++ show (dcName d) ++ format
       validateDefinesVariance r vm Covariant t <??
         "In " ++ show t ++ formatFullContextBrace c
     flattenRefine r ra@(ValueRefine c t) = do
-      (_,t2) <- getValueCategory tm (c,tiName t)
+      (_,t2) <- getValueCategory cm (c,tiName t)
       rs <- mapCompilerM (singleRefine r ra) (getCategoryRefines t2)
       return (ra:rs)
     singleRefine r (ValueRefine c t) (ValueRefine c2 t2) = do
