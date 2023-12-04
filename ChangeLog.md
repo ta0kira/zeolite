@@ -4,8 +4,19 @@
 
 ### Language
 
-* **[breaking]** Adds instance identification with the `identify` keyword. This
-  is breaking because `identify` is now reserved.
+* **[breaking]** In `testcase`, renames `crash` to `failure`.
+
+* **[breaking]** Adds the `visibility` keyword to limit calling of
+  `@value`/`@type` functions to specific type contexts. This is breaking because
+  `visibility` is now reserved.
+
+  ```text
+  concrete Foo {
+    visibility Bar, Baz  // Functions below here are only visible from Bar or Baz.
+
+    @type call () -> ()
+  }
+  ```
 
 * **[breaking]** Adds function delegation with `delegate` keyword.
 
@@ -32,24 +43,13 @@
 
   This is a breaking change because `delegate` is now reserved.
 
-* **[breaking]** Adds the `visibility` keyword to limit calling of
-  `@value`/`@type` functions to specific type contexts. This is breaking because
-  `visibility` is now reserved.
-
-  ```text
-  concrete Foo {
-    visibility Bar, Baz  // Functions below here are only visible from Bar or Baz.
-
-    @type call () -> ()
-  }
-  ```
-
-* **[breaking]** In `testcase`, renames `crash` to `failure`.
-
 * **[breaking]** In `testcase`, you can now optionally include a type name that
   `defines Testcase` after `success`/`failure`. The test will automatically call
   `start()` and `finish()`, which is meant to allow custom checks upon test
   exit. This is breaking because `Testcase` is now reserved.
+
+* **[breaking]** Adds instance identification with the `identify` keyword. This
+  is breaking because `identify` is now reserved.
 
 * **[fix]** Fixes parsing of comments that immediately follow operators, e.g.,
   the `/*b+*/` in `a+/*b+*/c`.
@@ -62,9 +62,6 @@
 
 * **[fix]** Updates parsing of `empty` to allow explicit type conversion, e.g.,
   `empty?String`.
-
-* **[new]** Adds the `$CallTrace$` macro to get a call trace for testing
-  purposes.
 
 * **[new]** Adds the option to provide _enforced_ labels for function args.
 
@@ -88,16 +85,6 @@
   of arguments. Additionally, there's no requirement that the labels match the
   argument names, nor that the labels are even unique.
 
-* **[new]** Adds the `<->` variable-swap syntax, e.g., `foo <-> bar`. This can
-  be used to swap the values of writable variables, i.e., _not_ marked as
-  read-only via a pragma and not a function argument.
-
-  ```text
-  Int foo <- 123
-  Int bar <- 456
-  foo <-> bar
-  ```
-
 * **[new]** Adds the `<-|` operator to conditionally overwrite an `optional`
   variable if it's empty.
 
@@ -107,8 +94,8 @@
   value <-| 456  // Not assigned, because value wasn't empty.
   ```
 
-* **[new]** Adds the `&.` value-call syntax to conditionally call a function on
-  an `optional` value.
+* **[new]** Adds the `&.` operator to conditionally call a function on an
+  `optional` value.
 
   ```text
   optional Int value <- 123
@@ -120,7 +107,23 @@
 
   ```text
   optional Formatted value <- empty
+  // Previously, the return type would've been optional Formatted.
   Int value2 <- (value <- 123)
+  ```
+
+* **[new]** Updates type inference to arbitrarily choose the lower bound when a
+  param is bounded above and below with different types. Previously, the
+  compiler would require specifying the param explicitly. This will make param
+  inference succeed in more situations than it did previously.
+
+* **[new]** Adds the `<->` operator to swap variable values. This can be used to
+  swap the values of writable variables of the same type, i.e., _not_ marked as
+  read-only via a pragma and not a function argument.
+
+  ```text
+  Int foo <- 123
+  Int bar <- 456
+  foo <-> bar
   ```
 
 * **[new]** Allows hex, octal, and binary floating-point literals. (Exponents
@@ -132,9 +135,8 @@
   Float value3 <- \b101.010
   ```
 
-* **[new]** Updates type inference to arbitrarily choose the lower bound when a
-  param is bounded above and below with different types. Previously, the
-  compiler would require specifying the param explicitly.
+* **[new]** Adds the `$CallTrace$` macro to get a call trace for testing
+  purposes.
 
 ### Libraries
 
@@ -149,8 +151,8 @@
   }
 
   unittest test {
-    \ Testing.checkEquals("something","other")
-    \ 3 `Matches:with` ValueCheck:between(2,7)
+    \ Testing.checkEquals("something", "other")
+    \ Testing.checkBetween(3, 2, 7)
   }
   ```
 
@@ -158,12 +160,12 @@
   // New way.
 
   testcase "my tests" {
-    success TestChecker  // <- enables checking of matchers
+    success TestChecker  // <- allows lib/testing to manage test results
   }
 
   unittest test {
     \ "something" `Matches:with` CheckValue:equals("other")
-    \ 3 `Matches:with` CheckValue:between(2,7)
+    \ 3 `Matches:with` CheckValue:betweenEquals(2, 7)
   }
   ```
 
@@ -181,8 +183,8 @@
   `lib/container`. User-defined matchers can compose other matchers to
   customize matching of more complex value types.
 
-* **[new]** Implements `SetReader<#k>` for `HashedMap<#k,#v>` and
-  `SortedMap<#k,#v>` in `lib/container`.
+* **[new]** Implements `SetReader<#k>` for `HashedMap<#k, #v>` and
+  `SortedMap<#k, #v>` in `lib/container`.
 
 * **[new]** Adds `tryValue` to `ErrorOr` in `lib/util`.
 
