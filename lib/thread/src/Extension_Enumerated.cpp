@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ limitations under the License.
 #include <atomic>
 #include <vector>
 
+#ifndef __APPLE__
 #include <pthread.h>
+#endif
+
 #include <string.h>
 
 #include "category-source.hpp"
@@ -28,6 +31,8 @@ limitations under the License.
 #include "Category_BarrierWait.hpp"
 #include "Category_EnumeratedBarrier.hpp"
 #include "Category_Int.hpp"
+
+#ifndef __APPLE__
 
 namespace {
 
@@ -97,12 +102,18 @@ private:
 
 }  // namespace
 
+#endif
+
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
 namespace ZEOLITE_PRIVATE_NAMESPACE {
 #endif  // ZEOLITE_PRIVATE_NAMESPACE
 
+#ifndef __APPLE__
+
 BoxedValue CreateValue_EnumeratedWait(
   S<const Type_EnumeratedWait> parent, S<Barrier> b, int i);
+
+#endif
 
 struct ExtCategory_EnumeratedWait : public Category_EnumeratedWait {
 };
@@ -110,6 +121,8 @@ struct ExtCategory_EnumeratedWait : public Category_EnumeratedWait {
 struct ExtType_EnumeratedWait : public Type_EnumeratedWait {
   inline ExtType_EnumeratedWait(Category_EnumeratedWait& p, Params<0>::Type params) : Type_EnumeratedWait(p, params) {}
 };
+
+#ifndef __APPLE__
 
 struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
   inline ExtValue_EnumeratedWait(S<const Type_EnumeratedWait> p, S<Barrier> b, int i)
@@ -129,6 +142,8 @@ struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
   int index;
 };
 
+#endif
+
 Category_EnumeratedWait& CreateCategory_EnumeratedWait() {
   static auto& category = *new ExtCategory_EnumeratedWait();
   return category;
@@ -141,10 +156,14 @@ S<const Type_EnumeratedWait> CreateType_EnumeratedWait(const Params<0>::Type& pa
 
 void RemoveType_EnumeratedWait(const Params<0>::Type& params) {}
 
+#ifndef __APPLE__
+
 BoxedValue CreateValue_EnumeratedWait(
   S<const Type_EnumeratedWait> parent, S<Barrier> b, int i) {
   return BoxedValue::New<ExtValue_EnumeratedWait>(std::move(parent), std::move(b), i);
 }
+
+#endif
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
 }  // namespace ZEOLITE_PRIVATE_NAMESPACE
@@ -167,6 +186,9 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
 
   ReturnTuple Call_new(const ParamsArgs& params_args) const final {
     TRACE_FUNCTION("EnumeratedBarrier.new")
+#ifdef __APPLE__
+    FAIL() << "Error creating barriers: BarrierWait not supported on MacOS";
+#else
     const PrimInt Var_arg1 = (params_args.GetArg(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Invalid barrier thread count " << Var_arg1;
@@ -179,6 +201,7 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
       waits.push_back(wait);
     }
     return ReturnTuple(CreateValue_EnumeratedBarrier(PARAM_SELF, std::move(waits)));
+#endif
   }
 };
 

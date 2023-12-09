@@ -327,20 +327,20 @@ library zeolite-internal
                        TypeSynonymInstances,
                        Unsafe
 
-  build-depends:       base >= 4.9 && < 4.15,
+  build-depends:       base >= 4.9 && < 4.20,
                        containers >= 0.3 && < 0.7,
                        directory >= 1.2.3 && < 1.4,
                        filepath >= 1.0 && < 1.5,
-                       hashable >= 1.0 && < 1.4,
-                       megaparsec >= 7.0 && < 9.1,
+                       hashable >= 1.0 && < 1.5,
+                       megaparsec >= 7.0 && < 9.7,
                        microlens >= 0.4.9 && < 0.5,
                        microlens-th >= 0.1.0.0 && < 0.5,
-                       mtl >= 1.0 && < 2.3,
+                       mtl >= 1.0 && < 2.4,
                        parser-combinators >= 0.2 && < 2.0,
                        regex-tdfa >= 1.0 && < 1.4,
-                       time >= 1.0 && < 1.11,
-                       transformers >= 0.1 && < 0.6,
-                       unix >= 2.6 && <= 2.8
+                       time >= 1.0 && < 1.13,
+                       transformers >= 0.1 && < 0.7,
+                       unix >= 2.6 && <= 2.9
 
   hs-source-dirs:      src
 

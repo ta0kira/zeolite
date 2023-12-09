@@ -188,6 +188,10 @@
 
 * **[new]** Adds `tryValue` to `ErrorOr` in `lib/util`.
 
+* **[fix]** Updates `BarrierWait` C++ implementation to compile for MacOS by
+  adding runtime failures if the functionality is used. MacOS doesn't support
+  thread barriers, so `lib/thread` previously didn't compile for MacOS.
+
 ### Compiler CLI
 
 * **[new]** Allows single-`-` CLI options to be clustered, e.g., `-rfj8`, which

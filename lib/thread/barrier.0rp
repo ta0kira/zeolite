@@ -16,6 +16,9 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// NOTE: This functionality isn't available on MacOS because MacOS doesn't
+// support thread barriers.
+
 // Waits for a thread barrier.
 @value interface BarrierWait {
   // Block until the barrier condition is satisfied.
