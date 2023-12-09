@@ -49,6 +49,7 @@ import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
 import Parser.TextParser (SourceContext)
+import Types.Builtin (requiredStaticTypes)
 import Types.DefinedCategory
 import Types.TypeCategory
 import Types.TypeInstance
@@ -287,7 +288,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es cs ep m 
           let lf' = lf ++ getLinkFlagsForDeps deps2
           let os     = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
-          let objects = ofr ns2 req
+          let objects = ofr ns2 (req `Set.union` requiredStaticTypes)
           return $ CompileToBinary mainAbs objects [] f0 paths2 lf'
         getCommand LinkDynamic mainAbs f0 deps2 paths2 = do
           let objects = getLibrariesForDeps deps2

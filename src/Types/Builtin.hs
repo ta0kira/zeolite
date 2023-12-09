@@ -16,6 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
 module Types.Builtin (
@@ -31,8 +32,11 @@ module Types.Builtin (
   isPointerRequiredValue,
   isOpaqueMulti,
   orderOptionalValue,
+  requiredStaticTypes,
   stringRequiredValue,
 ) where
+
+import qualified Data.Set as Set
 
 import Base.GeneralType
 import Base.MergeTree (reduceMergeTree)
@@ -100,3 +104,19 @@ data ExpressionValue =
 isOpaqueMulti :: ExpressionValue -> Bool
 isOpaqueMulti (OpaqueMulti _) = True
 isOpaqueMulti _               = False
+
+requiredStaticTypes :: Set.Set CategoryName
+#ifdef darwin_HOST_OS
+-- Weak linking doesn't work on MacOS, so we need these in order to link against
+-- boxed.cpp without linker errors.
+requiredStaticTypes = Set.fromList [
+    BuiltinBool,
+    BuiltinChar,
+    BuiltinInt,
+    BuiltinFloat,
+    BuiltinPointer,
+    BuiltinIdentifier
+  ]
+#else
+requiredStaticTypes = Set.empty
+#endif
