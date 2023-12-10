@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.24.0.1  -- 2023-12-10
+
+### Compiler CLI
+
+* **[fix]** Fixes static linking of binaries for C++ compilers that don't handle
+  weak symbols. Previously, static linking would fail for some compilers with an
+  error message related to functions that handle unboxed types.
+
 ## 0.24.0.0  -- 2023-12-09
 
 ### Language
