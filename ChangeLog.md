@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.24.0.0  -- ????-??-??
+## 0.24.0.0  -- 2023-12-09
 
 ### Language
 
