@@ -250,20 +250,33 @@ require ugly work-arounds; see the [full examples][examples].
 
 Requirements:
 
-- A Unix-like operating system. Zeolite has been tested on Linux and FreeBSD,
-  but in theory it should also work on OpenBSD, NetBSD, OS X, etc.
+- A POSIX-compliant operating system. Zeolite has been tested on Linux and
+  FreeBSD, and to a limited extent on MacOS. It probably _won't_ work on
+  Windows, due to how it interacts with the filesystem and subprocesses.
 - A Haskell compiler such as [`ghc`][ghc] that can install packages using
   [`cabal`][cabal], as well as the [`cabal`][cabal] installer.
 - A C++ compiler such as [`clang++`][clang] or [`g++`][gcc] and the standard
   `ar` archiver present on most Unix-like operating systems.
 
 If you use a modern Linux distribution, most of the above can be installed using
-the package manager that comes with your distribution.
+the package manager that comes with your distribution. On MacOS, you can install
+[Xcode][xcode] for a C++ compiler and [`brew install cabal-install`][brew-cabal]
+for `cabal`.
 
 Once you meet all of those requirements, follow the installation instructions
 for the [**`zeolite-lang`**][hackage-zeolite-lang] package on
 [Hackage][hackage]. Please take a look at the [issues page][zeolite-issues] if
 you run into problems.
+
+The entire process will probably look like this, once you have `cabal` and a C++
+compiler installed:
+
+```shell
+$ cabal update
+$ cabal install zeolite-lang
+$ zeolite-setup -j8
+# Follow interactive prompts...
+```
 
 If you happen to use the [`kate`][kate] text editor, you can use the syntax
 highlighting in [`zeolite.xml`][zeolite.xml].
@@ -2446,6 +2459,7 @@ both forward and reverse references were non-`weak`.
 
 [action-status]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml/badge.svg
 [action-zeolite]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml
+[brew-cabal]: https://formulae.brew.sh/formula/cabal-install
 [cabal]: https://www.haskell.org/cabal/#install-upgrade
 [category]: https://en.wikipedia.org/wiki/Category_theory
 [category-coproduct]: https://en.wikipedia.org/wiki/Coproduct
@@ -2465,6 +2479,7 @@ both forward and reverse references were non-`weak`.
 [procedural]: https://en.wikipedia.org/wiki/Procedural_programming
 [oop]: https://en.wikipedia.org/wiki/Object-oriented_programming
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
+[xcode]: https://developer.apple.com/xcode/
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
 [zeolite.xml]: https://github.com/ta0kira/zeolite/blob/master/highlighting/kate/zeolite.xml
