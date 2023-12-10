@@ -1,0 +1,72 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$ModuleOnly$
+
+@value interface TextToken<|#l> {
+  immutable
+
+  exportWith<#f> (TextFormatter<#l, #f>) -> (#f)
+}
+
+@value interface TextFormatter<#l|#f> {
+  format (String content:, #l label:) -> (#f)
+}
+
+concrete TextStream {
+  @type new (String) -> (TextStream)
+
+  @value current () -> (optional Char)
+  @value forward () -> (TextStream)
+  @value reset () -> (TextStream)
+  @value take () -> (String)
+  @value preview () -> (String)
+  @value atEnd () -> (Bool)
+}
+
+@value interface Tokenizer<#t, #v> {
+  tokenize (TextStream, KVReader<#t, Tokenizer<#t, #v>>) -> (optional #v, optional #t, Int)
+}
+
+concrete MultiTokenizer<#t, #v> {
+  refines Tokenizer<#t, #v>
+
+  visibility Tokenizer<#t, #v>
+
+  @type new () -> (#self)
+
+  @value include (#t) -> (#self)
+}
+
+concrete StreamTokenizer<#t, #v> {
+  @category new<#t, #v>
+    #v requires TextToken<any>
+  (KVReader<#t, Tokenizer<#t, #v>> tokenizers:, Tokenizer<#t, #v> default:) -> (StreamTokenizer<#t, #v>)
+
+  @value tokenizeAll (TextStream, Append<#v>) -> (#self)
+}
+
+concrete CharType {
+  @type lower (Char) -> (Bool)
+  @type upper (Char) -> (Bool)
+  @type digit (Char) -> (Bool)
+  @type alphaNum (Char) -> (Bool)
+  @type whitespace (Char) -> (Bool)
+  @type oneOf (Char, String) -> (Bool)
+  @type escapeBreaks (DefaultOrder<Char>) -> (String)
+}

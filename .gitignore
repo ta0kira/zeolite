@@ -12,6 +12,7 @@ core
 dist
 dist-newstyle
 example/*/*Demo
+example/highlighter/ZeoliteHighlight
 src/unit-tests
 tests/fast-static/Program
 tests/leak-check/LeakCheck

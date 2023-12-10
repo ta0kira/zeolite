@@ -489,6 +489,12 @@ test_example_hello() {
 }
 
 
+test_example_highlighter() {
+  do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r example/highlighter -f
+  do_zeolite -p "$ZEOLITE_PATH" -t example/highlighter
+}
+
+
 test_example_parser() {
   do_zeolite -p "$ZEOLITE_PATH" $PARALLEL -r example/parser -f
   do_zeolite -p "$ZEOLITE_PATH" -t example/parser
@@ -585,6 +591,7 @@ ALL_TESTS=(
   test_check_defs
   test_custom_testcase
   test_example_hello
+  test_example_highlighter
   test_example_parser
   test_example_primes
   test_example_random

@@ -1,0 +1,49 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "working tests" {
+  success TestChecker
+}
+
+unittest test {
+  ZeoliteTokenizers allTokenizers <- ZeoliteTokenizers.new()
+      .include<ZeoliteWhitespace>()
+      .include<ZeoliteLineComment>()
+      .include<ZeoliteCategoryName>()
+      .include<ZeoliteParamName>()
+  ZeoliteSelectFrom categoryOrParam <- ZeoliteSelectFrom.new()
+      .include<ZeoliteWhitespace>()
+      .include<ZeoliteLineComment>()
+      .include<ZeoliteCategoryName>()
+      .include<ZeoliteParamName>()
+
+  TextStream input <- TextStream.new("Category #param // done")
+  Vector<ZeoliteToken> output <- Vector<ZeoliteToken>.new()
+
+  \ StreamTokenizer:new(tokenizers: allTokenizers, default: categoryOrParam).tokenizeAll(input, output)
+
+  DefaultOrder<ZeoliteToken> expected <- Vector<ZeoliteToken>.new()
+      .append(`require` ZeoliteToken.new(content: "Category", label: "ZeoliteCategoryName"))
+      .append(`require` ZeoliteToken.new(content: " ", label: "ZeoliteWhitespace"))
+      .append(`require` ZeoliteToken.new(content: "#param", label: "ZeoliteParamName"))
+      .append(`require` ZeoliteToken.new(content: " ", label: "ZeoliteWhitespace"))
+      .append(`require` ZeoliteToken.new(content: "// done", label: "ZeoliteLineComment"))
+
+  \ input.atEnd() `Matches:with` CheckValue:equals(true)
+  \ output `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
+}

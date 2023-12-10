@@ -1,0 +1,214 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define ZeoliteToken {
+  @value String content
+  @value String label
+
+  new (content, label) {
+    if (content.size() < 1) {
+      return empty
+    } else {
+      return delegate -> #self
+    }
+  }
+
+  exportWith (formatter) {
+    return formatter.format(content: content, label: label)
+  }
+
+  testCompare (actual, report) {
+    \ MultiChecker.new(report)
+        .tryCheck(
+            title: "content",
+            actual.content(),
+            CheckValue:equals(content))
+        .tryCheck(
+            title: "label",
+            actual.label(),
+            CheckValue:equals(label))
+  }
+
+  formatted () {
+    return String.builder()
+        .append("ZeoliteToken{\"")
+        .append(CharType.escapeBreaks(content))
+        .append("\",")
+        .append(label)
+        .append("}")
+        .build()
+  }
+
+  @value content () -> (String)
+  content () {
+    return content
+  }
+
+  @value label () -> (String)
+  label () {
+    return label
+  }
+}
+
+define ZeoliteTokenizers {
+  $ReadOnlyExcept[]$
+
+  @value HashedMap<String, Tokenizer<String, ZeoliteToken>> tokenizers
+
+  new () {
+    return #self{ HashedMap<String, Tokenizer<String, ZeoliteToken>>.new() }
+  }
+
+  include () {
+    \ #t.tokenizerName() `tokenizers.set` #t.tokenizer()
+    return self
+  }
+
+  get (k) {
+    return delegate -> `tokenizers.get`
+  }
+}
+
+define ZeoliteSelectFrom {
+  $ReadOnlyExcept[]$
+
+  @value MultiTokenizer<String, ZeoliteToken> selector
+
+  new () {
+    return #self{ MultiTokenizer<String, ZeoliteToken>.new() }
+  }
+
+  include () {
+    \ selector.include(#t.tokenizerName())
+    return self
+  }
+
+  tokenize (input, tokenizers) {
+    return delegate -> `selector.tokenize`
+  }
+}
+
+define ZeoliteWhitespace {
+  refines Tokenizer<String, ZeoliteToken>
+
+  tokenizer () {
+    return #self{ }
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, tokenizers) (token, nextType, popCount) {
+    \ input.reset()
+    token <- empty
+    nextType <- empty
+    popCount <- 0
+    optional Char current <- input.current()
+    while (`present` current && CharType.whitespace(`require` current)) {
+      current <- input.forward().current()
+    }
+    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+  }
+}
+
+define ZeoliteLineComment {
+  refines Tokenizer<String, ZeoliteToken>
+
+  tokenizer () {
+    return #self{ }
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, tokenizers) (token, nextType, popCount) {
+    \ input.reset()
+    token <- empty
+    nextType <- empty
+    popCount <- 0
+    \ input.forward().forward()
+    if (input.preview() != "//") {
+      return _
+    }
+    optional Char current <- input.current()
+    while (`present` current && !CharType.oneOf(`require` current, "\r\n")) {
+      current <- input.forward().current()
+    }
+    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+  }
+}
+
+define ZeoliteCategoryName {
+  refines Tokenizer<String, ZeoliteToken>
+
+  tokenizer () {
+    return #self{ }
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, tokenizers) (token, nextType, popCount) {
+    \ input.reset()
+    token <- empty
+    nextType <- empty
+    popCount <- 0
+    optional Char current <- input.current()
+    if (! `present` current || !CharType.upper(`require` current)) {
+      return _
+    }
+    while (`present` current && CharType.alphaNum(`require` current)) {
+      current <- input.forward().current()
+    }
+    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+  }
+}
+
+define ZeoliteParamName {
+  refines Tokenizer<String, ZeoliteToken>
+
+  tokenizer () {
+    return #self{ }
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, tokenizers) (token, nextType, popCount) {
+    \ input.reset()
+    token <- empty
+    nextType <- empty
+    popCount <- 0
+    optional Char current <- input.current()
+    if (! `present` current || `require` current != '#') {
+      return _
+    }
+    current <- input.forward().current()
+    if (! `present` current || !CharType.lower(`require` current)) {
+      return _
+    }
+    while (`present` current && CharType.alphaNum(`require` current)) {
+      current <- input.forward().current()
+    }
+    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+  }
+}

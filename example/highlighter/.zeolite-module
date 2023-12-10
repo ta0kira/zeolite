@@ -1,0 +1,17 @@
+root: "../.."
+path: "example/highlighter"
+extra_paths: [
+  "example/highlighter/src"
+  "example/highlighter/test"
+]
+private_deps: [
+  "lib/testing"
+  "lib/util"
+  "lib/container"
+  "lib/file"
+]
+mode: binary {
+  category: ZeoliteHighlight
+  function: run
+  link_mode: static
+}

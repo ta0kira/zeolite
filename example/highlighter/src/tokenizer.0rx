@@ -1,0 +1,201 @@
+/* -----------------------------------------------------------------------------
+Copyright 2023 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define TextStream {
+  $ReadOnly[source]$
+
+  @value String source
+  @value Int tokenStart
+  @value Int tokenEnd
+
+  new (source) {
+    return TextStream{ source, 0, 0 }
+  }
+
+  current () (char) {
+    char <- empty
+    if (tokenEnd < source.size()) {
+      char <- source.readAt(tokenEnd)
+    }
+  }
+
+  forward () {
+    if (tokenEnd < source.size()) {
+      tokenEnd <- tokenEnd+1
+    }
+    return self
+  }
+
+  reset () {
+    tokenEnd <- tokenStart
+    return self
+  }
+
+  take () {
+    cleanup {
+      tokenStart <- tokenEnd
+    } in return preview()
+  }
+
+  preview () {
+    return source.subSequence(tokenStart, tokenEnd-tokenStart)
+  }
+
+  atEnd () {
+    return tokenStart >= source.size()
+  }
+}
+
+define MultiTokenizer {
+  $ReadOnlyExcept[]$
+
+  @value [DefaultOrder<#t> & Append<#t>] types
+
+  new () {
+    return #self{ Vector<#t>.new() }
+  }
+
+  include (type) {
+    \ types.append(type)
+    return self
+  }
+
+  tokenize (input, tokenizers) (token, nextType, popCount) {
+    token <- empty
+    nextType <- empty
+    popCount <- 0
+    traverse (types.defaultOrder() -> #t type) {
+      scoped {
+        optional Tokenizer<#t, #v> tokenizer <- tokenizers.get(type)
+      } in if (`present` tokenizer) {
+        token, nextType, popCount <- require(tokenizer).tokenize(input, tokenizers)
+      }
+    } update {
+      if (`present` token) {
+        break
+      }
+    }
+  }
+}
+
+define StreamTokenizer {
+  $ReadOnlyExcept[]$
+
+  @value KVReader<#t, Tokenizer<#t, #v>> tokenizers
+  @value Tokenizer<#t, #v> defaultTokenizer
+
+  new (tokenizers, defaultTokenizer) {
+    return delegate -> StreamTokenizer<#t, #v>
+  }
+
+  tokenizeAll (input, output) {
+    scoped {
+      Stack<Tokenizer<#t, #v>> tokenizerStack <- Vector<Tokenizer<#t, #v>>.new().push(defaultTokenizer)
+      Tokenizer<#t, #v> tokenizer <- defaultTokenizer
+      optional #v token <- empty
+      optional #t nextType <- empty
+      Int popCount <- 0
+    } in while (!input.atEnd()) {
+      $Hidden[tokenizerStack,defaultTokenizer]$
+      $ReadOnly[tokenizer]$
+      token, nextType, popCount <- tokenizer.tokenize(input, tokenizers)
+    } update {
+      // Process new token.
+      if (`present` token) {
+        \ output.append(`require` token)
+      } else {
+        // Tokenizing failed => let the caller deal with the rest of the input.
+        break
+      }
+      // Pop tokenizers.
+      while (popCount > 0 && tokenizerStack.size() > 0) {
+        tokenizer <- tokenizerStack.pop()
+      } update {
+        popCount <- popCount-1
+      }
+      if (popCount > 0) {
+        tokenizer <- defaultTokenizer
+        popCount <- 0
+      }
+      // Set new tokenizer.
+      scoped {
+        optional Tokenizer<#t, #v> nextTokenizer <- empty
+        if (`present` nextType) {
+          nextTokenizer <- tokenizers.get(`require` nextType)
+        }
+      } in if (`present` nextTokenizer) {
+        \ tokenizerStack.push(tokenizer)
+        tokenizer <- `require` nextTokenizer
+      }
+    }
+    return self
+  }
+}
+
+define CharType {
+  $ReadOnlyExcept[]$
+
+  @category KVReader<Char, String> escapes <- HashedMap<Char, String>.new()
+      .set('\t', "\\t")
+      .set('\n', "\\n")
+      .set('\r', "\\r")
+      .set('\"', "\\\"")
+
+  lower (c) {
+    return c >= 'a' && c <= 'z'
+  }
+
+  upper (c) {
+    return c >= 'A' && c <= 'Z'
+  }
+
+  digit (c) {
+    return c >= '0' && c <= '9'
+  }
+
+  alphaNum (c) {
+    return lower(c) || upper(c) || digit(c)
+  }
+
+  whitespace (c) {
+    return c `oneOf` "\n\t\r "
+  }
+
+  oneOf (c, allowed) (match) {
+    match <- false
+    traverse (allowed.defaultOrder() -> Char c2) {
+      if (c == c2) {
+        return true
+      }
+    }
+  }
+
+  escapeBreaks (string) {
+    [Append<Formatted> & Build<String>] builder <- String.builder()
+    traverse (string.defaultOrder() -> Char c) {
+      scoped {
+        optional String replacement <- escapes.get(c)
+      } in if (`present` replacement) {
+        \ builder.append(`require` replacement)
+      } else {
+        \ builder.append(c)
+      }
+    }
+    return builder.build()
+  }
+}
