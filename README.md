@@ -273,6 +273,7 @@ compiler installed:
 
 ```shell
 $ cabal update
+# Also add --overwrite-policy=always if you're upgrading to a specific version.
 $ cabal install zeolite-lang
 $ zeolite-setup -j8
 # Follow interactive prompts...
