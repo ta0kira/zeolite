@@ -622,8 +622,8 @@ compileExpression = compile where
     compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps as)) [])
   callFunctionSpec c as (FunctionSpec _ (TypeFunction c2 tn) fn ps) =
     compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps as)) [])
-  callFunctionSpec c as (FunctionSpec _ (ValueFunction c2 e0) fn ps) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c AlwaysCall (FunctionCall c fn ps as)])
+  callFunctionSpec c as (FunctionSpec _ (ValueFunction c2 o e0) fn ps) =
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c o (FunctionCall c fn ps as)])
   callFunctionSpec c as (FunctionSpec c2 UnqualifiedFunction fn ps) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps as)) [])
   compile (Literal l) = compileValueLiteral l
@@ -675,8 +675,8 @@ compileExpression = compile where
     compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
     compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
-  compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e2) =
-    compile (Expression c (ParensExpression c2 e0) [ValueCall c AlwaysCall (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))])
+  compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 o e0) fn ps)) e2) =
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c o (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e2) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [(Nothing,e1),(Nothing,e2)]))) [])
   compile (InfixExpression _ e1 (NamedOperator c o) e2) = do

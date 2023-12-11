@@ -492,9 +492,12 @@ instance ParseFromSource (FunctionQualifier SourceContext) where
   sourceParser = valueFunc <|> categoryFunc <|> typeFunc where
     valueFunc = do
       c <- getSourceContext
-      q <- try sourceParser
-      valueSymbolGet
-      return $ ValueFunction [c] q
+      -- NOTE: We duplicate parsing of ValueOperation here so that we don't
+      -- inadvertently parse "&" in "&." separately.
+      s <- try sourceParser
+      vs <- many (try sourceParser)
+      o <- (valueSymbolGet >> return AlwaysCall) <|> (valueSymbolMaybeGet >> return CallUnlessEmpty)
+      return $ ValueFunction [c] o $ Expression [c] s vs
     categoryFunc = do
       c <- getSourceContext
       q <- try $ do  -- Avoids consuming the type name if : isn't present.

@@ -354,7 +354,7 @@ tests = [
                                 (Literal (IntegerLiteral _ False 1))
                                 (FunctionOperator _
                                   (FunctionSpec _
-                                    (ValueFunction _
+                                    (ValueFunction _ AlwaysCall
                                       (Expression _ (NamedVariable (OutputValue _ (VariableName "something"))) []))
                                     (FunctionName "foo") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
@@ -366,7 +366,7 @@ tests = [
                                 (Literal (IntegerLiteral _ False 1))
                                   (FunctionOperator _
                                     (FunctionSpec _
-                                      (ValueFunction _
+                                      (ValueFunction _ AlwaysCall
                                         (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (Positional [])
                                           (Positional [(Nothing,Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])]))) []))
                                         (FunctionName "foo") (Positional [])))
@@ -407,7 +407,7 @@ tests = [
                               (UnaryExpression _
                                 (FunctionOperator _
                                   (FunctionSpec _
-                                    (ValueFunction _
+                                    (ValueFunction _ AlwaysCall
                                       (Expression _ (NamedVariable (OutputValue _ (VariableName "bits"))) []))
                                     (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
@@ -418,8 +418,20 @@ tests = [
                               UnaryExpression _
                                   (FunctionOperator _
                                     (FunctionSpec _
-                                      (ValueFunction _
+                                      (ValueFunction _ AlwaysCall
                                         (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (Positional [])
+                                          (Positional [(Nothing,Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])]))) []))
+                                        (FunctionName "not") (Positional [])))
+                                (Literal (IntegerLiteral _ False 2)) -> True
+                              _ -> False),
+
+    checkParsesAs "`strong(x)&.not` 2"
+                  (\e -> case e of
+                              UnaryExpression _
+                                  (FunctionOperator _
+                                    (FunctionSpec _
+                                      (ValueFunction _ CallUnlessEmpty
+                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinStrong (Positional [])
                                           (Positional [(Nothing,Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])]))) []))
                                         (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2)) -> True

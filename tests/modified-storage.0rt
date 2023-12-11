@@ -533,6 +533,16 @@ unittest nonEmpty {
   \ Testing.checkEquals(value&.formatted(), "123")
 }
 
+unittest prefixEmpty {
+  optional Int value <- empty
+  \ Testing.checkEquals(`value&.formatted()&.readAt` 0, empty)
+}
+
+unittest prefixNonEmpty {
+  optional Int value <- 123
+  \ Testing.checkEquals(`value&.formatted()&.readAt` 0, '1')
+}
+
 unittest chainedCalls {
   optional Int value <- 123
   \ Testing.checkEquals(value&.formatted()&.readAt(0), '1')

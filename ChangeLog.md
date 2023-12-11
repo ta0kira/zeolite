@@ -2,6 +2,11 @@
 
 ## 0.24.0.1  -- 2023-12-10
 
+### Language
+
+* **[fix]** Fixes parsing of `&.` with prefix/infix function notation, e.g.,
+  ``a `foo&.bar` b``.
+
 ### Compiler CLI
 
 * **[fix]** Fixes static linking of binaries for C++ compilers that don't handle
