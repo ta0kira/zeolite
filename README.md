@@ -6,13 +6,14 @@
 Zeolite is a statically-typed, general-purpose programming language. The type
 system revolves around defining objects and their usage patterns.
 
-Zeolite prioritizes making code written with it simple to understand for readers
-who didn't write the original code. This is done by limiting flexibility in
-some places and increasing it in others. In particular, emphasis is placed on
-the user's experience when troubleshooting code that is *incorrect*.
+Zeolite prioritizes making it easy to write maintainable and understandable
+code. This is done by rethinking standard language idioms and limiting
+flexibility in some places while increasing it in others. In particular,
+emphasis is placed on the user's experience when troubleshooting code that is
+*incorrect*.
 
 The design of the type system and the language itself is influenced by positive
-and negative experiences with Java, C++, Haskell, Python, and Go, with
+and negative experiences with Java, C++, Haskell, Python, Ruby, and Go, with
 collaborative development, and with various systems of code-quality enforcement.
 
 Due to the way GitHub renders embedded HTML, the colors might not show up in the
@@ -1233,8 +1234,14 @@ has `@type interface`s that declare `@type` functions that must be defined.
 <span style='color:#898887;'>// @type indicates that the interface declares @type functions.</span>
 <span style='color:#644a9b;'>@type</span> <b>interface</b> <b><span style='color:#0057ae;'>Diffable</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   <span style='color:#898887;'>// @type is not allowed in the declaration.</span>
-  diff (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+  diff (<i><span style='color:#0057ae;'>#x</span></i>, <i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
 }</pre>
+
+|Type|Param Variance|Param Filters|Can Inherit|`@category` Funcs|`@type` Funcs|`@value` Funcs|Define Procedures|
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|**`concrete`**|✓|✓|`@value interface` `@type interface`|✓|✓|✓|✓|
+|**`@value interface`**|✓||`@value interface`|||✓||
+|**`@type interface`**|✓||--||✓||
 
 - `@value interface`s can be **inherited** by other `@value interface`s and
   `concrete` categories using `refines`.
