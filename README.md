@@ -2490,4 +2490,4 @@ both forward and reverse references were non-`weak`.
 [xcode]: https://developer.apple.com/xcode/
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
-[zeolite.xml]: https://github.com/ta0kira/zeolite/blob/master/highlighting/kate/zeolite.xml
+[zeolite.xml]: https://github.com/ta0kira/zeolite/blob/master/editors/kate/zeolite.xml
