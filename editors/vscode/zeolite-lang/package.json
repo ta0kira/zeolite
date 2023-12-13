@@ -2,7 +2,7 @@
   "name": "zeolite-lang",
   "displayName": "Zeolite Lang",
   "description": "Syntax Highlighting for Zeolite Lang",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -10,16 +10,31 @@
     "Programming Languages"
   ],
   "contributes": {
-    "languages": [{
-      "id": "zeolite",
-      "aliases": ["Zeolite", "zeolite"],
-      "extensions": [".0rp",".0rx",".0rt"],
-      "configuration": "./language-configuration.json"
-    }],
-    "grammars": [{
-      "language": "zeolite",
-      "scopeName": "source.zeolite",
-      "path": "./syntaxes/zeolite.tmLanguage.json"
-    }]
+    "languages": [
+      {
+        "id": "zeolite",
+        "aliases": ["Zeolite", "zeolite"],
+        "extensions": [".0rp",".0rx",".0rt"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "zeolitemodule",
+        "aliases": ["Zeolite Module", "zeolitemodule"],
+        "filenamePatterns": [".zeolite-module"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "zeolite",
+        "scopeName": "source.zeolite",
+        "path": "./syntaxes/zeolite.tmLanguage.json"
+      },
+      {
+        "language": "zeolitemodule",
+        "scopeName": "source.zeolitemodule",
+        "path": "./syntaxes/zeolitemodule.tmLanguage.json"
+      }
+    ]
   }
 }

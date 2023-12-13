@@ -1,0 +1,128 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Zeolite Module",
+	"patterns": [
+		{
+			"include": "#comments-block"
+		},
+		{
+			"include": "#comments-line"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#pragma"
+		},
+		{
+			"include": "#macro-name"
+		},
+		{
+			"include": "#category-name"
+		},
+		{
+			"include": "#param-name"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.zeolitemodule",
+					"match": "\\b(root|path|extra_paths|expression_map|public_deps|private_deps|extra_files|extension_specs|include_paths|mode):"
+				},
+				{
+					"name": "keyword.control.zeolitemodule",
+					"match": "\\b(source|categories|requires):"
+				},
+				{
+					"name": "keyword.control.zeolitemodule",
+					"match": "\\b(name|refines|defines):"
+				},
+				{
+					"name": "keyword.control.zeolitemodule",
+					"match": "\\b(category|function|link_mode|output|link_flags):"
+				},
+				{
+					"name": "support.type.zeolitemodule",
+					"match": "\\b(category_source|category|binary|incremental|expression_macro)\\b"
+				},
+				{
+					"name": "keyword.control.zeolitemodule",
+					"match": "\\b(name|expression):"
+				},
+				{
+					"name": "support.constant.zeolitemodule",
+					"match": "\\b(dynamic|static)\\b"
+				}
+			]
+		},
+        "category-name": {
+			"patterns": [
+				{
+					"match": "\\b(Append|AsBool|AsChar|AsFloat|AsInt|Bounded|Bool|Build|Char|CharBuffer|Container|Default|Duplicate|Equals|Float|Formatted|Hashed|Identifier|Int|LessThan|Pointer|Order|ReadAt|String|SubSequence|Testcase|WriteAt)\\b",
+					"name": "support.class.zeolitemodule"
+				},
+				{
+					"match": "\\b[A-Z][A-Za-z09-]*\\b",
+					"name": "entity.name.type.zeolitemodule"
+				}
+			]
+        },
+        "param-name": {
+            "match": "#[a-z][A-Za-z09-]*\\b",
+            "name": "variable.parameter.zeolitemodule"
+        },
+		"macro-name": {
+			"patterns": [
+				{
+					"name": "entity.name.tag.zeolitemodule",
+					"match": "\\b[A-Z][A-Z_0-9]+\\b"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.zeolitemodule",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"include": "#escaped-chars"
+				}
+			]
+		},
+		"escaped-chars": {
+			"patterns": [
+				{
+					"name": "constant.character.escape.zeolitemodule",
+					"match": "\\\\x[A-Za-z0-9]{2}"
+				},
+				{
+					"name": "constant.character.escape.zeolitemodule",
+					"match": "\\\\[0-9]{3}"
+				},
+				{
+					"name": "constant.character.escape.zeolitemodule",
+					"match": "\\\\['\"?\\abfnrtv]"
+				}
+			]
+		},
+        "comments-line": {
+            "match": "\\/\\/.*?$",
+            "name": "comment.line.double-slash.zeolitemodule"
+        },
+        "pragma": {
+            "match": "\\$[A-Za-z0-9]+(\\[.*\\]|)\\$",
+            "name": "comment.block.preprocessor.zeolitemodule"
+        },
+        "comments-block": {
+            "begin": "\\/\\*",
+            "end": "\\*\\/",
+            "name": "comment.block.zeolitemodule"
+        }
+	},
+	"scopeName": "source.zeolitemodule"
+}
