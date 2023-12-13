@@ -280,7 +280,11 @@ $ zeolite-setup -j8
 # Follow interactive prompts...
 ```
 
-If you happen to use the [`kate`][kate] text editor, you can use the syntax
+**You might also need to add `$HOME/.cabal/bin` to your `$PATH`.**
+
+For syntax highlighting in [Visual Studio Code][vscode], See "VS Code Support"
+in the [Zeolite releases][zeolite-releases] and download the `.vsix` file. If
+you happen to use the [`kate`][kate] text editor, you can use the syntax
 highlighting in [`zeolite.xml`][zeolite.xml].
 
 ### Hello World
@@ -2488,6 +2492,8 @@ both forward and reverse references were non-`weak`.
 [oop]: https://en.wikipedia.org/wiki/Object-oriented_programming
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [xcode]: https://developer.apple.com/xcode/
+[vscode]: https://code.visualstudio.com/
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
+[zeolite-releases]: https://github.com/ta0kira/zeolite/releases
 [zeolite.xml]: https://github.com/ta0kira/zeolite/blob/master/editors/kate/zeolite.xml
