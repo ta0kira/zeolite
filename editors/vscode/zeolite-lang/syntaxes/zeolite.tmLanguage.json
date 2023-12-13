@@ -289,6 +289,10 @@
 					"include": "#comments-line"
 				},
 				{
+					"name": "support.type.zeolite",
+					"match": "\\b(all|any)\\b"
+				},
+				{
 					"include": "#builtin-category-params"
 				},
 				{
