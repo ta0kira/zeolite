@@ -3,18 +3,94 @@
 	"name": "Zeolite",
 	"patterns": [
 		{
-			"include": "#keywords"
+			"include": "#comments-block"
+		},
+		{
+			"include": "#comments-line"
+		},
+		{
+			"include": "#testcase"
 		},
 		{
 			"include": "#strings"
+		},
+		{
+			"include": "#chars"
+		},
+		{
+			"include": "#pragma-args"
+		},
+		{
+			"include": "#pragma-empty"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#arg-label"
+		},
+		{
+			"include": "#builtin-category-params"
+		},
+		{
+			"include": "#category-params"
+		},
+		{
+			"include": "#category-name"
+		},
+		{
+			"include": "#param-name"
+		},
+		{
+			"include": "#numbers"
+		},
+		{
+			"include": "#catch-errors"
+		},
+		{
+			"include": "#operators"
 		}
 	],
 	"repository": {
 		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.zeolite",
-				"match": "\\b(if|while|for|return)\\b"
-			}]
+			"patterns": [
+				{
+					"name": "storage.modifier.zeolite",
+					"match": "\\@(category|type|value)\\b"
+				},
+				{
+					"name": "storage.modifier.zeolite",
+					"match": "\\b(optional|weak)\\b"
+				},
+				{
+					"name": "storage.type.zeolite",
+					"match": "\\b(concrete|interface|define|unittest)\\b"
+				},
+				{
+					"name": "support.variable.zeolite",
+					"match": "\\b(_|empty|false|true|self)\\b"
+				},
+				{
+					"name": "keyword.control.zeolite",
+					"match": "\\b(break|cleanup|continue|defer|delegate|elif|else|if|in|return|scoped|traverse|update|while)\\b"
+				},
+				{
+					"name": "support.type.zeolite",
+					"match": "\\b(all|any)\\b"
+				},
+				{
+					"name": "support.type.zeolite",
+					"match": "#self\\b"
+				},
+				{
+					"name": "keyword.other.zeolite",
+					"match": "\\b(allows|defines|immutable|refines|requires|visibility)\\b"
+				},
+				{
+					"name": "support.function.zeolite",
+					"match": "\\b(exit|fail|identify|present|reduce|require|strong|typename)\\b"
+				}
+			]
 		},
 		"strings": {
 			"name": "string.quoted.double.zeolite",
@@ -22,8 +98,214 @@
 			"end": "\"",
 			"patterns": [
 				{
+					"include": "#escaped-chars"
+				}
+			]
+		},
+		"escaped-chars": {
+			"patterns": [
+				{
 					"name": "constant.character.escape.zeolite",
-					"match": "\\\\."
+					"match": "\\\\x[A-Za-z0-9]{2}"
+				},
+				{
+					"name": "constant.character.escape.zeolite",
+					"match": "\\\\[0-9]{3}"
+				},
+				{
+					"name": "constant.character.escape.zeolite",
+					"match": "\\\\['\"?\\abfnrtv]"
+				}
+			]
+		},
+		"numbers": {
+			"patterns": [
+				{
+					"name": "constant.numeric.zeolite",
+					"match": "\\\\[bB][0-1]+(\\.[0-1]+|)"
+				},
+				{
+					"name": "constant.numeric.zeolite",
+					"match": "\\\\[oO][0-7]+(\\.[0-7]+|)"
+				},
+				{
+					"name": "constant.numeric.zeolite",
+					"match": "\\\\[dD][0-9]+(\\.[0-9]+|)"
+				},
+				{
+					"name": "constant.numeric.zeolite",
+					"match": "\\\\[xX][A-Za-z0-9]+(\\.[A-Za-z0-9]+|)"
+				},
+				{
+					"name": "constant.numeric.zeolite",
+					"match": "\\b[0-9]+(\\.[0-9]+([eE][-+]?[0-9]+|)|)"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.other.zeolite",
+					"match": "<-|->|<-\\||\\&\\.|\\.|:|\\\\|\\?"
+				},
+				{
+					"name": "keyword.operator.zeolite",
+					"match": "\\&\\&|\\|\\||!=|==|<=|>=|<|>|\\+|[-*+/^~&|]"
+				}
+			]
+		},
+		"chars": {
+			"name": "string.quoted.single.zeolite",
+			"begin": "'",
+			"end": "'",
+			"patterns": [
+				{
+					"include": "#escaped-chars"
+				}
+			]
+		},
+        "comments-line": {
+            "match": "\\/\\/.*?$",
+            "name": "comment.line.double-slash.zeolite"
+        },
+        "catch-errors": {
+            "match": "[@#$=]",
+            "name": "invalid.unsupported.zeolite"
+        },
+        "comments-block": {
+            "begin": "\\/\\*",
+            "end": "\\*\\/",
+            "name": "comment.block.zeolite"
+        },
+        "category-name": {
+			"patterns": [
+				{
+					"match": "\\b(Append|Bounded|Bool|Build|Char|Container|Default|Duplicate|Equals|Float|Formatted|Hashed|Identifier|Int|Pointer|Order|ReadAt|String|Testcase|WriteAt)\\b",
+					"name": "support.class.zeolite"
+				},
+				{
+					"match": "\\b[A-Z][A-Za-z09-]*\\b",
+					"name": "entity.name.type.zeolite"
+				}
+			]
+        },
+        "param-name": {
+            "match": "#[a-z][A-Za-z09-]*\\b",
+            "name": "variable.parameter.zeolite"
+        },
+        "arg-label": {
+            "match": "\\b[a-z][A-Za-z09-]*:",
+            "name": "entity.name.tag.zeolite"
+        },
+		"testcase": {
+			"begin": "\\b(testcase)[ \\n\\t]?(\"[^\"]+\")[ \\n\\t]?\\{",
+			"end": "\\}",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.zeolite"
+                }
+            },
+			"patterns": [
+				{
+					"include": "#comments-block"
+				},
+				{
+					"include": "#comments-line"
+				},
+				{
+					"match": "\\b(success|failure|error|compiles|require|exclude|stderr|stdout|compiler|timeout|args)\\b",
+					"name": "entity.name.tag.zeolite"
+				},
+				{
+					"include": "#strings"
+				},
+				{
+					"match": "\\b[0-9]+\\b",
+					"name": "constant.numeric.zeolite"
+				},
+				{
+					"include": "#category-params"
+				},
+				{
+					"include": "#category-name"
+				},
+				{
+					"match": "[^ \\t]",
+					"name": "invalid.illegal"
+				}
+			]
+		},
+        "pragma-empty": {
+            "match": "\\$[A-Za-z0-9]+\\$",
+            "name": "comment.block.preprocessor.zeolite"
+        },
+        "pragma-args": {
+            "begin": "\\$[A-Za-z0-9]+\\[",
+            "end": "\\]\\$",
+            "beginCaptures": {
+                "0": {
+                    "name": "comment.block.preprocessor.zeolite"
+                }
+            },
+            "endCaptures": {
+                "0": {
+                    "name": "comment.block.preprocessor.zeolite"
+                }
+            },
+            "contentName": "string.other.zeolite"
+        },
+		"param-allowed": {
+			"patterns": [
+				{
+					"include": "#comments-block"
+				},
+				{
+					"include": "#comments-line"
+				},
+				{
+					"include": "#category-params"
+				},
+				{
+					"include": "#category-name"
+				},
+				{
+					"include": "#param-name"
+				},
+				{
+					"match": "\\|",
+					"name": "support.other.zeolite"
+				},
+				{
+					"match": "[^ \\t]",
+					"name": "invalid.illegal"
+				}
+			]
+		},
+		"category-params": {
+			"begin": "\\b([A-Z][A-Za-z09-]*)<",
+			"end": ">",
+            "beginCaptures": {
+                "1": {
+                    "name": "entity.name.type.zeolite"
+                }
+            },
+			"patterns": [
+				{
+					"include": "#param-allowed"
+				}
+			]
+		},
+		"builtin-category-params": {
+			"begin": "\\b(Append|Build|Equals|Identifier|Pointer|Order|ReadAt|WriteAt)<",
+			"end": ">",
+            "beginCaptures": {
+                "1": {
+                    "name": "entity.name.type.zeolite"
+                }
+            },
+			"patterns": [
+				{
+					"include": "#param-allowed"
 				}
 			]
 		}
