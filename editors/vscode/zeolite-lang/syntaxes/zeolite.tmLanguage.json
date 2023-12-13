@@ -149,7 +149,7 @@
 			"patterns": [
 				{
 					"name": "keyword.other.zeolite",
-					"match": "<-|->|<-\\||\\&\\.|\\.|:|\\\\|\\?"
+					"match": "<->|<-\\||<-|->|\\&\\.|\\.|:|\\\\|\\?"
 				},
 				{
 					"name": "keyword.operator.zeolite",
@@ -172,7 +172,7 @@
             "name": "comment.line.double-slash.zeolite"
         },
         "catch-errors": {
-            "match": "[@#$=]",
+            "match": "[@#$=;_]",
             "name": "invalid.unsupported.zeolite"
         },
         "comments-block": {
