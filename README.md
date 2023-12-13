@@ -280,7 +280,8 @@ $ zeolite-setup -j8
 # Follow interactive prompts...
 ```
 
-**You might also need to add `$HOME/.cabal/bin` to your `$PATH`.**
+**You might also need to add `$HOME/.cabal/bin` or  `$HOME/.local/bin` to your
+`$PATH`.**
 
 For syntax highlighting in [Visual Studio Code][vscode], See "VS Code Support"
 in the [Zeolite releases][zeolite-releases] and download the `.vsix` file. If
