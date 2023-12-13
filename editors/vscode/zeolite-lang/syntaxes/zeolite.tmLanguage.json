@@ -42,13 +42,16 @@
 			"include": "#param-name"
 		},
 		{
+			"include": "#meta-type"
+		},
+		{
 			"include": "#numbers"
 		},
 		{
-			"include": "#catch-errors"
+			"include": "#operators"
 		},
 		{
-			"include": "#operators"
+			"include": "#catch-errors"
 		}
 	],
 	"repository": {
@@ -254,6 +257,29 @@
             },
             "contentName": "string.other.zeolite"
         },
+        "meta-type": {
+            "begin": "\\[",
+            "end": "\\]",
+            "beginCaptures": {
+                "0": {
+                    "name": "keyword.other.zeolite"
+                }
+            },
+            "endCaptures": {
+                "0": {
+                    "name": "keyword.other.zeolite"
+                }
+            },
+			"patterns": [
+				{
+					"match": "[&|]",
+					"name": "keyword.other.zeolite"
+				},
+				{
+					"include": "#param-allowed"
+				}
+			]
+        },
 		"param-allowed": {
 			"patterns": [
 				{
@@ -261,6 +287,9 @@
 				},
 				{
 					"include": "#comments-line"
+				},
+				{
+					"include": "#builtin-category-params"
 				},
 				{
 					"include": "#category-params"
@@ -272,11 +301,14 @@
 					"include": "#param-name"
 				},
 				{
+					"include": "#meta-type"
+				},
+				{
 					"match": "\\|",
 					"name": "support.other.zeolite"
 				},
 				{
-					"match": "[^ \\t]",
+					"match": "[^, \\t]",
 					"name": "invalid.illegal"
 				}
 			]
@@ -296,11 +328,11 @@
 			]
 		},
 		"builtin-category-params": {
-			"begin": "\\b(Append|Build|Equals|Identifier|Pointer|Order|ReadAt|WriteAt)<",
+			"begin": "\\b(Append|Build|DefaultOrder|Equals|Identifier|Pointer|Order|ReadAt|WriteAt)<",
 			"end": ">",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.type.zeolite"
+                    "name": "support.class.zeolite"
                 }
             },
 			"patterns": [
