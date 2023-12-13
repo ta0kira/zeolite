@@ -183,7 +183,7 @@
         "category-name": {
 			"patterns": [
 				{
-					"match": "\\b(Append|Bounded|Bool|Build|Char|Container|Default|Duplicate|Equals|Float|Formatted|Hashed|Identifier|Int|Pointer|Order|ReadAt|String|Testcase|WriteAt)\\b",
+					"match": "\\b(Append|AsBool|AsChar|AsFloat|AsInt|Bounded|Bool|Build|Char|CharBuffer|Container|Default|Duplicate|Equals|Float|Formatted|Hashed|Identifier|Int|LessThan|Pointer|Order|ReadAt|String|SubSequence|Testcase|WriteAt)\\b",
 					"name": "support.class.zeolite"
 				},
 				{
@@ -328,7 +328,7 @@
 			]
 		},
 		"builtin-category-params": {
-			"begin": "\\b(Append|Build|DefaultOrder|Equals|Identifier|Pointer|Order|ReadAt|WriteAt)<",
+			"begin": "\\b(Append|Build|DefaultOrder|Equals|Identifier|LessThan|Pointer|Order|ReadAt|WriteAt)<",
 			"end": ">",
             "beginCaptures": {
                 "1": {
