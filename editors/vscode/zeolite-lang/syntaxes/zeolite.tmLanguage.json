@@ -118,6 +118,10 @@
 				{
 					"name": "constant.character.escape.zeolite",
 					"match": "\\\\['\"?\\abfnrtv]"
+				},
+				{
+					"name": "invalid.illegal.zeolite",
+					"match": "\\\\."
 				}
 			]
 		},
@@ -153,7 +157,7 @@
 				},
 				{
 					"name": "keyword.operator.zeolite",
-					"match": "\\&\\&|\\|\\||!=|==|<=|>=|<|>|\\+|[-*+/^~&|]"
+					"match": "\\&\\&|\\|\\||!=|==|<=|>=|<|>|\\+|[-*+/^~&|%]"
 				}
 			]
 		},

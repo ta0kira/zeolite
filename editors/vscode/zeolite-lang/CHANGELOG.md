@@ -1,5 +1,9 @@
 # Change Log
 
+## `0.2.1`
+
+- Fixes highlighting of `%`.
+
 ## `0.2.0`
 
 - Adds highlighting of `.zeolite-module`.
