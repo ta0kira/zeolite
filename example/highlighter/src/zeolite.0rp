@@ -49,6 +49,13 @@ concrete ZeoliteParseContext {
   () -> (ZeoliteParseContext)
 }
 
+// Zeolite symbol parsing.
+concrete ZeoliteSymbol {
+  @type categoryName (TextStream) -> (optional String)
+  @type paramName (TextStream) -> (optional String)
+  @type variableOrFunctionName (TextStream) -> (optional String)
+}
+
 // Zeolite source tokenizers.
 
 concrete ZeoliteWhitespace {

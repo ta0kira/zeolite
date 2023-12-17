@@ -137,6 +137,48 @@ define ZeoliteParseContext {
   }
 }
 
+define ZeoliteSymbol {
+  categoryName (input) {
+    \ input.reset()
+    optional Char current <- input.current()
+    if (! `present` current || !CharType.upper(`require` current)) {
+      return empty
+    }
+    while (`present` current && CharType.alphaNum(`require` current)) {
+      current <- input.forward().current()
+    }
+    return input.take()
+  }
+
+  paramName (input) {
+    \ input.reset()
+    optional Char current <- input.current()
+    if (! `present` current || `require` current != '#') {
+      return empty
+    }
+    current <- input.forward().current()
+    if (! `present` current || !CharType.lower(`require` current)) {
+      return empty
+    }
+    while (`present` current && CharType.alphaNum(`require` current)) {
+      current <- input.forward().current()
+    }
+    return input.take()
+  }
+
+  variableOrFunctionName (input) (token) {
+    \ input.reset()
+    optional Char current <- input.current()
+    if (! `present` current || !CharType.lower(`require` current)) {
+      return empty
+    }
+    while (`present` current && CharType.alphaNum(`require` current)) {
+      current <- input.forward().current()
+    }
+    return input.take()
+  }
+}
+
 define ZeoliteWhitespace {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
@@ -200,17 +242,14 @@ define ZeoliteCategoryName {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, context) (token) {
-    \ input.reset()
-    token <- empty
-    optional Char current <- input.current()
-    if (! `present` current || !CharType.upper(`require` current)) {
-      return _
+  tokenize (input, _) {
+    scoped {
+      optional String content <- ZeoliteSymbol.categoryName(input)
+    } in if (`present` content) {
+      return ZeoliteParsed.leaf(label: tokenizerName(), content: `require` content)
+    } else {
+      return empty
     }
-    while (`present` current && CharType.alphaNum(`require` current)) {
-      current <- input.forward().current()
-    }
-    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
   }
 }
 
@@ -226,20 +265,13 @@ define ZeoliteParamName {
   }
 
   tokenize (input, context) (token) {
-    \ input.reset()
-    token <- empty
-    optional Char current <- input.current()
-    if (! `present` current || `require` current != '#') {
-      return _
+    scoped {
+      optional String content <- ZeoliteSymbol.paramName(input)
+    } in if (`present` content) {
+      return ZeoliteParsed.leaf(label: tokenizerName(), content: `require` content)
+    } else {
+      return empty
     }
-    current <- input.forward().current()
-    if (! `present` current || !CharType.lower(`require` current)) {
-      return _
-    }
-    while (`present` current && CharType.alphaNum(`require` current)) {
-      current <- input.forward().current()
-    }
-    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
   }
 }
 
