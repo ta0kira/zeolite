@@ -16,7 +16,9 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define ZeoliteToken {
+define ZeoliteSection {
+  $ReadOnlyExcept[]$
+
   @value String content
   @value String label
 
@@ -24,12 +26,8 @@ define ZeoliteToken {
     if (content.size() < 1) {
       return empty
     } else {
-      return delegate -> #self
+      return ZeoliteSection{ content, label }
     }
-  }
-
-  exportWith (formatter) {
-    return formatter.format(content: content, label: label)
   }
 
   testCompare (actual, report) {
@@ -46,7 +44,7 @@ define ZeoliteToken {
 
   formatted () {
     return String.builder()
-        .append("ZeoliteToken{\"")
+        .append("ZeoliteSection{\"")
         .append(CharType.escapeBreaks(content))
         .append("\",")
         .append(label)
@@ -68,10 +66,10 @@ define ZeoliteToken {
 define ZeoliteTokenizers {
   $ReadOnlyExcept[]$
 
-  @value HashedMap<String, Tokenizer<String, ZeoliteToken>> tokenizers
+  @value HashedMap<String, Tokenizer<ZeoliteTokenizers, ZeoliteSection>> tokenizers
 
   new () {
-    return #self{ HashedMap<String, Tokenizer<String, ZeoliteToken>>.new() }
+    return #self{ HashedMap<String, Tokenizer<ZeoliteTokenizers, ZeoliteSection>>.new() }
   }
 
   include () {
@@ -87,24 +85,35 @@ define ZeoliteTokenizers {
 define ZeoliteSelectFrom {
   $ReadOnlyExcept[]$
 
-  @value MultiTokenizer<String, ZeoliteToken> selector
+  @value [DefaultOrder<String> & Append<String>] types
 
   new () {
-    return #self{ MultiTokenizer<String, ZeoliteToken>.new() }
+    return #self{ Vector<String>.new() }
   }
 
   include () {
-    \ selector.include(#t.tokenizerName())
+    \ types.append(#t.tokenizerName())
     return self
   }
 
-  tokenize (input, tokenizers) {
-    return delegate -> `selector.tokenize`
+  tokenize (input, tokenizers) (token) {
+    token <- empty
+    traverse (types.defaultOrder() -> String type) {
+      scoped {
+        optional Tokenizer<ZeoliteTokenizers, ZeoliteSection> tokenizer <- tokenizers.get(type)
+      } in if (`present` tokenizer) {
+        token <- require(tokenizer).tokenize(input, tokenizers)
+      }
+    } update {
+      if (`present` token) {
+        break
+      }
+    }
   }
 }
 
 define ZeoliteWhitespace {
-  refines Tokenizer<String, ZeoliteToken>
+  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
   tokenizer () {
     return #self{ }
@@ -114,21 +123,19 @@ define ZeoliteWhitespace {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token, nextType, popCount) {
+  tokenize (input, tokenizers) (token) {
     \ input.reset()
     token <- empty
-    nextType <- empty
-    popCount <- 0
     optional Char current <- input.current()
     while (`present` current && CharType.whitespace(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
   }
 }
 
 define ZeoliteLineComment {
-  refines Tokenizer<String, ZeoliteToken>
+  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
   tokenizer () {
     return #self{ }
@@ -138,11 +145,9 @@ define ZeoliteLineComment {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token, nextType, popCount) {
+  tokenize (input, tokenizers) (token) {
     \ input.reset()
     token <- empty
-    nextType <- empty
-    popCount <- 0
     \ input.forward().forward()
     if (input.preview() != "//") {
       return _
@@ -151,12 +156,12 @@ define ZeoliteLineComment {
     while (`present` current && !CharType.oneOf(`require` current, "\r\n")) {
       current <- input.forward().current()
     }
-    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
   }
 }
 
 define ZeoliteCategoryName {
-  refines Tokenizer<String, ZeoliteToken>
+  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
   tokenizer () {
     return #self{ }
@@ -166,11 +171,9 @@ define ZeoliteCategoryName {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token, nextType, popCount) {
+  tokenize (input, tokenizers) (token) {
     \ input.reset()
     token <- empty
-    nextType <- empty
-    popCount <- 0
     optional Char current <- input.current()
     if (! `present` current || !CharType.upper(`require` current)) {
       return _
@@ -178,12 +181,12 @@ define ZeoliteCategoryName {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
   }
 }
 
 define ZeoliteParamName {
-  refines Tokenizer<String, ZeoliteToken>
+  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
   tokenizer () {
     return #self{ }
@@ -193,11 +196,9 @@ define ZeoliteParamName {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token, nextType, popCount) {
+  tokenize (input, tokenizers) (token) {
     \ input.reset()
     token <- empty
-    nextType <- empty
-    popCount <- 0
     optional Char current <- input.current()
     if (! `present` current || `require` current != '#') {
       return _
@@ -209,6 +210,6 @@ define ZeoliteParamName {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteToken.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
   }
 }

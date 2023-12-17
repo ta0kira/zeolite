@@ -18,16 +18,6 @@ limitations under the License.
 
 $ModuleOnly$
 
-@value interface TextToken<|#l> {
-  immutable
-
-  exportWith<#f> (TextFormatter<#l, #f>) -> (#f)
-}
-
-@value interface TextFormatter<#l|#f> {
-  format (String content:, #l label:) -> (#f)
-}
-
 concrete TextStream {
   @type new (String) -> (TextStream)
 
@@ -39,24 +29,12 @@ concrete TextStream {
   @value atEnd () -> (Bool)
 }
 
-@value interface Tokenizer<#t, #v> {
-  tokenize (TextStream, KVReader<#t, Tokenizer<#t, #v>>) -> (optional #v, optional #t, Int)
+@value interface Tokenizer<#c|#v> {
+  tokenize (TextStream, #c) -> (optional #v)
 }
 
-concrete MultiTokenizer<#t, #v> {
-  refines Tokenizer<#t, #v>
-
-  visibility Tokenizer<#t, #v>
-
-  @type new () -> (#self)
-
-  @value include (#t) -> (#self)
-}
-
-concrete StreamTokenizer<#t, #v> {
-  @category new<#t, #v>
-    #v requires TextToken<any>
-  (KVReader<#t, Tokenizer<#t, #v>> tokenizers:, Tokenizer<#t, #v> default:) -> (StreamTokenizer<#t, #v>)
+concrete StreamTokenizer<#c|#v> {
+  @category new<#c, #v>  (#c context:, Tokenizer<#c, #v> tokenizer:) -> (StreamTokenizer<#c, #v>)
 
   @value tokenizeAll (TextStream, Append<#v>) -> (#self)
 }

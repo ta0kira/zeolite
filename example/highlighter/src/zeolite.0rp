@@ -18,23 +18,22 @@ limitations under the License.
 
 $ModuleOnly$
 
-concrete ZeoliteToken {
+concrete ZeoliteSection {
   refines Formatted
-  refines TestCompare<ZeoliteToken>
-  refines TextToken<String>
+  refines TestCompare<ZeoliteSection>
 
-  visibility Tokenizer<String, ZeoliteToken>
+  visibility Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
-  @type new (String content:, String label:) -> (optional ZeoliteToken)
+  @type new (String content:, String label:) -> (optional ZeoliteSection)
 }
 
 @type interface NamedTokenizer {
-  tokenizer () -> (Tokenizer<String, ZeoliteToken>)
+  tokenizer () -> (Tokenizer<ZeoliteTokenizers, ZeoliteSection>)
   tokenizerName () -> (String)
 }
 
 concrete ZeoliteTokenizers {
-  refines KVReader<String, Tokenizer<String, ZeoliteToken>>
+  refines KVReader<String, Tokenizer<ZeoliteTokenizers, ZeoliteSection>>
 
   @type new () -> (ZeoliteTokenizers)
 
@@ -44,9 +43,9 @@ concrete ZeoliteTokenizers {
 }
 
 concrete ZeoliteSelectFrom {
-  refines Tokenizer<String, ZeoliteToken>
+  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
-  visibility Tokenizer<String, ZeoliteToken>
+  visibility Tokenizer<ZeoliteTokenizers, ZeoliteSection>
 
   @type new () -> (ZeoliteSelectFrom)
 

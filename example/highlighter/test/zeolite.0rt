@@ -33,16 +33,16 @@ unittest test {
       .include<ZeoliteParamName>()
 
   TextStream input <- TextStream.new("Category #param // done")
-  Vector<ZeoliteToken> output <- Vector<ZeoliteToken>.new()
+  Vector<ZeoliteSection> output <- Vector<ZeoliteSection>.new()
 
-  \ StreamTokenizer:new(tokenizers: allTokenizers, default: categoryOrParam).tokenizeAll(input, output)
+  \ StreamTokenizer:new(context: allTokenizers, tokenizer: categoryOrParam).tokenizeAll(input, output)
 
-  DefaultOrder<ZeoliteToken> expected <- Vector<ZeoliteToken>.new()
-      .append(`require` ZeoliteToken.new(content: "Category", label: "ZeoliteCategoryName"))
-      .append(`require` ZeoliteToken.new(content: " ", label: "ZeoliteWhitespace"))
-      .append(`require` ZeoliteToken.new(content: "#param", label: "ZeoliteParamName"))
-      .append(`require` ZeoliteToken.new(content: " ", label: "ZeoliteWhitespace"))
-      .append(`require` ZeoliteToken.new(content: "// done", label: "ZeoliteLineComment"))
+  DefaultOrder<ZeoliteSection> expected <- Vector<ZeoliteSection>.new()
+      .append(`require` ZeoliteSection.new(content: "Category", label: "ZeoliteCategoryName"))
+      .append(`require` ZeoliteSection.new(content: " ", label: "ZeoliteWhitespace"))
+      .append(`require` ZeoliteSection.new(content: "#param", label: "ZeoliteParamName"))
+      .append(`require` ZeoliteSection.new(content: " ", label: "ZeoliteWhitespace"))
+      .append(`require` ZeoliteSection.new(content: "// done", label: "ZeoliteLineComment"))
 
   \ input.atEnd() `Matches:with` CheckValue:equals(true)
   \ output `Matches:with` CheckSequence:matches(CheckSequence:using(expected))

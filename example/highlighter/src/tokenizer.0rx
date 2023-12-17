@@ -61,59 +61,21 @@ define TextStream {
   }
 }
 
-define MultiTokenizer {
-  $ReadOnlyExcept[]$
-
-  @value [DefaultOrder<#t> & Append<#t>] types
-
-  new () {
-    return #self{ Vector<#t>.new() }
-  }
-
-  include (type) {
-    \ types.append(type)
-    return self
-  }
-
-  tokenize (input, tokenizers) (token, nextType, popCount) {
-    token <- empty
-    nextType <- empty
-    popCount <- 0
-    traverse (types.defaultOrder() -> #t type) {
-      scoped {
-        optional Tokenizer<#t, #v> tokenizer <- tokenizers.get(type)
-      } in if (`present` tokenizer) {
-        token, nextType, popCount <- require(tokenizer).tokenize(input, tokenizers)
-      }
-    } update {
-      if (`present` token) {
-        break
-      }
-    }
-  }
-}
-
 define StreamTokenizer {
   $ReadOnlyExcept[]$
 
-  @value KVReader<#t, Tokenizer<#t, #v>> tokenizers
-  @value Tokenizer<#t, #v> defaultTokenizer
+  @value #c context
+  @value Tokenizer<#c, #v> tokenizer
 
-  new (tokenizers, defaultTokenizer) {
-    return delegate -> StreamTokenizer<#t, #v>
+  new (context, tokenizer) {
+    return delegate -> StreamTokenizer<#c, #v>
   }
 
   tokenizeAll (input, output) {
     scoped {
-      Stack<Tokenizer<#t, #v>> tokenizerStack <- Vector<Tokenizer<#t, #v>>.new().push(defaultTokenizer)
-      Tokenizer<#t, #v> tokenizer <- defaultTokenizer
       optional #v token <- empty
-      optional #t nextType <- empty
-      Int popCount <- 0
     } in while (!input.atEnd()) {
-      $Hidden[tokenizerStack,defaultTokenizer]$
-      $ReadOnly[tokenizer]$
-      token, nextType, popCount <- tokenizer.tokenize(input, tokenizers)
+      token <- input `tokenizer.tokenize` context
     } update {
       // Process new token.
       if (`present` token) {
@@ -121,26 +83,6 @@ define StreamTokenizer {
       } else {
         // Tokenizing failed => let the caller deal with the rest of the input.
         break
-      }
-      // Pop tokenizers.
-      while (popCount > 0 && tokenizerStack.size() > 0) {
-        tokenizer <- tokenizerStack.pop()
-      } update {
-        popCount <- popCount-1
-      }
-      if (popCount > 0) {
-        tokenizer <- defaultTokenizer
-        popCount <- 0
-      }
-      // Set new tokenizer.
-      scoped {
-        optional Tokenizer<#t, #v> nextTokenizer <- empty
-        if (`present` nextType) {
-          nextTokenizer <- tokenizers.get(`require` nextType)
-        }
-      } in if (`present` nextTokenizer) {
-        \ tokenizerStack.push(tokenizer)
-        tokenizer <- `require` nextTokenizer
       }
     }
     return self
