@@ -95,45 +95,75 @@ define ZeoliteParsed {
   }
 }
 
-define ZeoliteParseContext {
+define UseNamedTokenizer {
   $ReadOnlyExcept[]$
 
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
-  @value [DefaultOrder<String> & Append<String>] types
-  @value HashedMap<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>> tokenizers
+  @value String name
 
   new () {
-    return #self{ Vector<String>.new(), HashedMap<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>>.new() }
-  }
-
-  defaultTokenizer () {
-    return self
-  }
-
-  include () {
-    \ #t.tokenizerName() `tokenizers.set` #t.tokenizer()
-    \ types.append(#t.tokenizerName())
-    return self
-  }
-
-  get (k) {
-    return delegate -> `tokenizers.get`
+    return #self{ #t.tokenizerName() }
   }
 
   tokenize (input, context) (token) {
     token <- empty
-    traverse (types.defaultOrder() -> String type) {
-      scoped {
-        optional Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- context.get(type)
-      } in if (`present` tokenizer) {
-        token <- require(tokenizer).tokenize(input, context)
-      }
+    scoped {
+      optional Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- context.get(name)
+    } in if (`present` tokenizer) {
+      token <- require(tokenizer).tokenize(input, context)
+    }
+  }
+}
+
+define TokenAlternatives {
+  $ReadOnlyExcept[]$
+
+  @value Vector<Tokenizer<ZeoliteParseContext, ZeoliteParsed>> tokenizers
+
+  new () {
+    return #self{ Vector<Tokenizer<ZeoliteParseContext, ZeoliteParsed>>.new() }
+  }
+
+  append (tokenizer) {
+    \ delegate -> `tokenizers.append`
+    return self
+  }
+
+  tokenize (input, context) (token) {
+    token <- empty
+    traverse (tokenizers.defaultOrder() -> Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer) {
+      token <- tokenizer.tokenize(input, context)
     } update {
       if (`present` token) {
         break
       }
     }
+  }
+}
+
+define ZeoliteParseContext {
+  $ReadOnlyExcept[]$
+
+  @value TokenAlternatives defaultTokenizer
+  @value HashedMap<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>> tokenizers
+
+  new () {
+    return #self{ TokenAlternatives.new(), HashedMap<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>>.new() }
+  }
+
+  defaultTokenizer () {
+    return defaultTokenizer
+  }
+
+  include () {
+    \ #t.tokenizerName() `tokenizers.set` #t.tokenizer()
+    \ defaultTokenizer.append(UseNamedTokenizer.new<#t>())
+    return self
+  }
+
+  get (k) {
+    return delegate -> `tokenizers.get`
   }
 }
 
@@ -156,6 +186,42 @@ define ZeoliteSymbol {
       .append("update")
       .append("while")
 
+  @category SetReader<String> typeKeywords <- HashedSet<String>.new()
+      .append("allows")
+      .append("defines")
+      .append("immutable")
+      .append("refines")
+      .append("requires")
+      .append("visibility")
+
+  @category SetReader<String> containKeywords <- HashedSet<String>.new()
+      .append("concrete")
+      .append("interface")
+      .append("define")
+      .append("unittest")
+
+  @category SetReader<String> storageKeywords <- HashedSet<String>.new()
+      .append("optional")
+      .append("weak")
+
+  @category SetReader<String> scopeQualifiers <- HashedSet<String>.new()
+      .append("@category")
+      .append("@type")
+      .append("@value")
+
+  @category SetReader<String> testcaseKeywords <- HashedSet<String>.new()
+      .append("args")
+      .append("compiler")
+      .append("compiles")
+      .append("error")
+      .append("exclude")
+      .append("failure")
+      .append("require")
+      .append("stderr")
+      .append("stdout")
+      .append("success")
+      .append("timeout")
+
   @category SetReader<String> builtinCategries <- HashedSet<String>.new()
       .append("all")
       .append("any")
@@ -164,8 +230,8 @@ define ZeoliteSymbol {
       .append("AsChar")
       .append("AsFloat")
       .append("AsInt")
-      .append("Bounded")
       .append("Bool")
+      .append("Bounded")
       .append("Build")
       .append("Char")
       .append("CharBuffer")
@@ -179,8 +245,8 @@ define ZeoliteSymbol {
       .append("Identifier")
       .append("Int")
       .append("LessThan")
-      .append("Pointer")
       .append("Order")
+      .append("Pointer")
       .append("ReadAt")
       .append("String")
       .append("SubSequence")
@@ -207,7 +273,7 @@ define ZeoliteSymbol {
   @category SetReader<String> builtinParams <- HashedSet<String>.new()
       .append("#self")
 
-  categoryName (input) {
+  parseUpperSymbol (input) {
     \ input.reset()
     optional Char current <- input.current()
     if (! `present` current || !CharType.upper(`require` current)) {
@@ -216,10 +282,22 @@ define ZeoliteSymbol {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    return input.take()
+    return input
   }
 
-  paramName (input) {
+  parseLowerSymbol (input) {
+    \ input.reset()
+    optional Char current <- input.current()
+    if (! `present` current || !CharType.lower(`require` current)) {
+      return empty
+    }
+    while (`present` current && CharType.alphaNum(`require` current)) {
+      current <- input.forward().current()
+    }
+    return input
+  }
+
+  parseParamName (input) {
     \ input.reset()
     optional Char current <- input.current()
     if (! `present` current || `require` current != '#') {
@@ -232,162 +310,86 @@ define ZeoliteSymbol {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    return input.take()
+    return input
   }
 
-  variableOrFunctionName (input) (token) {
+  parseScopeQualifier (input) {
     \ input.reset()
     optional Char current <- input.current()
-    if (! `present` current || !CharType.lower(`require` current)) {
+    if (! `present` current || `require` current != '@') {
       return empty
     }
+    current <- input.forward().current()
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    return input.take()
-  }
-
-  isControlKeyword (value) {
-    return `controlKeywords.member` value
-  }
-
-  isBuiltinCategory (value) {
-    return `builtinCategries.member` value
-  }
-
-  isBuiltinFunction (value) {
-    return `builtinFunctions.member` value
-  }
-
-  isBuiltinConstant (value) {
-    return `builtinConstants.member` value
-  }
-
-  isBuiltinParam (value) {
-    return `builtinParams.member` value
-  }
-}
-
-define ZeoliteWhitespace {
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  tokenizer () {
-    return #self{ }
-  }
-
-  tokenizerName () {
-    return typename<#self>().formatted()
-  }
-
-  tokenize (input, context) (token) {
-    \ input.reset()
-    token <- empty
-    optional Char current <- input.current()
-    while (`present` current && CharType.whitespace(`require` current)) {
-      current <- input.forward().current()
-    }
-    scoped {
-      String content <- input.take()
-    } in if (content.size() > 0) {
-      token <- ZeoliteParsed.leaf(label: tokenizerName(), content: content)
-    }
-  }
-}
-
-define ZeoliteLineComment {
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  tokenizer () {
-    return #self{ }
-  }
-
-  tokenizerName () {
-    return typename<#self>().formatted()
-  }
-
-  tokenize (input, context) (token) {
-    \ input.reset()
-    token <- empty
-    \ input.forward().forward()
-    if (input.preview() != "//") {
-      return _
-    }
-    optional Char current <- input.current()
-    while (`present` current && !CharType.oneOf(`require` current, "\r\n")) {
-      current <- input.forward().current()
-    }
-    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
-  }
-}
-
-define ZeoliteCategoryName {
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  tokenizer () {
-    return #self{ }
-  }
-
-  tokenizerName () {
-    return typename<#self>().formatted()
-  }
-
-  tokenize (input, _) {
-    scoped {
-      optional String content <- ZeoliteSymbol.categoryName(input)
-    } in if (`present` content) {
-      return ZeoliteParsed.leaf(label: tokenizerName(), content: `require` content)
+    if (! `scopeQualifiers.member` input.preview()){
+      return input
     } else {
       return empty
     }
   }
-}
 
-define ZeoliteParamName {
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  tokenizer () {
-    return #self{ }
-  }
-
-  tokenizerName () {
-    return typename<#self>().formatted()
-  }
-
-  tokenize (input, context) (token) {
-    scoped {
-      optional String content <- ZeoliteSymbol.paramName(input)
-    } in if (`present` content) {
-      return ZeoliteParsed.leaf(label: tokenizerName(), content: `require` content)
-    } else {
-      return empty
+  tryControlKeyword (value) (type) {
+    type <- empty
+    if (`controlKeywords.member` value) {
+      type <- "ZeoliteControlKeyword"
     }
   }
-}
 
-define ZeoliteBraceSection {
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  tokenizer () {
-    return #self{ }
+  tryTypeKeyword (value) (type) {
+    type <- empty
+    if (`typeKeywords.member` value) {
+      type <- "ZeoliteTypeKeyword"
+    }
   }
 
-  tokenizerName () {
-    return typename<#self>().formatted()
+  tryContainKeyword (value) (type) {
+    type <- empty
+    if (`containKeywords.member` value) {
+      type <- "ZeoliteContainKeyword"
+    }
   }
 
-  tokenize (input, context) (token) {
-    \ input.reset()
-    token <- empty
-    if (input.atEnd() || `require` input.current() != '{') {
-      return _
+  tryStorageKeyword (value) (type) {
+    type <- empty
+    if (`storageKeywords.member` value) {
+      type <- "ZeoliteStorageKeyword"
     }
-    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
-    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace", content: input.forward().take()))
-    \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer()).tokenizeAll(input, subsections)
-    \ input.reset()
-    if (!input.atEnd() && `require` input.current() == '}') {
-      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: input.forward().take()))
+  }
+
+  tryTestcaseKeyword (value) (type) {
+    type <- empty
+    if (`testcaseKeywords.member` value) {
+      type <- "ZeoliteTestcaseKeyword"
     }
-    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
+  }
+
+  tryBuiltinCategory (value) (type) {
+    type <- empty
+    if (`builtinCategries.member` value) {
+      type <- "ZeoliteBuiltinCategory"
+    }
+  }
+
+  tryBuiltinFunction (value) (type) {
+    type <- empty
+    if (`builtinFunctions.member` value) {
+      type <- "ZeoliteBuiltinFunction"
+    }
+  }
+
+  tryBuiltinConstant (value) (type) {
+    type <- empty
+    if (`builtinConstants.member` value) {
+      type <- "ZeoliteBuiltinConstant"
+    }
+  }
+
+  tryBuiltinParam (value) (type) {
+    type <- empty
+    if (`builtinParams.member` value) {
+      type <- "ZeoliteBuiltinParam"
+    }
   }
 }

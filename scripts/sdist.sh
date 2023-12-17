@@ -5,6 +5,7 @@ set -u -e
 cd "$(dirname "$0")/.."
 
 required='/(README\.md|\.zeolite-module|.+\.(0r[ptx]|h|hpp|cc|cpp))$'
+ignore='^editors/|^scripts/'
 sdist_file=$(cabal sdist | sed 1d)
 [[ $? -eq 0 ]] || exit $?
 
@@ -19,7 +20,7 @@ if [[ -n "${nv_files-}" ]]; then
   exit 1
 fi
 
-missing_files=($(echo "$tracked_files" | egrep "$required" | fgrep -vxf <(echo "$sdist_files") || true))
+missing_files=($(echo "$tracked_files" | egrep "$required" | egrep -v "$ignore" | fgrep -vxf <(echo "$sdist_files") || true))
 if [[ -n "${missing_files-}" ]]; then
   echo "*** $(basename "$sdist_file") is missing required files ***" 1>&2
   printf '%s\n' "${missing_files[@]}"

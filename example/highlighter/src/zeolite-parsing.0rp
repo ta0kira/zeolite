@@ -49,37 +49,39 @@ concrete ZeoliteParseContext {
   () -> (ZeoliteParseContext)
 }
 
+// Delegate to a tokenizer by name.
+concrete UseNamedTokenizer {
+  @type new<#t>
+    #t defines NamedTokenizer
+  () -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
+}
+
+// Attempts multiple tokenizers in order.
+concrete TokenAlternatives {
+  refines Append<Tokenizer<ZeoliteParseContext, ZeoliteParsed>>
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  @type new () -> (TokenAlternatives)
+}
+
 // Zeolite symbol parsing.
 concrete ZeoliteSymbol {
-  @type categoryName (TextStream) -> (optional String)
-  @type paramName (TextStream) -> (optional String)
-  @type variableOrFunctionName (TextStream) -> (optional String)
+  // Parses symbol and returns the stream forwarded to the end of the symbol.
 
-  @type isControlKeyword (String) -> (Bool)
-  @type isBuiltinCategory (String) -> (Bool)
-  @type isBuiltinFunction (String) -> (Bool)
-  @type isBuiltinConstant (String) -> (Bool)
-  @type isBuiltinParam (String) -> (Bool)
-}
+  @type parseUpperSymbol    (TextStream) -> (optional TextStream)
+  @type parseLowerSymbol    (TextStream) -> (optional TextStream)
+  @type parseParamName      (TextStream) -> (optional TextStream)
+  @type parseScopeQualifier (TextStream) -> (optional TextStream)
 
-// Zeolite source tokenizers.
+  // Returns a type label if the token is in the given set.
 
-concrete ZeoliteWhitespace {
-  defines NamedTokenizer
-}
-
-concrete ZeoliteLineComment {
-  defines NamedTokenizer
-}
-
-concrete ZeoliteCategoryName {
-  defines NamedTokenizer
-}
-
-concrete ZeoliteParamName {
-  defines NamedTokenizer
-}
-
-concrete ZeoliteBraceSection {
-  defines NamedTokenizer
+  @type tryControlKeyword  (String) -> (optional String)
+  @type tryTypeKeyword     (String) -> (optional String)
+  @type tryContainKeyword  (String) -> (optional String)
+  @type tryStorageKeyword  (String) -> (optional String)
+  @type tryTestcaseKeyword (String) -> (optional String)
+  @type tryBuiltinCategory (String) -> (optional String)
+  @type tryBuiltinFunction (String) -> (optional String)
+  @type tryBuiltinConstant (String) -> (optional String)
+  @type tryBuiltinParam    (String) -> (optional String)
 }
