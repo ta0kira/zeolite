@@ -395,6 +395,99 @@ unittest boxedToBoxed {
 }
 
 
+testcase "optional or" {
+  success
+}
+
+concrete Helper {
+  @type notCalled () -> (all)
+}
+
+define Helper {
+  notCalled () {
+    fail("should not be called")
+  }
+}
+
+unittest bothBoxedEmpty {
+  optional String value <- empty
+  \ Testing.checkEquals(value <|| "message", "message")
+}
+
+unittest bothBoxedNotEmpty {
+  optional String value <- "other"
+  \ Testing.checkEquals(value <|| "message", "other")
+}
+
+unittest leftUnboxedEmpty {
+  optional Int value <- empty
+  \ Testing.checkEquals((value <|| "message").formatted(), "message")
+}
+
+unittest leftUnboxedNotEmpty {
+  optional Int value <- 123
+  \ Testing.checkEquals((value <|| "message").formatted(), "123")
+}
+
+unittest rightUnboxedEmpty {
+  optional String value <- empty
+  \ Testing.checkEquals((value <|| 123).formatted(), "123")
+}
+
+unittest rightUnboxedNotEmpty {
+  optional String value <- "message"
+  \ Testing.checkEquals((value <|| 123).formatted(), "message")
+}
+
+unittest shortCircuit {
+  optional String value <- "other"
+  \ Testing.checkEquals(value <|| Helper.notCalled(), "other")
+}
+
+
+testcase "optional-or required return type" {
+  error
+  require "\[Int\|String\]"
+  exclude "optional"
+}
+
+unittest test {
+  Int value <- empty?Int <|| "message"
+}
+
+
+testcase "optional-or optional return type" {
+  error
+  require "modifier"
+  exclude "\[Int\|String\]"
+}
+
+unittest test {
+  Formatted value <- empty?Int <|| empty?String
+}
+
+
+testcase "optional-or not allowed with left required" {
+  error
+  require "optional.+Int"
+}
+
+unittest test {
+  \ 123 <|| 456
+}
+
+
+testcase "optional-or not allowed with right weak" {
+  error
+  require "weak Int"
+}
+
+unittest test {
+  weak Int value <- empty
+  \ empty?Int <|| value
+}
+
+
 testcase "conditional assignment" {
   success
 }

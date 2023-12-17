@@ -284,9 +284,18 @@ tests = [
     checkShortParseFail "x <- \\o123.",
     checkShortParseFail "x <- \\o123.456E1",
 
+    checkShortParseSuccess "x <-| 123",
     checkShortParseFail "Int x <-| 123",
     checkShortParseFail "_ <-| 123",
     checkShortParseFail "x, y <-| 123",
+
+    checkShortParseSuccess "\\ x <|| y",
+    checkShortParseSuccess "\\ empty?Int <|| y",
+    checkShortParseSuccess "\\ 123 <|| 456",
+    checkShortParseSuccess "\\ empty <|| 'a'",
+    checkShortParseFail "Int x <|| 'a'",
+    checkShortParseFail "x, y <|| 'a'",
+    checkShortParseFail "\\ _ <|| 'a'",
 
     checkParsesAs "'\"'"
                   (\e -> case e of

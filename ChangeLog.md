@@ -1,8 +1,17 @@
 # Revision history for zeolite-lang
 
-## 0.24.0.2  -- ????-??-??
+## 0.24.1.0  -- ????-??-??
 
-* **[fix]** Fixes `CheckSequence:using` with empty list.
+* **[fix]** Fixes `CheckSequence:using` (in `lib/testing`) when using an empty
+  list.
+
+* **[new]** Adds the `<||` operator to use the left value unless it's `empty`.
+
+```text
+optional Int value <- empty
+// value is preferred, but 123 is used because value is empty.
+Int other <- value <|| 123
+```
 
 ### Libraries
 

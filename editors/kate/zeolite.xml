@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.26"
+    version="3.27"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -392,6 +392,8 @@
 
       <context name="Type Name" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
+        <!-- This prevents <|| from being formatted as an error when the left is a type conversion. -->
+        <RegExpr attribute="Normal Text" context="#stay" String="&lt;\|\|" />
         <DetectChar attribute="Params Brace" context="Type Args" char="&lt;" />
         <IncludeRules context="Any Comment" />
         <RegExpr context="#pop" String=".*" lookAhead="true" />

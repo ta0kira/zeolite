@@ -190,7 +190,12 @@ class TypeInstance {
     BoxedValue::Present(result) \
         ? TypeValue::Call(result, func, args) \
         : ReturnTuple(count); \
-    })
+  })
+
+#define TYPE_VALUE_LEFT_UNLESS_EMPTY(left, right) ({ \
+    const BoxedValue result = left; \
+    BoxedValue::Present(result) ? result : (right); \
+  })
 
 class TypeValue {
  public:

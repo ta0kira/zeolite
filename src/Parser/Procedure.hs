@@ -339,7 +339,7 @@ infixOperator =  do
   o <- op
   return $ NamedOperator [c] o where
     op = labeled "binary operator" $ foldr (<|>) empty $ map (try . operator) ops
-    ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ divInfix ++ bitwiseInfix ++ bitshiftInfix
+    ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ divInfix ++ bitwiseInfix ++ bitshiftInfix ++ optionalOrInfix
 
 compareInfix :: [String]
 compareInfix = ["==","!=","<","<=",">",">="]
@@ -365,11 +365,14 @@ bitwiseInfix = ["&","|","^"]
 bitshiftInfix :: [String]
 bitshiftInfix = [">>","<<"]
 
+optionalOrInfix :: [String]
+optionalOrInfix = ["<||"]
+
 leftAssocInfix :: [String]
 leftAssocInfix = addInfix ++ subInfix ++ multInfix ++ divInfix ++ bitwiseInfix ++ bitshiftInfix
 
 rightAssocInfix :: [String]
-rightAssocInfix = logicalInfix
+rightAssocInfix = logicalInfix ++ optionalOrInfix
 
 nonAssocInfix :: [String]
 nonAssocInfix = compareInfix
@@ -729,7 +732,7 @@ instance ParseFromSource (ValueLiteral SourceContext) where
       return $ IntegerLiteral [c] unsigned d
 
 instance ParseFromSource (ValueOperation SourceContext) where
-  sourceParser = valueCall <|> conversion <|> selectReturn where
+  sourceParser = conversion <|> valueCall <|> selectReturn where
     valueCall = labeled "function call" $ do
       c <- getSourceContext
       o <- (valueSymbolGet >> return AlwaysCall) <|> (valueSymbolMaybeGet >> return CallUnlessEmpty)

@@ -70,6 +70,7 @@ of this document.
     - [Builtin Types](#builtin-types)
     - [Builtin Constants](#builtin-constants)
     - [Builtin Functions](#builtin-functions)
+    - [Procedural Operators](#procedural-operators)
 - [Layout and Dependencies](#layout-and-dependencies)
   - [Using Public Source Files](#using-public-source-files)
   - [Standard Library](#standard-library)
@@ -915,6 +916,11 @@ As of compiler version `0.24.0.0`, you can conditionally call a function on an
 <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> formatted <b><span style='color:#006e28;'>&lt;-</span></b> value&amp;<span style='color:#644a9b;'>.</span>formatted()
 <span style='color:#898887;'>// foo() won't be called unless the readAt call is going to be made.</span>
 <b>optional</b> <i><span style='color:#0057ae;'>Char</span></i> char <b><span style='color:#006e28;'>&lt;-</span></b> formatted&amp;<span style='color:#644a9b;'>.</span>readAt(foo())</pre>
+
+As of compiler version `0.24.1.0`, you can use **`x <|| y`** to use `y` if `x`
+is empty. Note that `x` must have an `optional` type, and the resulting type of
+the entire expression is the [type union](#meta-types) of the types of `x` and
+`y`.
 
 **`weak`** values allow your program to access a value *if it is available*,
 without holding up that value's cleanup if nothing else needs it. This can be
@@ -2000,6 +2006,26 @@ Builtin meta-types:
 - **`require`**: Convert `optional` to non-`optional`.
 - **`strong`**: Convert `weak` to `optional`.
 - **`typename<#x>()`**: Formats the *real* type of `#x` as a `Formatted` value.
+
+#### Procedural Operators
+
+|Operators|Semantics|Example|Input Types|Result Type|Notes|
+|:--:|:--:|:--:|:--:|:--:|:--:|
+|`+`,`-`,`*`,`/`|arithmetic|`x + y`|`Int`,`Float`|original type||
+|`%`|arithmetic|`x % y`|`Int`|`Int`||
+|`-`|arithmetic|`x - y`|`Char`|`Int`||
+|`^`,`\|`,`&`,`<<`,`>>`,`~`|bit operations|`x ^ y`|`Int`|`Int`||
+|`+`|concatenation|`x + y`|`String`|`String`||
+|`^`,`!`,`\|\|`,`&&`|logical|`x && y`|`Bool`|`Bool`||
+|`<`,`>`,`<=`,`==`,`>=`,`!=`|comparison|`x < y`|built-in unboxed, `String`|`Bool`|not available for `Pointer`|
+|`.`|function call|`x.foo()`|value|function return type(s)||
+|`.`|function call|`T.foo()`|type instance|function return type(s)||
+|`:`|function call|`T:foo()`|category|function return type(s)||
+|`&.`|conditional function call|`x&.foo()`|`optional` value|function return type(s) converted to `optional`|skips evaluation of args if call is skipped|
+|`?`|type conversion|`x?T`|_left:_ value <br /> _right:_ type instance|right type with optionality of left|can also be used with `optional` values|
+|`<-`|assignment|`x <- y`|_left:_ variable <br /> _right:_ expression|right type||
+|`<-\|`|conditional assignment|`x <-\| y`|_left:_ `optional` variable <br /> _right:_ non-`weak` expression|left type with optionality of right|skips evaluation of right if left is `present`|
+|`<\|\|`|fallback value|`x <\|\| y`|_left:_ `optional` expression <br /> _right:_ non-`weak` expression|union of left and right types with optionality of right|skips evaluation of right if left is `present`|
 
 ## Layout and Dependencies
 

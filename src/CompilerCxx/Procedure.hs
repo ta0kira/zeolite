@@ -46,6 +46,7 @@ import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
+import Base.Mergeable (mergeAny)
 import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState
@@ -706,6 +707,12 @@ compileExpression = compile where
     bind t1' t2'
     where
       bind t1 t2
+        | o == "<||" = do
+          when (not $ isOptionalValue t1) $ do
+            compilerErrorM $ "<|| requires the left expression to be optional but got " ++ show t1
+          when (isWeakValue t2) $ do
+            compilerErrorM $ "<|| requires the right expression to be not be weak but got " ++ show t2
+          compileOptionalOr (t1,e1) (t2,e2)
         | o `Set.member` comparison && isIdentifierRequiredValue t1 && isIdentifierRequiredValue t2 = do
           return (Positional [boolRequiredValue],glueInfix PrimIdentifier PrimBool e1 o e2)
         | t1 /= t2 =
@@ -772,6 +779,11 @@ compileExpression = compile where
     compilerErrorM $ "Function call requires one return but got " ++ formatTypes ts ++ formatFullContextBrace c2
   formatTypes [] = "none"
   formatTypes ts = intercalate ", " (map show ts)
+  compileOptionalOr (t1,e1) (t2,e2) = do
+    let t' = combineTypes t1 t2
+    let code = WrappedSingle $ "TYPE_VALUE_LEFT_UNLESS_EMPTY(" ++ useAsUnwrapped e1 ++ ", " ++ useAsUnwrapped e2 ++ ")"
+    return (Positional [t'], code)
+  combineTypes (ValueType _ t1) (ValueType s t2) = ValueType s (mergeAny [t1,t2])
 
 forceOptionalReturns :: [c] -> ScopedFunction c -> ScopedFunction c
 forceOptionalReturns c0 (ScopedFunction c n t s v as rs ps fs ms) =
