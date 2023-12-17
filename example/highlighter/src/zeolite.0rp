@@ -18,40 +18,31 @@ limitations under the License.
 
 $ModuleOnly$
 
-concrete ZeoliteSection {
+concrete ZeoliteParsed {
   refines Formatted
-  refines TestCompare<ZeoliteSection>
+  refines TestCompare<ZeoliteParsed>
 
-  visibility Tokenizer<ZeoliteTokenizers, ZeoliteSection>
+  visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
-  @type new (String content:, String label:) -> (optional ZeoliteSection)
+  @type leaf (String label:, String content:) -> (optional ZeoliteParsed)
+  @type section (String label:, DefaultOrder<ZeoliteParsed>) -> (ZeoliteParsed)
 }
 
 @type interface NamedTokenizer {
-  tokenizer () -> (Tokenizer<ZeoliteTokenizers, ZeoliteSection>)
+  tokenizer () -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
   tokenizerName () -> (String)
 }
 
-concrete ZeoliteTokenizers {
-  refines KVReader<String, Tokenizer<ZeoliteTokenizers, ZeoliteSection>>
+concrete ZeoliteParseContext {
+  refines KVReader<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>>
 
-  @type new () -> (ZeoliteTokenizers)
+  @type new () -> (ZeoliteParseContext)
 
-  @value include<#t>
-    #t defines NamedTokenizer
-  () -> (ZeoliteTokenizers)
-}
-
-concrete ZeoliteSelectFrom {
-  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
-
-  visibility Tokenizer<ZeoliteTokenizers, ZeoliteSection>
-
-  @type new () -> (ZeoliteSelectFrom)
+  @value defaultTokenizer () -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
 
   @value include<#t>
     #t defines NamedTokenizer
-  () -> (ZeoliteSelectFrom)
+  () -> (ZeoliteParseContext)
 }
 
 concrete ZeoliteWhitespace {
@@ -67,5 +58,9 @@ concrete ZeoliteCategoryName {
 }
 
 concrete ZeoliteParamName {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteBraceSection {
   defines NamedTokenizer
 }

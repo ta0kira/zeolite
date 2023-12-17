@@ -16,93 +16,112 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define ZeoliteSection {
+define ZeoliteParsed {
   $ReadOnlyExcept[]$
 
-  @value String content
   @value String label
+  @value optional String content
+  @value DefaultOrder<ZeoliteParsed> subsections
 
-  new (content, label) {
+  leaf (label, content) {
     if (content.size() < 1) {
       return empty
     } else {
-      return ZeoliteSection{ content, label }
+      return #self{ label, content, AlwaysEmpty.default() }
     }
+  }
+
+  section (label, subsections) {
+    return #self{ label, empty, subsections }
   }
 
   testCompare (actual, report) {
     \ MultiChecker.new(report)
-        .tryCheck(
-            title: "content",
-            actual.content(),
-            CheckValue:equals(content))
-        .tryCheck(
+        .check(
             title: "label",
             actual.label(),
             CheckValue:equals(label))
+        &.tryCheck(
+            title: "content",
+            actual.content(),
+            CheckValue:equals(content))
+        &.tryCheck(
+            title: "subsections",
+            actual.subsections(),
+            CheckSequence:matches(CheckSequence:using(subsections)))
   }
 
   formatted () {
-    return String.builder()
-        .append("ZeoliteSection{\"")
-        .append(CharType.escapeBreaks(content))
-        .append("\",")
+    [Append<Formatted> & Build<String>] builder <- String.builder()
+        .append("ZeoliteParsed{label:")
         .append(label)
-        .append("}")
-        .build()
-  }
-
-  @value content () -> (String)
-  content () {
-    return content
+    if (`present` content) {
+      \ builder
+          .append(",content:\"")
+          .append(CharType.escapeBreaks(`require` content))
+          .append("\"")
+    } else {
+      \ builder.append("[")
+        traverse (subsections.defaultOrder() -> Formatted subsection) {
+        \ builder
+            .append(",")
+            .append(subsection)
+      }
+      \ builder.append("]")
+    }
+    \ builder.append("}")
+    return builder.build()
   }
 
   @value label () -> (String)
   label () {
     return label
   }
+
+  @value content () -> (optional String)
+  content () {
+    return content
+  }
+
+  @value subsections () -> (DefaultOrder<ZeoliteParsed>)
+  subsections () {
+    return subsections
+  }
 }
 
-define ZeoliteTokenizers {
+define ZeoliteParseContext {
   $ReadOnlyExcept[]$
 
-  @value HashedMap<String, Tokenizer<ZeoliteTokenizers, ZeoliteSection>> tokenizers
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  @value [DefaultOrder<String> & Append<String>] types
+  @value HashedMap<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>> tokenizers
 
   new () {
-    return #self{ HashedMap<String, Tokenizer<ZeoliteTokenizers, ZeoliteSection>>.new() }
+    return #self{ Vector<String>.new(), HashedMap<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>>.new() }
+  }
+
+  defaultTokenizer () {
+    return self
   }
 
   include () {
     \ #t.tokenizerName() `tokenizers.set` #t.tokenizer()
+    \ types.append(#t.tokenizerName())
     return self
   }
 
   get (k) {
     return delegate -> `tokenizers.get`
   }
-}
 
-define ZeoliteSelectFrom {
-  $ReadOnlyExcept[]$
-
-  @value [DefaultOrder<String> & Append<String>] types
-
-  new () {
-    return #self{ Vector<String>.new() }
-  }
-
-  include () {
-    \ types.append(#t.tokenizerName())
-    return self
-  }
-
-  tokenize (input, tokenizers) (token) {
+  tokenize (input, context) (token) {
     token <- empty
     traverse (types.defaultOrder() -> String type) {
       scoped {
-        optional Tokenizer<ZeoliteTokenizers, ZeoliteSection> tokenizer <- tokenizers.get(type)
+        optional Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- context.get(type)
       } in if (`present` tokenizer) {
-        token <- require(tokenizer).tokenize(input, tokenizers)
+        token <- require(tokenizer).tokenize(input, context)
       }
     } update {
       if (`present` token) {
@@ -113,7 +132,7 @@ define ZeoliteSelectFrom {
 }
 
 define ZeoliteWhitespace {
-  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
     return #self{ }
@@ -123,19 +142,19 @@ define ZeoliteWhitespace {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token) {
+  tokenize (input, context) (token) {
     \ input.reset()
     token <- empty
     optional Char current <- input.current()
     while (`present` current && CharType.whitespace(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
   }
 }
 
 define ZeoliteLineComment {
-  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
     return #self{ }
@@ -145,7 +164,7 @@ define ZeoliteLineComment {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token) {
+  tokenize (input, context) (token) {
     \ input.reset()
     token <- empty
     \ input.forward().forward()
@@ -156,12 +175,12 @@ define ZeoliteLineComment {
     while (`present` current && !CharType.oneOf(`require` current, "\r\n")) {
       current <- input.forward().current()
     }
-    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
   }
 }
 
 define ZeoliteCategoryName {
-  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
     return #self{ }
@@ -171,7 +190,7 @@ define ZeoliteCategoryName {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token) {
+  tokenize (input, context) (token) {
     \ input.reset()
     token <- empty
     optional Char current <- input.current()
@@ -181,12 +200,12 @@ define ZeoliteCategoryName {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
   }
 }
 
 define ZeoliteParamName {
-  refines Tokenizer<ZeoliteTokenizers, ZeoliteSection>
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
     return #self{ }
@@ -196,7 +215,7 @@ define ZeoliteParamName {
     return typename<#self>().formatted()
   }
 
-  tokenize (input, tokenizers) (token) {
+  tokenize (input, context) (token) {
     \ input.reset()
     token <- empty
     optional Char current <- input.current()
@@ -210,6 +229,34 @@ define ZeoliteParamName {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteSection.new(content: input.take(), label: tokenizerName())
+    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
+  }
+}
+
+define ZeoliteBraceSection {
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return #self{ }
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    token <- empty
+    if (input.atEnd() || `require` input.current() != '{') {
+      return _
+    }
+    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
+    \ subsections.append(`require` ZeoliteParsed.leaf(label: "ZeoliteOpenBrace", content: input.forward().take()))
+    \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer()).tokenizeAll(input, subsections)
+    \ input.reset()
+    if (!input.atEnd() && `require` input.current() == '}') {
+      \ subsections.append(`require` ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: input.forward().take()))
+    }
+    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
   }
 }
