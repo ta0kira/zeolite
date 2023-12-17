@@ -54,6 +54,12 @@ concrete ZeoliteSymbol {
   @type categoryName (TextStream) -> (optional String)
   @type paramName (TextStream) -> (optional String)
   @type variableOrFunctionName (TextStream) -> (optional String)
+
+  @type isControlKeyword (String) -> (Bool)
+  @type isBuiltinCategory (String) -> (Bool)
+  @type isBuiltinFunction (String) -> (Bool)
+  @type isBuiltinConstant (String) -> (Bool)
+  @type isBuiltinParam (String) -> (Bool)
 }
 
 // Zeolite source tokenizers.

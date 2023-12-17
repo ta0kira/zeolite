@@ -138,6 +138,75 @@ define ZeoliteParseContext {
 }
 
 define ZeoliteSymbol {
+  $ReadOnlyExcept[]$
+
+  @category SetReader<String> controlKeywords <- HashedSet<String>.new()
+      .append("break")
+      .append("cleanup")
+      .append("continue")
+      .append("defer")
+      .append("delegate")
+      .append("elif")
+      .append("else")
+      .append("if")
+      .append("in")
+      .append("return")
+      .append("scoped")
+      .append("traverse")
+      .append("update")
+      .append("while")
+
+  @category SetReader<String> builtinCategries <- HashedSet<String>.new()
+      .append("all")
+      .append("any")
+      .append("Append")
+      .append("AsBool")
+      .append("AsChar")
+      .append("AsFloat")
+      .append("AsInt")
+      .append("Bounded")
+      .append("Bool")
+      .append("Build")
+      .append("Char")
+      .append("CharBuffer")
+      .append("Container")
+      .append("Default")
+      .append("Duplicate")
+      .append("Equals")
+      .append("Float")
+      .append("Formatted")
+      .append("Hashed")
+      .append("Identifier")
+      .append("Int")
+      .append("LessThan")
+      .append("Pointer")
+      .append("Order")
+      .append("ReadAt")
+      .append("String")
+      .append("SubSequence")
+      .append("Testcase")
+      .append("WriteAt")
+
+  @category SetReader<String> builtinFunctions <- HashedSet<String>.new()
+      .append("exit")
+      .append("fail")
+      .append("identify")
+      .append("present")
+      .append("reduce")
+      .append("require")
+      .append("strong")
+      .append("typename")
+
+  @category SetReader<String> builtinConstants <- HashedSet<String>.new()
+      .append("_")
+      .append("empty")
+      .append("false")
+      .append("true")
+      .append("self")
+
+  @category SetReader<String> builtinParams <- HashedSet<String>.new()
+      .append("#self")
+
   categoryName (input) {
     \ input.reset()
     optional Char current <- input.current()
@@ -176,6 +245,26 @@ define ZeoliteSymbol {
       current <- input.forward().current()
     }
     return input.take()
+  }
+
+  isControlKeyword (value) {
+    return `controlKeywords.member` value
+  }
+
+  isBuiltinCategory (value) {
+    return `builtinCategries.member` value
+  }
+
+  isBuiltinFunction (value) {
+    return `builtinFunctions.member` value
+  }
+
+  isBuiltinConstant (value) {
+    return `builtinConstants.member` value
+  }
+
+  isBuiltinParam (value) {
+    return `builtinParams.member` value
   }
 }
 
