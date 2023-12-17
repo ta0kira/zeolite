@@ -18,8 +18,10 @@ limitations under the License.
 
 $ModuleOnly$
 
+// Hierarchical parsed data from Zeolite source files.
 concrete ZeoliteParsed {
   refines Formatted
+  refines FormattedToken<String, String>
   refines TestCompare<ZeoliteParsed>
 
   visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
@@ -28,11 +30,13 @@ concrete ZeoliteParsed {
   @type section (String label:, DefaultOrder<ZeoliteParsed>) -> (ZeoliteParsed)
 }
 
+// Singleton tokenizer with a name.
 @type interface NamedTokenizer {
   tokenizer () -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
   tokenizerName () -> (String)
 }
 
+// Context used when parsing Zeolite source files.
 concrete ZeoliteParseContext {
   refines KVReader<String, Tokenizer<ZeoliteParseContext, ZeoliteParsed>>
 
@@ -44,6 +48,8 @@ concrete ZeoliteParseContext {
     #t defines NamedTokenizer
   () -> (ZeoliteParseContext)
 }
+
+// Zeolite source tokenizers.
 
 concrete ZeoliteWhitespace {
   defines NamedTokenizer

@@ -18,6 +18,23 @@ limitations under the License.
 
 $ModuleOnly$
 
+// Tokenizes with context #c and generates values of type #v.
+@value interface Tokenizer<#c|#v> {
+  tokenize (TextStream, #c) -> (optional #v)
+}
+
+// Supports generic formatting based on label type #l and content type #x.
+@value interface FormattedToken<|#l, #x> {
+  formatWith<#f> (TokenFormatter<#l, #x, #f>) -> (#f)
+}
+
+// Generates #f values by formatting with label type #l and content type #x.
+@value interface TokenFormatter<#l, #x|#f|> {
+  formatLeaf (#l label:, #x value:) -> (#f)
+  createSection (#l label:) -> ([Append<#f> & Build<#f>])
+}
+
+// Input adapter for parsing text input.
 concrete TextStream {
   @type new (String) -> (TextStream)
 
@@ -29,16 +46,21 @@ concrete TextStream {
   @value atEnd () -> (Bool)
 }
 
-@value interface Tokenizer<#c|#v> {
-  tokenize (TextStream, #c) -> (optional #v)
-}
-
+// Tokenizes all content in a TextStream.
 concrete StreamTokenizer<#c|#v> {
   @category new<#c, #v>  (#c context:, Tokenizer<#c, #v> tokenizer:) -> (StreamTokenizer<#c, #v>)
 
   @value tokenizeAll (TextStream, Append<#v>) -> (#self)
 }
 
+// Serializes parsed data without formatting.
+concrete UnformattedFormatter {
+  refines TokenFormatter<any, Formatted, String>
+
+  @type new () -> (#self)
+}
+
+// Helpers for reasoning about Char values.
 concrete CharType {
   @type lower (Char) -> (Bool)
   @type upper (Char) -> (Bool)

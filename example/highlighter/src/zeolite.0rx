@@ -61,16 +61,26 @@ define ZeoliteParsed {
           .append(CharType.escapeBreaks(`require` content))
           .append("\"")
     } else {
-      \ builder.append("[")
         traverse (subsections.defaultOrder() -> Formatted subsection) {
         \ builder
             .append(",")
             .append(subsection)
       }
-      \ builder.append("]")
     }
     \ builder.append("}")
     return builder.build()
+  }
+
+  formatWith (formatter) {
+    if (`present` content) {
+      return formatter.formatLeaf(label: label, value: `require` content)
+    } else {
+      [Append<#f> & Build<#f>] builder <- formatter.createSection(label: label)
+      traverse (subsections.defaultOrder() -> ZeoliteParsed subsection) {
+        \ builder.append(subsection.formatWith(formatter))
+      }
+      return builder.build()
+    }
   }
 
   @value label () -> (String)

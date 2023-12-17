@@ -21,6 +21,7 @@ testcase "working tests" {
 }
 
 unittest test {
+  // Set up parser.
   ZeoliteParseContext context <- ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
@@ -28,11 +29,12 @@ unittest test {
       .include<ZeoliteParamName>()
       .include<ZeoliteBraceSection>()
 
+  // Parse the input data.
   TextStream input <- TextStream.new("{Category #param} // done")
   Vector<ZeoliteParsed> output <- Vector<ZeoliteParsed>.new()
-
   \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer()).tokenizeAll(input, output)
 
+  // Expected parsed structure.
   DefaultOrder<ZeoliteParsed> expected <- Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
           .append(`require` ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",    content: "{"))
@@ -40,9 +42,20 @@ unittest test {
           .append(`require` ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
           .append(`require` ZeoliteParsed.leaf(label: "ZeoliteParamName",    content: "#param"))
           .append(`require` ZeoliteParsed.leaf(label: "ZeoliteCloseBrace",   content: "}"))))
-      .append(`require` ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: " "))
-      .append(`require` ZeoliteParsed.leaf(label: "ZeoliteLineComment",  content: "// done"))
+      .append(`require` ZeoliteParsed.leaf(label: "ZeoliteWhitespace",  content: " "))
+      .append(`require` ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "// done"))
 
+  // Check parsed data.
   \ input.atEnd() `Matches:with` CheckValue:equals(true)
   \ output `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
+
+  // Expected re-serialized data.
+  [Append<Formatted> & Build<String>] builder <- String.builder()
+  UnformattedFormatter formatter <- UnformattedFormatter.new()
+  traverse (output.defaultOrder() -> ZeoliteParsed parsed) {
+    \ builder.append(parsed.formatWith(formatter))
+  }
+
+  // Check basic re-serialization of parsed data.
+  \ builder.build() `Matches:with` CheckValue:equals("{Category #param} // done")
 }

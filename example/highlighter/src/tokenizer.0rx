@@ -61,6 +61,20 @@ define TextStream {
   }
 }
 
+define UnformattedFormatter {
+  new () {
+    return delegate -> #self
+  }
+
+  formatLeaf (_, value) {
+    return value.formatted()
+  }
+
+  createSection (_) {
+    return String.builder()
+  }
+}
+
 define StreamTokenizer {
   $ReadOnlyExcept[]$
 
