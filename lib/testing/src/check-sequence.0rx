@@ -54,7 +54,13 @@ define SequenceAdapter {
   }
 
   defaultOrder () {
-    return #self{ original, original.defaultOrder() }
+    scoped {
+      optional Order<#x> order <- original.defaultOrder()
+    } in if (`present` order) {
+     return #self{ original, order }
+    } else {
+      return empty
+    }
   }
 
   get () {

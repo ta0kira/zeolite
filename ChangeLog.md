@@ -1,5 +1,11 @@
 # Revision history for zeolite-lang
 
+## 0.24.0.2  -- ????-??-??
+
+* **[fix]** Fixes `CheckSequence:using` with empty list.
+
+### Libraries
+
 ## 0.24.0.1  -- 2023-12-10
 
 ### Language

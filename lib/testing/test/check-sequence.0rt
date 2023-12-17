@@ -176,13 +176,19 @@ testcase "CheckSequence:using success" {
   success TestChecker
 }
 
-unittest test {
+unittest matchingValues {
   ValueList<TestValue> actual <- ValueList<TestValue>.new()
       .append(TestValue.default())
       .append(TestValue.new(456, "something", empty))
   ValueList<TestValue> expected <- ValueList<TestValue>.new()
       .append(TestValue.default())
       .append(TestValue.new(456, "something", empty))
+  \ actual `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
+}
+
+unittest bothEmpty {
+  ValueList<TestValue> actual <- ValueList<TestValue>.new()
+  ValueList<TestValue> expected <- ValueList<TestValue>.new()
   \ actual `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
 }
 
