@@ -24,11 +24,7 @@ define ZeoliteParsed {
   @value DefaultOrder<ZeoliteParsed> subsections
 
   leaf (label, content) {
-    if (content.size() < 1) {
-      return empty
-    } else {
-      return #self{ label, content, AlwaysEmpty.default() }
-    }
+    return #self{ label, content, AlwaysEmpty.default() }
   }
 
   section (label, subsections) {
@@ -159,7 +155,11 @@ define ZeoliteWhitespace {
     while (`present` current && CharType.whitespace(`require` current)) {
       current <- input.forward().current()
     }
-    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
+    scoped {
+      String content <- input.take()
+    } in if (content.size() > 0) {
+      token <- ZeoliteParsed.leaf(label: tokenizerName(), content: content)
+    }
   }
 }
 
@@ -261,11 +261,11 @@ define ZeoliteBraceSection {
       return _
     }
     Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
-    \ subsections.append(`require` ZeoliteParsed.leaf(label: "ZeoliteOpenBrace", content: input.forward().take()))
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace", content: input.forward().take()))
     \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer()).tokenizeAll(input, subsections)
     \ input.reset()
     if (!input.atEnd() && `require` input.current() == '}') {
-      \ subsections.append(`require` ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: input.forward().take()))
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: input.forward().take()))
     }
     token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
   }

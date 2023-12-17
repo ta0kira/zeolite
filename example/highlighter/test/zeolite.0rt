@@ -37,13 +37,13 @@ unittest test {
   // Expected parsed structure.
   DefaultOrder<ZeoliteParsed> expected <- Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
-          .append(`require` ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",    content: "{"))
-          .append(`require` ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Category"))
-          .append(`require` ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
-          .append(`require` ZeoliteParsed.leaf(label: "ZeoliteParamName",    content: "#param"))
-          .append(`require` ZeoliteParsed.leaf(label: "ZeoliteCloseBrace",   content: "}"))))
-      .append(`require` ZeoliteParsed.leaf(label: "ZeoliteWhitespace",  content: " "))
-      .append(`require` ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "// done"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",    content: "{"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Category"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteParamName",    content: "#param"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace",   content: "}"))))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",  content: " "))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "// done"))
 
   // Check parsed data.
   \ input.atEnd() `Matches:with` CheckValue:equals(true)
