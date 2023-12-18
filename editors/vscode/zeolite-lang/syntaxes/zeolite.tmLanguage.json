@@ -113,11 +113,11 @@
 				},
 				{
 					"name": "constant.character.escape.zeolite",
-					"match": "\\\\[0-9]{3}"
+					"match": "\\\\[0-7]{3}"
 				},
 				{
 					"name": "constant.character.escape.zeolite",
-					"match": "\\\\['\"?\\abfnrtv]"
+					"match": "\\\\['\"?\\\\abfnrtv]"
 				},
 				{
 					"name": "invalid.illegal.zeolite",
@@ -171,20 +171,20 @@
 				}
 			]
 		},
-        "comments-line": {
-            "match": "\\/\\/.*?$",
-            "name": "comment.line.double-slash.zeolite"
-        },
-        "catch-errors": {
-            "match": "[@#$=;_]",
-            "name": "invalid.unsupported.zeolite"
-        },
-        "comments-block": {
-            "begin": "\\/\\*",
-            "end": "\\*\\/",
-            "name": "comment.block.zeolite"
-        },
-        "category-name": {
+		"comments-line": {
+				"match": "\\/\\/.*?$",
+				"name": "comment.line.double-slash.zeolite"
+		},
+		"catch-errors": {
+				"match": "[@#$=;_]",
+				"name": "invalid.unsupported.zeolite"
+		},
+		"comments-block": {
+				"begin": "\\/\\*",
+				"end": "\\*\\/",
+				"name": "comment.block.zeolite"
+		},
+		"category-name": {
 			"patterns": [
 				{
 					"match": "\\b(Append|AsBool|AsChar|AsFloat|AsInt|Bounded|Bool|Build|Char|CharBuffer|Container|Default|Duplicate|Equals|Float|Formatted|Hashed|Identifier|Int|LessThan|Pointer|Order|ReadAt|String|SubSequence|Testcase|WriteAt)\\b",
@@ -195,15 +195,15 @@
 					"name": "entity.name.type.zeolite"
 				}
 			]
-        },
-        "param-name": {
-            "match": "#[a-z][A-Za-z09-]*\\b",
-            "name": "variable.parameter.zeolite"
-        },
-        "arg-label": {
-            "match": "\\b[a-z][A-Za-z09-]*:",
-            "name": "entity.name.tag.zeolite"
-        },
+		},
+		"param-name": {
+				"match": "#[a-z][A-Za-z09-]*\\b",
+				"name": "variable.parameter.zeolite"
+		},
+		"arg-label": {
+				"match": "\\b[a-z][A-Za-z09-]*:",
+				"name": "entity.name.tag.zeolite"
+		},
 		"testcase": {
 			"begin": "\\b(testcase)[ \\n\\t]?(\"[^\"]+\")[ \\n\\t]?\\{",
 			"end": "\\}",

@@ -1,5 +1,9 @@
 # Change Log
 
+## `0.2.2`
+
+- Fixes highlighting of `\\` in quoted strings.
+
 ## `0.2.1`
 
 - Fixes highlighting of `%`.
