@@ -207,11 +207,11 @@
 		"testcase": {
 			"begin": "\\b(testcase)[ \\n\\t]?(\"[^\"]+\")[ \\n\\t]?\\{",
 			"end": "\\}",
-            "beginCaptures": {
-                "1": {
-                    "name": "storage.type.zeolite"
-                }
-            },
+			"beginCaptures": {
+					"1": {
+							"name": "storage.type.zeolite"
+					}
+			},
 			"patterns": [
 				{
 					"include": "#comments-block"
@@ -242,38 +242,38 @@
 				}
 			]
 		},
-        "pragma-empty": {
-            "match": "\\$[A-Za-z0-9]+\\$",
-            "name": "comment.block.preprocessor.zeolite"
-        },
-        "pragma-args": {
-            "begin": "\\$[A-Za-z0-9]+\\[",
-            "end": "\\]\\$",
-            "beginCaptures": {
-                "0": {
-                    "name": "comment.block.preprocessor.zeolite"
-                }
-            },
-            "endCaptures": {
-                "0": {
-                    "name": "comment.block.preprocessor.zeolite"
-                }
-            },
-            "contentName": "string.other.zeolite"
-        },
-        "meta-type": {
-            "begin": "\\[",
-            "end": "\\]",
-            "beginCaptures": {
-                "0": {
-                    "name": "keyword.other.zeolite"
-                }
-            },
-            "endCaptures": {
-                "0": {
-                    "name": "keyword.other.zeolite"
-                }
-            },
+		"pragma-empty": {
+				"match": "\\$[A-Za-z0-9]+\\$",
+				"name": "comment.block.preprocessor.zeolite"
+		},
+		"pragma-args": {
+				"begin": "\\$[A-Za-z0-9]+\\[",
+				"end": "\\]\\$",
+				"beginCaptures": {
+						"0": {
+								"name": "comment.block.preprocessor.zeolite"
+						}
+				},
+				"endCaptures": {
+						"0": {
+								"name": "comment.block.preprocessor.zeolite"
+						}
+				},
+				"contentName": "string.other.zeolite"
+		},
+		"meta-type": {
+			"begin": "\\[",
+			"end": "\\]",
+			"beginCaptures": {
+					"0": {
+							"name": "keyword.other.zeolite"
+					}
+			},
+			"endCaptures": {
+					"0": {
+							"name": "keyword.other.zeolite"
+					}
+			},
 			"patterns": [
 				{
 					"match": "[&|]",
@@ -283,7 +283,7 @@
 					"include": "#param-allowed"
 				}
 			]
-        },
+		},
 		"param-allowed": {
 			"patterns": [
 				{

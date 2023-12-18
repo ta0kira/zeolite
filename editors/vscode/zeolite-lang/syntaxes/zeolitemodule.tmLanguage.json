@@ -60,7 +60,7 @@
 				}
 			]
 		},
-        "category-name": {
+		"category-name": {
 			"patterns": [
 				{
 					"match": "\\b(Append|AsBool|AsChar|AsFloat|AsInt|Bounded|Bool|Build|Char|CharBuffer|Container|Default|Duplicate|Equals|Float|Formatted|Hashed|Identifier|Int|LessThan|Pointer|Order|ReadAt|String|SubSequence|Testcase|WriteAt)\\b",
@@ -71,11 +71,11 @@
 					"name": "entity.name.type.zeolitemodule"
 				}
 			]
-        },
-        "param-name": {
-            "match": "#[a-z][A-Za-z09-]*\\b",
-            "name": "variable.parameter.zeolitemodule"
-        },
+		},
+		"param-name": {
+				"match": "#[a-z][A-Za-z09-]*\\b",
+				"name": "variable.parameter.zeolitemodule"
+		},
 		"macro-name": {
 			"patterns": [
 				{
@@ -110,19 +110,19 @@
 				}
 			]
 		},
-        "comments-line": {
-            "match": "\\/\\/.*?$",
-            "name": "comment.line.double-slash.zeolitemodule"
-        },
-        "pragma": {
-            "match": "\\$[A-Za-z0-9]+(\\[.*\\]|)\\$",
-            "name": "comment.block.preprocessor.zeolitemodule"
-        },
-        "comments-block": {
-            "begin": "\\/\\*",
-            "end": "\\*\\/",
-            "name": "comment.block.zeolitemodule"
-        }
+		"comments-line": {
+				"match": "\\/\\/.*?$",
+				"name": "comment.line.double-slash.zeolitemodule"
+		},
+		"pragma": {
+				"match": "\\$[A-Za-z0-9]+(\\[.*\\]|)\\$",
+				"name": "comment.block.preprocessor.zeolitemodule"
+		},
+		"comments-block": {
+				"begin": "\\/\\*",
+				"end": "\\*\\/",
+				"name": "comment.block.zeolitemodule"
+		}
 	},
 	"scopeName": "source.zeolitemodule"
 }
