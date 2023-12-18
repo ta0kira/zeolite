@@ -38,8 +38,9 @@ unittest test {
 
   // Parse the input data.
   TextStream input <- TextStream.new(originalData)
-  Vector<ZeoliteParsed> output <- Vector<ZeoliteParsed>.new()
-  \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer()).tokenizeAll(input, output)
+  DefaultOrder<ZeoliteParsed> output <- defer
+  \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer())
+      .tokenizeAll(input, (output <- Vector<ZeoliteParsed>.new()))
 
   // Expected parsed structure.
   DefaultOrder<ZeoliteParsed> expected <- Vector<ZeoliteParsed>.new()
