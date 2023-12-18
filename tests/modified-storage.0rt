@@ -401,11 +401,22 @@ testcase "optional or" {
 
 concrete Helper {
   @type notCalled () -> (all)
+  @type getOnce () -> (optional Int)
 }
 
 define Helper {
+  @category Bool used <- false
+
   notCalled () {
     fail("should not be called")
+  }
+
+  getOnce () {
+    if (used) {
+      fail("already called")
+    }
+    used <- true
+    return 123
   }
 }
 
@@ -437,6 +448,10 @@ unittest rightUnboxedEmpty {
 unittest rightUnboxedNotEmpty {
   optional String value <- "message"
   \ Testing.checkEquals((value <|| 123).formatted(), "message")
+}
+
+unittest leftEvaluatedOnce {
+  \ Testing.checkEquals(Helper.getOnce() <|| 456, 123)
 }
 
 unittest shortCircuit {
