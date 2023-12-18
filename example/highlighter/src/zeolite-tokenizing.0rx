@@ -68,12 +68,47 @@ define ZeoliteLineComment {
   }
 }
 
+define ZeoliteBlockComment {
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    token <- empty
+    \ input.forward().forward()
+    if (input.preview() != "/*") {
+      return _
+    }
+    scoped {
+      optional Char current <- empty
+      Bool starFound <- false
+    } in while (`present` (current <- input.current())) {
+      if (starFound && `require` current == '/') {
+        \ input.forward()
+        break
+      } else {
+        starFound <- `require` current == '*'
+      }
+    } update {
+      \ input.forward()
+    }
+    token <- ZeoliteParsed.leaf(label: tokenizerName(), content: input.take())
+  }
+}
+
 define ZeoliteOptionalSeparator {
   $ReadOnlyExcept[]$
 
   @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- TokenAlternatives.new()
       .append(UseNamedTokenizer.new<ZeoliteLineComment>())
-      //.append(UseNamedTokenizer<ZeoliteBlockComment>())
+      .append(UseNamedTokenizer.new<ZeoliteBlockComment>())
       .append(UseNamedTokenizer.new<ZeoliteWhitespace>())
 
   default () {

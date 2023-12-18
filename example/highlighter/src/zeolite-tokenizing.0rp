@@ -18,11 +18,19 @@ limitations under the License.
 
 $ModuleOnly$
 
+// TODO: Tokenize pragmas.
+// TODO: Tokenize numbers.
+// TODO: Tokenize quoted chars.
+
 concrete ZeoliteWhitespace {
   defines NamedTokenizer
 }
 
 concrete ZeoliteLineComment {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteBlockComment {
   defines NamedTokenizer
 }
 

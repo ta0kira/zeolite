@@ -25,6 +25,7 @@ unittest test {
   ZeoliteParseContext context <- ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
+      .include<ZeoliteBlockComment>()
       .include<ZeoliteStringLiteral>()
       .include<ZeoliteTestcase>()
       .include<ZeoliteUpperSymbol>()
@@ -32,7 +33,7 @@ unittest test {
       .include<ZeoliteParamName>()
       .include<ZeoliteBraceSection>()
 
-  String originalData <- "{Category #param}\"string\\n\" // done"
+  String originalData <- "{Category #param}\"string\\n\" /*/ done*/\n"
   $ReadOnly[originalData]$
 
   // Parse the input data.
@@ -53,8 +54,9 @@ unittest test {
           .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar",  content: "string"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\n"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
-      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",  content: " "))
-      .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "// done"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*/ done*/"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: "\n"))
 
   // Check parsed data.
   \ input.atEnd() `Matches:with` CheckValue:equals(true)
