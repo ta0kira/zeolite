@@ -25,6 +25,7 @@ unittest test {
   ZeoliteParseContext context <- ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
+      .include<ZeoliteTestcase>()
       .include<ZeoliteUpperSymbol>()
       .include<ZeoliteLowerSymbol>()
       .include<ZeoliteParamName>()

@@ -20,7 +20,7 @@ define ZeoliteWhitespace {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenizerName () {
@@ -46,7 +46,7 @@ define ZeoliteLineComment {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenizerName () {
@@ -77,7 +77,7 @@ define ZeoliteOptionalSeparator {
       .append(UseNamedTokenizer.new<ZeoliteWhitespace>())
 
   default () {
-    return #self{ }
+    return delegate -> #self
   }
 
   parse (context, input, output) {
@@ -93,7 +93,7 @@ define ZeoliteUpperSymbol {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenizerName () {
@@ -116,7 +116,7 @@ define ZeoliteLowerSymbol {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenizerName () {
@@ -144,7 +144,7 @@ define ZeoliteParamName {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   tokenizer () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenizerName () {
@@ -170,18 +170,20 @@ concrete ZeoliteTestcaseKeyword {
 
 define ZeoliteTestcaseKeyword {
   default () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenize (input, context) (token) {
     token <- empty
-    optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.take()
-    if (! `present` content) {
+    scoped {
+      optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.preview()
+    } in if (! `present` content) {
       return empty
     } else {
       optional String type <- ZeoliteSymbol.tryTestcaseKeyword(`require` content)
+      $Hidden[content]$
       if (`present` type) {
-        token <- ZeoliteParsed.leaf(label: `require` type, content: `require` content)
+        token <- ZeoliteParsed.leaf(label: `require` type, content: input.take())
       }
     }
   }
@@ -198,7 +200,7 @@ define ZeoliteTestcase {
       .append(ZeoliteTestcaseKeyword.default())
 
   tokenizer () {
-    return #self{ }
+    return delegate -> #self
   }
 
   tokenizerName () {
