@@ -198,7 +198,7 @@ define ZeoliteSymbol {
       .append("concrete")
       .append("interface")
       .append("define")
-      .append("unittest")
+      .append("testcase")
 
   @category SetReader<String> storageKeywords <- HashedSet<String>.new()
       .append("optional")
@@ -208,6 +208,7 @@ define ZeoliteSymbol {
       .append("@category")
       .append("@type")
       .append("@value")
+      .append("unittest")
 
   @category SetReader<String> testcaseKeywords <- HashedSet<String>.new()
       .append("args")

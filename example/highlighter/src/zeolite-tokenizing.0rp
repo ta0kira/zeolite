@@ -38,6 +38,23 @@ concrete ZeoliteParamName {
   defines NamedTokenizer
 }
 
+concrete ZeoliteTestcase {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteOptionalSeparator {
+  defines Default
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  @type parse (ZeoliteParseContext, TextStream, Append<ZeoliteParsed>) -> ()
+}
+
 concrete ZeoliteBraceSection {
   defines NamedTokenizer
+
+  visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  @type new (Tokenizer<ZeoliteParseContext, ZeoliteParsed>) -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
 }
