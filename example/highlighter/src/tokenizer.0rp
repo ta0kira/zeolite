@@ -39,6 +39,7 @@ concrete TextStream {
   @type new (String) -> (TextStream)
 
   @value current () -> (optional Char)
+  @value tokenSize () -> (Int)
   @value forward () -> (TextStream)
   @value reset () -> (TextStream)
   @value take () -> (String)
@@ -65,6 +66,9 @@ concrete CharType {
   @type lower (Char) -> (Bool)
   @type upper (Char) -> (Bool)
   @type digit (Char) -> (Bool)
+  @type binDigit (Char) -> (Bool)
+  @type octDigit (Char) -> (Bool)
+  @type hexDigit (Char) -> (Bool)
   @type alphaNum (Char) -> (Bool)
   @type whitespace (Char) -> (Bool)
   @type oneOf (Char, String) -> (Bool)

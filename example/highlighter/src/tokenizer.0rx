@@ -34,6 +34,10 @@ define TextStream {
     }
   }
 
+  tokenSize () {
+    return tokenEnd-tokenStart
+  }
+
   forward () {
     if (tokenEnd < source.size()) {
       tokenEnd <- tokenEnd+1
@@ -53,7 +57,7 @@ define TextStream {
   }
 
   preview () {
-    return source.subSequence(tokenStart, tokenEnd-tokenStart)
+    return source.subSequence(tokenStart, tokenSize())
   }
 
   atEnd () {
@@ -122,6 +126,18 @@ define CharType {
 
   digit (c) {
     return c >= '0' && c <= '9'
+  }
+
+  binDigit (c) {
+    return c >= '0' && c <= '1'
+  }
+
+  octDigit (c) {
+    return c >= '0' && c <= '7'
+  }
+
+  hexDigit (c) {
+    return digit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')
   }
 
   alphaNum (c) {

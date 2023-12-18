@@ -196,7 +196,8 @@ define ZeoliteTestcase {
 
   @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> testcaseSpecs <- TokenAlternatives.new()
       .append(ZeoliteOptionalSeparator.default())
-      // TODO: Include string literals, numbers, type instances
+      .append(UseNamedTokenizer.new<ZeoliteStringLiteral>())
+      // TODO: Include numbers, type instances
       .append(ZeoliteTestcaseKeyword.default())
 
   tokenizer () {
@@ -227,6 +228,60 @@ define ZeoliteTestcase {
 
     // Testcase specs.
     \ StreamTokenizer:new(context: context, tokenizer: testcaseSpecs).tokenizeAll(input, subsections)
+  }
+}
+
+define ZeoliteStringLiteral {
+  $ReadOnlyExcept[]$
+
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    token <- empty
+    if (input.atEnd() || `require` input.current() != '"') {
+      return _
+    }
+    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
+    // Setting this early still allows building it incrementally while also
+    // allowing an early return if something is missing.
+    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: input.forward().take()))
+
+    scoped {
+      optional Char current <- empty
+    } in while (!input.atEnd() && `present` (current <- input.current())) {
+      if (`require` current == '\"') {
+        \ addCurrentChars(input, subsections)
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: input.forward().take()))
+        return _
+      } elif (`require` current == '\\') {
+        \ addCurrentChars(input, subsections)
+        if (`present` ZeoliteSymbol.parseEscapedChar(input.forward())) {
+          \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: input.take()))
+        } else {
+          \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.take()))
+        }
+      } else {
+        \ input.forward()
+      }
+    }
+    \ addCurrentChars(input, subsections)
+  }
+
+  @type addCurrentChars (TextStream, Append<ZeoliteParsed>) -> ()
+  addCurrentChars (input, output) {
+    if (input.tokenSize() > 0) {
+      \ output.append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar", content: input.take()))
+    }
   }
 }
 

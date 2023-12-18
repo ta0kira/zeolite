@@ -73,6 +73,9 @@ concrete ZeoliteSymbol {
   @type parseParamName      (TextStream) -> (optional TextStream)
   @type parseScopeQualifier (TextStream) -> (optional TextStream)
 
+  // Caller must check for \ first. Stream isn't reset!
+  @type parseEscapedChar    (TextStream) -> (optional TextStream)
+
   // Returns a type label if the token is in the given set.
 
   @type tryControlKeyword  (String) -> (optional String)

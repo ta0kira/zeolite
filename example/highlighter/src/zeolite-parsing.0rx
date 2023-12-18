@@ -331,6 +331,40 @@ define ZeoliteSymbol {
     }
   }
 
+  parseEscapedChar (input) {
+    scoped {
+      optional Char current <- input.current()
+    } in if (! `present` current) {
+      return empty
+    } elif (`require` current == 'x') {
+      // Hex escaped char.
+      traverse (Counter.zeroIndexed(2) -> _) {
+        current <- input.forward().current()
+        if (! `present` current || !CharType.hexDigit(`require` current)) {
+          return empty
+        }
+      }
+      \ input.forward()
+    } elif (CharType.octDigit(`require` current)) {
+      // Oct escaped char.
+      traverse (Counter.zeroIndexed(2) -> _) {
+        current <- input.forward().current()
+        if (! `present` current || !CharType.octDigit(`require` current)) {
+          return empty
+        }
+      }
+      \ input.forward()
+    } elif (`require` current `CharType.oneOf` "'\"?\\abfnrtv") {
+      // Single escaped char.
+      \ input.forward()
+    } else {
+      // Invalid escaped char.
+      \ input.forward()
+      return empty
+    }
+    return input
+  }
+
   tryControlKeyword (value) (type) {
     type <- empty
     if (`controlKeywords.member` value) {

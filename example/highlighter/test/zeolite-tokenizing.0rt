@@ -25,14 +25,18 @@ unittest test {
   ZeoliteParseContext context <- ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
+      .include<ZeoliteStringLiteral>()
       .include<ZeoliteTestcase>()
       .include<ZeoliteUpperSymbol>()
       .include<ZeoliteLowerSymbol>()
       .include<ZeoliteParamName>()
       .include<ZeoliteBraceSection>()
 
+  String originalData <- "{Category #param}\"string\\n\" // done"
+  $ReadOnly[originalData]$
+
   // Parse the input data.
-  TextStream input <- TextStream.new("{Category #param} // done")
+  TextStream input <- TextStream.new(originalData)
   Vector<ZeoliteParsed> output <- Vector<ZeoliteParsed>.new()
   \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer()).tokenizeAll(input, output)
 
@@ -44,6 +48,11 @@ unittest test {
           .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
           .append(ZeoliteParsed.leaf(label: "ZeoliteParamName",    content: "#param"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace",   content: "}"))))
+      .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar",  content: "string"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\n"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
       .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",  content: " "))
       .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "// done"))
 
@@ -59,5 +68,5 @@ unittest test {
   }
 
   // Check basic re-serialization of parsed data.
-  \ builder.build() `Matches:with` CheckValue:equals("{Category #param} // done")
+  \ builder.build() `Matches:with` CheckValue:equals(originalData)
 }

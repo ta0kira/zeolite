@@ -42,6 +42,10 @@ concrete ZeoliteTestcase {
   defines NamedTokenizer
 }
 
+concrete ZeoliteStringLiteral {
+  defines NamedTokenizer
+}
+
 concrete ZeoliteOptionalSeparator {
   defines Default
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
