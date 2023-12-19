@@ -20,31 +20,292 @@ testcase "working tests" {
   success TestChecker
 }
 
-unittest test {
-  // Set up parser.
-  ZeoliteParseContext context <- ZeoliteParseContext.new()
+concrete ParsingTester {
+  @type new (ZeoliteParseContext) -> (ParsingTester)
+
+  @value checkParsesAs (String, DefaultOrder<ZeoliteParsed>) -> ()
+}
+
+unittest parseZeoliteWhitespace {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteWhitespace>())
+
+  \ " \t \r\n" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: " \t \r\n"))
+}
+
+unittest parseZeoliteLineComment {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteLineComment>()
+      .include<ZeoliteWhitespace>())
+
+  \ "//12345\n//54321" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "//12345"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",  content: "\n"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "//54321"))
+
+  \ "/ /" `tester.checkParsesAs` AlwaysEmpty.default()
+}
+
+unittest parseZeoliteBlockComment {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteBlockComment>()
+      .include<ZeoliteWhitespace>())
+
+  \ "/*/12345\n54321* */" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*/12345\n54321* */"))
+
+  \ "/*comment*/  " `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*comment*/"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: "  "))
+  \ "/*forever " `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*forever "))
+
+  \ "/ *" `tester.checkParsesAs` AlwaysEmpty.default()
+}
+
+unittest parseZeoliteUpperSymbol {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteUpperSymbol>())
+
+  \ "Hello123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Hello123"))
+  \ "String" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBuiltinCategory", content: "String"))
+
+  \ "Hello_123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Hello"))
+
+  \ "hello" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "123Hello" `tester.checkParsesAs` AlwaysEmpty.default()
+}
+
+unittest parseZeoliteLowerSymbol {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteLowerSymbol>())
+
+  \ "hello123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "hello123"))
+  \ "cleanup" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteControlKeyword", content: "cleanup"))
+  \ "immutable" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteTypeKeyword", content: "immutable"))
+  \ "concrete" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: "concrete"))
+  \ "optional" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteStorageKeyword", content: "optional"))
+  \ "unittest" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteScopeQualifier", content: "unittest"))
+  \ "any" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBuiltinCategory", content: "any"))
+  \ "identify" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBuiltinFunction", content: "identify"))
+  \ "empty" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBuiltinConstant", content: "empty"))
+
+  \ "hello_123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "hello"))
+  // Only has a special label in testcase.
+  \ "compiler" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "compiler"))
+  \ "empty123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "empty123"))
+
+  \ "Hello" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "123hello" `tester.checkParsesAs` AlwaysEmpty.default()
+}
+
+unittest parseZeoliteParamName {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteParamName>())
+
+  \ "#param123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteParamName", content: "#param123"))
+  \ "#self" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBuiltinParam", content: "#self"))
+
+  \ "#param_123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteParamName", content: "#param"))
+  \ "#self123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteParamName", content: "#self123"))
+
+  \ "param" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "#Param" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "#123param" `tester.checkParsesAs` AlwaysEmpty.default()
+}
+
+unittest parseZeoliteStringLiteral {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteStringLiteral>())
+
+  \ "\"hello\\n\\t\\0123\\xABC\\Q \\09c goodbye\"" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "hello"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\n"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\t"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\012"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "3"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\xAB"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "C"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteError",       content: "\\Q"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteError",       content: "\\0"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "9c goodbye"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
+
+  \ "\"forever" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "forever"))))
+}
+
+unittest parseZeoliteCharLiteral {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteCharLiteral>())
+
+  \ "'a'" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "a"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))))
+  \ "'\\''" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))))
+  \ "'\\n'" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\n"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))))
+  \ "'\\xAB'" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\xAB"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))))
+  \ "'\\Q'" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "\\Q"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))))
+
+  \ "''" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "'"))))
+  \ "'forever" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "f"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "o"))))
+}
+
+unittest parseZeoliteTestcase {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
       .include<ZeoliteBlockComment>()
+      .include<ZeoliteStringLiteral>()
+      // ZeoliteTestcase also uses the above if available.
+      .include<ZeoliteTestcase>()
+      // These should be after ZeoliteTestcase.
+      .include<ZeoliteUpperSymbol>()
+      .include<ZeoliteLowerSymbol>())
+
+  String data <- "testcase \"my test\" {
+    success TestChecker  // <- enables lib/testing support
+    require compiler \"something\"
+  }"
+
+  \ data `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteTestcase", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: "testcase"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",     content: " "))
+          .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
+              .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "my test"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: " "))
+          .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
+              .append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",       content: "{"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "success"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName",    content: "TestChecker"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "  "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment",     content: "// <- enables lib/testing support"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "require"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "compiler"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
+              .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "something"))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: "\n  "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: "}"))))))
+
+  \ "testcase { }" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteTestcase", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: "testcase"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",     content: " "))))
+}
+
+unittest parseZeolitePragma {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeolitePragma>())
+
+  \ "$NoArgs$" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: "$"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaName",  content:  "NoArgs"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: "$"))))
+  \ "$SomeArgs[a, b, 123]$" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim",    content: "$"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaName",     content:  "SomeArgs"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArgOpen",  content: "["))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArg",      content:  "a, b, 123"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArgClose", content: "]"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim",    content: "$"))))
+
+  \ "$NoArgs" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: "$"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaName",  content:  "NoArgs"))))
+  \ "$foo$" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: "$"))))
+  \ "$NoArgs#" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: "$"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaName",  content:  "NoArgs"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteError",       content: "#"))))
+  \ "$SomeArgs[args" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim",    content: "$"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaName",     content:  "SomeArgs"))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArgOpen",  content: "["))
+          .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArg",      content:  "args"))))
+}
+
+unittest integration {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteWhitespace>()
+      .include<ZeoliteLineComment>()
+      .include<ZeoliteBlockComment>()
+      .include<ZeolitePragma>()
       .include<ZeoliteStringLiteral>()
       .include<ZeoliteCharLiteral>()
       .include<ZeoliteTestcase>()
       .include<ZeoliteUpperSymbol>()
       .include<ZeoliteLowerSymbol>()
       .include<ZeoliteParamName>()
-      .include<ZeoliteBraceSection>()
+      .include<ZeoliteBraceSection>())
 
-  String originalData <- "{Category #param}\"string\\n\" /*/ done*/\n"
-  $ReadOnly[originalData]$
-
-  // Parse the input data.
-  TextStream input <- TextStream.new(originalData)
-  DefaultOrder<ZeoliteParsed> output <- defer
-  \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer())
-      .tokenizeAll(input, (output <- Vector<ZeoliteParsed>.new()))
-
-  // Expected parsed structure.
-  DefaultOrder<ZeoliteParsed> expected <- Vector<ZeoliteParsed>.new()
+  \ "{Category #param}\"string\\n\" /*/ done*/\n" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
           .append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",    content: "{"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Category"))
@@ -53,24 +314,51 @@ unittest test {
           .append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace",   content: "}"))))
       .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
           .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
-          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar",  content: "string"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "string"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: "\\n"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
       .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
       .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*/ done*/"))
       .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: "\n"))
+}
 
-  // Check parsed data.
-  \ input.atEnd() `Matches:with` CheckValue:equals(true)
-  \ output `Matches:with` CheckSequence:matches(CheckSequence:using(expected))
+define ParsingTester {
+  $ReadOnlyExcept[]$
 
-  // Expected re-serialized data.
-  [Append<Formatted> & Build<String>] builder <- String.builder()
-  UnformattedFormatter formatter <- UnformattedFormatter.new()
-  traverse (output.defaultOrder() -> ZeoliteParsed parsed) {
-    \ builder.append(parsed.formatWith(formatter))
+  @value ZeoliteParseContext context
+
+  new (context) {
+    return delegate -> #self
   }
 
-  // Check basic re-serialization of parsed data.
-  \ builder.build() `Matches:with` CheckValue:equals(originalData)
+  checkParsesAs (originalData, expected) {
+    TextStream input <- TextStream.new(originalData)
+    DefaultOrder<ZeoliteParsed> output <- defer
+    \ StreamTokenizer:new(context: context, tokenizer: context.defaultTokenizer())
+        .tokenizeAll(input, (output <- Vector<ZeoliteParsed>.new()))
+
+    // Match output.
+    \ output `Matches:tryWith` CheckSequence:matches(CheckSequence:using(expected))
+
+    // Serialize output.
+    [Append<Formatted> & Build<String>] builder <- String.builder()
+    UnformattedFormatter formatter <- UnformattedFormatter.new()
+    traverse (output.defaultOrder() -> ZeoliteParsed parsed) {
+      \ builder.append(parsed.formatWith(formatter))
+    }
+
+    // Append unparsed remainder.
+    while (`present` input.current()) {
+      \ input.forward()
+    }
+    // This will be included in the output of failing tests.
+    \ BasicOutput.stderr()
+        .append("Remaining content: \"")
+        .append(CharType.escapeBreaks(input.preview()))
+        .append("\"\n")
+    \ builder.append(input.take())
+
+    // Check that all data is accounted for.
+    \ builder.build() `Matches:tryWith` CheckValue:equals(originalData)
+  }
 }

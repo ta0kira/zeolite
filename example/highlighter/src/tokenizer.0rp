@@ -38,13 +38,14 @@ $ModuleOnly$
 concrete TextStream {
   @type new (String) -> (TextStream)
 
-  @value current () -> (optional Char)
+  @value current   () -> (optional Char)
   @value tokenSize () -> (Int)
+  @value preview   () -> (String)
+  @value atEnd     () -> (Bool)
+
   @value forward () -> (TextStream)
-  @value reset () -> (TextStream)
-  @value take () -> (String)
-  @value preview () -> (String)
-  @value atEnd () -> (Bool)
+  @value reset   () -> (TextStream)
+  @value take    () -> (String)
 }
 
 // Tokenizes all content in a TextStream.

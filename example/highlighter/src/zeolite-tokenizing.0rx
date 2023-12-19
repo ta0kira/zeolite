@@ -103,27 +103,6 @@ define ZeoliteBlockComment {
   }
 }
 
-define ZeoliteOptionalSeparator {
-  $ReadOnlyExcept[]$
-
-  @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- TokenAlternatives.new()
-      .append(UseNamedTokenizer.new<ZeoliteLineComment>())
-      .append(UseNamedTokenizer.new<ZeoliteBlockComment>())
-      .append(UseNamedTokenizer.new<ZeoliteWhitespace>())
-
-  default () {
-    return delegate -> #self
-  }
-
-  parse (context, input, output) {
-    \ StreamTokenizer:new(context: context, tokenizer: default()).tokenizeAll(input, output)
-  }
-
-  tokenize (input, output) {
-    return delegate -> `tokenizer.tokenize`
-  }
-}
-
 define ZeoliteUpperSymbol {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
@@ -166,6 +145,8 @@ define ZeoliteLowerSymbol {
       String type <-  ZeoliteSymbol.tryControlKeyword(`require` content)
                   <|| ZeoliteSymbol.tryTypeKeyword(`require` content)
                   <|| ZeoliteSymbol.tryContainKeyword(`require` content)
+                  <|| ZeoliteSymbol.tryStorageKeyword(`require` content)
+                  <|| ZeoliteSymbol.tryScopeQualifier(`require` content)
                   <|| ZeoliteSymbol.tryBuiltinCategory(`require` content)
                   <|| ZeoliteSymbol.tryBuiltinFunction(`require` content)
                   <|| ZeoliteSymbol.tryBuiltinConstant(`require` content)
@@ -224,48 +205,6 @@ define ZeoliteTestcaseKeyword {
   }
 }
 
-define ZeoliteTestcase {
-  $ReadOnlyExcept[]$
-
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> testcaseSpecs <- TokenAlternatives.new()
-      .append(ZeoliteOptionalSeparator.default())
-      .append(UseNamedTokenizer.new<ZeoliteStringLiteral>())
-      // TODO: Include numbers, type instances
-      .append(ZeoliteTestcaseKeyword.default())
-
-  tokenizer () {
-    return delegate -> #self
-  }
-
-  tokenizerName () {
-    return typename<#self>().formatted()
-  }
-
-  tokenize (input, context) (token) {
-    scoped {
-      optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.take()
-    } in if (! `present` content || require(content) != "testcase") {
-      return empty
-    }
-
-    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
-    // Setting this early still allows building it incrementally while also
-    // allowing an early return if something is missing.
-    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
-    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: input.take()))
-
-    // Testcase description string.
-    \ ZeoliteOptionalSeparator.parse(context, input, subsections)
-    // TODO: Parse string literal testcase name. Return early if missing.
-    \ ZeoliteOptionalSeparator.parse(context, input, subsections)
-
-    // Testcase specs.
-    \ StreamTokenizer:new(context: context, tokenizer: testcaseSpecs).tokenizeAll(input, subsections)
-  }
-}
-
 define ZeoliteStringLiteral {
   $ReadOnlyExcept[]$
 
@@ -315,7 +254,7 @@ define ZeoliteStringLiteral {
   @type addCurrentChars (TextStream, Append<ZeoliteParsed>) -> ()
   addCurrentChars (input, output) {
     if (input.tokenSize() > 0) {
-      \ output.append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar", content: input.take()))
+      \ output.append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: input.take()))
     }
   }
 }
@@ -357,7 +296,7 @@ define ZeoliteCharLiteral {
     } elif (`require` current == '\'') {
       \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.forward().take()))
     } else {
-      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar", content: input.forward().take()))
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: input.forward().take()))
     }
     if (`present` (current <- input.current())) {
       if (`require` current == '\'') {
@@ -366,6 +305,131 @@ define ZeoliteCharLiteral {
         \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.forward().take()))
       }
     }
+  }
+}
+
+define ZeolitePragma {
+  $ReadOnlyExcept[]$
+
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    token <- empty
+    if (input.atEnd() || `require` input.current() != '$') {
+      return _
+    }
+    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
+    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: input.forward().take()))
+
+    if (! `present` ZeoliteSymbol.parseUpperSymbol(input)) {
+      return _
+    } else {
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeolitePragmaName", content: input.take()))
+    }
+
+    optional Char current <- input.current()
+    if (! `present` current) {
+      return _
+    } elif (`require` current == '[') {
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeolitePragmaArgOpen", content: input.forward().take()))
+      while (`present` (current <- input.current()) && `require` current != ']') {
+        \ input.forward()
+      }
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeolitePragmaArg", content: input.take()))
+      if (`present` (current <- input.current())) {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeolitePragmaArgClose", content: input.forward().take()))
+      } else {
+        return _
+      }
+    }
+
+    if (`present` (current <- input.current())) {
+      if (`require` current == '$') {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeolitePragmaDelim", content: input.forward().take()))
+      } else {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.forward().take()))
+      }
+    }
+  }
+}
+
+define ZeoliteTestcase {
+  $ReadOnlyExcept[]$
+
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> testcaseSpecs <- TokenAlternatives.new()
+      .append(ZeoliteOptionalSeparator.default())
+      .append(UseNamedTokenizer.new<ZeoliteStringLiteral>())
+      // TODO: Include numbers, type instances, param braces.
+      .append(ZeoliteTestcaseKeyword.default())
+      .append(UseNamedTokenizer.new<ZeoliteUpperSymbol>())
+      .append(UseNamedTokenizer.new<ZeoliteLowerSymbol>())
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.take()
+    if (! `present` content || require(content) != "testcase") {
+      return empty
+    }
+
+    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
+    // Setting this early still allows building it incrementally while also
+    // allowing an early return if something is missing.
+    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: `require` content))
+
+    \ ZeoliteOptionalSeparator.parseAny(input, context, subsections)
+    // Testcase description string.
+    scoped {
+      optional ZeoliteParsed name <- delegate -> `ZeoliteStringLiteral.tokenizer().tokenize`
+    } in if (`present` name) {
+      \ subsections.append(`require` name)
+    } else {
+      return _
+    }
+    \ ZeoliteOptionalSeparator.parseAny(input, context, subsections)
+
+    // Testcase specs.
+    \ StreamTokenizer:new(context: context, tokenizer: ZeoliteBraceSection.new(testcaseSpecs)).tokenizeAll(input, subsections)
+  }
+}
+
+define ZeoliteOptionalSeparator {
+  $ReadOnlyExcept[]$
+
+  @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- TokenAlternatives.new()
+      .append(UseNamedTokenizer.new<ZeoliteLineComment>())
+      .append(UseNamedTokenizer.new<ZeoliteBlockComment>())
+      .append(UseNamedTokenizer.new<ZeoliteWhitespace>())
+
+  parseAny (input, context, output) {
+    \ StreamTokenizer:new(context: context, tokenizer: default()).tokenizeAll(input, output)
+  }
+
+  default () {
+    return delegate -> #self
+  }
+
+  tokenize (input, output) {
+    return delegate -> `tokenizer.tokenize`
   }
 }
 
@@ -395,12 +459,13 @@ define ZeoliteBraceSection {
       return _
     }
     Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
+    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
     \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace", content: input.forward().take()))
+
     \ StreamTokenizer:new(context: context, tokenizer: tokenizer <|| context.defaultTokenizer()).tokenizeAll(input, subsections)
     \ input.reset()
     if (!input.atEnd() && `require` input.current() == '}') {
       \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: input.forward().take()))
     }
-    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
   }
 }

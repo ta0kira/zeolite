@@ -393,6 +393,13 @@ define ZeoliteSymbol {
     }
   }
 
+  tryScopeQualifier (value) (type) {
+    type <- empty
+    if (`scopeQualifiers.member` value) {
+      type <- "ZeoliteScopeQualifier"
+    }
+  }
+
   tryTestcaseKeyword (value) (type) {
     type <- empty
     if (`testcaseKeywords.member` value) {

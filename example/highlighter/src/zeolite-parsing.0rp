@@ -82,6 +82,7 @@ concrete ZeoliteSymbol {
   @type tryTypeKeyword     (String) -> (optional String)
   @type tryContainKeyword  (String) -> (optional String)
   @type tryStorageKeyword  (String) -> (optional String)
+  @type tryScopeQualifier  (String) -> (optional String)
   @type tryTestcaseKeyword (String) -> (optional String)
   @type tryBuiltinCategory (String) -> (optional String)
   @type tryBuiltinFunction (String) -> (optional String)
