@@ -2,8 +2,16 @@
 
 ## 0.24.1.0  -- ????-??-??
 
-* **[fix]** Fixes `CheckSequence:using` (in `lib/testing`) when using an empty
-  list.
+### Language
+
+* **[fix]** Fixes parsing of `<` expressions when the left side is an explicit
+  type conversion, e.g., `"123"?String < "456"`. Previously, the `<` was assumed
+  to be the start of a param substitution.
+
+  Note that this shouldn't ever be needed because `<` only supports built-in
+  `concrete` types. (Any value with a union/intersection type convertible to one
+  of those types already simplifies to that type, making the union/intersection
+  superfluous.)
 
 * **[new]** Adds the `<||` operator to use the left value unless it's `empty`.
 
@@ -12,6 +20,11 @@ optional Int value <- empty
 // value is preferred, but 123 is used because value is empty.
 Int other <- value <|| 123
 ```
+
+### Libraries
+
+* **[fix]** Fixes `CheckSequence:using` (in `lib/testing`) when using an empty
+  list.
 
 ### Libraries
 

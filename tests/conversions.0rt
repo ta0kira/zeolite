@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020-2021 Kevin P. Barry
+Copyright 2020-2021,2023 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,14 @@ unittest toAnyOptional {
 unittest convertedCall {
   Value value <- Value.create()
   \ value?Base1.call()
+}
+
+unittest convertWithLessThan {
+  \ Testing.checkEquals("123"?String < "456", true)
+}
+
+unittest convertWithParamSubstitution {
+  \ Testing.checkEquals("123"?ReadAt<Char>.readAt(1), '2')
 }
 
 concrete Helper {

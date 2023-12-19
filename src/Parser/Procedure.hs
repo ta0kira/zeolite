@@ -35,6 +35,7 @@ import Control.Monad (when)
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType (singleType)
 import Base.Positional
 import Parser.Common
 import Parser.Pragma
@@ -43,6 +44,7 @@ import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Types.Procedure
 import Types.TypeCategory
+import Types.TypeInstance (TypeInstanceOrParam(..), TypeInstance(..))
 
 
 instance ParseFromSource (ExecutableProcedure SourceContext) where
@@ -742,8 +744,18 @@ instance ParseFromSource (ValueOperation SourceContext) where
     conversion = labeled "type conversion" $ do
       c <- getSourceContext
       inferredParam
-      t <- sourceParser -- NOTE: Should not need try here.
+      t <- typeInstance <|> sourceParser
       return $ TypeConversion [c] t
+    -- This is the same as the TypeInstance ParseFromSource implementation
+    -- except that it uses try for params. This is necessary for < and <|| when
+    -- the left side is converted to a category without params.
+    typeInstance = labeled "type instance" $ do
+      n <- sourceParser
+      as <- labeled "type args" $ try args <|> return []
+      return $ singleType $ JustTypeInstance $ TypeInstance n (Positional as)
+    args = between (sepAfter $ string "<")
+                   (sepAfter $ string ">")
+                   (sepBy sourceParser (sepAfter $ string ","))
     selectReturn = labeled "return selection" $ do
       c <- getSourceContext
       sepAfter_ (string_ "{")

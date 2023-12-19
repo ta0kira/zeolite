@@ -297,6 +297,10 @@ tests = [
     checkShortParseFail "x, y <|| 'a'",
     checkShortParseFail "\\ _ <|| 'a'",
 
+    checkShortParseSuccess "\\ \"123\"?String < \"456\"",
+    checkShortParseSuccess "\\ \"123\"?ReadAt < Char>",
+    checkShortParseSuccess "\\ \"123\"?String < String.default()",
+
     checkParsesAs "'\"'"
                   (\e -> case e of
                               (Expression _ (UnambiguousLiteral (CharLiteral _ '"')) []) -> True

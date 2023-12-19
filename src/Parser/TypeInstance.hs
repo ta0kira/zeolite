@@ -103,11 +103,7 @@ instance ParseFromSource ParamName where
 instance ParseFromSource TypeInstance where
   sourceParser = labeled "type instance" $ do
     n <- sourceParser
-    -- This is needed so that <|| works with type conversions.
-    isOperator <- (notFollowedBy (string_ "<||") >> return False) <|> return True
-    as <- if isOperator
-             then return []
-             else labeled "type args" $ args <|> return []
+    as <- labeled "type args" $ args <|> return []
     return $ TypeInstance n (Positional as)
     where
       args = between (sepAfter $ string "<")
