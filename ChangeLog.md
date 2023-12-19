@@ -21,6 +21,9 @@ optional Int value <- empty
 Int other <- value <|| 123
 ```
 
+* **[behavior]** Adds source context to traces for crashes during initialization
+  of `@category` members.
+
 ### Libraries
 
 * **[fix]** Fixes `CheckSequence:using` (in `lib/testing`) when using an empty

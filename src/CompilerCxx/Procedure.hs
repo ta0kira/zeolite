@@ -414,9 +414,9 @@ getWritableVariable c n = do
 
 compileLazyInit :: (Ord c, Show c, CollectErrorsM m,
                    CompilerContext c m [String] a) =>
-  DefinedMember c -> CompilerState a m ()
-compileLazyInit (DefinedMember _ _ _ _ Nothing) = return ()
-compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundM $ do
+  CategoryName -> DefinedMember c -> CompilerState a m ()
+compileLazyInit _ (DefinedMember _ _ _ _ Nothing) = return ()
+compileLazyInit t0 (DefinedMember c _ t1 n (Just e)) = resetBackgroundM $ do
   (ts,e') <- compileExpression e
   when (length (pValues ts) /= 1) $
     compilerErrorM $ "Expected single return in initializer" ++ formatFullContextBrace (getExpressionContext e)
@@ -425,7 +425,14 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundM $ do
   let Positional [t2] = ts
   lift $ (checkValueAssignment r fa t2 t1) <??
     "In initialization of " ++ show n ++ " at " ++ formatFullContext c
-  csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
+  let maybeTrace = setTraceContext c
+  let trace = case maybeTrace of
+                   [v] -> " " ++ v
+                   _ -> ""
+  -- NOTE: This needs to be on one line, due to how multiple member inits are concatenated.
+  csWrite [variableName n ++ "([this]() { " ++ startInitTracing t0 CategoryScope ++ trace ++
+      " return " ++ writeStoredVariable t1 e' ++ "; })"
+    ]
 
 compileVoidExpression :: (Ord c, Show c, CollectErrorsM m,
                          CompilerContext c m [String] a) =>

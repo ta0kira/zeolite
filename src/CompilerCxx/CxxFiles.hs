@@ -593,7 +593,7 @@ generateCategoryDefinition testing = common where
 
   inlineCategoryConstructor t d tm em = do
     ctx <- getContextForInit testing tm em t d CategoryScope
-    initMembers <- runDataCompiler (sequence $ map compileLazyInit members) ctx
+    initMembers <- runDataCompiler (sequence $ map (compileLazyInit $ getCategoryName t) members) ctx
     let initMembersStr = intercalate ", " $ cdOutput initMembers
     let initColon = if null initMembersStr then "" else " : "
     return $ mconcat [

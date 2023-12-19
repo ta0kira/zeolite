@@ -102,6 +102,9 @@ startMainTracing n = "TRACE_FUNCTION(" ++ show n ++ ")"
 startInitTracing :: CategoryName -> SymbolScope -> String
 startInitTracing t s = "TRACE_FUNCTION(" ++ show (show t ++ " " ++ show s ++ " init") ++ ")"
 
+startLazyTracing :: CategoryName -> SymbolScope -> String
+startLazyTracing t s = "TRACE_FUNCTION(" ++ show (show t ++ " " ++ show s ++ " init") ++ ")"
+
 startTestTracing :: FunctionName -> String
 startTestTracing f = "TRACE_FUNCTION(" ++ show ("unittest " ++ show f) ++ ")"
 
