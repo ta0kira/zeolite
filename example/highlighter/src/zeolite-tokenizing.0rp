@@ -20,7 +20,6 @@ $ModuleOnly$
 
 // TODO: Tokenize pragmas.
 // TODO: Tokenize numbers.
-// TODO: Tokenize quoted chars.
 
 concrete ZeoliteWhitespace {
   defines NamedTokenizer
@@ -51,6 +50,10 @@ concrete ZeoliteTestcase {
 }
 
 concrete ZeoliteStringLiteral {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteCharLiteral {
   defines NamedTokenizer
 }
 

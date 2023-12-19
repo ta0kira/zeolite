@@ -320,6 +320,55 @@ define ZeoliteStringLiteral {
   }
 }
 
+define ZeoliteCharLiteral {
+  $ReadOnlyExcept[]$
+
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    token <- empty
+    if (input.atEnd() || `require` input.current() != '\'') {
+      return _
+    }
+    Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
+    // Setting this early still allows building it incrementally while also
+    // allowing an early return if something is missing.
+    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: input.forward().take()))
+
+    optional Char current <- input.current()
+    if (! `present` current) {
+      return _
+    } elif (`require` current == '\\') {
+      if (`present` ZeoliteSymbol.parseEscapedChar(input.forward())) {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteEscapedChar", content: input.take()))
+      } else {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.take()))
+      }
+    } elif (`require` current == '\'') {
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.forward().take()))
+    } else {
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChar", content: input.forward().take()))
+    }
+    if (`present` (current <- input.current())) {
+      if (`require` current == '\'') {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: input.forward().take()))
+      } else {
+        \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.forward().take()))
+      }
+    }
+  }
+}
+
 define ZeoliteBraceSection {
   $ReadOnlyExcept[]$
 

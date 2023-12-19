@@ -27,6 +27,7 @@ unittest test {
       .include<ZeoliteLineComment>()
       .include<ZeoliteBlockComment>()
       .include<ZeoliteStringLiteral>()
+      .include<ZeoliteCharLiteral>()
       .include<ZeoliteTestcase>()
       .include<ZeoliteUpperSymbol>()
       .include<ZeoliteLowerSymbol>()
