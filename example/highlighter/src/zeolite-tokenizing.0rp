@@ -19,7 +19,7 @@ limitations under the License.
 $ModuleOnly$
 
 // TODO: Tokenize scope qualifiers.
-// TODO: Tokenize operators, _, {}, [], <>, \, stray chars.
+// TODO: Tokenize operators, _, <>, \, stray chars.
 // TODO: Tokenize numbers.
 
 concrete ZeoliteWhitespace {
@@ -54,6 +54,18 @@ concrete ZeoliteCharLiteral {
   defines NamedTokenizer
 }
 
+concrete ZeoliteBraceSection {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteParenSection {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteSquareSection {
+  defines NamedTokenizer
+}
+
 concrete ZeolitePragma {
   defines NamedTokenizer
 }
@@ -69,12 +81,4 @@ concrete ZeoliteOptionalSeparator {
   visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   @type parseAny (TextStream, ZeoliteParseContext, Append<ZeoliteParsed>) -> ()
-}
-
-concrete ZeoliteBraceSection {
-  defines NamedTokenizer
-
-  visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  @type new (Tokenizer<ZeoliteParseContext, ZeoliteParsed>) -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
 }

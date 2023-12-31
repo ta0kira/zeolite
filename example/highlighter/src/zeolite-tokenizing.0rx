@@ -308,6 +308,36 @@ define ZeoliteCharLiteral {
   }
 }
 
+define ZeoliteBraceSection {
+  tokenizer () {
+    return ZeoliteDelimSection.new(name: tokenizerName(), open: '{', close: '}', empty)
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+}
+
+define ZeoliteParenSection {
+  tokenizer () {
+    return ZeoliteDelimSection.new(name: tokenizerName(), open: '(', close: ')', empty)
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+}
+
+define ZeoliteSquareSection {
+  tokenizer () {
+    return ZeoliteDelimSection.new(name: tokenizerName(), open: '[', close: ']', empty)
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+}
+
 define ZeolitePragma {
   $ReadOnlyExcept[]$
 
@@ -408,7 +438,8 @@ define ZeoliteTestcase {
     \ ZeoliteOptionalSeparator.parseAny(input, context, subsections)
 
     // Testcase specs.
-    \ StreamTokenizer:new(context: context, tokenizer: ZeoliteBraceSection.new(testcaseSpecs)).tokenizeAll(input, subsections)
+    \ StreamTokenizer:new(context: context, tokenizer: ZeoliteDelimSection.new(name: "ZeoliteTestcaseSection", open: '{', close: '}', testcaseSpecs))
+        .tokenizeAll(input, subsections)
   }
 }
 
@@ -433,39 +464,38 @@ define ZeoliteOptionalSeparator {
   }
 }
 
-define ZeoliteBraceSection {
+concrete ZeoliteDelimSection {
+  @type new (String name:, Char open:, Char close:, optional Tokenizer<ZeoliteParseContext, ZeoliteParsed>) -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
+}
+
+define ZeoliteDelimSection {
   $ReadOnlyExcept[]$
 
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
+  @value String name
+  @value Char open
+  @value Char close
   @value optional Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer
 
-  tokenizer () {
-    return #self{ empty }
-  }
-
-  new (tokenizer) {
+  new (name, open, close, tokenizer) {
     return delegate -> #self
-  }
-
-  tokenizerName () {
-    return typename<#self>().formatted()
   }
 
   tokenize (input, context) (token) {
     \ input.reset()
     token <- empty
-    if (input.atEnd() || `require` input.current() != '{') {
+    if (input.atEnd() || `require` input.current() != open) {
       return _
     }
     Vector<ZeoliteParsed> subsections <- Vector<ZeoliteParsed>.new()
-    token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
-    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace", content: input.forward().take()))
+    token <- ZeoliteParsed.section(label: name, subsections)
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim", content: input.forward().take()))
 
     \ StreamTokenizer:new(context: context, tokenizer: tokenizer <|| context.defaultTokenizer()).tokenizeAll(input, subsections)
     \ input.reset()
-    if (!input.atEnd() && `require` input.current() == '}') {
-      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: input.forward().take()))
+    if (!input.atEnd() && `require` input.current() == close) {
+      \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim", content: input.forward().take()))
     }
   }
 }

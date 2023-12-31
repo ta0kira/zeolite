@@ -32,6 +32,9 @@ unittest parseZeoliteWhitespace {
 
   \ " \t \r\n" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: " \t \r\n"))
+
+  \ "   test" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: "   "))
 }
 
 unittest parseZeoliteLineComment {
@@ -201,6 +204,69 @@ unittest parseZeoliteCharLiteral {
           .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "o"))))
 }
 
+unittest parseZeoliteBraceSection {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteBlockComment>()
+      .include<ZeoliteBraceSection>()
+      .include<ZeoliteWhitespace>())
+
+  \ "{ /*hello*/ }" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "{"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*hello*/"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: "}"))))
+
+  \ "{ /*forever*/" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "{"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*forever*/"))))
+}
+
+unittest parseZeoliteParenSection {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteBlockComment>()
+      .include<ZeoliteParenSection>()
+      .include<ZeoliteWhitespace>())
+
+  \ "( /*hello*/ )" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteParenSection", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "("))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*hello*/"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: ")"))))
+
+  \ "( /*forever*/" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteParenSection", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "("))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*forever*/"))))
+}
+
+unittest parseZeoliteSquareSection {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteBlockComment>()
+      .include<ZeoliteSquareSection>()
+      .include<ZeoliteWhitespace>())
+
+  \ "[ /*hello*/ ]" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteSquareSection", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "["))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*hello*/"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: "]"))))
+
+  \ "[ /*forever*/" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.section(label: "ZeoliteSquareSection", Vector<ZeoliteParsed>.new()
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "["))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*forever*/"))))
+}
+
 unittest parseZeoliteTestcase {
   ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
@@ -227,8 +293,8 @@ unittest parseZeoliteTestcase {
               .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "my test"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
           .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: " "))
-          .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
-              .append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",       content: "{"))
+          .append(ZeoliteParsed.section(label: "ZeoliteTestcaseSection", Vector<ZeoliteParsed>.new()
+              .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",       content: "{"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
               .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "success"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
@@ -245,7 +311,7 @@ unittest parseZeoliteTestcase {
                   .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "something"))
                   .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: "\n  "))
-              .append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace", content: "}"))))))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim", content: "}"))))))
 
   \ "testcase { }" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteTestcase", Vector<ZeoliteParsed>.new()
@@ -307,11 +373,11 @@ unittest integration {
 
   \ "{Category #param}\"string\\n\" /*/ done*/\n" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
-          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenBrace",    content: "{"))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "{"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Category"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",   content: " "))
           .append(ZeoliteParsed.leaf(label: "ZeoliteParamName",    content: "#param"))
-          .append(ZeoliteParsed.leaf(label: "ZeoliteCloseBrace",   content: "}"))))
+          .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: "}"))))
       .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
           .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
           .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "string"))
