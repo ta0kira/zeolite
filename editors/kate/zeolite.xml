@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.27"
+    version="3.28"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -387,6 +387,8 @@
 
       <context name="Char" attribute="Char" lineEndContext="#stay" >
         <HlCChar attribute="Escaped Char" context="#stay" />
+        <RegExpr attribute="Escaped Char" context="#stay" String="\\\\" />
+        <RegExpr attribute="Escaped Char" context="#stay" String="\\'" />
         <DetectChar attribute="Char" context="#pop" char="'" />
       </context>
 
