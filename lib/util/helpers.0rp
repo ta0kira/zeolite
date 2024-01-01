@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -239,4 +239,12 @@ concrete AsLessThan2<#x|#xx|> {
   #xx defines LessThan<#x>
 
   @type new () -> (LessThan2<#x>)
+}
+
+// Helpers for Append<#x>.
+concrete AppendH {
+  // Appends all items in order.
+  @category from<#x, #a>
+    #a requires Append<#x>
+  (#a, optional Order<#x>) -> (#a)
 }

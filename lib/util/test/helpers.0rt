@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021,2023 Kevin P. Barry
+Copyright 2021,2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -212,6 +212,11 @@ unittest readAtHIterateWith {
     expected <- expected+1
   }
   \ expected `Matches:with` CheckValue:equals(5)
+}
+
+unittest appendHFrom {
+  [Append<Formatted> & Build<String>] output <- String.builder() `AppendH:from` "123".defaultOrder() `AppendH:from` "abc".defaultOrder()
+  \ output.build() `Matches:with` CheckValue:equals("123abc")
 }
 
 concrete ValueOrder {

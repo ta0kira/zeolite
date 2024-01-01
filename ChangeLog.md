@@ -29,6 +29,8 @@ Int other <- value <|| 123
 * **[fix]** Fixes `CheckSequence:using` (in `lib/testing`) when using an empty
   list.
 
+* **[new]** Adds `AppendH` helpers to `lib/util`.
+
 ### Libraries
 
 ## 0.24.0.1  -- 2023-12-10

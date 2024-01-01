@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -232,5 +232,14 @@ define AsLessThan2 {
 
   lessThan2 (x, y) {
     return x `#xx.lessThan` y
+  }
+}
+
+define AppendH {
+  from (output, input) {
+    traverse (input -> #x value) {
+      \ output.append(value)
+    }
+    return output
   }
 }
