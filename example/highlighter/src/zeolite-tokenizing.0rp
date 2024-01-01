@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ limitations under the License.
 $ModuleOnly$
 
 // TODO: Tokenize _, \, ,, stray chars.
-// TODO: Tokenize numbers.
 
 concrete ZeoliteWhitespace {
   defines NamedTokenizer
@@ -58,6 +57,10 @@ concrete ZeoliteStringLiteral {
 }
 
 concrete ZeoliteCharLiteral {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteNumber {
   defines NamedTokenizer
 }
 

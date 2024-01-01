@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -244,6 +244,56 @@ unittest parseZeoliteCharLiteral {
           .append(ZeoliteParsed.leaf(label: "ZeoliteSingleQuote", content: "'"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "f"))
           .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "o"))))
+}
+
+unittest parseZeoliteNumber {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteNumber>())
+
+  \ "123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123"))
+  \ "123.456" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123.456"))
+  \ "123.456E123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123.456E123"))
+  \ "+123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "+123"))
+  \ "-123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "-123"))
+  \ "123.456E+123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123.456E+123"))
+  \ "123.456E-123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123.456E-123"))
+
+  \ "\\b101.010" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\b101.010"))
+  \ "\\o123.456" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\o123.456"))
+  \ "\\d123.456" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\d123.456"))
+  \ "\\x123.abc" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\x123.abc"))
+
+  \ "123A" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123"))
+  \ "\\b0123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\b01"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "23"))
+  \ "\\o12389" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\o123"))
+      .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "89"))
+  \ "\\d123A" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\d123"))
+  \ "\\xABCqq" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: "\\xABC"))
+
+  \ "-" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "+" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "\\" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "\\b" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "\\o" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "\\d" `tester.checkParsesAs` AlwaysEmpty.default()
+  \ "\\h" `tester.checkParsesAs` AlwaysEmpty.default()
 }
 
 unittest parseZeoliteBraceSection {

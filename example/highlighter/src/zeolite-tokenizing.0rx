@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -352,6 +352,142 @@ define ZeoliteCharLiteral {
         \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteError", content: input.forward().take()))
       }
     }
+  }
+}
+
+define ZeoliteNumber {
+  $ReadOnlyExcept[]$
+
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    token <- empty
+    optional Char current <- input.current()
+    if (! `present` current) {
+      return _
+    } elif (CharType.digit(`require` current)) {
+      token <- parseDec(input, escaped: false)
+    } elif (`require` current `CharType.oneOf` "-+") {
+      \ input.forward()
+      token <- parseDec(input, escaped: false)
+    } elif (`require` current != '\\') {
+      return _
+    } else {
+      current <- input.forward().current()
+      if (! `present` current) {
+        return _
+      } elif (`require` current `CharType.oneOf` "bB") {
+        \ input.forward()
+        token <- parseBin(input)
+      } elif (`require` current `CharType.oneOf` "oO") {
+      \ input.forward()
+        token <- parseOct(input)
+      } elif (`require` current `CharType.oneOf` "dD") {
+      \ input.forward()
+        token <- parseDec(input, escaped: true)
+      } elif (`require` current `CharType.oneOf` "xX") {
+      \ input.forward()
+        token <- parseHex(input)
+      } else {
+        return _
+      }
+    }
+  }
+
+  @type parseBin (TextStream) -> (optional ZeoliteParsed)
+  parseBin (input) {
+    Bool isEmpty <- true
+    optional Char current <- empty
+    while (`present` (current <- input.current()) && CharType.binDigit(`require` current)) {
+      \ input.forward()
+      isEmpty <- false
+    }
+    if (isEmpty) {
+      return empty
+    } elif (`present` (current <- input.current()) && `require` current == '.') {
+      \ input.forward()
+      while (`present` (current <- input.current()) && CharType.binDigit(`require` current)) {
+        \ input.forward()
+      }
+    }
+    return ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: input.take())
+  }
+
+  @type parseOct (TextStream) -> (optional ZeoliteParsed)
+  parseOct (input) {
+    Bool isEmpty <- true
+    optional Char current <- empty
+    while (`present` (current <- input.current()) && CharType.octDigit(`require` current)) {
+      \ input.forward()
+      isEmpty <- false
+    }
+    if (isEmpty) {
+      return empty
+    } elif (`present` (current <- input.current()) && `require` current == '.') {
+      \ input.forward()
+      while (`present` (current <- input.current()) && CharType.octDigit(`require` current)) {
+        \ input.forward()
+      }
+    }
+    return ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: input.take())
+  }
+
+  @type parseDec (TextStream, Bool escaped:) -> (optional ZeoliteParsed)
+  parseDec (input, escaped) {
+    Bool isEmpty <- true
+    optional Char current <- empty
+    while (`present` (current <- input.current()) && CharType.digit(`require` current)) {
+      \ input.forward()
+      isEmpty <- false
+    }
+    if (isEmpty) {
+      return empty
+    } elif (`present` (current <- input.current()) && `require` current == '.') {
+      \ input.forward()
+      while (`present` (current <- input.current()) && CharType.digit(`require` current)) {
+        \ input.forward()
+      }
+    }
+    if (escaped) {
+      return ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: input.take())
+    } elif (`present` current && `require` current `CharType.oneOf` "eE") {
+      \ input.forward()
+      if (`present` (current <- input.current()) && `require` current `CharType.oneOf` "-+") {
+        \ input.forward()
+      }
+      while (`present` (current <- input.current()) && CharType.digit(`require` current)) {
+        \ input.forward()
+      }
+    }
+    return ZeoliteParsed.leaf(label: "ZeoliteNumber", content: input.take())
+  }
+
+  @type parseHex (TextStream) -> (optional ZeoliteParsed)
+  parseHex (input) {
+    Bool isEmpty <- true
+    optional Char current <- empty
+    while (`present` (current <- input.current()) && CharType.hexDigit(`require` current)) {
+      \ input.forward()
+      isEmpty <- false
+    }
+    if (isEmpty) {
+      return empty
+    } elif (`present` (current <- input.current()) && `require` current == '.') {
+      \ input.forward()
+      while (`present` (current <- input.current()) && CharType.hexDigit(`require` current)) {
+        \ input.forward()
+      }
+    }
+    return ZeoliteParsed.leaf(label: "ZeoliteEscapedNumber", content: input.take())
   }
 }
 
