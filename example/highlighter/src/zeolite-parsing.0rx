@@ -107,7 +107,7 @@ define UseNamedTokenizer {
   }
 
   tokenize (input, context) {
-    return context.get(name)&.tokenize(input, context)
+    return delegate -> `context.get(name)&.tokenize`
   }
 }
 

@@ -292,3 +292,62 @@ define Value {
     return delegate -> Value
   }
 }
+
+
+testcase "delegate handles optional with &." {
+  success
+}
+
+concrete Helper {
+  @type testEmpty (Int) -> ()
+  @type testNonEmpty (Int) -> ()
+  @type call (Bool fake:) -> (optional String)
+}
+
+define Helper {
+  testEmpty (position) {
+    \ Testing.checkEquals(delegate -> `Helper.call(fake: true)&.readAt`, empty)
+  }
+
+  testNonEmpty (position) {
+    \ Testing.checkEquals(delegate -> `Helper.call(fake: false)&.readAt`, "123".readAt(position))
+  }
+
+  call (fake) {
+    if (fake) {
+      return empty
+    } else {
+      return "123"
+    }
+  }
+}
+
+unittest testEmpty {
+  \ Helper.testEmpty(1)
+}
+
+unittest testNonEmpty {
+  \ Helper.testNonEmpty(1)
+}
+
+
+testcase "delegate applies optional with &." {
+  error
+  require compiler "value"
+  require compiler "modifier"
+}
+
+concrete Helper {
+  @type test (Int) -> ()
+  @type call () -> (optional String)
+}
+
+define Helper {
+  test (position) {
+    Char value <- delegate -> `Helper.call()&.readAt`
+  }
+
+  call () {
+    return empty
+  }
+}
