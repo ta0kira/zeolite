@@ -367,6 +367,9 @@ unittest parseZeoliteTestcase {
       .include<ZeoliteLineComment>()
       .include<ZeoliteBlockComment>()
       .include<ZeoliteStringLiteral>()
+      .include<ZeoliteSquareSection>()
+      .include<ZeoliteNumber>()
+      .include<ZeoliteOperator>()
       // ZeoliteTestcase also uses the above if available.
       .include<ZeoliteTestcase>()
       // These should be after ZeoliteTestcase.
@@ -374,8 +377,9 @@ unittest parseZeoliteTestcase {
       .include<ZeoliteLowerSymbol>())
 
   String data <- "testcase \"my test\" {
-    success TestChecker  // <- enables lib/testing support
+    success Checker<[A&B]>  // <- enables lib/testing support
     require compiler \"something\"
+    timeout 30
   }"
 
   \ data `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
@@ -392,7 +396,15 @@ unittest parseZeoliteTestcase {
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
               .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "success"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
-              .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName",    content: "TestChecker"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName",    content: "Checker"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",        content: "<"))
+              .append(ZeoliteParsed.section(label: "ZeoliteSquareSection", Vector<ZeoliteParsed>.new()
+                    .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "["))
+                    .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "A"))
+                    .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",     content: "&"))
+                    .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "B"))
+                    .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: "]"))))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",        content: ">"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "  "))
               .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment",     content: "// <- enables lib/testing support"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
@@ -404,8 +416,12 @@ unittest parseZeoliteTestcase {
                   .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))
                   .append(ZeoliteParsed.leaf(label: "ZeoliteQuotedChars", content: "something"))
                   .append(ZeoliteParsed.leaf(label: "ZeoliteDoubleQuote", content: "\""))))
-              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: "\n  "))
-              .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim", content: "}"))))))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "timeout"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteNumber",          content: "30"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n  "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",      content: "}"))))))
 
   \ "testcase { }" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteTestcase", Vector<ZeoliteParsed>.new()

@@ -527,10 +527,12 @@ define ZeoliteTestcase {
   @category Tokenizer<ZeoliteParseContext, ZeoliteParsed> testcaseSpecs <- TokenAlternatives.new()
       .append(ZeoliteOptionalSeparator.default())
       .append(UseNamedTokenizer.new<ZeoliteStringLiteral>())
-      // TODO: Include numbers, type instances, param braces.
+      .append(UseNamedTokenizer.new<ZeoliteSquareSection>())
       .append(ZeoliteTestcaseKeyword.default())
       .append(UseNamedTokenizer.new<ZeoliteUpperSymbol>())
       .append(UseNamedTokenizer.new<ZeoliteLowerSymbol>())
+      .append(UseNamedTokenizer.new<ZeoliteNumber>())
+      .append(UseNamedTokenizer.new<ZeoliteOperator>())
 
   tokenizer () {
     return delegate -> #self
