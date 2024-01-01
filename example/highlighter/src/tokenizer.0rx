@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -117,6 +117,16 @@ define CharType {
       .set('\"', "\\\"")
       .set('\\', "\\\\")
 
+  @category SetReader<Char> binChars <- HashedSet<Char>.new() `AppendH:from` "01".defaultOrder()
+
+  @category SetReader<Char> octChars <- HashedSet<Char>.new() `AppendH:from` "01234567".defaultOrder()
+
+  @category SetReader<Char> decChars <- HashedSet<Char>.new() `AppendH:from` "0123456789".defaultOrder()
+
+  @category SetReader<Char> hexChars <- HashedSet<Char>.new() `AppendH:from` "0123456789abcdefABCDEF".defaultOrder()
+
+  @category SetReader<Char> whitespaceChars <- HashedSet<Char>.new() `AppendH:from` "\n\t\r ".defaultOrder()
+
   lower (c) {
     return c >= 'a' && c <= 'z'
   }
@@ -126,19 +136,19 @@ define CharType {
   }
 
   digit (c) {
-    return c >= '0' && c <= '9'
+    return `decChars.member` c
   }
 
   binDigit (c) {
-    return c >= '0' && c <= '1'
+    return `binChars.member` c
   }
 
   octDigit (c) {
-    return c >= '0' && c <= '7'
+    return `octChars.member` c
   }
 
   hexDigit (c) {
-    return digit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')
+    return `hexChars.member` c
   }
 
   alphaNum (c) {
@@ -146,7 +156,23 @@ define CharType {
   }
 
   whitespace (c) {
-    return c `oneOf` "\n\t\r "
+    return `whitespaceChars.member` c
+  }
+
+  binChars () {
+    return binChars
+  }
+
+  octChars () {
+    return octChars
+  }
+
+  decChars () {
+    return decChars
+  }
+
+  hexChars () {
+    return hexChars
   }
 
   oneOf (c, allowed) (match) {

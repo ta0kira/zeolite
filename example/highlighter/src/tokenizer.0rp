@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,7 +73,12 @@ concrete CharType {
   @type alphaNum   (Char) -> (Bool)
   @type whitespace (Char) -> (Bool)
 
-  @type oneOf (Char, String) -> (Bool)
+  @type binChars () -> (SetReader<Char>)
+  @type octChars () -> (SetReader<Char>)
+  @type decChars () -> (SetReader<Char>)
+  @type hexChars () -> (SetReader<Char>)
+
+  @type oneOf (Char, DefaultOrder<Char>) -> (Bool)
 
   @type escapeBreaks (DefaultOrder<Char>) -> (String)
 }

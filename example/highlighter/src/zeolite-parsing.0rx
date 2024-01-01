@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -278,6 +278,10 @@ define ZeoliteSymbol {
       .append("&.")
       .append("?")
 
+  @category SetReader<Char> operatorChars <- HashedSet<Char>.new() `AppendH:from` ".!%^&*-+|<>?".defaultOrder()
+
+  @category SetReader<Char> escapedChars <- HashedSet<Char>.new() `AppendH:from` "'\"?\\abfnrtv".defaultOrder()
+
   parseUpperSymbol (input) {
     \ input.reset()
     optional Char current <- input.current()
@@ -335,7 +339,7 @@ define ZeoliteSymbol {
     \ input.reset()
     output <- empty
     optional Char current <- input.current()
-    while (`present` current && CharType.oneOf(`require` current, ".!%^&*-+|<>?")) {
+    while (`present` current && `operatorChars.member` `require` current) {
       current <- input.forward().current()
       output <- input
     }
@@ -364,7 +368,7 @@ define ZeoliteSymbol {
         }
       }
       \ input.forward()
-    } elif (`require` current `CharType.oneOf` "'\"?\\abfnrtv") {
+    } elif (`escapedChars.member` `require` current) {
       // Single escaped char.
       \ input.forward()
     } else {
