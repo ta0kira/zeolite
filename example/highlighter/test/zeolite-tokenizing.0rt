@@ -118,6 +118,23 @@ unittest parseZeoliteLowerSymbol {
   \ "123hello" `tester.checkParsesAs` AlwaysEmpty.default()
 }
 
+unittest parseZeoliteScopeQualifier {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteScopeQualifier>())
+
+  \ "@value" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteScopeQualifier", content: "@value"))
+  \ "@type" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteScopeQualifier", content: "@type"))
+  \ "@category" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteScopeQualifier", content: "@category"))
+
+  \ "@value something" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteScopeQualifier", content: "@value"))
+  \ "@local" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "@local"))
+}
+
 unittest parseZeoliteParamName {
   ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
       .include<ZeoliteParamName>())

@@ -324,11 +324,7 @@ define ZeoliteSymbol {
     while (`present` current && CharType.alphaNum(`require` current)) {
       current <- input.forward().current()
     }
-    if (! `scopeQualifiers.member` input.preview()){
-      return input
-    } else {
-      return empty
-    }
+    return input
   }
 
   parseEscapedChar (input) {

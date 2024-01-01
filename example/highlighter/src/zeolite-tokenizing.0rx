@@ -156,6 +156,29 @@ define ZeoliteLowerSymbol {
   }
 }
 
+define ZeoliteScopeQualifier {
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, _) {
+    optional String content <- ZeoliteSymbol.parseScopeQualifier(input)&.take()
+    if (! `present` content) {
+      return empty
+    } else {
+      String type <-  ZeoliteSymbol.tryScopeQualifier(`require` content)
+                  <|| "ZeoliteError"
+      return ZeoliteParsed.leaf(label: type, content: `require` content)
+    }
+  }
+}
+
 define ZeoliteParamName {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 

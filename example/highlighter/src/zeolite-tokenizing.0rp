@@ -18,7 +18,6 @@ limitations under the License.
 
 $ModuleOnly$
 
-// TODO: Tokenize scope qualifiers.
 // TODO: Tokenize operators, _, <>, \, stray chars.
 // TODO: Tokenize numbers.
 
@@ -39,6 +38,10 @@ concrete ZeoliteUpperSymbol {
 }
 
 concrete ZeoliteLowerSymbol {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteScopeQualifier {
   defines NamedTokenizer
 }
 
