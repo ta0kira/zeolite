@@ -18,7 +18,7 @@ limitations under the License.
 
 $ModuleOnly$
 
-// TODO: Tokenize operators, _, <>, \, stray chars.
+// TODO: Tokenize _, \, stray chars.
 // TODO: Tokenize numbers.
 
 concrete ZeoliteWhitespace {
@@ -42,6 +42,10 @@ concrete ZeoliteLowerSymbol {
 }
 
 concrete ZeoliteScopeQualifier {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteOperator {
   defines NamedTokenizer
 }
 

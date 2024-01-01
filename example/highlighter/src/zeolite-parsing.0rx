@@ -274,6 +274,15 @@ define ZeoliteSymbol {
   @category SetReader<String> builtinParams <- HashedSet<String>.new()
       .append("#self")
 
+  @category SetReader<String> assignmentOperators <- HashedSet<String>.new()
+      .append("<-")
+      .append("<-|")
+
+  @category SetReader<String> functionCallOperators <- HashedSet<String>.new()
+      .append(".")
+      .append("&.")
+      .append("?")
+
   parseUpperSymbol (input) {
     \ input.reset()
     optional Char current <- input.current()
@@ -325,6 +334,16 @@ define ZeoliteSymbol {
       current <- input.forward().current()
     }
     return input
+  }
+
+  parseOperatorSymbols (input) (output) {
+    \ input.reset()
+    output <- empty
+    optional Char current <- input.current()
+    while (`present` current && CharType.oneOf(`require` current, ".!%^&*-+|<>?")) {
+      current <- input.forward().current()
+      output <- input
+    }
   }
 
   parseEscapedChar (input) {
@@ -424,10 +443,24 @@ define ZeoliteSymbol {
     }
   }
 
+  tryAssignment (value) (type) {
+    type <- empty
+    if (`assignmentOperators.member` value) {
+      type <- "ZeoliteAssignment"
+    }
+  }
+
   tryBuiltinParam (value) (type) {
     type <- empty
     if (`builtinParams.member` value) {
       type <- "ZeoliteBuiltinParam"
+    }
+  }
+
+  tryFunctionCall (value) (type) {
+    type <- empty
+    if (`functionCallOperators.member` value) {
+      type <- "ZeoliteFunctionCall"
     }
   }
 }

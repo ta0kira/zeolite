@@ -179,6 +179,30 @@ define ZeoliteScopeQualifier {
   }
 }
 
+define ZeoliteOperator {
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, _) {
+    optional String content <- ZeoliteSymbol.parseOperatorSymbols(input)&.take()
+    if (! `present` content) {
+      return empty
+    } else {
+      String type <-  ZeoliteSymbol.tryAssignment(`require` content)
+                  <|| ZeoliteSymbol.tryFunctionCall(`require` content)
+                  <|| "ZeoliteOperator"
+      return ZeoliteParsed.leaf(label: type, content: `require` content)
+    }
+  }
+}
+
 define ZeoliteParamName {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
