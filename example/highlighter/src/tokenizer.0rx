@@ -115,6 +115,7 @@ define CharType {
       .set('\n', "\\n")
       .set('\r', "\\r")
       .set('\"', "\\\"")
+      .set('\\', "\\\\")
 
   lower (c) {
     return c >= 'a' && c <= 'z'

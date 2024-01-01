@@ -23,5 +23,6 @@ concrete ZeoliteHighlight {
 define ZeoliteHighlight {
   run () {
     // TODO
+    fail("not implemented yet")
   }
 }

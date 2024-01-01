@@ -106,13 +106,8 @@ define UseNamedTokenizer {
     return #self{ #t.tokenizerName() }
   }
 
-  tokenize (input, context) (token) {
-    token <- empty
-    scoped {
-      optional Tokenizer<ZeoliteParseContext, ZeoliteParsed> tokenizer <- context.get(name)
-    } in if (`present` tokenizer) {
-      token <- require(tokenizer).tokenize(input, context)
-    }
+  tokenize (input, context) {
+    return context.get(name)&.tokenize(input, context)
   }
 }
 

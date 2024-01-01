@@ -64,14 +64,16 @@ concrete UnformattedFormatter {
 
 // Helpers for reasoning about Char values.
 concrete CharType {
-  @type lower (Char) -> (Bool)
-  @type upper (Char) -> (Bool)
-  @type digit (Char) -> (Bool)
-  @type binDigit (Char) -> (Bool)
-  @type octDigit (Char) -> (Bool)
-  @type hexDigit (Char) -> (Bool)
-  @type alphaNum (Char) -> (Bool)
+  @type lower      (Char) -> (Bool)
+  @type upper      (Char) -> (Bool)
+  @type digit      (Char) -> (Bool)
+  @type binDigit   (Char) -> (Bool)
+  @type octDigit   (Char) -> (Bool)
+  @type hexDigit   (Char) -> (Bool)
+  @type alphaNum   (Char) -> (Bool)
   @type whitespace (Char) -> (Bool)
+
   @type oneOf (Char, String) -> (Bool)
+
   @type escapeBreaks (DefaultOrder<Char>) -> (String)
 }
