@@ -272,13 +272,14 @@ define ZeoliteSymbol {
   @category SetReader<String> assignmentOperators <- HashedSet<String>.new()
       .append("<-")
       .append("<-|")
+      .append("\\")
 
   @category SetReader<String> functionCallOperators <- HashedSet<String>.new()
       .append(".")
       .append("&.")
       .append("?")
 
-  @category SetReader<Char> operatorChars <- HashedSet<Char>.new() `AppendH:from` ".!%^&*-+|<>?".defaultOrder()
+  @category SetReader<Char> operatorChars <- HashedSet<Char>.new() `AppendH:from` ".!%^&*-+|<>?\\".defaultOrder()
 
   @category SetReader<Char> escapedChars <- HashedSet<Char>.new() `AppendH:from` "'\"?\\abfnrtv".defaultOrder()
 

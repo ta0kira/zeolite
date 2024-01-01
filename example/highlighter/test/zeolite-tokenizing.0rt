@@ -143,6 +143,8 @@ unittest parseZeoliteOperator {
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-"))
   \ "<-|" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-|"))
+  \ "\\" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "\\"))
   \ "." `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionCall", content: "."))
   \ "&." `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
