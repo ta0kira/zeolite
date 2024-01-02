@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "working tests" {
+testcase "parsing tests" {
   success TestChecker
 }
 
@@ -477,6 +477,8 @@ unittest parseZeoliteExtras {
       .append(ZeoliteParsed.leaf(label: "ZeoliteIgnore", content: "_"))
   \ "\\" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteDiscard", content: "\\"))
+  \ "`" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteTick", content: "`"))
   \ "," `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteComma", content: ","))
   \ ";" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()

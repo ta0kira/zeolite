@@ -553,6 +553,9 @@ define ZeoliteExtras {
     } elif (`require` current == '\\') {
       \ input.forward()
       return ZeoliteParsed.leaf(label: "ZeoliteDiscard", content: input.take())
+    } elif (`require` current == '`') {
+      \ input.forward()
+      return ZeoliteParsed.leaf(label: "ZeoliteTick", content: input.take())
     } elif (`require` current == ',') {
       \ input.forward()
       return ZeoliteParsed.leaf(label: "ZeoliteComma", content: input.take())
@@ -589,8 +592,9 @@ define ZeoliteTestcase {
   }
 
   tokenize (input, context) (token) {
-    optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.take()
-    if (! `present` content || require(content) != "testcase") {
+    scoped {
+      optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.preview()
+    } in if (! `present` content || require(content) != "testcase") {
       return empty
     }
 
@@ -598,7 +602,7 @@ define ZeoliteTestcase {
     // Setting this early still allows building it incrementally while also
     // allowing an early return if something is missing.
     token <- ZeoliteParsed.section(label: tokenizerName(), subsections)
-    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: `require` content))
+    \ subsections.append(ZeoliteParsed.leaf(label: "ZeoliteContainKeyword", content: input.take()))
 
     \ ZeoliteOptionalSeparator.parseAny(input, context, subsections)
     // Testcase description string.
