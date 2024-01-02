@@ -89,6 +89,8 @@ unittest parseZeoliteLowerSymbol {
 
   \ "hello123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "hello123"))
+  \ "hello123:" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteArgLabel", content: "hello123:"))
   \ "cleanup" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteControlKeyword", content: "cleanup"))
   \ "immutable" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
@@ -113,6 +115,8 @@ unittest parseZeoliteLowerSymbol {
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "compiler"))
   \ "empty123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "empty123"))
+  \ "identify:" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteBuiltinFunction", content: "identify"))
 
   \ "Hello" `tester.checkParsesAs` AlwaysEmpty.default()
   \ "123hello" `tester.checkParsesAs` AlwaysEmpty.default()
@@ -477,6 +481,8 @@ unittest parseZeoliteExtras {
       .append(ZeoliteParsed.leaf(label: "ZeoliteComma", content: ","))
   \ ";" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: ";"))
+  \ ":" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: ":"))
 }
 
 unittest integration {

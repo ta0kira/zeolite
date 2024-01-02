@@ -138,7 +138,7 @@ define ZeoliteLowerSymbol {
   }
 
   tokenize (input, _) {
-    optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.take()
+    optional String content <- ZeoliteSymbol.parseLowerSymbol(input)&.preview()
     if (! `present` content) {
       return empty
     } else {
@@ -150,8 +150,20 @@ define ZeoliteLowerSymbol {
                   <|| ZeoliteSymbol.tryBuiltinCategory(`require` content)
                   <|| ZeoliteSymbol.tryBuiltinFunction(`require` content)
                   <|| ZeoliteSymbol.tryBuiltinConstant(`require` content)
+                  <|| tryLabel(input)
                   <|| "ZeoliteFunctionOrVariableName"
-      return ZeoliteParsed.leaf(label: type, content: `require` content)
+      $Hidden[content]$
+      return ZeoliteParsed.leaf(label: type, content: input.take())
+    }
+  }
+
+  @type tryLabel (TextStream) -> (optional String)
+  tryLabel (input) {
+    if (`present` input.current() && `require` input.current() == ':') {
+      \ input.forward()
+      return "ZeoliteArgLabel"
+    } else {
+      return empty
     }
   }
 }
@@ -544,7 +556,7 @@ define ZeoliteExtras {
     } elif (`require` current == ',') {
       \ input.forward()
       return ZeoliteParsed.leaf(label: "ZeoliteComma", content: input.take())
-    } elif (`require` current == ';') {
+    } elif (`require` current `CharType.oneOf` ";:") {
       \ input.forward()
       return ZeoliteParsed.leaf(label: "ZeoliteError", content: input.take())
     } else {
