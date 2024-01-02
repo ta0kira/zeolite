@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023-2024 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,8 +21,91 @@ concrete ZeoliteHighlight {
 }
 
 define ZeoliteHighlight {
+  $ReadOnlyExcept[]$
+
+  @category ZeoliteParseContext zeoliteSourceContext <- ZeoliteParseContext.new()
+      .include<ZeoliteWhitespace>()
+      .include<ZeoliteLineComment>()
+      .include<ZeoliteBlockComment>()
+      .include<ZeoliteUpperSymbol>()
+      // Must be before ZeoliteLowerSymbol.
+      .include<ZeoliteTestcase>()
+      .include<ZeoliteLowerSymbol>()
+      .include<ZeoliteScopeQualifier>()
+      // Must be before ZeoliteExtras.
+      .include<ZeoliteNumber>()
+      .include<ZeoliteOperator>()
+      .include<ZeoliteParamName>()
+      .include<ZeoliteStringLiteral>()
+      .include<ZeoliteCharLiteral>()
+      .include<ZeoliteBraceSection>()
+      .include<ZeoliteParenSection>()
+      .include<ZeoliteSquareSection>()
+      .include<ZeolitePragma>()
+      .include<ZeoliteExtras>()
+
   run () {
-    // TODO
-    fail("not implemented yet")
+    traverse (Counter.builder().start(1).limit(Argv.global().size()).done() -> Int i) {
+      String filename <- Argv.global().readAt(i)
+      $ReadOnly[filename]$
+      scoped {
+        optional String content <- loadFile(filename: filename)
+      } in if (`present` content) {
+        \ processFile(filename: filename, content: `require` content)
+      }
+    }
+  }
+
+  @type processFile (String filename:, String content:) -> ()
+  processFile (filename, content) {
+    TextStream input <- TextStream.new(content)
+    $Hidden[content]$
+    DefaultOrder<ZeoliteParsed> output <- defer
+    \ StreamTokenizer:new(context: zeoliteSourceContext, tokenizer: zeoliteSourceContext.defaultTokenizer())
+        .tokenizeAll(input, (output <- Vector<ZeoliteParsed>.new()))
+
+    if (input.atEnd()) {
+      \ BasicOutput.stderr()
+          .append("Successfully parsed file ")
+          .append(filename)
+          .append(":\n")
+    } else {
+      \ BasicOutput.stderr()
+          .append("Incomplete parse of file ")
+          .append(filename)
+          .append(" at line ")
+          .append(input.currentLine())
+          .append(" char ")
+          .append(input.currentChar())
+          .append(":\n")
+    }
+
+    traverse (output.defaultOrder() -> ZeoliteParsed parsed) {
+      // TODO: Output formatted data.
+      \ BasicOutput.stderr()
+          .append(parsed)
+          .append("\n\n")
+    }
+  }
+
+  @type loadFile (String filename:) -> (optional String)
+  loadFile (filename) {
+    \ BasicOutput.stderr()
+        .append("Reading file ")
+        .append(filename)
+        .append("...\n")
+    scoped {
+      RawFileReader input <- RawFileReader.open(filename)
+    } cleanup {
+      \ input.freeResource()
+    } in if (`present` input.getFileError()) {
+      \ BasicOutput.stderr()
+          .append("Error reading file: ")
+          .append(`require` input.getFileError())
+          .append("...\n")
+      return empty
+    } else {
+      return TextReader.readAll(input)
+    }
   }
 }
