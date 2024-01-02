@@ -519,6 +519,40 @@ define ZeolitePragma {
   }
 }
 
+define ZeoliteExtras {
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  tokenizer () {
+    return delegate -> #self
+  }
+
+  tokenizerName () {
+    return typename<#self>().formatted()
+  }
+
+  tokenize (input, context) (token) {
+    \ input.reset()
+    optional Char current <- input.current()
+    if (! `present` current) {
+      return empty
+    } elif (`require` current == '_') {
+      \ input.forward()
+      return ZeoliteParsed.leaf(label: "ZeoliteIgnore", content: input.take())
+    } elif (`require` current == '\\') {
+      \ input.forward()
+      return ZeoliteParsed.leaf(label: "ZeoliteDiscard", content: input.take())
+    } elif (`require` current == ',') {
+      \ input.forward()
+      return ZeoliteParsed.leaf(label: "ZeoliteComma", content: input.take())
+    } elif (`require` current == ';') {
+      \ input.forward()
+      return ZeoliteParsed.leaf(label: "ZeoliteError", content: input.take())
+    } else {
+      return empty
+    }
+  }
+}
+
 define ZeoliteTestcase {
   $ReadOnlyExcept[]$
 

@@ -18,8 +18,6 @@ limitations under the License.
 
 $ModuleOnly$
 
-// TODO: Tokenize _, ,, stray chars.
-
 concrete ZeoliteWhitespace {
   defines NamedTokenizer
 }
@@ -77,6 +75,10 @@ concrete ZeoliteSquareSection {
 }
 
 concrete ZeolitePragma {
+  defines NamedTokenizer
+}
+
+concrete ZeoliteExtras {
   defines NamedTokenizer
 }
 

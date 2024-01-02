@@ -143,8 +143,6 @@ unittest parseZeoliteOperator {
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-"))
   \ "<-|" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-|"))
-  \ "\\" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
-      .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "\\"))
   \ "." `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionCall", content: "."))
   \ "&." `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
@@ -465,6 +463,20 @@ unittest parseZeolitePragma {
           .append(ZeoliteParsed.leaf(label: "ZeolitePragmaName",     content:  "SomeArgs"))
           .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArgOpen",  content: "["))
           .append(ZeoliteParsed.leaf(label: "ZeolitePragmaArg",      content:  "args"))))
+}
+
+unittest parseZeoliteExtras {
+  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+      .include<ZeoliteExtras>())
+
+  \ "_" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteIgnore", content: "_"))
+  \ "\\" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteDiscard", content: "\\"))
+  \ "," `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteComma", content: ","))
+  \ ";" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: ";"))
 }
 
 unittest integration {
