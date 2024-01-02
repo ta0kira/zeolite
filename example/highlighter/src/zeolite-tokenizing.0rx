@@ -621,6 +621,15 @@ define ZeoliteTestcase {
   }
 }
 
+concrete ZeoliteOptionalSeparator {
+  defines Default
+  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
+
+  @type parseAny (TextStream, ZeoliteParseContext, Append<ZeoliteParsed>) -> ()
+}
+
 define ZeoliteOptionalSeparator {
   $ReadOnlyExcept[]$
 

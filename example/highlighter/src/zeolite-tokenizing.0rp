@@ -82,15 +82,13 @@ concrete ZeoliteExtras {
   defines NamedTokenizer
 }
 
+// NOTE: Uses the following if available:
+// - ZeoliteStringLiteral (required)
+// - ZeoliteLowerSymbol (required)
+// - ZeoliteSquareSection
+// - ZeoliteUpperSymbol
+// - ZeoliteNumber
+// - ZeoliteOperator
 concrete ZeoliteTestcase {
   defines NamedTokenizer
-}
-
-concrete ZeoliteOptionalSeparator {
-  defines Default
-  refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  visibility Tokenizer<ZeoliteParseContext, ZeoliteParsed>
-
-  @type parseAny (TextStream, ZeoliteParseContext, Append<ZeoliteParsed>) -> ()
 }
