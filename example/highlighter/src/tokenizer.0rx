@@ -22,9 +22,11 @@ define TextStream {
   @value String source
   @value Int tokenStart
   @value Int tokenEnd
+  @value Int currentLine
+  @value Int currentChar
 
   new (source) {
-    return TextStream{ source, 0, 0 }
+    return TextStream{ source, 0, 0, 1, 1 }
   }
 
   current () (char) {
@@ -52,12 +54,30 @@ define TextStream {
 
   take () {
     cleanup {
+      while (tokenStart < tokenEnd) {
+        if (source.readAt(tokenStart) == '\n') {
+          currentChar <- 1
+          currentLine <- currentLine+1
+        } else {
+          currentChar <- currentChar+1
+        }
+      } update {
+        tokenStart <- tokenStart+1
+      }
       tokenStart <- tokenEnd
     } in return preview()
   }
 
   preview () {
     return source.subSequence(tokenStart, tokenSize())
+  }
+
+  currentLine () {
+    return currentLine
+  }
+
+  currentChar () {
+    return currentChar
   }
 
   atEnd () {

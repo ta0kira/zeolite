@@ -21,18 +21,47 @@ testcase "input tests" {
 }
 
 unittest integration {
-  TextStream input <- "word\nanother\n"
+  TextStream input <- TextStream.new("123\n4")
 
-  \ input.atEnd() `Matches:with` Value:equals(false)
-  \ input.current() `Matches:with` Value:equals('w')
-  \ input.preview() `Matches:with` Value:equals("")
-  \ input.currentLine() `Matches:with` Value:equals(1)
-  \ input.currentChar() `Matches:with` Value:equals(1)
+  \ input.atEnd() `Matches:with` CheckValue:equals(false)
+  \ input.current() `Matches:with` CheckValue:equals('1')
+  \ input.preview() `Matches:with` CheckValue:equals("")
+  \ input.currentLine() `Matches:with` CheckValue:equals(1)
+  \ input.currentChar() `Matches:with` CheckValue:equals(1)
 
   \ input.forward().forward()
-  \ input.atEnd() `Matches:with` Value:equals(false)
-  \ input.current() `Matches:with` Value:equals('r')
-  \ input.preview() `Matches:with` Value:equals("wo")
-  \ input.currentLine() `Matches:with` Value:equals(1)
-  \ input.currentChar() `Matches:with` Value:equals(3)
+  \ input.atEnd() `Matches:with` CheckValue:equals(false)
+  \ input.current() `Matches:with` CheckValue:equals('3')
+  \ input.preview() `Matches:with` CheckValue:equals("12")
+  \ input.currentLine() `Matches:with` CheckValue:equals(1)
+  \ input.currentChar() `Matches:with` CheckValue:equals(1)
+
+  \ input.take() `Matches:with` CheckValue:equals("12")
+  \ input.atEnd() `Matches:with` CheckValue:equals(false)
+  \ input.current() `Matches:with` CheckValue:equals('3')
+  \ input.preview() `Matches:with` CheckValue:equals("")
+  \ input.currentLine() `Matches:with` CheckValue:equals(1)
+  \ input.currentChar() `Matches:with` CheckValue:equals(3)
+
+  \ input.forward().forward()
+  \ input.atEnd() `Matches:with` CheckValue:equals(false)
+  \ input.current() `Matches:with` CheckValue:equals('4')
+  \ input.preview() `Matches:with` CheckValue:equals("3\n")
+
+  \ input.reset()
+  \ input.atEnd() `Matches:with` CheckValue:equals(false)
+  \ input.current() `Matches:with` CheckValue:equals('3')
+  \ input.preview() `Matches:with` CheckValue:equals("")
+  \ input.currentLine() `Matches:with` CheckValue:equals(1)
+  \ input.currentChar() `Matches:with` CheckValue:equals(3)
+
+  \ input.forward().forward().forward()
+  \ input.atEnd() `Matches:with` CheckValue:equals(false)
+  \ input.current() `Matches:with` CheckValue:equals(empty?Char)
+  \ input.preview() `Matches:with` CheckValue:equals("3\n4")
+
+  \ input.take() `Matches:with` CheckValue:equals("3\n4")
+  \ input.atEnd() `Matches:with` CheckValue:equals(true)
+  \ input.currentLine() `Matches:with` CheckValue:equals(2)
+  \ input.currentChar() `Matches:with` CheckValue:equals(2)
 }
