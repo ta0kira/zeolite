@@ -83,8 +83,9 @@ define ZeoliteHighlight {
     traverse (output.defaultOrder() -> ZeoliteParsed parsed) {
       // TODO: Output formatted data.
       \ BasicOutput.stderr()
+          .append("\n")
           .append(parsed)
-          .append("\n\n")
+          .append("\n")
     }
   }
 
@@ -100,9 +101,11 @@ define ZeoliteHighlight {
       \ input.freeResource()
     } in if (`present` input.getFileError()) {
       \ BasicOutput.stderr()
-          .append("Error reading file: ")
+          .append("Error reading file ")
+          .append(filename)
+          .append(": ")
           .append(`require` input.getFileError())
-          .append("...\n")
+          .append("\n")
       return empty
     } else {
       return TextReader.readAll(input)
