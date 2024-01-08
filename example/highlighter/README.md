@@ -1,8 +1,9 @@
 # Zeolite Code Highlighter
 
 This example is a fully-functional syntax highlighter for Zeolite source files.
-You can see the highlighting of the code in this example
-[here](https://ta0kira.github.io/zeolite/example/highligher/).
+
+**You can see the highlighting of the code in this example
+[here](https://ta0kira.github.io/zeolite/example/highlighter/).**
 
 To build and test the example code:
 
