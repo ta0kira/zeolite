@@ -31,7 +31,10 @@ Int other <- value <|| 123
 
 * **[new]** Adds `AppendH` helpers to `lib/util`.
 
-### Libraries
+### Examples
+
+* Adds `example/highlighter`, as both a code example and a highlighted-HTML
+  generator for Zeolite source files.
 
 ## 0.24.0.1  -- 2023-12-10
 
