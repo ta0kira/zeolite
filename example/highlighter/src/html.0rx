@@ -1,0 +1,207 @@
+/* -----------------------------------------------------------------------------
+Copyright 2024 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define HtmlContent {
+  $ReadOnlyExcept[]$
+
+  @category KVReader<Char, String> charEscapes <- HashedMap<Char, String>.new()
+      .set('"', "&quot;")
+      .set('#', "&num;")
+      .set('$', "&dollar;")
+      .set('%', "&percnt;")
+      .set('&', "&amp;")
+      .set('\'', "&apos;")
+      .set('<', "&lt;")
+      .set('>', "&gt;")
+
+  @value String content
+
+  formatted () {
+    return content
+  }
+
+  section (open, close) {
+    return delegate -> `HtmlSectionBuilder.new`
+  }
+
+  tag (name) {
+    return #self{ String.builder()
+      .append("<")
+      .append(name)
+      .append(" />")
+      .build() }
+  }
+
+  escape (content) {
+    [Append<Formatted> & Build<String>] builder <- String.builder()
+    traverse (content.defaultOrder() -> Char c) {
+      scoped {
+        optional String replacement <- charEscapes.get(c)
+      } in if (`present` replacement) {
+        \ builder.append(`require` replacement)
+      } else {
+        \ builder.append(c)
+      }
+    }
+    return #self{ builder.build() }
+  }
+
+  raw (verified) {
+    return #self{ verified }
+  }
+}
+
+define ZeoliteHtmlFormatter {
+  $ReadOnlyExcept[]$
+
+  @category KVReader<String, String> labelToStyle <- HashedMap<String, String>.new()
+      .set("ZeoliteError", "color:red; font-weight:bold; text-decoration:underline;")
+
+      .set("ZeoliteBlockComment", "color:DarkGray; font-style:italic;")
+      .set("ZeoliteLineComment", "color:DarkGray; font-style:italic;")
+      .set("ZeolitePragma", "color:DarkSalmon; font-style:italic;")
+      .set("ZeolitePragmaName", "color:DarkSalmon; font-style:italic; font-weight:bold;")
+
+      .set("ZeoliteArgLabel", "color:green;")
+      .set("ZeoliteAssignment", "color:blue;")
+
+      .set("ZeoliteBuiltinCategory", "color:DarkBlue; font-weight:bold;")
+      .set("ZeoliteBuiltinConstant", "color:DarkCyan; font-weight:bold;")
+      .set("ZeoliteBuiltinFunction", "color:DarkGreen; font-weight:bold;")
+      .set("ZeoliteBuiltinParam", "color:DarkBlue; font-weight:bold;")
+      .set("ZeoliteCategoryName", "color:DarkBlue;")
+      .set("ZeoliteParamName", "color:DarkBlue;")
+
+      .set("ZeoliteCharLiteral", "color:DarkViolet;")
+      .set("ZeoliteStringLiteral", "color:DeepPink;")
+      .set("ZeoliteEscapedChar", "color:DarkMagenta;")
+
+      .set("ZeoliteNumber", "color:GoldenRod;")
+      .set("ZeoliteEscapedNumber", "color:DarkMagenta;")
+
+      .set("ZeoliteContainKeyword", "color:Indigo; font-weight:bold;")
+      .set("ZeoliteScopeQualifier", "color:Indigo; font-weight:bold;")
+      .set("ZeoliteControlKeyword", "font-weight:bold;")
+      .set("ZeoliteOperator", "color:BlueViolet;")
+
+      .set("ZeoliteTestcase", "background:PaleTurquoise;")
+      .set("ZeoliteTestcaseKeyword", "color:green;")
+
+  @category SetReader<String> labelsUsingDefault <- HashedSet<String>.new()
+      .append("ZeoliteBraceSection")
+      .append("ZeoliteCloseDelim")
+      .append("ZeoliteComma")
+      .append("ZeoliteDiscard")
+      .append("ZeoliteDoubleQuote")
+      .append("ZeoliteFunctionCall")
+      .append("ZeoliteFunctionOrVariableName")
+      .append("ZeoliteIgnore")
+      .append("ZeoliteOpenDelim")
+      .append("ZeoliteParenSection")
+      .append("ZeolitePragmaArg")
+      .append("ZeolitePragmaArgClose")
+      .append("ZeolitePragmaArgOpen")
+      .append("ZeolitePragmaDelim")
+      .append("ZeoliteQuotedChars")
+      .append("ZeoliteSingleQuote")
+      .append("ZeoliteSquareSection")
+      .append("ZeoliteStorageKeyword")
+      .append("ZeoliteTestcaseSection")
+      .append("ZeoliteTick")
+      .append("ZeoliteTypeKeyword")
+      .append("ZeoliteWhitespace")
+
+
+  new () {
+    return delegate -> #self
+  }
+
+  formatLeaf (label, value) {
+    scoped {
+      optional String style <- getStyle(label)
+    } in if (`present` style) {
+      return HtmlContent
+          .section(open: buildSpanTag(`require` style), close: "</span>")
+          .append(HtmlContent.escape(content: value))
+          .build()
+    } else {
+      return HtmlContent.escape(content: value)
+    }
+  }
+
+  createSection (label) {
+    scoped {
+      optional String style <- getStyle(label)
+    } in if (`present` style) {
+      return HtmlContent.section(open: buildSpanTag(`require` style), close: "</span>")
+    } else {
+      return HtmlContent.section(open: "", close: "")
+    }
+  }
+
+  @type getStyle (String) -> (optional String)
+  getStyle (label) (style) {
+    style <- labelToStyle.get(label)
+    if (! `present` style && ! labelsUsingDefault.member(label)) {
+      \ BasicOutput.stderr()
+          .append("HTML style for label \"")
+          .append(label)
+          .append("\" not found!\n")
+    }
+  }
+
+  @type buildSpanTag (String) -> (String)
+  buildSpanTag (style) {
+    return String.builder()
+        .append("<span style=\"")
+        .append(style)
+        .append("\">")
+        .build()
+  }
+}
+
+concrete HtmlSectionBuilder {
+  refines Append<HtmlContent>
+  refines Build<HtmlContent>
+
+  @type new (String open:, String close:) -> (HtmlSectionBuilder)
+}
+
+define HtmlSectionBuilder {
+  $ReadOnlyExcept[]$
+
+  @value [Append<Formatted> & Build<String>] content
+  @value String close
+
+  new (open, close) {
+    return #self{ String.builder().append(open), close }
+  }
+
+  append (newContent) {
+    \ delegate -> `content.append`
+    return self
+  }
+
+  build () {
+    // We need a new builder so that we don't append close multiple times.
+    return HtmlContent.raw(verified: String.builder()
+        .append(content.build())
+        .append(close)
+        .build())
+  }
+}

@@ -147,6 +147,12 @@ unittest parseZeoliteOperator {
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-"))
   \ "<-|" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-|"))
+  \ "<->" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<->"))
+  \ "->" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "->"))
+  \ ":" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionCall", content: ":"))
   \ "." `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionCall", content: "."))
   \ "&." `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
@@ -155,8 +161,8 @@ unittest parseZeoliteOperator {
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionCall", content: "?"))
   \ "<<" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteOperator", content: "<<"))
-  \ ".!%^&*-+|<>?" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
-      .append(ZeoliteParsed.leaf(label: "ZeoliteOperator", content: ".!%^&*-+|<>?"))
+  \ ":.!%^&*-+|<>?=" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteOperator", content: ":.!%^&*-+|<>?="))
 
   \ "<-||" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteOperator", content: "<-||"))
@@ -483,8 +489,10 @@ unittest parseZeoliteExtras {
       .append(ZeoliteParsed.leaf(label: "ZeoliteComma", content: ","))
   \ ";" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: ";"))
-  \ ":" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
-      .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: ":"))
+  \ "#" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "#"))
+  \ "@" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
+      .append(ZeoliteParsed.leaf(label: "ZeoliteError", content: "@"))
 }
 
 unittest integration {

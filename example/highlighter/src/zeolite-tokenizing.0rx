@@ -559,7 +559,7 @@ define ZeoliteExtras {
     } elif (`require` current == ',') {
       \ input.forward()
       return ZeoliteParsed.leaf(label: "ZeoliteComma", content: input.take())
-    } elif (`require` current `CharType.oneOf` ";:") {
+    } elif (`require` current `CharType.oneOf` ";#@") {
       \ input.forward()
       return ZeoliteParsed.leaf(label: "ZeoliteError", content: input.take())
     } else {
