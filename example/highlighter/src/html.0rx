@@ -98,7 +98,7 @@ define ZeoliteHtmlFormatter {
       .set("ZeoliteOperator", "color:BlueViolet;")
 
       .set("ZeoliteNumber", "color:GoldenRod;")
-      .set("ZeoliteEscapedNumber", "color:DarkMagenta;")
+      .set("ZeoliteEscapedNumber", "color:GoldenRod;")
 
       .set("ZeoliteContainKeyword", "color:Indigo; font-weight:bold;")
       .set("ZeoliteScopeQualifier", "color:Indigo; font-weight:bold;")
@@ -176,6 +176,7 @@ define ZeoliteHtmlFormatter {
 
 concrete HtmlSectionBuilder {
   refines Append<HtmlContent>
+  // NOTE: Calling build() invalidates the builder.
   refines Build<HtmlContent>
 
   @type new (String open:, String close:) -> (HtmlSectionBuilder)
@@ -197,10 +198,6 @@ define HtmlSectionBuilder {
   }
 
   build () {
-    // We need a new builder so that we don't append close multiple times.
-    return HtmlContent.raw(verified: String.builder()
-        .append(content.build())
-        .append(close)
-        .build())
+    return HtmlContent.raw(verified: content.append(close).build())
   }
 }

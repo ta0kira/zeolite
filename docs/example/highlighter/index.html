@@ -55,6 +55,9 @@ limitations under the License.
           <span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot; [page title] [.0r? input files]<span style="color:DarkMagenta;">\n</span>&quot;</span>)
       <span style="color:DarkGreen; font-weight:bold;">exit</span>(<span style="color:GoldenRod;">1</span>)
     }
+
+    <span style="color:DarkBlue; font-weight:bold;">Bool</span> error <span style="color:blue;">&lt;-</span> <span style="color:DarkCyan; font-weight:bold;">false</span>
+
     <span style="color:blue;">\</span> writeHtmlStart(<span style="color:green;">title:</span> <span style="color:DarkBlue;">Argv</span><span style="color:blue;">.</span>global()<span style="color:blue;">.</span>readAt(<span style="color:GoldenRod;">1</span>))
     <span style="font-weight:bold;">traverse</span> (<span style="color:DarkBlue;">Counter</span><span style="color:blue;">.</span>builder()<span style="color:blue;">.</span>start(<span style="color:GoldenRod;">2</span>)<span style="color:blue;">.</span>limit(<span style="color:DarkBlue;">Argv</span><span style="color:blue;">.</span>global()<span style="color:blue;">.</span>size())<span style="color:blue;">.</span>done() <span style="color:blue;">-&gt;</span> <span style="color:DarkBlue; font-weight:bold;">Int</span> i) {
       <span style="color:DarkBlue; font-weight:bold;">String</span> filename <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">Argv</span><span style="color:blue;">.</span>global()<span style="color:blue;">.</span>readAt(i)
@@ -62,10 +65,20 @@ limitations under the License.
       <span style="font-weight:bold;">scoped</span> {
         <span style="font-style:italic;">optional</span> <span style="color:DarkBlue; font-weight:bold;">String</span> content <span style="color:blue;">&lt;-</span> loadFile(<span style="color:green;">filename:</span> filename)
       } <span style="font-weight:bold;">in</span> <span style="font-weight:bold;">if</span> (<span style="color:blue;">`</span><span style="color:DarkGreen; font-weight:bold;">present</span><span style="color:blue;">`</span> content) {
-        <span style="color:blue;">\</span> processFile(<span style="color:green;">filename:</span> filename, <span style="color:green;">content:</span> <span style="color:blue;">`</span><span style="color:DarkGreen; font-weight:bold;">require</span><span style="color:blue;">`</span> content)
+        <span style="color:DarkGray; font-style:italic;">// NOTE: The order below matters, due to short-circuiting.</span>
+        error <span style="color:blue;">&lt;-</span> processFile(<span style="color:green;">filename:</span> filename, <span style="color:green;">content:</span> <span style="color:blue;">`</span><span style="color:DarkGreen; font-weight:bold;">require</span><span style="color:blue;">`</span> content) <span style="color:BlueViolet;">||</span> error
+      } <span style="font-weight:bold;">else</span> {
+        error <span style="color:blue;">&lt;-</span> <span style="color:DarkCyan; font-weight:bold;">true</span>
       }
     }
     <span style="color:blue;">\</span> writeHtmlEnd()
+
+    <span style="font-weight:bold;">if</span> (error) {
+      <span style="color:blue;">\</span> <span style="color:DarkBlue;">BasicOutput</span><span style="color:blue;">.</span>stderr()<span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;Errors occurred when processing one or more files!<span style="color:DarkMagenta;">\n</span>&quot;</span>)
+      <span style="color:DarkGreen; font-weight:bold;">exit</span>(<span style="color:GoldenRod;">1</span>)
+    } <span style="font-weight:bold;">else</span> {
+      <span style="color:blue;">\</span> <span style="color:DarkBlue;">BasicOutput</span><span style="color:blue;">.</span>stderr()<span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;Formatting successful for all files!<span style="color:DarkMagenta;">\n</span>&quot;</span>)
+    }
   }
 
   <span style="color:Indigo; font-weight:bold;">@type</span> writeHtmlStart (<span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">title:</span>) <span style="color:blue;">-&gt;</span> ()
@@ -99,9 +112,10 @@ limitations under the License.
         <span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;&lt;/html&gt;&quot;</span>)
   }
 
-  <span style="color:Indigo; font-weight:bold;">@type</span> processFile (<span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">filename:</span>, <span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">content:</span>) <span style="color:blue;">-&gt;</span> ()
-  processFile (filename, content) {
+  <span style="color:Indigo; font-weight:bold;">@type</span> processFile (<span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">filename:</span>, <span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">content:</span>) <span style="color:blue;">-&gt;</span> (<span style="color:DarkBlue; font-weight:bold;">Bool</span>)
+  processFile (filename, content) (error) {
     <span style="color:DarkBlue;">TextStream</span> input <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">TextStream</span><span style="color:blue;">.</span>new(content)
+    error <span style="color:blue;">&lt;-</span> <span style="color:DarkCyan; font-weight:bold;">false</span>
     <span style="color:DarkSalmon; font-style:italic;">&dollar;<span style="color:DarkSalmon; font-style:italic; font-weight:bold;">Hidden</span>[<span style="color:DarkSalmon; font-style:normal;">content</span>]&dollar;</span>
     <span style="color:DarkBlue;">DefaultOrder</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;</span> output <span style="color:blue;">&lt;-</span> <span style="font-weight:bold;">defer</span>
     <span style="color:blue;">\</span> <span style="color:DarkBlue;">StreamTokenizer</span><span style="color:blue;">:</span>new(<span style="color:green;">context:</span> zeoliteSourceContext, <span style="color:green;">tokenizer:</span> zeoliteSourceContext<span style="color:blue;">.</span>defaultTokenizer())
@@ -113,6 +127,7 @@ limitations under the License.
           <span style="color:blue;">.</span>append(filename)
           <span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;:<span style="color:DarkMagenta;">\n</span>&quot;</span>)
     } <span style="font-weight:bold;">else</span> {
+      error <span style="color:blue;">&lt;-</span> <span style="color:DarkCyan; font-weight:bold;">true</span>
       <span style="color:blue;">\</span> <span style="color:DarkBlue;">BasicOutput</span><span style="color:blue;">.</span>stderr()
           <span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;Incomplete parse of file &quot;</span>)
           <span style="color:blue;">.</span>append(filename)
@@ -295,7 +310,7 @@ limitations under the License.
       <span style="color:blue;">.</span>set(<span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>, <span style="color:DeepPink;">&quot;color:BlueViolet;&quot;</span>)
 
       <span style="color:blue;">.</span>set(<span style="color:DeepPink;">&quot;ZeoliteNumber&quot;</span>, <span style="color:DeepPink;">&quot;color:GoldenRod;&quot;</span>)
-      <span style="color:blue;">.</span>set(<span style="color:DeepPink;">&quot;ZeoliteEscapedNumber&quot;</span>, <span style="color:DeepPink;">&quot;color:DarkMagenta;&quot;</span>)
+      <span style="color:blue;">.</span>set(<span style="color:DeepPink;">&quot;ZeoliteEscapedNumber&quot;</span>, <span style="color:DeepPink;">&quot;color:GoldenRod;&quot;</span>)
 
       <span style="color:blue;">.</span>set(<span style="color:DeepPink;">&quot;ZeoliteContainKeyword&quot;</span>, <span style="color:DeepPink;">&quot;color:Indigo; font-weight:bold;&quot;</span>)
       <span style="color:blue;">.</span>set(<span style="color:DeepPink;">&quot;ZeoliteScopeQualifier&quot;</span>, <span style="color:DeepPink;">&quot;color:Indigo; font-weight:bold;&quot;</span>)
@@ -373,6 +388,7 @@ limitations under the License.
 
 <span style="color:Indigo; font-weight:bold;">concrete</span> <span style="color:DarkBlue;">HtmlSectionBuilder</span> {
   <span style="color:Crimson;">refines</span> <span style="color:DarkBlue; font-weight:bold;">Append</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">HtmlContent</span><span style="color:BlueViolet;">&gt;</span>
+  <span style="color:DarkGray; font-style:italic;">// NOTE: Calling build() invalidates the builder.</span>
   <span style="color:Crimson;">refines</span> <span style="color:DarkBlue; font-weight:bold;">Build</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">HtmlContent</span><span style="color:BlueViolet;">&gt;</span>
 
   <span style="color:Indigo; font-weight:bold;">@type</span> new (<span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">open:</span>, <span style="color:DarkBlue; font-weight:bold;">String</span> <span style="color:green;">close:</span>) <span style="color:blue;">-&gt;</span> (<span style="color:DarkBlue;">HtmlSectionBuilder</span>)
@@ -394,11 +410,7 @@ limitations under the License.
   }
 
   build () {
-    <span style="color:DarkGray; font-style:italic;">// We need a new builder so that we don&apos;t append close multiple times.</span>
-    <span style="font-weight:bold;">return</span> <span style="color:DarkBlue;">HtmlContent</span><span style="color:blue;">.</span>raw(<span style="color:green;">verified:</span> <span style="color:DarkBlue; font-weight:bold;">String</span><span style="color:blue;">.</span>builder()
-        <span style="color:blue;">.</span>append(content<span style="color:blue;">.</span>build())
-        <span style="color:blue;">.</span>append(close)
-        <span style="color:blue;">.</span>build())
+    <span style="font-weight:bold;">return</span> <span style="color:DarkBlue;">HtmlContent</span><span style="color:blue;">.</span>raw(<span style="color:green;">verified:</span> content<span style="color:blue;">.</span>append(close)<span style="color:blue;">.</span>build())
   }
 }
 </pre>
@@ -1095,7 +1107,7 @@ limitations under the License.
       <span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;&amp;.&quot;</span>)
       <span style="color:blue;">.</span>append(<span style="color:DeepPink;">&quot;?&quot;</span>)
 
-  <span style="color:Indigo; font-weight:bold;">@category</span> <span style="color:DarkBlue;">SetReader</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue; font-weight:bold;">Char</span><span style="color:BlueViolet;">&gt;</span> operatorChars <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">HashedSet</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue; font-weight:bold;">Char</span><span style="color:BlueViolet;">&gt;.</span>new() <span style="color:blue;">`</span><span style="color:DarkBlue;">AppendH</span><span style="color:blue;">:</span>from<span style="color:blue;">`</span> <span style="color:DeepPink;">&quot;:.!&percnt;^&amp;*-+|&lt;&gt;?=&quot;</span><span style="color:blue;">.</span>defaultOrder()
+  <span style="color:Indigo; font-weight:bold;">@category</span> <span style="color:DarkBlue;">SetReader</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue; font-weight:bold;">Char</span><span style="color:BlueViolet;">&gt;</span> operatorChars <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">HashedSet</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue; font-weight:bold;">Char</span><span style="color:BlueViolet;">&gt;.</span>new() <span style="color:blue;">`</span><span style="color:DarkBlue;">AppendH</span><span style="color:blue;">:</span>from<span style="color:blue;">`</span> <span style="color:DeepPink;">&quot;:.!&percnt;^&amp;*-+|&lt;&gt;?=/~&quot;</span><span style="color:blue;">.</span>defaultOrder()
 
   <span style="color:Indigo; font-weight:bold;">@category</span> <span style="color:DarkBlue;">SetReader</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue; font-weight:bold;">Char</span><span style="color:BlueViolet;">&gt;</span> escapedChars <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">HashedSet</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue; font-weight:bold;">Char</span><span style="color:BlueViolet;">&gt;.</span>new() <span style="color:blue;">`</span><span style="color:DarkBlue;">AppendH</span><span style="color:blue;">:</span>from<span style="color:blue;">`</span> <span style="color:DeepPink;">&quot;&apos;<span style="color:DarkMagenta;">\&quot;</span>?<span style="color:DarkMagenta;">\\</span>abfnrtv&quot;</span><span style="color:blue;">.</span>defaultOrder()
 
@@ -2304,8 +2316,10 @@ limitations under the License.
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteFunctionCall&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;?&quot;</span>))
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;&lt;&lt;&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&lt;&lt;&quot;</span>))
-  <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;:.!&percnt;^&amp;*-+|&lt;&gt;?=&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
-      <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;:.!&percnt;^&amp;*-+|&lt;&gt;?=&quot;</span>))
+  <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;/&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
+      <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;/&quot;</span>))
+  <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;~:.!&percnt;^&amp;*-+|&lt;&gt;?=/&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
+      <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;~:.!&percnt;^&amp;*-+|&lt;&gt;?=/&quot;</span>))
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;&lt;-||&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&lt;-||&quot;</span>))

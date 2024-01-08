@@ -52,6 +52,9 @@ define ZeoliteHighlight {
           .append(" [page title] [.0r? input files]\n")
       exit(1)
     }
+
+    Bool error <- false
+
     \ writeHtmlStart(title: Argv.global().readAt(1))
     traverse (Counter.builder().start(2).limit(Argv.global().size()).done() -> Int i) {
       String filename <- Argv.global().readAt(i)
@@ -59,10 +62,20 @@ define ZeoliteHighlight {
       scoped {
         optional String content <- loadFile(filename: filename)
       } in if (`present` content) {
-        \ processFile(filename: filename, content: `require` content)
+        // NOTE: The order below matters, due to short-circuiting.
+        error <- processFile(filename: filename, content: `require` content) || error
+      } else {
+        error <- true
       }
     }
     \ writeHtmlEnd()
+
+    if (error) {
+      \ BasicOutput.stderr().append("Errors occurred when processing one or more files!\n")
+      exit(1)
+    } else {
+      \ BasicOutput.stderr().append("Formatting successful for all files!\n")
+    }
   }
 
   @type writeHtmlStart (String title:) -> ()
@@ -96,9 +109,10 @@ define ZeoliteHighlight {
         .append("</html>")
   }
 
-  @type processFile (String filename:, String content:) -> ()
-  processFile (filename, content) {
+  @type processFile (String filename:, String content:) -> (Bool)
+  processFile (filename, content) (error) {
     TextStream input <- TextStream.new(content)
+    error <- false
     $Hidden[content]$
     DefaultOrder<ZeoliteParsed> output <- defer
     \ StreamTokenizer:new(context: zeoliteSourceContext, tokenizer: zeoliteSourceContext.defaultTokenizer())
@@ -110,6 +124,7 @@ define ZeoliteHighlight {
           .append(filename)
           .append(":\n")
     } else {
+      error <- true
       \ BasicOutput.stderr()
           .append("Incomplete parse of file ")
           .append(filename)
