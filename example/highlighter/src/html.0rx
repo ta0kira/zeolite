@@ -76,12 +76,17 @@ define ZeoliteHtmlFormatter {
       .set("ZeoliteLineComment", "color:DarkGray; font-style:italic;")
       .set("ZeolitePragma", "color:DarkSalmon; font-style:italic;")
       .set("ZeolitePragmaName", "color:DarkSalmon; font-style:italic; font-weight:bold;")
+      .set("ZeolitePragmaArg", "color:DarkSalmon; font-style:normal;")
 
       .set("ZeoliteArgLabel", "color:green;")
       .set("ZeoliteAssignment", "color:blue;")
+      .set("ZeoliteDiscard", "color:blue;")
+      .set("ZeoliteFunctionCall", "color:blue;")
+      .set("ZeoliteTick", "color:blue;")
 
       .set("ZeoliteBuiltinCategory", "color:DarkBlue; font-weight:bold;")
       .set("ZeoliteBuiltinConstant", "color:DarkCyan; font-weight:bold;")
+      .set("ZeoliteIgnore", "color:DarkCyan; font-weight:bold;")
       .set("ZeoliteBuiltinFunction", "color:DarkGreen; font-weight:bold;")
       .set("ZeoliteBuiltinParam", "color:DarkBlue; font-weight:bold;")
       .set("ZeoliteCategoryName", "color:DarkBlue;")
@@ -90,14 +95,16 @@ define ZeoliteHtmlFormatter {
       .set("ZeoliteCharLiteral", "color:DarkViolet;")
       .set("ZeoliteStringLiteral", "color:DeepPink;")
       .set("ZeoliteEscapedChar", "color:DarkMagenta;")
+      .set("ZeoliteOperator", "color:BlueViolet;")
 
       .set("ZeoliteNumber", "color:GoldenRod;")
       .set("ZeoliteEscapedNumber", "color:DarkMagenta;")
 
       .set("ZeoliteContainKeyword", "color:Indigo; font-weight:bold;")
       .set("ZeoliteScopeQualifier", "color:Indigo; font-weight:bold;")
+      .set("ZeoliteTypeKeyword", "color:Crimson;")
       .set("ZeoliteControlKeyword", "font-weight:bold;")
-      .set("ZeoliteOperator", "color:BlueViolet;")
+      .set("ZeoliteStorageKeyword", "font-style:italic;")
 
       .set("ZeoliteTestcase", "background:PaleTurquoise;")
       .set("ZeoliteTestcaseKeyword", "color:green;")
@@ -106,26 +113,18 @@ define ZeoliteHtmlFormatter {
       .append("ZeoliteBraceSection")
       .append("ZeoliteCloseDelim")
       .append("ZeoliteComma")
-      .append("ZeoliteDiscard")
       .append("ZeoliteDoubleQuote")
-      .append("ZeoliteFunctionCall")
       .append("ZeoliteFunctionOrVariableName")
-      .append("ZeoliteIgnore")
       .append("ZeoliteOpenDelim")
       .append("ZeoliteParenSection")
-      .append("ZeolitePragmaArg")
       .append("ZeolitePragmaArgClose")
       .append("ZeolitePragmaArgOpen")
       .append("ZeolitePragmaDelim")
       .append("ZeoliteQuotedChars")
       .append("ZeoliteSingleQuote")
       .append("ZeoliteSquareSection")
-      .append("ZeoliteStorageKeyword")
       .append("ZeoliteTestcaseSection")
-      .append("ZeoliteTick")
-      .append("ZeoliteTypeKeyword")
       .append("ZeoliteWhitespace")
-
 
   new () {
     return delegate -> #self
