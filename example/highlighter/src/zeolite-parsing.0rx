@@ -260,7 +260,6 @@ define ZeoliteSymbol {
       .append("typename")
 
   @category SetReader<String> builtinConstants <- HashedSet<String>.new()
-      .append("_")
       .append("empty")
       .append("false")
       .append("true")
