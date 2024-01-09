@@ -21,5 +21,5 @@ zeolite -p "$ZEOLITE_PATH" -t example/highlighter
 To generate an HTML file for Zeolite source files (after building the example):
 
 ```shell
-example/highlighter/ZeoliteHighlight "Your Page Title" your-source-file.0rx
+$ZEOLITE_PATH/example/highlighter/ZeoliteHighlight "Your Page Title" your-source-file.0rx
 ```
