@@ -28,6 +28,8 @@ concrete ZeoliteParsed {
 
   @type leaf (String label:, String content:) -> (ZeoliteParsed)
   @type section (String label:, DefaultOrder<ZeoliteParsed>) -> (ZeoliteParsed)
+
+  @value relabel(String) -> (ZeoliteParsed)
 }
 
 // Singleton tokenizer with a name.
@@ -54,6 +56,10 @@ concrete UseNamedTokenizer {
   @type new<#t>
     #t defines NamedTokenizer
   () -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
+
+  @type override<#t>
+    #t defines NamedTokenizer
+  (String label:) -> (Tokenizer<ZeoliteParseContext, ZeoliteParsed>)
 }
 
 // Attempts multiple tokenizers in order.

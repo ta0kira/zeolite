@@ -384,12 +384,17 @@ unittest parseZeoliteTestcase {
       .include<ZeoliteTestcase>()
       // These should be after ZeoliteTestcase.
       .include<ZeoliteUpperSymbol>()
-      .include<ZeoliteLowerSymbol>())
+      // For error highlighting.
+      .include<ZeoliteLowerSymbol>()
+      .include<ZeoliteParamName>()
+      .include<ZeoliteCharLiteral>()
+      .include<ZeoliteExtras>())
 
   String data <- "testcase \"my test\" {
     success Checker<[A&B]>  // <- enables lib/testing support
     require compiler \"something\"
     timeout 30
+    #bad alsobad
   }"
 
   \ data `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
@@ -430,6 +435,10 @@ unittest parseZeoliteTestcase {
               .append(ZeoliteParsed.leaf(label: "ZeoliteTestcaseKeyword", content: "timeout"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
               .append(ZeoliteParsed.leaf(label: "ZeoliteNumber",          content: "30"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n    "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteError",           content: "#bad"))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: " "))
+              .append(ZeoliteParsed.leaf(label: "ZeoliteError",           content: "alsobad"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "\n  "))
               .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",      content: "}"))))))
 

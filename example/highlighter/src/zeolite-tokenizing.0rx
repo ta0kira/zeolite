@@ -579,9 +579,13 @@ define ZeoliteTestcase {
       .append(UseNamedTokenizer.new<ZeoliteSquareSection>())
       .append(ZeoliteTestcaseKeyword.default())
       .append(UseNamedTokenizer.new<ZeoliteUpperSymbol>())
-      .append(UseNamedTokenizer.new<ZeoliteLowerSymbol>())
       .append(UseNamedTokenizer.new<ZeoliteNumber>())
       .append(UseNamedTokenizer.new<ZeoliteOperator>())
+      // Errors to highlight, just so that parsing doesn't fail entirely.
+      .append(UseNamedTokenizer.override<ZeoliteLowerSymbol>(label: "ZeoliteError"))
+      .append(UseNamedTokenizer.override<ZeoliteParamName>(label: "ZeoliteError"))
+      .append(UseNamedTokenizer.override<ZeoliteCharLiteral>(label: "ZeoliteError"))
+      .append(UseNamedTokenizer.override<ZeoliteExtras>(label: "ZeoliteError"))
 
   tokenizer () {
     return delegate -> #self

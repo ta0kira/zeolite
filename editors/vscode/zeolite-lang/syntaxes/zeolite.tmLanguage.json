@@ -220,7 +220,7 @@
 					"include": "#comments-line"
 				},
 				{
-					"match": "\\b(success|failure|error|compiles|require|exclude|stderr|stdout|compiler|timeout|args)\\b",
+					"match": "\\b(any|success|failure|error|compiles|require|exclude|stderr|stdout|compiler|timeout|args)\\b",
 					"name": "entity.name.tag.zeolite"
 				},
 				{

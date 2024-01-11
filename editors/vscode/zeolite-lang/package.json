@@ -2,7 +2,7 @@
   "name": "zeolite-lang",
   "displayName": "Zeolite Lang",
   "description": "Syntax Highlighting for Zeolite Lang",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "engines": {
     "vscode": "^1.85.0"
   },

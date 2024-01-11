@@ -31,6 +31,11 @@ define ZeoliteParsed {
     return #self{ label, empty, subsections }
   }
 
+  relabel (newLabel) {
+    $Hidden[label]$
+    return #self{ newLabel, content, subsections }
+  }
+
   testCompare (actual, report) {
     \ MultiChecker.new(report)
         .check(
@@ -101,13 +106,22 @@ define UseNamedTokenizer {
   refines Tokenizer<ZeoliteParseContext, ZeoliteParsed>
 
   @value String name
+  @value optional String label
 
   new () {
-    return #self{ #t.tokenizerName() }
+    return #self{ #t.tokenizerName(), empty }
+  }
+
+  override (label) {
+    return #self{ #t.tokenizerName(), label }
   }
 
   tokenize (input, context) {
-    return delegate -> `context.get(name)&.tokenize`
+    if (`present` label) {
+      return (delegate -> `context.get(name)&.tokenize`)&.relabel(`require` label)
+    } else {
+      return delegate -> `context.get(name)&.tokenize`
+    }
   }
 }
 
@@ -206,6 +220,7 @@ define ZeoliteSymbol {
       .append("unittest")
 
   @category SetReader<String> testcaseKeywords <- HashedSet<String>.new()
+      .append("any")
       .append("args")
       .append("compiler")
       .append("compiles")

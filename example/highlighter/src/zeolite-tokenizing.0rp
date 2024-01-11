@@ -84,11 +84,14 @@ concrete ZeoliteExtras {
 
 // NOTE: Uses the following if available:
 // - ZeoliteStringLiteral (required)
-// - ZeoliteLowerSymbol (required)
-// - ZeoliteSquareSection
-// - ZeoliteUpperSymbol
 // - ZeoliteNumber
 // - ZeoliteOperator
+// - ZeoliteSquareSection
+// - ZeoliteUpperSymbol
+// - ZeoliteCharLiteral (errors)
+// - ZeoliteExtras (errors)
+// - ZeoliteLowerSymbol (errors)
+// - ZeoliteParamName (errors)
 concrete ZeoliteTestcase {
   defines NamedTokenizer
 }

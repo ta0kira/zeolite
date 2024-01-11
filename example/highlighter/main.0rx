@@ -137,7 +137,7 @@ define ZeoliteHighlight {
 
     ZeoliteHtmlFormatter formatter <- ZeoliteHtmlFormatter.new()
     \ BasicOutput.stdout().append("<h2>").append(HtmlContent.escape(content: filename)).append("</h2>\n")
-    \ BasicOutput.stdout().append("<pre style=\"background:#fafffa;\">\n")
+    \ BasicOutput.stdout().append("<pre style=\"background:#fafffc; border-style:solid; border-width:1px; padding:10pt;\">\n")
     traverse (output.defaultOrder() -> ZeoliteParsed parsed) {
       \ BasicOutput.stdout().append(parsed.formatWith(formatter))
     }

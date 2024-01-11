@@ -1,5 +1,9 @@
 # Change Log
 
+## `0.2.3`
+
+- Fixes highlighting of `any` in `testcase`.
+
 ## `0.2.2`
 
 - Fixes highlighting of `\\` in quoted strings.
