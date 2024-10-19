@@ -27,8 +27,8 @@ concrete ParsingTester {
 }
 
 unittest parseZeoliteWhitespace {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteWhitespace>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteWhitespace>()
 
   \ " \t \r\n" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace", content: " \t \r\n"))
@@ -38,9 +38,9 @@ unittest parseZeoliteWhitespace {
 }
 
 unittest parseZeoliteLineComment {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteLineComment>()
-      .include<ZeoliteWhitespace>())
+      .include<ZeoliteWhitespace>()
 
   \ "//12345\n//54321" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment", content: "//12345"))
@@ -51,9 +51,9 @@ unittest parseZeoliteLineComment {
 }
 
 unittest parseZeoliteBlockComment {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteBlockComment>()
-      .include<ZeoliteWhitespace>())
+      .include<ZeoliteWhitespace>()
 
   \ "/*/12345\n54321* */" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteBlockComment", content: "/*/12345\n54321* */"))
@@ -68,8 +68,8 @@ unittest parseZeoliteBlockComment {
 }
 
 unittest parseZeoliteUpperSymbol {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteUpperSymbol>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteUpperSymbol>()
 
   \ "Hello123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "Hello123"))
@@ -84,8 +84,8 @@ unittest parseZeoliteUpperSymbol {
 }
 
 unittest parseZeoliteLowerSymbol {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteLowerSymbol>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteLowerSymbol>()
 
   \ "hello123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteFunctionOrVariableName", content: "hello123"))
@@ -123,8 +123,8 @@ unittest parseZeoliteLowerSymbol {
 }
 
 unittest parseZeoliteScopeQualifier {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteScopeQualifier>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteScopeQualifier>()
 
   \ "@value" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteScopeQualifier", content: "@value"))
@@ -140,8 +140,8 @@ unittest parseZeoliteScopeQualifier {
 }
 
 unittest parseZeoliteOperator {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteOperator>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteOperator>()
 
   \ "<-" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteAssignment", content: "<-"))
@@ -173,8 +173,8 @@ unittest parseZeoliteOperator {
 }
 
 unittest parseZeoliteParamName {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteParamName>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteParamName>()
 
   \ "#param123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteParamName", content: "#param123"))
@@ -192,8 +192,8 @@ unittest parseZeoliteParamName {
 }
 
 unittest parseZeoliteStringLiteral {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteStringLiteral>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteStringLiteral>()
 
   \ "\"hello\\n\\t\\0123\\xABC\\Q \\09c goodbye\"" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteStringLiteral", Vector<ZeoliteParsed>.new()
@@ -218,8 +218,8 @@ unittest parseZeoliteStringLiteral {
 }
 
 unittest parseZeoliteCharLiteral {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteCharLiteral>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteCharLiteral>()
 
   \ "'a'" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteCharLiteral", Vector<ZeoliteParsed>.new()
@@ -259,8 +259,8 @@ unittest parseZeoliteCharLiteral {
 }
 
 unittest parseZeoliteNumber {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteNumber>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteNumber>()
 
   \ "123" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteNumber", content: "123"))
@@ -309,10 +309,10 @@ unittest parseZeoliteNumber {
 }
 
 unittest parseZeoliteBraceSection {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteBlockComment>()
       .include<ZeoliteBraceSection>()
-      .include<ZeoliteWhitespace>())
+      .include<ZeoliteWhitespace>()
 
   \ "{ /*hello*/ }" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()
@@ -330,10 +330,10 @@ unittest parseZeoliteBraceSection {
 }
 
 unittest parseZeoliteParenSection {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteBlockComment>()
       .include<ZeoliteParenSection>()
-      .include<ZeoliteWhitespace>())
+      .include<ZeoliteWhitespace>()
 
   \ "( /*hello*/ )" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteParenSection", Vector<ZeoliteParsed>.new()
@@ -351,10 +351,10 @@ unittest parseZeoliteParenSection {
 }
 
 unittest parseZeoliteSquareSection {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteBlockComment>()
       .include<ZeoliteSquareSection>()
-      .include<ZeoliteWhitespace>())
+      .include<ZeoliteWhitespace>()
 
   \ "[ /*hello*/ ]" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteSquareSection", Vector<ZeoliteParsed>.new()
@@ -372,7 +372,7 @@ unittest parseZeoliteSquareSection {
 }
 
 unittest parseZeoliteTestcase {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
       .include<ZeoliteBlockComment>()
@@ -388,7 +388,7 @@ unittest parseZeoliteTestcase {
       .include<ZeoliteLowerSymbol>()
       .include<ZeoliteParamName>()
       .include<ZeoliteCharLiteral>()
-      .include<ZeoliteExtras>())
+      .include<ZeoliteExtras>()
 
   String data <- "testcase \"my test\" {
     success Checker<[A&B]>  // <- enables lib/testing support
@@ -414,11 +414,11 @@ unittest parseZeoliteTestcase {
               .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName",    content: "Checker"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",        content: "<"))
               .append(ZeoliteParsed.section(label: "ZeoliteSquareSection", Vector<ZeoliteParsed>.new()
-                    .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "["))
-                    .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "A"))
-                    .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",     content: "&"))
-                    .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "B"))
-                    .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: "]"))))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteOpenDelim",    content: "["))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "A"))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",     content: "&"))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteCategoryName", content: "B"))
+                  .append(ZeoliteParsed.leaf(label: "ZeoliteCloseDelim",   content: "]"))))
               .append(ZeoliteParsed.leaf(label: "ZeoliteOperator",        content: ">"))
               .append(ZeoliteParsed.leaf(label: "ZeoliteWhitespace",      content: "  "))
               .append(ZeoliteParsed.leaf(label: "ZeoliteLineComment",     content: "// <- enables lib/testing support"))
@@ -449,8 +449,8 @@ unittest parseZeoliteTestcase {
 }
 
 unittest parseZeolitePragma {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeolitePragma>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeolitePragma>()
 
   \ "$NoArgs$" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeolitePragma", Vector<ZeoliteParsed>.new()
@@ -487,8 +487,8 @@ unittest parseZeolitePragma {
 }
 
 unittest parseZeoliteExtras {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
-      .include<ZeoliteExtras>())
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
+      .include<ZeoliteExtras>()
 
   \ "_" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.leaf(label: "ZeoliteIgnore", content: "_"))
@@ -507,7 +507,7 @@ unittest parseZeoliteExtras {
 }
 
 unittest integration {
-  ParsingTester tester <- ParsingTester.new(ZeoliteParseContext.new()
+  ParsingTester tester <- `ParsingTester.new` ZeoliteParseContext.new()
       .include<ZeoliteWhitespace>()
       .include<ZeoliteLineComment>()
       .include<ZeoliteBlockComment>()
@@ -518,7 +518,7 @@ unittest integration {
       .include<ZeoliteUpperSymbol>()
       .include<ZeoliteLowerSymbol>()
       .include<ZeoliteParamName>()
-      .include<ZeoliteBraceSection>())
+      .include<ZeoliteBraceSection>()
 
   \ "{Category #param}\"string\\n\" /*/ done*/\n" `tester.checkParsesAs` Vector<ZeoliteParsed>.new()
       .append(ZeoliteParsed.section(label: "ZeoliteBraceSection", Vector<ZeoliteParsed>.new()

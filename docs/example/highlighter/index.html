@@ -2210,8 +2210,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteWhitespace {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot; <span style="color:DarkMagenta;">\t</span> <span style="color:DarkMagenta;">\r</span><span style="color:DarkMagenta;">\n</span>&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteWhitespace&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot; <span style="color:DarkMagenta;">\t</span> <span style="color:DarkMagenta;">\r</span><span style="color:DarkMagenta;">\n</span>&quot;</span>))
@@ -2221,9 +2221,9 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteLineComment {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLineComment</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;//12345<span style="color:DarkMagenta;">\n</span>//54321&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteLineComment&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;//12345&quot;</span>))
@@ -2234,9 +2234,9 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteBlockComment {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBlockComment</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;/*/12345<span style="color:DarkMagenta;">\n</span>54321* */&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteBlockComment&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;/*/12345<span style="color:DarkMagenta;">\n</span>54321* */&quot;</span>))
@@ -2251,8 +2251,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteUpperSymbol {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteUpperSymbol</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteUpperSymbol</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;Hello123&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCategoryName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;Hello123&quot;</span>))
@@ -2267,8 +2267,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteLowerSymbol {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLowerSymbol</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLowerSymbol</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;hello123&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteFunctionOrVariableName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;hello123&quot;</span>))
@@ -2306,8 +2306,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteScopeQualifier {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteScopeQualifier</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteScopeQualifier</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;@value&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteScopeQualifier&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;@value&quot;</span>))
@@ -2323,8 +2323,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteOperator {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteOperator</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteOperator</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;&lt;-&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteAssignment&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&lt;-&quot;</span>))
@@ -2356,8 +2356,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteParamName {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParamName</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParamName</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;&num;param123&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteParamName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&num;param123&quot;</span>))
@@ -2375,8 +2375,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteStringLiteral {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteStringLiteral</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteStringLiteral</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;<span style="color:DarkMagenta;">\&quot;</span>hello<span style="color:DarkMagenta;">\\</span>n<span style="color:DarkMagenta;">\\</span>t<span style="color:DarkMagenta;">\\</span>0123<span style="color:DarkMagenta;">\\</span>xABC<span style="color:DarkMagenta;">\\</span>Q <span style="color:DarkMagenta;">\\</span>09c goodbye<span style="color:DarkMagenta;">\&quot;</span>&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteStringLiteral&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
@@ -2401,8 +2401,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteCharLiteral {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteCharLiteral</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteCharLiteral</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;&apos;a&apos;&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCharLiteral&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
@@ -2442,8 +2442,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteNumber {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteNumber</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteNumber</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;123&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteNumber&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;123&quot;</span>))
@@ -2492,10 +2492,10 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteBraceSection {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBlockComment</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBraceSection</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;{ /*hello*/ }&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteBraceSection&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
@@ -2513,10 +2513,10 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteParenSection {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBlockComment</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParenSection</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;( /*hello*/ )&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteParenSection&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
@@ -2534,10 +2534,10 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteSquareSection {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBlockComment</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteSquareSection</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;[ /*hello*/ ]&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteSquareSection&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
@@ -2555,7 +2555,7 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteTestcase {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLineComment</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBlockComment</span><span style="color:BlueViolet;">&gt;</span>()
@@ -2571,7 +2571,7 @@ limitations under the License.
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLowerSymbol</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParamName</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteCharLiteral</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteExtras</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteExtras</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:DarkBlue; font-weight:bold;">String</span> data <span style="color:blue;">&lt;-</span> <span style="color:DeepPink;">&quot;testcase <span style="color:DarkMagenta;">\&quot;</span>my test<span style="color:DarkMagenta;">\&quot;</span> {
     success Checker&lt;[A&amp;B]&gt;  // &lt;- enables lib/testing support
@@ -2597,11 +2597,11 @@ limitations under the License.
               <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCategoryName&quot;</span>,    <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;Checker&quot;</span>))
               <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>,        <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&lt;&quot;</span>))
               <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteSquareSection&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
-                    <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOpenDelim&quot;</span>,    <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;[&quot;</span>))
-                    <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCategoryName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;A&quot;</span>))
-                    <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>,     <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&amp;&quot;</span>))
-                    <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCategoryName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;B&quot;</span>))
-                    <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCloseDelim&quot;</span>,   <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;]&quot;</span>))))
+                  <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOpenDelim&quot;</span>,    <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;[&quot;</span>))
+                  <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCategoryName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;A&quot;</span>))
+                  <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>,     <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&amp;&quot;</span>))
+                  <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCategoryName&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;B&quot;</span>))
+                  <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteCloseDelim&quot;</span>,   <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;]&quot;</span>))))
               <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteOperator&quot;</span>,        <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;&gt;&quot;</span>))
               <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteWhitespace&quot;</span>,      <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;  &quot;</span>))
               <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteLineComment&quot;</span>,     <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;// &lt;- enables lib/testing support&quot;</span>))
@@ -2632,8 +2632,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeolitePragma {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeolitePragma</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeolitePragma</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;&dollar;NoArgs&dollar;&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeolitePragma&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
@@ -2670,8 +2670,8 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> parseZeoliteExtras {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteExtras</span><span style="color:BlueViolet;">&gt;</span>())
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteExtras</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;_&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>leaf(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteIgnore&quot;</span>, <span style="color:green;">content:</span> <span style="color:DeepPink;">&quot;_&quot;</span>))
@@ -2690,7 +2690,7 @@ limitations under the License.
 }
 
 <span style="color:Indigo; font-weight:bold;">unittest</span> integration {
-  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new(<span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
+  <span style="color:DarkBlue;">ParsingTester</span> tester <span style="color:blue;">&lt;-</span> <span style="color:blue;">`</span><span style="color:DarkBlue;">ParsingTester</span><span style="color:blue;">.</span>new<span style="color:blue;">`</span> <span style="color:DarkBlue;">ZeoliteParseContext</span><span style="color:blue;">.</span>new()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteWhitespace</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLineComment</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBlockComment</span><span style="color:BlueViolet;">&gt;</span>()
@@ -2701,7 +2701,7 @@ limitations under the License.
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteUpperSymbol</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteLowerSymbol</span><span style="color:BlueViolet;">&gt;</span>()
       <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParamName</span><span style="color:BlueViolet;">&gt;</span>()
-      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBraceSection</span><span style="color:BlueViolet;">&gt;</span>())
+      <span style="color:blue;">.</span>include<span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteBraceSection</span><span style="color:BlueViolet;">&gt;</span>()
 
   <span style="color:blue;">\</span> <span style="color:DeepPink;">&quot;{Category &num;param}<span style="color:DarkMagenta;">\&quot;</span>string<span style="color:DarkMagenta;">\\</span>n<span style="color:DarkMagenta;">\&quot;</span> /*/ done*/<span style="color:DarkMagenta;">\n</span>&quot;</span> <span style="color:blue;">`</span>tester<span style="color:blue;">.</span>checkParsesAs<span style="color:blue;">`</span> <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
       <span style="color:blue;">.</span>append(<span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:blue;">.</span>section(<span style="color:green;">label:</span> <span style="color:DeepPink;">&quot;ZeoliteBraceSection&quot;</span>, <span style="color:DarkBlue;">Vector</span><span style="color:BlueViolet;">&lt;</span><span style="color:DarkBlue;">ZeoliteParsed</span><span style="color:BlueViolet;">&gt;.</span>new()
