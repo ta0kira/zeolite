@@ -2024,6 +2024,7 @@ Builtin meta-types:
 |`&.`|conditional function call|`x&.foo()`|`optional` value|function return type(s) converted to `optional`|skips evaluation of args if call is skipped|
 |`?`|type conversion|`x?T`|_left:_ value <br /> _right:_ type instance|right type with optionality of left|can also be used with `optional` values|
 |`<-`|assignment|`x <- y`|_left:_ variable <br /> _right:_ expression|right type||
+|`<->`|swap|`x <-> y`|_left:_ variable <br /> _right:_ variable|--|top-level statement; can't be used inside of other expressions|
 |`<-\|`|conditional assignment|`x <-\| y`|_left:_ `optional` variable <br /> _right:_ non-`weak` expression|left type with optionality of right|skips evaluation of right if left is `present`|
 |`<\|\|`|fallback value|`x <\|\| y`|_left:_ `optional` expression <br /> _right:_ non-`weak` expression|union of left and right types with optionality of right|skips evaluation of right if left is `present`|
 
