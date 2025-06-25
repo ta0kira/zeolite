@@ -191,17 +191,17 @@
 					"name": "support.class.zeolite"
 				},
 				{
-					"match": "\\b[A-Z][A-Za-z09-]*\\b",
+					"match": "\\b[A-Z][A-Za-z0-9]*\\b",
 					"name": "entity.name.type.zeolite"
 				}
 			]
 		},
 		"param-name": {
-				"match": "#[a-z][A-Za-z09-]*\\b",
+				"match": "#[a-z][A-Za-z0-9]*\\b",
 				"name": "variable.parameter.zeolite"
 		},
 		"arg-label": {
-				"match": "\\b[a-z][A-Za-z09-]*:",
+				"match": "\\b[a-z][A-Za-z0-9]*:",
 				"name": "entity.name.tag.zeolite"
 		},
 		"testcase": {
@@ -322,7 +322,7 @@
 			]
 		},
 		"category-params": {
-			"begin": "\\b([A-Z][A-Za-z09-]*)<",
+			"begin": "\\b([A-Z][A-Za-z0-9]*)<",
 			"end": ">",
             "beginCaptures": {
                 "1": {
