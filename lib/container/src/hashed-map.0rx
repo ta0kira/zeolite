@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021,2023 Kevin P. Barry
+Copyright 2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,6 +62,14 @@ define HashedMap {
       itemCount <- itemCount+1
       \ maybeResize()
       return v
+    }
+  }
+
+  getWithDefault (k) (v) {
+    v, Bool added <- table.readAt(getBin(k.hashed())).defaultReplace<#v2>(k)
+    if (added) {
+      itemCount <- itemCount+1
+      \ maybeResize()
     }
   }
 
@@ -168,6 +176,10 @@ concrete HashRoot<#k, #v> {
 
   @value exchange (#k, optional #v) -> (optional #v)
   @value weakReplace (#k, #v) -> (optional #v)
+  @value defaultReplace<#v2>
+    #v2 requires #v
+    #v2 defines Default
+  (#k) -> (#v, Bool)
   @value find (#k) -> (optional #v)
   // Override to allow returning HashNode directly.
   @value defaultOrder () -> (optional HashNode<#k, #v>)
@@ -227,6 +239,17 @@ define HashRoot {
     }
     root <- HashNode<#k, #v>.new(k, v, root)
     return empty
+  }
+
+  defaultReplace (k) (value, added) {
+    traverse (root -> HashNode<#k, #v> node) {
+      if (node.getKey() `#k.equals` k) {
+        return node.getValue(), false
+      }
+    }
+    value <- #v2.default()
+    added <- true
+    root <- HashNode<#k, #v>.new(k, value, root)
   }
 
   find (k) (v) {

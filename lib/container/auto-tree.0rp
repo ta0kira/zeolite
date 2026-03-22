@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,6 +58,16 @@ concrete AutoBinaryTree<|#n, #k, #v|#r> {
   // - updateNode() will be called on every affected node, starting with the
   //   deepest node. It might be called an arbitrary number of times per node.
   @value weakSet (#k, #v) -> (#v)
+
+  // Same as `weakSet`, but only constructs a default value if needed.
+  //
+  // Notes:
+  // - updateNode() will be called on every affected node, starting with the
+  //   deepest node. It might be called an arbitrary number of times per node.
+  @value getWithDefault<#v2>
+    #v2 requires #v
+    #v2 defines Default
+  (#k) -> (#v)
 
   // Swap the value associated with the key if it is not present.
   //

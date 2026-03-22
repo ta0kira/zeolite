@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.24.2.0 -- ????-??-??
+
+### Libraries
+
+* **[new]** Adds `getWithDefault` to `KVExchange`, `HashedMap`, and `SortedMap`.
+  This allows getting with a default value without constructing the default if
+  a value already exists.
+
 ## 0.24.1.0  -- 2024-01-07
 
 ### Language

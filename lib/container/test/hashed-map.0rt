@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021,2023 Kevin P. Barry
+Copyright 2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -213,6 +213,30 @@ unittest weakSetMissing {
   \ map.get(7) `Matches:with` CheckValue:equals(Value.new(10))
 }
 
+unittest getWithDefaultExists {
+  HashedMap<Int, Value> map <- HashedMap<Int, Value>.default()
+      .set(1, Value.new(1))
+      .set(2, Value.new(2))
+      .set(3, Value.new(3))
+
+  Value value <- map.getWithDefault<Value>(2)
+  \ value.get() `Matches:with` CheckValue:equals(2)
+  \ identify(value) `Matches:with` CheckValue:equals(identify(map.get(2)))
+  \ Value.defaultCount() `Matches:with` CheckValue:equals(0)
+}
+
+unittest getWithDefaultMissing {
+  HashedMap<Int, Value> map <- HashedMap<Int, Value>.default()
+      .set(1, Value.new(1))
+      .set(2, Value.new(2))
+      .set(3, Value.new(3))
+
+  Value value <- map.getWithDefault<Value>(4)
+  \ value.get() `Matches:with` CheckValue:equals(0)
+  \ identify(value) `Matches:with` CheckValue:equals(identify(map.get(4)))
+  \ Value.defaultCount() `Matches:with` CheckValue:equals(1)
+}
+
 unittest setMember {
   HashedMap<Int, Value> map <- HashedMap<Int, Value>.default()
       .set(1, Value.new(1))
@@ -223,18 +247,27 @@ unittest setMember {
 }
 
 concrete Value {
+  defines Default
   defines Equals<Value>
   refines Formatted
 
   @type new (Int) -> (Value)
+  @type defaultCount () -> (Int)
   @value get () -> (Int)
   @value set (Int) -> ()
 }
 
 define Value {
+  @category Int defaultCount <- 0
   @value Int value
 
+  default () {
+    defaultCount <- defaultCount+1
+    return new(0)
+  }
+
   new (value) { return Value{ value } }
+  defaultCount () { return defaultCount }
   get () { return value }
   set (value2) { value <- value2 }
 

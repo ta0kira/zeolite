@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2019-2021,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,6 +54,13 @@ define AutoBinaryTree {
     }
   }
 
+  getWithDefault (k) (v) {
+    root, Bool added, v <- insertWithDefault<#v2>(root, k)
+    if (added) {
+      treeSize <- treeSize+1
+    }
+  }
+
   swap (k, v) (old) {
     root, old <- exchange(root, k, v)
     if (!present(v) && present(old)) {
@@ -101,14 +108,48 @@ define AutoBinaryTree {
     #n node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {
       newRoot, value <- insertWeak(node2.getLower(), k, v)
-      \ node2.setLower(newRoot)
-      newRoot <- rebalance(node2)
+      if (! `present` value) {
+        \ node2.setLower(newRoot)
+        newRoot <- rebalance(node2)
+      }
     } elif (node2.getKey() `#k.lessThan` k) {
       newRoot, value <- insertWeak(node2.getHigher(), k, v)
-      \ node2.setHigher(newRoot)
-      newRoot <- rebalance(node2)
+      if (! `present` value) {
+        \ node2.setHigher(newRoot)
+        newRoot <- rebalance(node2)
+      }
     } else {
       return node2, node2.getValue()
+    }
+  }
+
+
+  @type insertWithDefault<#v2>
+    #v2 requires #v
+    #v2 defines Default
+  (optional #n, #k) -> (optional #n, Bool, #v)
+  insertWithDefault (node, k) (newRoot, added, value) {
+    if (!present(node)) {
+      value <- #v2.default()
+      added <- true
+      newRoot <- #n.newNode(k, value)
+      return _
+    }
+    #n node2 <- require(node)
+    if (k `#k.lessThan` node2.getKey()) {
+      newRoot, added, value <- insertWithDefault<#v2>(node2.getLower(), k)
+      if (added) {
+        \ node2.setLower(newRoot)
+        newRoot <- rebalance(node2)
+      }
+    } elif (node2.getKey() `#k.lessThan` k) {
+      newRoot, added, value <- insertWithDefault<#v2>(node2.getHigher(), k)
+      if (added) {
+        \ node2.setHigher(newRoot)
+        newRoot <- rebalance(node2)
+      }
+    } else {
+      return node2, false, node2.getValue()
     }
   }
 
