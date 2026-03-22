@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,13 +47,7 @@ define CategoricalTree {
   }
 
   getWeight (cat) {
-    scoped {
-      optional Int size <- tree.get(cat)
-    } in if (present(size)) {
-      return require(size)
-    } else {
-      return 0
-    }
+    return tree.get(cat) <|| 0
   }
 
   incrWeight (cat) {
@@ -182,14 +176,8 @@ define CategoricalTreeNode {
   @value optional #self higher
 
   duplicate () {
-    optional #self lower2 <- empty
-    if (present(lower)) {
-      lower2 <- require(lower).duplicate()
-    }
-    optional #self higher2 <- empty
-    if (present(higher)) {
-      higher2 <- require(higher).duplicate()
-    }
+    optional #self lower2 <- lower&.duplicate()
+    optional #self higher2 <- higher&.duplicate()
     return #self{ height, key, size, total, lower2, higher2 }
   }
 
@@ -221,11 +209,7 @@ define CategoricalTreeNode {
   }
 
   tryTotal (node) {
-    if (present(node)) {
-      return require(node).getTotal()
-    } else {
-      return 0
-    }
+    return node&.getTotal() <|| 0
   }
 
   newNode (k, v) {
@@ -244,14 +228,8 @@ define CategoricalTreeNode {
 
   updateNode () {
     scoped {
-      Int l <- 0
-      Int h <- 0
-      if (present(lower)) {
-        l <- require(lower).getHeight()
-      }
-      if (present(higher)) {
-        h <- require(higher).getHeight()
-      }
+      Int l <- lower&.getHeight() <|| 0
+      Int h <- higher&.getHeight() <|| 0
     } in if (l > h) {
       height <- l + 1
     } else {
