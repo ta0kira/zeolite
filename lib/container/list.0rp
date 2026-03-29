@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2021,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -112,5 +112,5 @@ concrete ListBuilder<#x|#n> {
   //   head/tail, but that tail will no longer be the end.
   // - Calling mutating functions (e.g., setNext, setPrev) on any of the
   //   elements between the returned head/tail will invalidate the builder.
-  @value build () -> (optional #n, optional #n)
+  @value build () -> (optional #n head:, optional #n tail:)
 }
