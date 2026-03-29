@@ -16,6 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -43,6 +44,11 @@ import Control.Monad.Trans (lift)
 import Data.List (intercalate,nub)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+
+#if MIN_VERSION_base(4,11,0)
+#else
+import Data.Semigroup
+#endif
 
 import Base.CompilerError
 import Base.GeneralType
