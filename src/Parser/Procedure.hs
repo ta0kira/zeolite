@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2023 Kevin P. Barry
+Copyright 2019-2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -759,9 +759,11 @@ instance ParseFromSource (ValueOperation SourceContext) where
     selectReturn = labeled "return selection" $ do
       c <- getSourceContext
       sepAfter_ (string_ "{")
-      pos <- labeled "return position" $ fmap snd parseDec
+      selector <- fmap Left returnIndex <|> fmap Right returnLabel
       sepAfter_ (string_ "}")
-      return $ SelectReturn [c] (fromIntegral pos)
+      return $ SelectReturn [c] selector
+    returnIndex = labeled "return position" $ fmap fromIntegral $ fmap snd parseDec
+    returnLabel = labeled "return label" sourceParser
 
 instance ParseFromSource MacroName where
   sourceParser = labeled "macro name" $ do

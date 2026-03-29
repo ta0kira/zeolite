@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2023 Kevin P. Barry
+Copyright 2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ define Value {
 }
 
 
-testcase "merge with matched label" {
+testcase "merge with matched arg label" {
   success
 }
 
@@ -122,7 +122,7 @@ define Value {
 }
 
 
-testcase "failed merge with mismatched label" {
+testcase "failed merge with mismatched arg label" {
   error
   require compiler "value:"
   require compiler "number:"
@@ -143,7 +143,7 @@ define Value {
 }
 
 
-testcase "failed merge with added label" {
+testcase "failed merge with added arg label" {
   error
   require compiler "number:"
 }
@@ -163,7 +163,7 @@ define Value {
 }
 
 
-testcase "failed merge with removed label" {
+testcase "failed merge with removed arg label" {
   error
   require compiler "number:"
 }
@@ -305,4 +305,268 @@ concrete Value {
 
 define Value {
   call (value1, value2) { return value1+value2 }
+}
+
+
+testcase "return selection with labels" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Value.call(){first:}, 1)
+  \ Testing.checkEquals(Value.call(){second:}, "foo")
+  \ Testing.checkEquals(Value.call(){2}, false)
+}
+
+concrete Value {
+  @type call () -> (Int first:, String second:, Bool)
+}
+
+define Value {
+  call () { return 1, "foo", false }
+}
+
+
+testcase "reusing return label is allowed" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Value.call(){0}, 1)
+  \ Testing.checkEquals(Value.call(){1}, "foo")
+  \ Testing.checkEquals(Value.call(){flag:}, false)
+}
+
+concrete Value {
+  @type call () -> (Int value:, String value:, Bool flag:)
+}
+
+define Value {
+  call () { return 1, "foo", false }
+}
+
+
+testcase "reusing return label breaks selection" {
+  error
+  require compiler "value:"
+}
+
+unittest test {
+  \ Value.call(){value:}
+}
+
+concrete Value {
+  @type call () -> (Int value:, String value:, Bool flag:)
+}
+
+define Value {
+  call () { return 1, "foo", false }
+}
+
+
+testcase "no matches for return label" {
+  error
+  require compiler "value:"
+}
+
+unittest test {
+  \ Value.call(){value:}
+}
+
+concrete Value {
+  @type call () -> ()
+}
+
+define Value {
+  call () { }
+}
+
+
+testcase "return labels forwarded in order for multiple returns" {
+  success
+}
+
+unittest test {
+  Int first, String second <- Value.call2(Value.call1())
+  \ Testing.checkEquals(first, 1)
+  \ Testing.checkEquals(second, "foo")
+}
+
+concrete Value {
+  @type call1 () -> (Int first:, String second:)
+  @type call2 (Int first:, String second:) -> (Int, String)
+}
+
+define Value {
+  call1 () { return 1, "foo" }
+  call2 (first, second) { return first, second }
+}
+
+
+testcase "return label mismatch for multiple returns" {
+  error
+  require compiler "oops:"
+  require compiler "second:"
+}
+
+unittest test {
+  \ Value.call2(Value.call1())
+}
+
+concrete Value {
+  @type call1 () -> (Int first:, String oops:)
+  @type call2 (Int first:, String second:) -> (Int, String)
+}
+
+define Value {
+  call1 () { return 1, "foo" }
+  call2 (first, second) { return first, second }
+}
+
+
+testcase "return labels forwarded in order for single return" {
+  success
+}
+
+unittest test {
+  Int first, String second <- Value.call3(Value.call1(), Value.call2())
+  \ Testing.checkEquals(first, 1)
+  \ Testing.checkEquals(second, "foo")
+}
+
+concrete Value {
+  @type call1 () -> (Int first:)
+  @type call2 () -> (String second:)
+  @type call3 (Int first:, String second:) -> (Int, String)
+}
+
+define Value {
+  call1 () { return 1 }
+  call2 () { return "foo" }
+  call3 (first, second) { return first, second }
+}
+
+
+testcase "return label mismatch for single return" {
+  error
+  require compiler "oops:"
+  require compiler "second:"
+}
+
+unittest test {
+  \ Value.call3(Value.call1(), Value.call2())
+}
+
+concrete Value {
+  @type call1 () -> (Int first:)
+  @type call2 () -> (String oops:)
+  @type call3 (Int first:, String second:) -> (Int, String)
+}
+
+define Value {
+  call1 () { return 1 }
+  call2 () { return "foo" }
+  call3 (first, second) { return first, second }
+}
+
+
+testcase "merge with matched return label" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals(Value.call(1){value:}, 1)
+}
+
+@type interface Base {
+  call (Int) -> (Int value:)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int) -> (Int value:)
+}
+
+define Value {
+  call (value) { return value }
+}
+
+
+testcase "failed merge with mismatched return label" {
+  error
+  require compiler "value:"
+  require compiler "number:"
+}
+
+@type interface Base {
+  call (Int) -> (Int value:)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int) -> (Int number:)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "failed merge with added return label" {
+  error
+  require compiler "number:"
+}
+
+@type interface Base {
+  call (Int) -> (Int)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int) -> (Int number:)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "failed merge with removed return label" {
+  error
+  require compiler "number:"
+}
+
+@type interface Base {
+  call (Int) -> (Int number:)
+}
+
+concrete Value {
+  defines Base
+
+  @type call (Int) -> (Int)
+}
+
+define Value {
+  call (number) { return number }
+}
+
+
+testcase "warning when return name differs from arg label" {
+  compiles
+  require compiler "value:"
+  require compiler "result"
+  require compiler "another:"
+  require compiler "different"
+  exclude compiler "fine"
+}
+
+concrete Value {
+  @type call (Int) -> (Int fine:, Int value:, Int another:)
+}
+
+define Value {
+  call (number) (fine, result, different) { return 1, 2, 3 }
 }

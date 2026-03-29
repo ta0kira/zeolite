@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019,2021,2023 Kevin P. Barry
+Copyright 2019,2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -161,13 +161,13 @@ instance ParseFromSource FunctionName where
     e <- sepAfter $ many alphaNumChar
     return $ FunctionName (b:e)
 
-instance ParseFromSource (CallArgLabel SourceContext) where
+instance ParseFromSource (CallValueLabel SourceContext) where
   sourceParser = labeled "arg label" $ do
     c <- getSourceContext
     b <- lowerChar
     e <- many alphaNumChar
     sepAfter $ char_ ':'
-    return $ CallArgLabel [c] (b:e ++ ":")
+    return $ CallValueLabel [c] (b:e ++ ":")
 
 instance ParseFromSource (FunctionVisibility SourceContext) where
   sourceParser = labeled "visibility" $ do
@@ -236,7 +236,9 @@ parseScopedFunction sp tp = labeled "function" $ do
     singleReturn = do
       c <- getSourceContext
       t <- sourceParser
-      return $ PassedValue [c] t
+      optionalSpace
+      n <- fmap Just sourceParser <|> return Nothing
+      return $ (PassedValue [c] t,n)
 
 parseScope :: TextParser SymbolScope
 parseScope = try categoryScope <|> try typeScope <|> valueScope

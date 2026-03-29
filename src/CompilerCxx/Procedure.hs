@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2023 Kevin P. Barry
+Copyright 2019-2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ compileExecutableProcedure to immutable cxxType ctx
                     " = " ++ writeStoredVariable (pvType t2) (UnwrappedSingle $ "params_args.GetArg(" ++ show i ++ ")") ++ ";"
     nameReturns
       | isUnnamedReturns rs2 = []
-      | otherwise = map (\(i,(t2,n2)) -> nameReturn i (pvType t2) n2) (zip ([0..] :: [Int]) $ zip (pValues rs1) (pValues $ nrNames rs2))
+      | otherwise = map (\(i,(t2,n2)) -> nameReturn i (pvType t2) n2) (zip ([0..] :: [Int]) $ zip (pValues $ fmap fst rs1) (pValues $ nrNames rs2))
     nameReturn i t2 n2
       | isStoredUnboxed t2 = variableProxyType t2 ++ " " ++ variableName (ovName n2) ++ ";"
       | otherwise =
@@ -182,7 +182,7 @@ compileCondition ctx c e = do
        return (predTraceContext c2 ++ "(" ++ e' ++ ")",ctx')
   where
     compile = "In condition at " ++ formatFullContext c ??> do
-      (ts,e') <- compileExpression e
+      (ts,e',_) <- compileExpression e
       checkCondition ts
       return $ useAsUnboxed PrimBool e'
       where
@@ -224,7 +224,7 @@ compileStatement (EmptyReturn c) = do
   maybeSetTrace c
   doImplicitReturn c
 compileStatement (ExplicitReturn c es) = do
-  es' <- sequence $ map compileExpression $ pValues es
+  es' <- sequence $ map (fmap (\(t,e,_) -> (t,e)) . compileExpression) $ pValues es
   getReturn $ zip (map getExpressionContext $ pValues es) es'
   where
     -- Single expression, but possibly multi-return.
@@ -264,9 +264,9 @@ compileStatement (LoopContinue c) = do
 compileStatement (FailCall c e) = do
   csAddRequired (Set.fromList [BuiltinFormatted,BuiltinString])
   e' <- compileExpression e
-  when (length (pValues $ fst e') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) e') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e0) = e'
+  let (Positional [t0],e0,_) = e'
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t0 formattedRequiredValue) <??
@@ -277,9 +277,9 @@ compileStatement (FailCall c e) = do
 compileStatement (ExitCall c e) = do
   csAddRequired (Set.fromList [BuiltinInt])
   e' <- compileExpression e
-  when (length (pValues $ fst e') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) e') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e0) = e'
+  let (Positional [t0],e0,_) = e'
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t0 intRequiredValue) <??
@@ -291,7 +291,7 @@ compileStatement (RawFailCall s) = do
   csSetJumpType [] JumpImmediateExit
   csWrite ["RAW_FAIL(" ++ show s ++ ")"]
 compileStatement (IgnoreValues c e) = do
-  (_,e') <- compileExpression e
+  (_,e',_) <- compileExpression e
   maybeSetTrace c
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
 compileStatement (DeferredVariables c as) = message ??> mapM_ createVariable as
@@ -323,7 +323,7 @@ compileStatement (VariableSwap c vl vr) = message ??> handle vl vr where
     scopedR <- autoScope sr
     csWrite ["SwapValues(" ++ scopedL ++ variableName nl ++ ", " ++ scopedR ++ variableName nr ++ ");"]
 compileStatement (Assignment c as e) = message ??> do
-  (ts,e') <- compileExpression e
+  (ts,e',_) <- compileExpression e
   r <- csResolver
   fa <- csAllFilters
   -- Check for a count match first, to avoid the default error message.
@@ -378,7 +378,7 @@ compileStatement (Assignment c as e) = message ??> do
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
 compileStatement (AssignmentEmpty c n e) = do
-  (_,e') <- compileExpressionStart (InlineAssignment c n AssignIfEmpty e)
+  (_,e',_) <- compileExpressionStart (InlineAssignment c n AssignIfEmpty e)
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 compileStatement (MarkReadOnly c vs) = mapM_ (\v -> csSetReadOnly (UsedVariable c v)) vs
@@ -417,7 +417,7 @@ compileLazyInit :: (Ord c, Show c, CollectErrorsM m,
   CategoryName -> DefinedMember c -> CompilerState a m ()
 compileLazyInit _ (DefinedMember _ _ _ _ Nothing) = return ()
 compileLazyInit t0 (DefinedMember c _ t1 n (Just e)) = resetBackgroundM $ do
-  (ts,e') <- compileExpression e
+  (ts,e',_) <- compileExpression e
   when (length (pValues ts) /= 1) $
     compilerErrorM $ "Expected single return in initializer" ++ formatFullContextBrace (getExpressionContext e)
   r <- csResolver
@@ -498,7 +498,7 @@ compileIteratedLoop (WhileLoop c e p u) = do
   csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
 compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilation of traverse at " ++ formatFullContext c1 ??> do
-  (Positional ts,e') <- compileExpression e
+  (Positional ts,e',_) <- compileExpression e
   checkContainer ts
   r <- csResolver
   fa <- csAllFilters
@@ -515,7 +515,7 @@ compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilati
   let currPresent = BuiltinCall [] $ FunctionCall [] BuiltinPresent (Positional []) (Positional [(Nothing,RawExpression (Positional [currType]) (UnwrappedSingle currVar))])
   let callNext = Expression c1 currExpr [ValueCall c1 AlwaysCall $ FunctionCall c1 (FunctionName "next") (Positional []) (Positional [])]
   let callGet  = Expression c2 currExpr [ValueCall c2 AlwaysCall $ FunctionCall c2 (FunctionName "get")  (Positional []) (Positional [])]
-  (Positional [typeGet],exprNext) <- compileExpression callNext
+  (Positional [typeGet],exprNext,_) <- compileExpression callNext
   when (typeGet /= currType) $ compilerErrorM $ "Unexpected return type from next(): " ++ show typeGet ++ " (expected) " ++ show currType ++ " (actual)"
   let assnGet = if isAssignableDiscard a then [] else [Assignment c2 (Positional [a]) callGet]
   let showVar = case a of
@@ -624,7 +624,7 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
 
 compileExpression :: (Ord c, Show c, CollectErrorsM m,
                       CompilerContext c m [String] a) =>
-  Expression c -> CompilerState a m (ExpressionType,ExpressionValue)
+  Expression c -> CompilerState a m (ExpressionType,ExpressionValue,Maybe [Maybe (CallValueLabel c)])
 compileExpression = compile where
   callFunctionSpec c as (FunctionSpec _ (CategoryFunction c2 cn) fn ps) =
     compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps as)) [])
@@ -634,7 +634,9 @@ compileExpression = compile where
     compile (Expression c (ParensExpression c2 e0) [ValueCall c o (FunctionCall c fn ps as)])
   callFunctionSpec c as (FunctionSpec c2 UnqualifiedFunction fn ps) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps as)) [])
-  compile (Literal l) = compileValueLiteral l
+  compile (Literal l) = do
+    (t,e) <- compileValueLiteral l
+    return (t,e,Nothing)
   compile (Expression _ s os) = do
     foldl transform (compileExpressionStart s) os
   compile (DelegatedFunctionCall c f) = "In function delegation at " ++ formatFullContext c ??> do
@@ -652,7 +654,7 @@ compileExpression = compile where
   compile (UnaryExpression _ (NamedOperator c "-") (Literal (DecimalLiteral _ l e b))) =
     compile (Literal (DecimalLiteral c (-l) e b))
   compile (UnaryExpression _ (NamedOperator c o) e) = do
-    (Positional ts,e') <- compileExpression e
+    (Positional ts,e',_) <- compileExpression e
     t' <- requireSingle c ts
     doUnary t' e'
     where
@@ -666,17 +668,20 @@ compileExpression = compile where
         when (t /= boolRequiredValue) $
           compilerErrorM $ "Cannot use " ++ show t ++ " with unary ! operator" ++
                             formatFullContextBrace c
-        return $ (Positional [boolRequiredValue],UnboxedPrimitive PrimBool $ "!(" ++ useAsUnboxed PrimBool e2 ++ ")")
+        return $ (Positional [boolRequiredValue],UnboxedPrimitive PrimBool $ "!(" ++ useAsUnboxed PrimBool e2 ++ ")",Nothing)
       doNeg t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
-                                            UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e2)
+                                            UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e2,
+                                            Nothing)
         | t == floatRequiredValue = return $ (Positional [floatRequiredValue],
-                                             UnboxedPrimitive PrimFloat $ "-(" ++ useAsUnboxed PrimFloat e2 ++ ")")
+                                             UnboxedPrimitive PrimFloat $ "-(" ++ useAsUnboxed PrimFloat e2 ++ ")",
+                                             Nothing)
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary - operator" ++
                                        formatFullContextBrace c
       doComp t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
-                                            UnboxedPrimitive PrimInt $ "~(" ++ useAsUnboxed PrimInt e2 ++ ")")
+                                            UnboxedPrimitive PrimInt $ "~(" ++ useAsUnboxed PrimInt e2 ++ ")",
+                                            Nothing)
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                        formatFullContextBrace c
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e2) =
@@ -693,7 +698,7 @@ compileExpression = compile where
               then isolateExpression e2 -- Ignore named-return assignments.
               else compileExpression e2
     bindInfix c e1' o e2'
-  compile (RawExpression ts e) = return (ts,e)
+  compile (RawExpression ts e) = return (ts,e,Nothing)
   isolateExpression e = do
     ctx <- getCleanContext
     (e',ctx') <- lift $ runStateT (compileExpression e) ctx
@@ -707,7 +712,7 @@ compileExpression = compile where
   comparison = Set.fromList ["==","!=","<","<=",">",">="]
   logical = Set.fromList ["&&","||"]
   bitwise = Set.fromList ["&","|","^",">>","<<"]
-  bindInfix c (Positional ts1,e1) o (Positional ts2,e2) = do
+  bindInfix c (Positional ts1,e1,_) o (Positional ts2,e2,_) = do
     -- TODO: Needs better error messages.
     t1' <- requireSingle c ts1
     t2' <- requireSingle c ts2
@@ -721,66 +726,76 @@ compileExpression = compile where
             compilerErrorM $ "<|| requires the right expression to be not be weak but got " ++ show t2
           compileOptionalOr (t1,e1) (t2,e2)
         | o `Set.member` comparison && isIdentifierRequiredValue t1 && isIdentifierRequiredValue t2 = do
-          return (Positional [boolRequiredValue],glueInfix PrimIdentifier PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimIdentifier PrimBool e1 o e2,Nothing)
         | t1 /= t2 =
           compilerErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                            show t2 ++ formatFullContextBrace c
         | o `Set.member` comparison && t1 == intRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimInt PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimInt PrimBool e1 o e2,Nothing)
         | o `Set.member` comparison && t1 == floatRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimFloat PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimFloat PrimBool e1 o e2,Nothing)
         | o `Set.member` comparison && t1 == stringRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimString PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimString PrimBool e1 o e2,Nothing)
         | o `Set.member` comparison && t1 == charRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimChar PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimChar PrimBool e1 o e2,Nothing)
         | o `Set.member` arithmetic1 && t1 == intRequiredValue = do
-          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
+          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2,Nothing)
         | o `Set.member` bitwise && t1 == intRequiredValue = do
-          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
+          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2,Nothing)
         | o `Set.member` arithmetic2 && t1 == intRequiredValue = do
-          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
+          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2,Nothing)
         | o `Set.member` arithmetic3 && t1 == intRequiredValue = do
-          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
+          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2,Nothing)
         | o `Set.member` arithmetic1 && t1 == floatRequiredValue = do
-          return (Positional [floatRequiredValue],glueInfix PrimFloat PrimFloat e1 o e2)
+          return (Positional [floatRequiredValue],glueInfix PrimFloat PrimFloat e1 o e2,Nothing)
         | o `Set.member` arithmetic3 && t1 == floatRequiredValue = do
-          return (Positional [floatRequiredValue],glueInfix PrimFloat PrimFloat e1 o e2)
+          return (Positional [floatRequiredValue],glueInfix PrimFloat PrimFloat e1 o e2,Nothing)
         | o == "+" && t1 == stringRequiredValue = do
-          return (Positional [stringRequiredValue],glueInfix PrimString PrimString e1 o e2)
+          return (Positional [stringRequiredValue],glueInfix PrimString PrimString e1 o e2,Nothing)
         | o `Set.member` logical && t1 == boolRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2,Nothing)
         | o == "^" && t1 == boolRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2,Nothing)
         | o == "-" && t1 == charRequiredValue = do
-          return (Positional [intRequiredValue],glueInfix PrimChar PrimInt e1 o e2)
+          return (Positional [intRequiredValue],glueInfix PrimChar PrimInt e1 o e2,Nothing)
         | o `Set.member` equals && t1 == boolRequiredValue = do
-          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
+          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2,Nothing)
         | otherwise =
           compilerErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                  show t2 ++ formatFullContextBrace c
       glueInfix t1 t2 e3 o2 e4 =
         UnboxedPrimitive t2 $ "(" ++ useAsUnboxed t1 e3 ++ ")" ++ o2 ++ "(" ++ useAsUnboxed t1 e4 ++ ")"
   transform e (TypeConversion c t) = do
-    (Positional ts,e') <- e
+    (Positional ts,e',_) <- e
     t' <- requireSingle c ts
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType (vtRequired t') t
     (lift $ checkValueAssignment r fa t' vt) <??
       "In explicit type conversion at " ++ formatFullContext c
-    return (Positional [vt],e')
+    return (Positional [vt],e',Nothing)
   transform e (ValueCall c o f) = do
-    (Positional ts,e') <- e
+    (Positional ts,e',_) <- e
     t' <- requireSingle c ts
     f' <- lookupValueFunction t' o f
     compileFunctionCall (o == CallUnlessEmpty) (Just $ useAsUnwrapped e') f' f
   transform e (SelectReturn c pos) = do
-    (Positional ts,e') <- e
+    (Positional ts,e',labels) <- e
     when (not $ isOpaqueMulti e') $
       compilerErrorM $ "Return selection can only be used with function returns" ++ formatFullContextBrace c
-    when (pos >= length ts) $
-      compilerErrorM $ "Position " ++ show pos ++ " exceeds return count " ++ show (length ts) ++ formatFullContext c
-    return (Positional [ts !! pos],WrappedSingle $ useAsReturns e' ++ ".At(" ++ show pos ++ ")")
+    case pos of
+         Left index -> do
+           when (index >= length ts) $
+             compilerErrorM $ "Position " ++ show index ++ " exceeds return count " ++ show (length ts) ++ formatFullContext c
+           return (Positional [ts !! index],WrappedSingle $ useAsReturns e' ++ ".At(" ++ show index ++ ")",Nothing)
+         Right label -> do
+           let matches = fmap (map fst . filter (matchesLabel label . snd) . zip ([0..] :: [Int])) labels
+           case matches of
+                Just [index] -> return (Positional [ts !! index],WrappedSingle $ useAsReturns e' ++ ".At(" ++ show index ++ ")",Nothing)
+                Just (_:_) -> compilerErrorM $ "Multiple matches for return label " ++ show label
+                _ -> compilerErrorM $ "No matches for return label " ++ show label
+  matchesLabel target (Just l) = cvlName target == cvlName l
+  matchesLabel _ _ = False
   requireSingle _ [t] = return t
   requireSingle c2 ts =
     compilerErrorM $ "Function call requires one return but got " ++ formatTypes ts ++ formatFullContextBrace c2
@@ -789,14 +804,14 @@ compileExpression = compile where
   compileOptionalOr (t1,e1) (t2,e2) = do
     let t' = combineTypes t1 t2
     let code = WrappedSingle $ "TYPE_VALUE_LEFT_UNLESS_EMPTY(" ++ useAsUnwrapped e1 ++ ", " ++ useAsUnwrapped e2 ++ ")"
-    return (Positional [t'], code)
+    return (Positional [t'],code,Nothing)
   combineTypes (ValueType _ t1) (ValueType s t2) = ValueType s (mergeAny [t1,t2])
 
 forceOptionalReturns :: [c] -> ScopedFunction c -> ScopedFunction c
 forceOptionalReturns c0 (ScopedFunction c n t s v as rs ps fs ms) =
   ScopedFunction c n t s v as rs' ps fs ms where
     rs' = fmap forceOptional rs
-    forceOptional (PassedValue c2 (ValueType RequiredValue t2)) = (PassedValue (c0 ++ c2) (ValueType OptionalValue t2))
+    forceOptional (PassedValue c2 (ValueType RequiredValue t2),l) = (PassedValue (c0 ++ c2) (ValueType OptionalValue t2),l)
     forceOptional t2 = t2
 
 lookupValueFunction :: (Ord c, Show c, CollectErrorsM m,
@@ -822,7 +837,7 @@ lookupValueFunction (ValueType RequiredValue t) _ (FunctionCall c n _ _) = do
 
 compileExpressionStart :: (Ord c, Show c, CollectErrorsM m,
                            CompilerContext c m [String] a) =>
-  ExpressionStart c -> CompilerState a m (ExpressionType,ExpressionValue)
+  ExpressionStart c -> CompilerState a m (ExpressionType,ExpressionValue,Maybe [Maybe (CallValueLabel c)])
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
   let var = UsedVariable c n
   (VariableValue _ s t _) <- csGetVariable var
@@ -830,7 +845,7 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   csAddUsed var
   scoped <- autoScope s
   let lazy = s == CategoryScope
-  return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n))
+  return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n),Nothing)
 compileExpressionStart (NamedMacro c n) = do
   e <- csExprLookup c n
   csReserveExprMacro c n
@@ -847,7 +862,7 @@ compileExpressionStart (ExpressionMacro c MacroCallTrace) = do
   nextFunc <- csGetTypeFunction c (Just order) (FunctionName "next")
   getFunc <- csGetTypeFunction c (Just order) (FunctionName "get")
   let getTrace = "GetCallTrace(" ++ functionName getFunc ++ ", " ++ functionName nextFunc ++ ")"
-  return (Positional [orderOptionalValue formatted],UnwrappedSingle getTrace)
+  return (Positional [orderOptionalValue formatted],UnwrappedSingle getTrace,Nothing)
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csAddRequired $ Set.fromList [t,sfType f']
@@ -895,36 +910,38 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = d
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map (compileExpression . snd) $ pValues es
-  when (length (pValues $ fst $ head es') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e) = head es'
+  let (Positional [t0],e,_) = head es'
   when (isWeakValue t0) $
     compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [boolRequiredValue],
-            UnboxedPrimitive PrimBool $ "BoxedValue::Present(" ++ useAsUnwrapped e ++ ")")
+            UnboxedPrimitive PrimBool $ "BoxedValue::Present(" ++ useAsUnwrapped e ++ ")",
+            Nothing)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinIdentify ps es)) = do
   when (length (pValues ps) /= 0) $
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map (compileExpression . snd) $ pValues es
-  when (length (pValues $ fst $ head es') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e) = head es'
+  let (Positional [t0],e,_) = head es'
   when (isWeakValue t0) $
     compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   csAddRequired $ Set.fromList [BuiltinIdentifier]
   return $ (Positional [ValueType RequiredValue (singleType $ JustTypeInstance (TypeInstance BuiltinIdentifier (Positional [(vtType t0)])))],
-            UnboxedPrimitive PrimIdentifier $ "BoxedValue::Identify(" ++ useAsUnwrapped e ++ ")")
+            UnboxedPrimitive PrimIdentifier $ "BoxedValue::Identify(" ++ useAsUnwrapped e ++ ")",
+            Nothing)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues ps) /= 2) $
     compilerErrorM $ "Expected 2 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map (compileExpression . snd) $ pValues es
-  when (length (pValues $ fst $ head es') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e) = head es'
+  let (Positional [t0],e,_) = head es'
   self <- autoSelfType
   ps' <- lift $ disallowInferred ps
   [t1,t2] <- lift $ mapCompilerM (replaceSelfInstance self) ps'
@@ -940,34 +957,36 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   csAddRequired $ categoriesFromTypes t1
   csAddRequired $ categoriesFromTypes t2
   return $ (Positional [ValueType OptionalValue t2],
-            UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
+            UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")",
+            Nothing)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = do
   when (length (pValues ps) /= 0) $
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map (compileExpression . snd) $ pValues es
-  when (length (pValues $ fst $ head es') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e) = head es'
+  let (Positional [t0],e,_) = head es'
   when (isWeakValue t0) $
     compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [ValueType RequiredValue (vtType t0)],
-            UnwrappedSingle $ "BoxedValue::Require(" ++ useAsUnwrapped e ++ ")")
+            UnwrappedSingle $ "BoxedValue::Require(" ++ useAsUnwrapped e ++ ")",
+            Nothing)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinStrong ps es)) = do
   when (length (pValues ps) /= 0) $
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
     compilerErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map (compileExpression . snd) $ pValues es
-  when (length (pValues $ fst $ head es') /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
-  let (Positional [t0],e) = head es'
+  let (Positional [t0],e,_) = head es'
   let t1 = Positional [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
      -- Weak values are already unboxed.
-     then return (t1,UnwrappedSingle $ "BoxedValue::Strong(" ++ useAsUnwrapped e ++ ")")
-     else return (t1,e)
+     then return (t1,UnwrappedSingle $ "BoxedValue::Strong(" ++ useAsUnwrapped e ++ ")",Nothing)
+     else return (t1,e,Nothing)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = do
   when (length (pValues ps) /= 1) $
     compilerErrorM $ "Expected 1 type parameter" ++ formatFullContextBrace c
@@ -982,15 +1001,16 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
   t' <- expandGeneralInstance t
   csAddRequired $ Set.unions $ map categoriesFromTypes [t]
   return $ (Positional [formattedRequiredValue],
-            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
+            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")",
+            Nothing)
 compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n o e) = do
   (VariableValue _ s t0 _) <- getWritableVariable c n
   e2 <- compileExpression e
-  when (length (pValues $ fst $ e2) /= 1) $
+  when (length (pValues $ (\(t,_,_) -> t) e2) /= 1) $
     compilerErrorM $ "Expected single return" ++ formatFullContextBrace c
-  let (Positional [t],e') = e2
+  let (Positional [t],e',_) = e2
   when (o == AssignIfEmpty && not (isOptionalValue t0)) $
     compilerErrorM $ "Variable must have an optional type" ++ formatFullContextBrace c
   when (o == AssignIfEmpty) $ csCheckVariableInit [UsedVariable c n]
@@ -1010,8 +1030,8 @@ compileExpressionStart (InlineAssignment c n o e) = do
                         else assignAndGet
   let maybeAssign = readStoredVariable lazy t0 $ check ++ " ? " ++ variable ++ " : (" ++ assign ++ ")"
   case o of
-       AlwaysAssign -> return (Positional [t],alwaysAssign)
-       AssignIfEmpty -> return (Positional [combineTypes t0 t],maybeAssign)
+       AlwaysAssign -> return (Positional [t],alwaysAssign,Nothing)
+       AssignIfEmpty -> return (Positional [combineTypes t0 t],maybeAssign,Nothing)
   where
     combineTypes (ValueType _ t1) (ValueType s _) = ValueType s t1
 compileExpressionStart (InitializeValue c t es) = do
@@ -1035,18 +1055,19 @@ compileExpressionStart (InitializeValue c t es) = do
   args <- getArgs es''
   -- TODO: This is unsafe if used in a type or category constructor.
   return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
-          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ args ++ ")")
+          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ args ++ ")",
+          Nothing)
   where
     getType _  True ValueScope _      = "PARAM_SELF"
     getType _  True TypeScope  _      = "PARAM_SELF"
     getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
     -- Single expression, but possibly multi-return.
-    getValues [(Positional ts,e)] = return (ts,useAsArgs e)
+    getValues [(Positional ts,e,_)] = return (ts,useAsArgs e)
     -- Multi-expression => must all be singles.
     getValues rs = do
-      (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+      (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map (\(x,_,_) -> x) rs) <??
         "In return at " ++ formatFullContext c
-      return (map (head . pValues . fst) rs, intercalate ", " (map (useAsUnwrapped . snd) rs))
+      return (map (head . pValues . (\(x,_,_) -> x)) rs, intercalate ", " (map (useAsUnwrapped . (\(_,  x,_) -> x)) rs))
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compilerErrorM $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -1058,7 +1079,9 @@ compileExpressionStart (InitializeValue c t es) = do
       if canForward
          then return "params_args"
          else return $ "PassParamsArgs(" ++ argEs ++ ")"
-compileExpressionStart (UnambiguousLiteral l) = compileValueLiteral l
+compileExpressionStart (UnambiguousLiteral l) = do
+  (t,e) <- compileValueLiteral l
+  return (t,e,Nothing)
 
 compileValueLiteral :: (Ord c, Show c, CollectErrorsM m,
                            CompilerContext c m [String] a) =>
@@ -1113,12 +1136,12 @@ disallowInferred = mapCompilerM disallow . pValues where
 compileFunctionCall :: (Ord c, Show c, CollectErrorsM m,
                         CompilerContext c m [String] a) =>
   Bool -> Maybe String -> ScopedFunction c -> FunctionCall c ->
-  CompilerState a m (ExpressionType,ExpressionValue)
+  CompilerState a m (ExpressionType,ExpressionValue,Maybe [Maybe (CallValueLabel c)])
 compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
   r <- csResolver
   fa <- csAllFilters
   es' <- sequence $ map (compileExpression . snd) $ pValues es
-  (ts,es'') <- lift $ getValues es'
+  (ts,es'',ls) <- lift $ getValues es'
   f' <- lift $ parsedToFunctionType f
   let psActual = case ps of
                       (Positional []) -> Positional $ take (length $ pValues $ ftParams f') $ repeat (InferredInstance c)
@@ -1130,11 +1153,9 @@ compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
   lift $ mapCompilerM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
-  lift $ if (length ts /= length (pValues es))
-            then do
-              mapCompilerM_ (labelNotAllowedError . fst) $ pValues es
-              mapCompilerM_ (labelNotSetError . snd) $ pValues $ sfArgs f
-            else processPairs_ checkArgLabel (fmap snd $ sfArgs f) (Positional $ zip ([0..] :: [Int]) $ map fst $ pValues es)
+  let callLabels = mergeLabels (map fst $ pValues es) ls
+  lift $ when (length ts /= length (pValues es)) (mapCompilerM_ labelNotAllowedError $ map fst $ pValues es)
+  lift $ processPairs_ checkArgLabel (fmap snd $ sfArgs f) (Positional $ zip ([0..] :: [Int]) callLabels)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
   csAddRequired $ Set.unions $ map categoriesFromTypes $ pValues ps2
   csAddRequired (Set.fromList [sfType f])
@@ -1143,12 +1164,19 @@ compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
   scoped <- autoScope (sfScope f)
   paramsArgs <- getParamsArgs (pValues ps2) params es''
   call <- assemble e scoped scope (sfScope f) paramsArgs
-  return $ (ftReturns f'',OpaqueMulti call)
+  let returnLabels = map snd $ pValues $ sfReturns f
+  return $ (ftReturns f'',OpaqueMulti call,Just returnLabels)
   where
+    mergeLabels ls (Just ls0)
+      | length ls > length ls0 = ls
+      | length ls < length ls0 = ls0
+      | otherwise = map mergeLabel $ zip ls ls0
+    mergeLabels ls _ = ls
+    mergeLabel (l@(Just _),_) = l
+    mergeLabel (_,l@(Just _)) = l
+    mergeLabel _ = Nothing
     labelNotAllowedError (Just l) = compilerErrorM $ "Arg label " ++ show l ++ " not allowed when forwarding multiple returns"
     labelNotAllowedError _ = return ()
-    labelNotSetError (Just l) = compilerErrorM $ "Arg label " ++ show l ++ " cannot be set when forwarding multiple returns"
-    labelNotSetError _ = return ()
     replaceSelfParam self (AssignedInstance c2 t) = do
       t' <- replaceSelfInstance self t
       return $ AssignedInstance c2 t'
@@ -1187,18 +1215,21 @@ compileFunctionCall optionalValue e f (FunctionCall c _ ps es) = message ??> do
     returnCount = length $ pValues $ sfReturns f
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
-    getValues [(Positional ts,e2)] = return (ts,[useAsArgs e2])
+    getValues [(Positional ts,e2,l)] = return (ts,[useAsArgs e2],l)
     -- Multi-expression => must all be singles.
     getValues rs = do
-      (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+      (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map (\(x,_,_) -> x) rs) <??
         "In return at " ++ formatFullContext c
-      return (map (head . pValues . fst) rs,map (useAsUnwrapped . snd) rs)
+      let ts2 = map (\(t,_,_) -> head $ pValues t) rs
+      let es2 = map (\(_,e',_) -> useAsUnwrapped e') rs
+      let ls = foldr (<>) Nothing $ map (\(_,_,l) -> l) rs
+      return (ts2,es2,ls)
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compilerErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
       checkValueAssignment r fa t1 t0 <?? "In argument " ++ show i ++ " to " ++ show (sfName f)
-    checkArgLabel (Just (CallArgLabel _ n1)) (_,Just (CallArgLabel _ n2))
+    checkArgLabel (Just (CallValueLabel _ n1)) (_,Just (CallValueLabel _ n2))
       | n1 == n2 = return ()
     checkArgLabel l1 (i,l2) = "In argument " ++ show i ++ " to " ++ show (sfName f) ??> labelError l1 l2
     labelError (Just l1) (Just l2) =

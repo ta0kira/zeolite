@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021,2023 Kevin P. Barry
+Copyright 2019-2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ limitations under the License.
 
 module Types.TypeCategory (
   AnyCategory(..),
-  CallArgLabel(..),
+  CallValueLabel(..),
   CategoryMap(..),
   CategoryResolver(..),
   FunctionName(..),
@@ -77,7 +77,7 @@ module Types.TypeCategory (
   isStaticNamespace,
   isValueConcrete,
   isValueInterface,
-  matchesCallArgLabel,
+  matchesCallValueLabel,
   mergeDefines,
   mergeFunctions,
   mergeInferredTypes,
@@ -285,7 +285,7 @@ getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ de
   fromType (ValueType _ t2) = fromInstance t2
   fromFunction f = args ++ returns ++ filters2 where
     args = concat $ map (fromType . pvType . fst) $ pValues $ sfArgs f
-    returns = concat $ map (fromType . pvType) $ pValues $ sfReturns f
+    returns = concat $ map (fromType . pvType . fst) $ pValues $ sfReturns f
     filters2 = concat $ map (fromFilter . pfFilter) $ sfFilters f
 
 isValueInterface :: AnyCategory c -> Bool
@@ -972,13 +972,19 @@ mergeFunctions r cm pm fm rs ds fs = do
                      CategoryScope -> checkFunctionConvert r Map.empty Map.empty f2' f1'
                      _             -> checkFunctionConvert r fm pm f2' f1'
                 processPairs_ checkArgNames (sfArgs f1) (sfArgs f2)
+                processPairs_ checkReturnNames (sfReturns f1) (sfReturns f2)
           checkMergeVis FunctionVisibilityDefault _ = return ()
           checkMergeVis v1 v2 =
             compilerErrorM $ "Cannot supersede " ++ show v2 ++ " with " ++ show v1
           checkArgNames (_,n1) (_,n2)
-            | fmap calName n1 == fmap calName n2 = return ()
+            | fmap cvlName n1 == fmap cvlName n2 = return ()
           checkArgNames t1 t2 =
             compilerErrorM $ "Expected arg label from " ++ showArgName t2 ++
+                            " to match " ++ showArgName t1
+          checkReturnNames (_,n1) (_,n2)
+            | fmap cvlName n1 == fmap cvlName n2 = return ()
+          checkReturnNames t1 t2 =
+            compilerErrorM $ "Expected return label from " ++ showArgName t2 ++
                             " to match " ++ showArgName t1
           showArgName (t',Nothing) = show t'
           showArgName (t',Just n') = show (pvType t') ++ " " ++ show n'
@@ -1004,18 +1010,18 @@ instance Show FunctionName where
   show BuiltinIdentify = "identify"
   show BuiltinTypename = "typename"
 
-data CallArgLabel c =
-  CallArgLabel {
-    calContext :: [c],
-    calName ::String
+data CallValueLabel c =
+  CallValueLabel {
+    cvlContext :: [c],
+    cvlName ::String
   }
   deriving (Eq,Ord)
 
-instance Show c => Show (CallArgLabel c) where
-  show (CallArgLabel c n) = n ++ formatFullContextBrace c
+instance Show c => Show (CallValueLabel c) where
+  show (CallValueLabel c n) = n ++ formatFullContextBrace c
 
-matchesCallArgLabel :: CallArgLabel c -> String -> Bool
-matchesCallArgLabel (CallArgLabel _ n1) n2 = init n1 == n2
+matchesCallValueLabel :: CallValueLabel c -> String -> Bool
+matchesCallValueLabel (CallValueLabel _ n1) n2 = init n1 == n2
 
 data FunctionVisibility c =
   FunctionVisibility {
@@ -1036,8 +1042,8 @@ data ScopedFunction c =
     sfType :: CategoryName,
     sfScope :: SymbolScope,
     sfVisibility :: FunctionVisibility c,
-    sfArgs :: Positional (PassedValue c, Maybe (CallArgLabel c)),
-    sfReturns :: Positional (PassedValue c),
+    sfArgs :: Positional (PassedValue c, Maybe (CallValueLabel c)),
+    sfReturns :: Positional (PassedValue c, Maybe (CallValueLabel c)),
     sfParams :: Positional (ValueParam c),
     sfFilters :: [ParamFilter c],
     sfMerges :: [ScopedFunction c]
@@ -1056,10 +1062,10 @@ showFunctionInContext s indent (ScopedFunction cs n t _ _ as rs ps fa ms) =
   showParams (pValues ps) ++ " " ++ formatContext cs ++ "\n" ++
   concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
   indent ++ "(" ++ intercalate "," (map showArg $ pValues as) ++ ") -> " ++
-  "(" ++ intercalate "," (map (show . pvType) $ pValues rs) ++ ")" ++ showMerges (flatten ms)
+  "(" ++ intercalate "," (map showArg $ pValues rs) ++ ")" ++ showMerges (flatten ms)
   where
     showArg (a,Nothing) = show (pvType a)
-    showArg (a,Just n2) = show (pvType a) ++ " " ++ show (calName n2)
+    showArg (a,Just n2) = show (pvType a) ++ " " ++ show (cvlName n2)
     showParams [] = ""
     showParams ps2 = "<" ++ intercalate "," (map (show . vpParam) ps2) ++ ">"
     formatContext cs2 = "/*" ++ formatFullContext cs2 ++ "*/"
@@ -1084,7 +1090,7 @@ parsedToFunctionType :: (Show c, CollectErrorsM m) =>
   ScopedFunction c -> m FunctionType
 parsedToFunctionType (ScopedFunction c n _ _ _ as rs ps fa _) = do
   let as' = Positional $ map (pvType . fst) $ pValues as
-  let rs' = Positional $ map pvType $ pValues rs
+  let rs' = Positional $ map (pvType . fst) $ pValues rs
   let ps' = Positional $ map vpParam $ pValues ps
   mapCompilerM_ checkFilter fa
   let fm = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) fa
@@ -1113,7 +1119,7 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s v as rs ps fa ms) =
     let unresolved = Map.fromList $ map (\n2 -> (n2,singleType $ JustParamName False n2)) $ map vpParam $ pValues ps
     let pa' = pa `Map.union` unresolved
     as' <- fmap Positional $ mapCompilerM (subPassedNamed pa') $ pValues as
-    rs' <- fmap Positional $ mapCompilerM (subPassed pa') $ pValues rs
+    rs' <- fmap Positional $ mapCompilerM (subPassedNamed pa') $ pValues rs
     fa' <- mapCompilerM (subFilter pa') fa
     ms' <- mapCompilerM (uncheckedSubFunction pa) ms
     v' <- subVisibility pa' v
@@ -1141,7 +1147,7 @@ replaceSelfFunction :: (Show c, CollectErrorsM m) =>
 replaceSelfFunction self ff@(ScopedFunction c n t s v as rs ps fa ms) =
   "In function:\n---\n" ++ show ff ++ "\n---\n" ??> do
     as' <- fmap Positional $ mapCompilerM subPassedNamed $ pValues as
-    rs' <- fmap Positional $ mapCompilerM subPassed $ pValues rs
+    rs' <- fmap Positional $ mapCompilerM subPassedNamed $ pValues rs
     fa' <- mapCompilerM subFilter fa
     ms' <- mapCompilerM (replaceSelfFunction self) ms
     v' <- subVisibility v

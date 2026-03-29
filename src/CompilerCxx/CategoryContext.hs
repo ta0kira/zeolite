@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021,2023 Kevin P. Barry
+Copyright 2019-2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,11 +95,12 @@ getProcedureContext :: (Show c, CollectErrorsM m) =>
 getProcedureContext to (ScopeContext tm t ps ms pa fa va em)
                     ff@(ScopedFunction _ _ _ s _ as1 rs1 ps1 fs _)
                     (ExecutableProcedure _ _ _ _ as2 rs2 _) = do
+  let rs1NoLabels = fmap fst rs1
   rs' <- if isUnnamedReturns rs2
-            then return $ ValidatePositions rs1
-            else fmap (ValidateNames (fmap ovName $ nrNames rs2) rs1 . foldr (uncurry addDeferred) emptyDeferred) $ processPairs pairOutput rs1 (nrNames rs2)
+            then return $ ValidatePositions rs1NoLabels
+            else fmap (ValidateNames (fmap ovName $ nrNames rs2) rs1NoLabels . foldr (uncurry addDeferred) emptyDeferred) $ processPairs pairOutput rs1NoLabels (nrNames rs2)
   va' <- updateArgVariables va as1 as2
-  va'' <- updateReturnVariables va' rs1 rs2
+  va'' <- updateReturnVariables va' rs1NoLabels rs2
   let pa' = if s == CategoryScope
                then fs
                else pa ++ fs
@@ -117,9 +118,11 @@ getProcedureContext to (ScopeContext tm t ps ms pa fa va em)
                    TypeScope     -> Map.union localFilters typeFilters
                    ValueScope    -> Map.union localFilters typeFilters
                    _ -> undefined
-  let ns0 = if isUnnamedReturns rs2
-               then []
-               else zipWith3 ReturnVariable [0..] (map ovName $ pValues $ nrNames rs2) (map pvType $ pValues rs1)
+  ns0 <- if isUnnamedReturns rs2
+            then return []
+            else do
+              sequence_ $ map checkReturnName $ zip (pValues $ nrNames rs2) (pValues $ fmap snd rs1)
+              return $ zipWith3 ReturnVariable [0..] (map ovName $ pValues $ nrNames rs2) (map pvType $ pValues rs1NoLabels)
   let ns = filter (isStoredUnboxed . rvType) ns0
   return $ ProcedureContext {
       _pcScope = s,
@@ -155,6 +158,10 @@ getProcedureContext to (ScopeContext tm t ps ms pa fa va em)
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
     args = Positional $ zip (map snd $ pValues as1) (pValues $ avNames as2)
     parentCall = Just (fmap vpParam ps1,args)
+    checkReturnName (OutputValue c (VariableName vn),(Just l))
+      | l `matchesCallValueLabel` vn = return ()
+      | otherwise = compilerWarningM $ "Return " ++ vn ++ formatFullContextBrace c ++ " has a different name than return label " ++ show l
+    checkReturnName _ = return ()
 
 getMainContext :: CollectErrorsM m => Bool -> CategoryMap c -> ExprMap c -> m (ProcedureContext c)
 getMainContext to tm em = return $ ProcedureContext {

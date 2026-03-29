@@ -2,6 +2,21 @@
 
 ## 0.24.2.0 -- ????-??-??
 
+### Language
+
+* **[new]** Adds support for labeling function return values.
+
+  ```text
+  foo () -> (Int returnLabel:)
+  ```
+
+  This is useful for documenting return values, and can also be used to select
+  return values, e.g.,
+
+  ```text
+  Int value <- foo(){returnLabel:}
+  ```
+
 ### Libraries
 
 * **[new]** Adds `getWithDefault` to `KVExchange`, `HashedMap`, and `SortedMap`.
@@ -23,11 +38,11 @@
 
 * **[new]** Adds the `<||` operator to use the left value unless it's `empty`.
 
-```text
-optional Int value <- empty
-// value is preferred, but 123 is used because value is empty.
-Int other <- value <|| 123
-```
+  ```text
+  optional Int value <- empty
+  // value is preferred, but 123 is used because value is empty.
+  Int other <- value <|| 123
+  ```
 
 * **[behavior]** Adds source context to traces for crashes during initialization
   of `@category` members.

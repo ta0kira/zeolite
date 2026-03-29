@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2023 Kevin P. Barry
+Copyright 2019-2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -314,7 +314,7 @@ getExpressionContext (DelegatedFunctionCall c _)    = c
 getExpressionContext (DelegatedInitializeValue c _) = c
 
 data FunctionCall c =
-  FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Maybe (CallArgLabel c), Expression c))
+  FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Maybe (CallValueLabel c), Expression c))
   deriving (Show)
 
 data AssignmentType =
@@ -361,7 +361,7 @@ data ValueCallType =
 data ValueOperation c =
   TypeConversion [c] GeneralInstance |
   ValueCall [c] ValueCallType (FunctionCall c) |
-  SelectReturn [c] Int
+  SelectReturn [c] (Either Int (CallValueLabel c))
   deriving (Show)
 
 newtype MacroName =

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021,2023 Kevin P. Barry
+Copyright 2019-2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -719,11 +719,11 @@ formatFunctionTypes :: Show c => ScopedFunction c -> [String]
 formatFunctionTypes (ScopedFunction c _ _ s _ as rs ps fa _) = [location,args,returns,params] ++ filters where
   location = show s ++ " function declared at " ++ formatFullContext c
   args    = "Arg Types:    (" ++ intercalate ", " (map singleArg $ pValues as)  ++ ")"
-  returns = "Return Types: (" ++ intercalate ", " (map (show . pvType) $ pValues rs)  ++ ")"
+  returns = "Return Types: (" ++ intercalate ", " (map singleArg $ pValues rs)  ++ ")"
   params  = "Type Params:  <" ++ intercalate ", " (map (show . vpParam) $ pValues ps) ++ ">"
   filters = map singleFilter fa
   singleFilter (ParamFilter _ n2 f) = "  " ++ show n2 ++ " " ++ show f
-  singleArg (a,Just n) = show (pvType a) ++ " " ++ (calName n)
+  singleArg (a,Just n) = show (pvType a) ++ " " ++ (cvlName n)
   singleArg (a,_)      = show (pvType a)
 
 createMainCommon :: String -> CompiledData [String] -> CompiledData [String] -> [String]
@@ -1039,7 +1039,7 @@ getCategoryMentions t = Set.fromList $ fromRefines (getCategoryRefines t) ++
   fromDefine (DefinesInstance d ps) = d:(fromGenerals $ pValues ps)
   fromFunctions fs = concat $ map fromFunction fs
   fromFunction (ScopedFunction _ _ t2 _ _ as rs _ fs _) =
-    [t2] ++ (fromGenerals $ map (vtType . pvType) (map fst (pValues as) ++ pValues rs)) ++ fromFilters fs
+    [t2] ++ (fromGenerals $ map (vtType . pvType) (map fst (pValues as) ++ map fst (pValues rs))) ++ fromFilters fs
   fromFilters fs = concat $ map (fromFilter . pfFilter) fs
   fromFilter (TypeFilter _ t2)  = Set.toList $ categoriesFromTypes t2
   fromFilter (DefinesFilter t2) = fromDefine t2

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021,2023 Kevin P. Barry
+Copyright 2019-2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processPairs_ alwaysPair (fmap pvType $ sfReturns f) (fmap ovName $ nrNames $ epReturns p) <!!
+           processPairs_ alwaysPair (fmap (pvType . fst) $ sfReturns f) (fmap ovName $ nrNames $ epReturns p) <!!
              ("Procedure for " ++ show (sfName f) ++
               formatFullContextBrace (nrContext $ epReturns p) ++
               " has the wrong number of returns" ++

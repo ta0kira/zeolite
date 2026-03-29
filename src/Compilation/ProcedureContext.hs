@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2021,2023 Kevin P. Barry
+Copyright 2019-2021,2023,2026 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ data ProcedureContext c =
     _pcNoTrace :: Bool,
     _pcTestsOnly :: Bool,
     _pcTraces :: [String],
-    _pcParentCall :: Maybe (Positional ParamName,Positional (Maybe (CallArgLabel c), InputValue c))
+    _pcParentCall :: Maybe (Positional ParamName,Positional (Maybe (CallValueLabel c), InputValue c))
   }
 
 $(makeLenses ''ProcedureContext)
@@ -464,14 +464,14 @@ updateReturnVariables ma rs1 rs2 = updated where
 
 updateArgVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->
-  Positional (PassedValue c, Maybe (CallArgLabel c)) -> ArgValues c ->
+  Positional (PassedValue c, Maybe (CallValueLabel c)) -> ArgValues c ->
   m (Map.Map VariableName (VariableValue c))
 updateArgVariables ma as1 as2 = do
   as <- processPairs alwaysPair as1 (avNames as2)
   let as' = filter (not . isDiscardedInput . snd) as
   foldM update ma as' where
     checkName (Just l) (InputValue c (VariableName n))
-      | l `matchesCallArgLabel` n = return ()
+      | l `matchesCallValueLabel` n = return ()
       | otherwise = compilerWarningM $ "Variable " ++ n ++
                                          formatFullContextBrace c ++
                                          " has a different name than arg label " ++ show l

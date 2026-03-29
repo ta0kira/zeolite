@@ -54,6 +54,7 @@ of this document.
     - [Immediate Program Termination](#immediate-program-termination)
     - [Call Delegation](#call-delegation)
   - [Function Argument Labels](#function-argument-labels)
+  - [Function Return Labels](#function-return-labels)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
   - [Immutable Types](#immutable-types)
@@ -1112,6 +1113,45 @@ and end with `:`.
   label, but that isn't a requirement. Also note that labels _can_ be reused,
   e.g., `@value swapRows (Int row:, Int row:) -> ()`. This allows the label to
   be descriptive rather than just an identifier.
+
+### Function Return Labels
+
+As of compiler version `0.24.2.0`, function declarations in Zeolite can
+_optionally_ have labels for any individual return.
+
+These have the same syntax as argument labels.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  <span style='color:#644a9b;'>@type</span> newPair () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span> <span style='color:#006e28;'>first:</span>, <span style='color:#0057ae;'>Value</span> <span style='color:#006e28;'>second:</span>)
+}</pre>
+
+Return labels are primarily for documenting interfaces, but can also be used to
+select an individual return.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#0057ae;'>Value</span> value <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>.</span>newPair(){<span style='color:#006e28;'>first:</span>}</pre>
+
+As with argument labels, you _can_ reuse the same label, but duplicate labels
+will prevent using them to select a single return.
+
+**IMPORTANT:** If you pass the result of a function call directly as an argument
+to another function call, return labels will be reused as argument labels.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+foo () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i> <span style='color:#006e28;'>value:</span>)
+bar (<i><span style='color:#0057ae;'>Int</span></i> <span style='color:#006e28;'>value:</span>) <b><span style='color:#006e28;'>-&gt;</span></b> ()</pre>
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#898887;'>// The argument to bar has label value: because the return of foo() has that label.</span>
+\ bar(foo())</pre>
+
+If this causes problems, you can either explicilty override the label or you can
+"unset" it by selecting the return value with `{0}`.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+\ bar(<span style='color:#006e28;'>value:</span> foo())
+\ baz(foo(){<span style='color:#b08000;'>0</span>})</pre>
 
 ### Using Parameters
 
