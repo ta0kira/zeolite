@@ -23,6 +23,9 @@
   This allows getting with a default value without constructing the default if
   a value already exists.
 
+* **[new]** Adds `uniqueCount` to `CategoricalReader`, to get the number of
+  categories with non-zero weight.
+
 ## 0.24.1.0  -- 2024-01-07
 
 ### Language

@@ -35,6 +35,10 @@ define CategoricalTree {
     return CategoricalTreeNode<#c>.tryTotal(tree.getRoot())
   }
 
+  uniqueCount () {
+    return tree.size()
+  }
+
   setWeight (cat, size) {
     if (size < 0) {
       fail("size must not be negative")

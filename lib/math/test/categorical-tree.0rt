@@ -38,6 +38,7 @@ unittest simpleInsertion {
       .push(6).push(6)
 
   \ tree.getTotal() `Matches:with` CheckValue:equals(expected.size())
+  \ tree.uniqueCount() `Matches:with` CheckValue:equals(6)
   \ tree.getWeight(1) `Matches:with` CheckValue:equals(3)
   \ tree.getWeight(2) `Matches:with` CheckValue:equals(7)
   \ tree.getWeight(3) `Matches:with` CheckValue:equals(1)
@@ -72,6 +73,7 @@ unittest modifySizes {
       .push(7).push(7).push(7)
 
   \ tree.getTotal() `Matches:with` CheckValue:equals(expected.size())
+  \ tree.uniqueCount() `Matches:with` CheckValue:equals(6)
   \ tree.getWeight(1) `Matches:with` CheckValue:equals(3)
   \ tree.getWeight(2) `Matches:with` CheckValue:equals(7)
   \ tree.getWeight(3) `Matches:with` CheckValue:equals(0)
@@ -97,6 +99,7 @@ unittest increment {
     .incrWeight(1)
 
   \ tree.getTotal() `Matches:with` CheckValue:equals(3)
+  \ tree.uniqueCount() `Matches:with` CheckValue:equals(1)
   \ tree.getWeight(1) `Matches:with` CheckValue:equals(3)
 }
 
@@ -126,7 +129,7 @@ unittest duplicate {
 }
 
 unittest integrationTest { $DisableCoverage$
-  ValidatedTree<Int> tree     <- ValidatedTree<Int>.new()
+  ValidatedTree<Int> tree      <- ValidatedTree<Int>.new()
   SortedMap<Int, Int> expected <- SortedMap<Int, Int>.new()
 
   Int count   <- 137
