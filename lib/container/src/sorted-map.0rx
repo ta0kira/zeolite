@@ -103,13 +103,13 @@ define ValidatedTree {
 
   set (k, v) { $NoTrace$
     \ map.swap(k, v)
-    \ validate(map.getRoot())
+    \ validate(map.getRoot(), map.size())
     return self
   }
 
   remove (k) { $NoTrace$
     \ map.swap(k, empty)
-    \ validate(map.getRoot())
+    \ validate(map.getRoot(), map.size())
     return self
   }
 
@@ -117,11 +117,24 @@ define ValidatedTree {
     return map.get(k)
   }
 
-  @type validate (optional BinaryTreeNode<#k, #v>) -> ()
-  validate (node) { $NoTrace$
-    if (present(node)) {
-      \ validateOrder(require(node))
-      \ validateBalance(require(node))
+  @type validate (optional BinaryTreeNode<#k, #v>, Int) -> ()
+  validate (root, count) { $NoTrace$
+    Int nodeCount <- countNodes(root)
+    if (nodeCount != count) {
+      fail("incorrect size")
+    }
+    if (`present` root) {
+      \ validateOrder(`require` root)
+      \ validateBalance(`require` root)
+    }
+  }
+
+  @type countNodes (optional BinaryTreeNode<#k, #v>) -> (Int)
+  countNodes (node) { $NoTrace$
+    if (`present` node) {
+      return 1+countNodes(require(node).getLower())+countNodes(require(node).getHigher())
+    } else {
+      return 0
     }
   }
 
