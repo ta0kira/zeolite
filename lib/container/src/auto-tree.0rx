@@ -227,17 +227,17 @@ define AutoBinaryTree {
   }
 
   @type removeNode (#n) -> (optional #n)
-  removeNode (node) (newNode) {
+  removeNode (node) (removed) {
     if (getBalance(node) < 0) {
-      optional #n temp, newNode <- removeHighest(node.getLower())
-      \ node.setLower(temp)
+      optional #n newNode, removed <- removeHighest(node.getLower())
+      \ node.setLower(newNode)
     } else {
-      optional #n temp, newNode <- removeLowest(node.getHigher())
-      \ node.setHigher(temp)
+      optional #n newNode, removed <- removeLowest(node.getHigher())
+      \ node.setHigher(newNode)
     }
-    if (present(newNode)) {
-      \ swapChildren(node, require(newNode))
-      \ require(newNode).updateNode()
+    if (present(removed)) {
+      \ swapChildren(node, require(removed))
+      \ require(removed).updateNode()
     }
   }
 

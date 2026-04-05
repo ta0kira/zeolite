@@ -107,13 +107,7 @@ define ValidatedTree {
   }
 
   getWeight (cat) { $NoTrace$
-    scoped {
-      optional Int size <- tree.get(cat)
-    } in if (present(size)) {
-      return require(size)
-    } else {
-      return 0
-    }
+    return tree.get(cat) <|| 0
   }
 
   locate (pos) { $NoTrace$
